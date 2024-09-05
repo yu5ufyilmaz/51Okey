@@ -4,12 +4,30 @@ using UnityEngine;
 using Photon.Realtime;
 using Photon.Pun;
 
-public class Manage : MonoBehaviourPunCallbacks
+public class PhotonManager : MonoBehaviourPunCallbacks
 {
     // Start is called before the first frame update
+    static PhotonManager instance = null;
     void Start()
     {
+        if (instance == null)
+        {
+            instance = this;
+            DontDestroyOnLoad(this.gameObject);
+        }
+        else
+        {
+            Destroy(this.gameObject);
+        }
+
+
         PhotonNetwork.ConnectUsingSettings();
+
+
+        EventDispatcher.RegisterListener("JoinLobby", OnJoinedLobby);
+        EventDispatcher.RegisterListener("JoinRoom", OnJoinedRoom);
+        EventDispatcher.RegisterListener("LeftRoom", OnLeftRoom);
+        EventDispatcher.RegisterListener("LeftLobby", OnLeftLobby);
     }
 
     public override void OnConnectedToMaster()
@@ -18,18 +36,23 @@ public class Manage : MonoBehaviourPunCallbacks
         PhotonNetwork.JoinLobby();
     }
 
-    public override void OnJoinedLobby()
-    {
-        Debug.Log("Joined Lobby");
-        //PhotonNetwork.JoinOrCreateRoom("MyRoom", new RoomOptions { MaxPlayers = 4,IsOpen = true, IsVisible = true }, TypedLobby.Default);,
-        
-        //PhotonNetwork.JoinRandomRoom();
-    }
-
+    
     public override void OnJoinedRoom()
     {
         Debug.Log("Joined Room");
     }
+    public override void OnLeftRoom()
+    {
+        Debug.Log("Left Room");
+    }
+    public override void OnLeftLobby()
+    {
+        Debug.Log("Left Lobby");
+    }
+
+
+
+
 
     public override void OnJoinRoomFailed(short returnCode, string message)
     {
@@ -38,7 +61,7 @@ public class Manage : MonoBehaviourPunCallbacks
 
     public override void OnJoinRandomFailed(short returnCode, string message)
     {
-        Debug.Log("Failed to join random room"); 
+        Debug.Log("Failed to join random room");
     }
 
     public override void OnCreateRoomFailed(short returnCode, string message)
