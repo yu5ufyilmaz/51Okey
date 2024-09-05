@@ -2571,5 +2571,10 @@ namespace Photon.Pun
                 }
             }
         }
+
+        public static void Instantiate(string name, Transform content, Quaternion identity, int v, object value)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

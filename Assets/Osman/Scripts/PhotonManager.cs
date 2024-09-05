@@ -3,11 +3,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using Photon.Realtime;
 using Photon.Pun;
+using UnityEngine.SceneManagement;
+using TMPro;
+using UnityEngine.UI;
 
 public class PhotonManager : MonoBehaviourPunCallbacks
 {
     // Start is called before the first frame update
     static PhotonManager instance = null;
+    public TMP_InputField usernameInputField;
+    public TextMeshProUGUI buttonText;
+
     void Start()
     {
         if (instance == null)
@@ -23,28 +29,32 @@ public class PhotonManager : MonoBehaviourPunCallbacks
 
         PhotonNetwork.ConnectUsingSettings();
 
-
-        EventDispatcher.RegisterListener("JoinLobby", OnJoinedLobby);
-        EventDispatcher.RegisterListener("JoinRoom", OnJoinedRoom);
-        EventDispatcher.RegisterListener("LeftRoom", OnLeftRoom);
-        EventDispatcher.RegisterListener("LeftLobby", OnLeftLobby);
     }
 
     public override void OnConnectedToMaster()
     {
         Debug.Log("Connected to Server");
         PhotonNetwork.JoinLobby();
+
     }
 
-    
-    public override void OnJoinedRoom()
+    public void ConnectLobby()
     {
-        Debug.Log("Joined Room");
+
+        if (usernameInputField.text.Length > 1)
+        {
+            PhotonNetwork.NickName = usernameInputField.text;
+            buttonText.text = "Connecting...";
+            PhotonNetwork.ConnectUsingSettings();
+            SceneManager.LoadScene("LobbyMenu");
+        }
+
+
+
     }
-    public override void OnLeftRoom()
-    {
-        Debug.Log("Left Room");
-    }
+
+
+
     public override void OnLeftLobby()
     {
         Debug.Log("Left Lobby");
