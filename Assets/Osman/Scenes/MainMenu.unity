@@ -195,8 +195,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d57ef64779ebcb0448a99b7bd483abba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  usernameInputField: {fileID: 1624504754}
-  buttonText: {fileID: 1053447678}
 --- !u!4 &370890744
 Transform:
   m_ObjectHideFlags: 0
@@ -510,7 +508,7 @@ GameObject:
   - component: {fileID: 848419647}
   - component: {fileID: 848419646}
   m_Layer: 5
-  m_Name: Button
+  m_Name: ConnectButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -580,8 +578,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 370890743}
-        m_TargetAssemblyTypeName: PhotonManager, Assembly-CSharp
+      - m_Target: {fileID: 1326737529}
+        m_TargetAssemblyTypeName: MainMenuUIHandler, Assembly-CSharp
         m_MethodName: ConnectLobby
         m_Mode: 1
         m_Arguments:
@@ -642,7 +640,7 @@ GameObject:
   - component: {fileID: 929228717}
   - component: {fileID: 929228716}
   m_Layer: 5
-  m_Name: Image
+  m_Name: InputFieldBackground
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -790,13 +788,13 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 24
-  m_fontSizeBase: 24
+  m_fontSize: 35
+  m_fontSizeBase: 35
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 0
   m_fontSizeMax: 0
-  m_fontStyle: 0
+  m_fontStyle: 1
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
   m_textAlignment: 65535
@@ -1191,6 +1189,7 @@ GameObject:
   - component: {fileID: 1326737527}
   - component: {fileID: 1326737526}
   - component: {fileID: 1326737525}
+  - component: {fileID: 1326737529}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -1281,6 +1280,20 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &1326737529
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1326737524}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bdb3bfb9962da8544a8c20c57d1dd69e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerNameInput: {fileID: 1624504754}
+  buttonText: {fileID: 1053447678}
 --- !u!1 &1393875577
 GameObject:
   m_ObjectHideFlags: 0

@@ -11,8 +11,7 @@ public class PhotonManager : MonoBehaviourPunCallbacks
 {
     // Start is called before the first frame update
     static PhotonManager instance = null;
-    public TMP_InputField usernameInputField;
-    public TextMeshProUGUI buttonText;
+
 
     void Start()
     {
@@ -38,20 +37,7 @@ public class PhotonManager : MonoBehaviourPunCallbacks
 
     }
 
-    public void ConnectLobby()
-    {
 
-        if (usernameInputField.text.Length > 1)
-        {
-            PhotonNetwork.NickName = usernameInputField.text;
-            buttonText.text = "Connecting...";
-            PhotonNetwork.ConnectUsingSettings();
-            SceneManager.LoadScene("LobbyMenu");
-        }
-
-
-
-    }
 
 
 

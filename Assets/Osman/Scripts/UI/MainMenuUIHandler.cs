@@ -4,25 +4,28 @@ using UnityEngine;
 using TMPro;
 using Photon.Realtime;
 using UnityEngine.SceneManagement;
+using Photon.Pun;
 
-public class MainMenuUIHandler : MonoBehaviour
+public class MainMenuUIHandler : MonoBehaviourPunCallbacks
 {
+
     public TMP_InputField playerNameInput;
+    public TextMeshProUGUI buttonText;
+
     // Bu kısımıa Google Hesaplarını Facebookj hesaplarını bağlama eklenecek
-    void Start()
+    public void ConnectLobby()
     {
-        if (PlayerPrefs.HasKey("PlayerNickname"))
-            playerNameInput.text = PlayerPrefs.GetString("PlayerNickname");
+        if (PhotonNetwork.InLobby)
+        {
+            if (playerNameInput.text.Length > 1)
+            {
+                PhotonNetwork.NickName = playerNameInput.text;
+                buttonText.text = "Connecting...";
+                SceneManager.LoadScene("LobbyMenu");
+            }
+        }
 
     }
 
-    public void OnJoinGameClicked()
-    {
-
-        PlayerPrefs.SetString("PlayerNickname", playerNameInput.text);
-        PlayerPrefs.Save();
-        if (playerNameInput.text.Length > 0)
-            SceneManager.LoadScene("LobbyMenu");
-    }
 
 }
