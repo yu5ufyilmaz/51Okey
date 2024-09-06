@@ -17,38 +17,46 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
     public Transform _content;
 
 
+
+
     void Start()
     {
         PhotonNetwork.JoinLobby();
-    }
-    void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            List<RoomInfo> roomList = new List<RoomInfo>();
-            UpdateRoomList(roomList);
-        }
     }
     //Buraya oda ayarlarının değiştirilebilineceği ayar panelinin açılıp oradan RoomOptionsı değiştirebilinecek kodlar yazılabilir.
     public void CreateGame()
     {
         if (PhotonNetwork.InLobby)
         {
-            PhotonNetwork.CreateRoom(PhotonNetwork.NickName, new RoomOptions() { MaxPlayers = 4, IsOpen = true, IsVisible = true });
             SceneManager.LoadScene("Table");
-        }
-    }
-    public void JoinGame()
-    {
-        if (PhotonNetwork.InLobby)
-        {
-            PhotonNetwork.JoinOrCreateRoom(PhotonNetwork.NickName, new RoomOptions() { MaxPlayers = 4, IsOpen = true, IsVisible = true },TypedLobby.Default);
-            SceneManager.LoadScene("Table");
+            PhotonNetwork.CreateRoom(PhotonNetwork.NickName, new RoomOptions() { MaxPlayers = 4, IsOpen = true, IsVisible = true }, TypedLobby.Default);
+
         }
     }
     public void JoinRoom(string _roomName)
     {
-        PhotonNetwork.JoinRoom(_roomName);
+
+        if (_roomName != null)
+        {
+            if (roomItemsList.Count > 0)
+            {
+
+                PhotonNetwork.JoinRandomRoom();
+                SceneManager.LoadScene("Table");
+            }
+            else
+            {
+
+                PhotonNetwork.CreateRoom(PhotonNetwork.NickName, new RoomOptions() { MaxPlayers = 4, IsOpen = true, IsVisible = true }, TypedLobby.Default);
+                SceneManager.LoadScene("Table");
+            }
+        }
+        else
+        {
+            Debug.Log("zort");
+            PhotonNetwork.JoinRoom(_roomName);
+            SceneManager.LoadScene("Table");
+        }
     }
 
 
@@ -69,7 +77,7 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
         {
 
             RoomItem newRoom = Instantiate(roomItemPrefab, _content);
-            newRoom.SetRoomName(room.Name);
+            newRoom.SetRoomName(room.Name, room.PlayerCount);
             roomItemsList.Add(newRoom);
         }
     }
@@ -87,11 +95,7 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
 
         Debug.Log("Joined Lobby");
     }
-    public override void OnJoinedRoom()
-    {
 
-        Debug.Log("Joined Room");
-    }
     public override void OnLeftRoom()
     {
         Debug.Log("Left Room");

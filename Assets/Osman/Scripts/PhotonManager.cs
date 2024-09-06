@@ -29,7 +29,6 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         PhotonNetwork.ConnectUsingSettings();
 
     }
-
     public override void OnConnectedToMaster()
     {
         Debug.Log("Connected to Server");
@@ -38,7 +37,10 @@ public class PhotonManager : MonoBehaviourPunCallbacks
     }
 
 
-
+    public override void OnJoinedRoom()
+    {
+        Debug.Log(PhotonNetwork.CurrentRoom.Name + " joined");
+    }
 
 
     public override void OnLeftLobby()
