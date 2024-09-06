@@ -4,7 +4,7 @@ using UnityEngine.Events;
 
 public class EventDispatcher : MonoBehaviour
 {
-    private Dictionary<string, UnityEvent> eventRegistry;
+    private Dictionary<string, UnityEventBase> eventRegistry;
 
     private static EventDispatcher dispatcherInstance;
 
@@ -34,15 +34,17 @@ public class EventDispatcher : MonoBehaviour
     {
         if (eventRegistry == null)
         {
-            eventRegistry = new Dictionary<string, UnityEvent>();
+            eventRegistry = new Dictionary<string, UnityEventBase>();
         }
     }
 
+    // Parametresiz olay dinleyici
     public static void RegisterListener(string eventName, UnityAction callback)
     {
         UnityEvent thisEvent = null;
-        if (Instance.eventRegistry.TryGetValue(eventName, out thisEvent))
+        if (Instance.eventRegistry.TryGetValue(eventName, out UnityEventBase baseEvent))
         {
+            thisEvent = baseEvent as UnityEvent;
             thisEvent.AddListener(callback);
         }
         else
@@ -53,23 +55,60 @@ public class EventDispatcher : MonoBehaviour
         }
     }
 
+    // Parametreli olay dinleyici (Örneğin string parametre alan)
+    public static void RegisterListener<T>(string eventName, UnityAction<T> callback)
+    {
+        UnityEvent<T> thisEvent = null;
+        if (Instance.eventRegistry.TryGetValue(eventName, out UnityEventBase baseEvent))
+        {
+            thisEvent = baseEvent as UnityEvent<T>;
+            thisEvent.AddListener(callback);
+        }
+        else
+        {
+            thisEvent = new UnityEvent<T>();
+            thisEvent.AddListener(callback);
+            Instance.eventRegistry.Add(eventName, thisEvent);
+        }
+    }
+
+    // Parametresiz olay çağırma
+    public static void InvokeEvent(string eventName)
+    {
+        if (Instance.eventRegistry.TryGetValue(eventName, out UnityEventBase baseEvent))
+        {
+            (baseEvent as UnityEvent)?.Invoke();
+        }
+    }
+
+    // Parametreli olay çağırma (string gibi bir parametre ile)
+    public static void InvokeEvent<T>(string eventName, T param)
+    {
+        if (Instance.eventRegistry.TryGetValue(eventName, out UnityEventBase baseEvent))
+        {
+            (baseEvent as UnityEvent<T>)?.Invoke(param);
+        }
+    }
+
+    // Parametresiz olay dinleyiciyi kaldırma
     public static void UnregisterListener(string eventName, UnityAction callback)
     {
         if (dispatcherInstance == null) return;
 
-        UnityEvent thisEvent = null;
-        if (Instance.eventRegistry.TryGetValue(eventName, out thisEvent))
+        if (Instance.eventRegistry.TryGetValue(eventName, out UnityEventBase baseEvent))
         {
-            thisEvent.RemoveListener(callback);
+            (baseEvent as UnityEvent)?.RemoveListener(callback);
         }
     }
 
-    public static void InvokeEvent(string eventName)
+    // Parametreli olay dinleyiciyi kaldırma
+    public static void UnregisterListener<T>(string eventName, UnityAction<T> callback)
     {
-        UnityEvent thisEvent = null;
-        if (Instance.eventRegistry.TryGetValue(eventName, out thisEvent))
+        if (dispatcherInstance == null) return;
+
+        if (Instance.eventRegistry.TryGetValue(eventName, out UnityEventBase baseEvent))
         {
-            thisEvent.Invoke();
+            (baseEvent as UnityEvent<T>)?.RemoveListener(callback);
         }
     }
 }

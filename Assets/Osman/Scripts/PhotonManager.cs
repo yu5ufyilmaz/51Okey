@@ -1,11 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Photon.Realtime;
+
 using Photon.Pun;
-using UnityEngine.SceneManagement;
-using TMPro;
-using UnityEngine.UI;
+
 
 public class PhotonManager : MonoBehaviourPunCallbacks
 {

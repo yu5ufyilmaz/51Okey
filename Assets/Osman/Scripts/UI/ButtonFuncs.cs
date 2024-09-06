@@ -1,65 +1,48 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using Photon.Pun;
 using Photon.Realtime;
-using UnityEngine.UI;
-using TMPro;
 public class ButtonFuncs : MonoBehaviourPunCallbacks
 {
 
-
-
     public RoomItem roomItemPrefab;
-    public List<RoomItem> roomItemsList = new List<RoomItem>();
-
-    public Transform _content;
-
-
+    private List<RoomItem> roomItemsList = new List<RoomItem>();
+    [SerializeField]
+    private Transform _content;
 
 
     void Start()
     {
         PhotonNetwork.JoinLobby();
     }
+
+
+
+
     //Buraya oda ayarlarının değiştirilebilineceği ayar panelinin açılıp oradan RoomOptionsı değiştirebilinecek kodlar yazılabilir.
     public void CreateGame()
     {
         if (PhotonNetwork.InLobby)
         {
-            SceneManager.LoadScene("Table");
-            PhotonNetwork.CreateRoom(PhotonNetwork.NickName, new RoomOptions() { MaxPlayers = 4, IsOpen = true, IsVisible = true }, TypedLobby.Default);
-
+            EventDispatcher.InvokeEvent("CreateRoom");
         }
     }
+
+
+
+
+
+    //Oda kurma ya da odaya girme kısmı buradan ama daha optimize yazılınabilinir.
     public void JoinRoom(string _roomName)
     {
-
-        if (_roomName != null)
-        {
-            if (roomItemsList.Count > 0)
-            {
-
-                PhotonNetwork.JoinRandomRoom();
-                SceneManager.LoadScene("Table");
-            }
-            else
-            {
-
-                PhotonNetwork.CreateRoom(PhotonNetwork.NickName, new RoomOptions() { MaxPlayers = 4, IsOpen = true, IsVisible = true }, TypedLobby.Default);
-                SceneManager.LoadScene("Table");
-            }
-        }
-        else
-        {
-            Debug.Log("zort");
-            PhotonNetwork.JoinRoom(_roomName);
-            SceneManager.LoadScene("Table");
-        }
+        EventDispatcher.InvokeEvent("JoinRoom", _roomName);
     }
 
 
+
+
+    //Buraası Oda Listesini yenileme kısmı Oda bulmayla alakalı sorunları Buradan çözücez.
     public override void OnRoomListUpdate(List<RoomInfo> roomList)
     {
         UpdateRoomList(roomList);

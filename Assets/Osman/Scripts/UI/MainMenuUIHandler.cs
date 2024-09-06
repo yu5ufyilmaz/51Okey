@@ -2,8 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
-using Photon.Realtime;
-using UnityEngine.SceneManagement;
 using Photon.Pun;
 
 public class MainMenuUIHandler : MonoBehaviourPunCallbacks
@@ -21,7 +19,7 @@ public class MainMenuUIHandler : MonoBehaviourPunCallbacks
             {
                 PhotonNetwork.NickName = playerNameInput.text;
                 buttonText.text = "Connecting...";
-                SceneManager.LoadScene("LobbyMenu");
+                SceneChangeManager.Instance.ChangeScene("LobbyMenu");
             }
         }
 

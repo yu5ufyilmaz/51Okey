@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using Photon.Pun;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,11 +14,6 @@ public class RoomItem : MonoBehaviour
     void Start()
     {
         manager = FindObjectOfType<ButtonFuncs>();
-    }
-    void Update()
-    {
-        Debug.Log("Room name: " + _roomOwnerName);
-
     }
     public void SetRoomName(string _roomName, int _playerCount)
     {
