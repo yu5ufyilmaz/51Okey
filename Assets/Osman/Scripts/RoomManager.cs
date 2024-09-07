@@ -29,7 +29,14 @@ public class RoomManager : MonoBehaviourPunCallbacks
         EventDispatcher.RegisterFunction<int>("JoinRandomRoomOrCreate", JoinRandomRoomOrCreate);
     }
 
-
+    private void Update()
+    {
+      /*  if (PhotonNetwork.)
+        {
+            isOpen = false;
+            isVisible = false;
+        }*/
+    }
     //Create Game butonuna bastığımızda çalışır. 
     //Burada ki Oda ayarları Oyuncular tarafından değiştirilebilir olması gerekir EKLENECEK.
     public void CreateRoom()
@@ -48,10 +55,8 @@ public class RoomManager : MonoBehaviourPunCallbacks
     //Açılmış odalardan istediğimize tıkladığımız vakit O odaya gircektir.
     public void JoinRoom(string _roomName)
     {
-        {
-            PhotonNetwork.JoinRoom(_roomName);
-            SceneChangeManager.Instance.ChangeScene("Table");
-        }
+        PhotonNetwork.JoinRoom(_roomName);
+        SceneChangeManager.Instance.ChangeScene("Table");
     }
 
 

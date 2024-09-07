@@ -11,7 +11,7 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
     [SerializeField]
     private Transform _content;
 
-
+    List<RoomInfo> list = new List<RoomInfo>();
     private List<RoomItem> roomItemsList = new List<RoomItem>();
     //Odaları yenileme süresi
     private float timeBetweenUpdates = 1.5f;
@@ -42,8 +42,6 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
 
 
 
-
-
     public void JoinRoom(string _roomName)
     {
         if (PhotonNetwork.InLobby)
@@ -55,17 +53,24 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
             EventDispatcher.SummonEvent("JoinRandomRoomOrCreate", roomCount);
     }
 
-
+    public void RefreshList()
+    {
+        if (PhotonNetwork.InLobby)
+            UpdateRoomList(list);
+    }
 
 
     //Burası Oda Listesini yenileme kısmı Oda bulmayla alakalı sorunları Buradan çözüceğiz.
     public override void OnRoomListUpdate(List<RoomInfo> roomList)
     {
-        if (Time.time >= nextUpdateTime)
+        if (PhotonNetwork.InLobby)
         {
-            roomCount = roomList.Count;
-            UpdateRoomList(roomList);
-            nextUpdateTime = Time.time + timeBetweenUpdates; // 1.5 saniye
+            if (Time.time >= nextUpdateTime)
+            {
+                roomCount = roomList.Count;
+                UpdateRoomList(roomList);
+                nextUpdateTime = Time.time + timeBetweenUpdates; // 1.5 saniye
+            }
         }
     }
     void UpdateRoomList(List<RoomInfo> list)
