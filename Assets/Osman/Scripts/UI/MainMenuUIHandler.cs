@@ -9,8 +9,8 @@ public class MainMenuUIHandler : MonoBehaviourPunCallbacks
 
     public TMP_InputField playerNameInput;
     public TextMeshProUGUI buttonText;
-
-    // Bu kısımıa Google Hesaplarını Facebookj hesaplarını bağlama eklenecek
+    //Main menü kısmındaki kodların Manager Scripti.
+    // Bu kısıma Google Hesaplarını, Facebook hesaplarını bağlama eklenecek.
     public void ConnectLobby()
     {
         if (PhotonNetwork.InLobby)

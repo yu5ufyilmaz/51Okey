@@ -13,16 +13,25 @@ public class RoomManager : MonoBehaviourPunCallbacks
     [Tooltip("Bir oyuncu odadan ayrıldığında, o oyuncunun oyunla ilgili bilgileri (RPC çağrıları gibi) temizlenir.")]
     [SerializeField] private bool cleanupCacheOnLeave = true;
 
-    [SerializeField] private int maxPlayers = 4;
+
+    [Tooltip("Oda aktif olacak mı?")]
     [SerializeField] bool isOpen = true;
+
+    [Tooltip("Oda Gizlensin mi?")]
     [SerializeField] bool isVisible = true;
+    private int maxPlayers = 4;
 
     void Start()
     {
-        EventDispatcher.RegisterListener("CreateRoom", CreateRoom);
-        EventDispatcher.RegisterListener<string>("JoinRoom", JoinRoom);
+        //Bu Scriptte oluşturduğum Fonksiyonları diğer scriptlerde çağırmak için bu fonksiyonları kullanabiliriz.
+        EventDispatcher.RegisterFunction("CreateRoom", CreateRoom);
+        EventDispatcher.RegisterFunction<string>("JoinRoom", JoinRoom);
+        EventDispatcher.RegisterFunction<int>("JoinRandomRoomOrCreate", JoinRandomRoomOrCreate);
     }
 
+
+    //Create Game butonuna bastığımızda çalışır. 
+    //Burada ki Oda ayarları Oyuncular tarafından değiştirilebilir olması gerekir EKLENECEK.
     public void CreateRoom()
     {
         RoomOptions roomOptions = new RoomOptions();
@@ -35,28 +44,33 @@ public class RoomManager : MonoBehaviourPunCallbacks
         SceneChangeManager.Instance.ChangeScene("Table");
     }
 
+
+    //Açılmış odalardan istediğimize tıkladığımız vakit O odaya gircektir.
     public void JoinRoom(string _roomName)
     {
-        List<RoomInfo> list = new List<RoomInfo>();
-        if (_roomName != null)
-        {
-            if (list.Count > 0)
-            {
-
-                PhotonNetwork.JoinRandomRoom();
-                SceneChangeManager.Instance.ChangeScene("Table");
-            }
-            else
-            {
-                EventDispatcher.InvokeEvent("CreateRoom");
-            }
-        }
-        else
         {
             PhotonNetwork.JoinRoom(_roomName);
             SceneChangeManager.Instance.ChangeScene("Table");
         }
     }
+
+
+    //Join Game Butonuna bastığımızda eğer ki hiç oda kurulmamışsa oda oluşturacak kurulu odalar varsa rastgele birini seçecek ve ona katılacak
+    public void JoinRandomRoomOrCreate(int roomCount)
+    {
+        Debug.Log(roomCount);
+        if (roomCount > 0)
+        {
+
+            PhotonNetwork.JoinRandomRoom();
+            SceneChangeManager.Instance.ChangeScene("Table");
+        }
+        else
+        {
+            EventDispatcher.SummonEvent("CreateRoom");
+        }
+    }
+
 
 
 }

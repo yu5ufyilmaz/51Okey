@@ -7,7 +7,6 @@ using Photon.Pun;
 
 public class PhotonManager : MonoBehaviourPunCallbacks
 {
-    // Start is called before the first frame update
     static PhotonManager instance = null;
 
 

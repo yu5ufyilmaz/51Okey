@@ -5,11 +5,19 @@ using UnityEngine;
 
 public class ExitButton : MonoBehaviourPunCallbacks
 {
+    //Oyuncunun bulunduğu odadan çıktıktan sonra tekrardan Lobbye bağlanmasını sağlayan Fonksiyonlar
     public void ExitGame()
     {
         PhotonNetwork.LeaveRoom();
         SceneChangeManager.Instance.ChangeScene("LobbyMenu");
     }
+    public override void OnLeftRoom()
+    {
+        Debug.Log("Left Room");
+    }
 
-
+    public override void OnConnectedToMaster()
+    {
+        PhotonNetwork.JoinLobby();
+    }
 }

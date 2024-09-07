@@ -39,7 +39,7 @@ public class EventDispatcher : MonoBehaviour
     }
 
     // Parametresiz olay dinleyici
-    public static void RegisterListener(string eventName, UnityAction callback)
+    public static void RegisterFunction(string eventName, UnityAction callback)
     {
         UnityEvent thisEvent = null;
         if (Instance.eventRegistry.TryGetValue(eventName, out UnityEventBase baseEvent))
@@ -56,7 +56,7 @@ public class EventDispatcher : MonoBehaviour
     }
 
     // Parametreli olay dinleyici (Örneğin string parametre alan)
-    public static void RegisterListener<T>(string eventName, UnityAction<T> callback)
+    public static void RegisterFunction<T>(string eventName, UnityAction<T> callback)
     {
         UnityEvent<T> thisEvent = null;
         if (Instance.eventRegistry.TryGetValue(eventName, out UnityEventBase baseEvent))
@@ -73,7 +73,7 @@ public class EventDispatcher : MonoBehaviour
     }
 
     // Parametresiz olay çağırma
-    public static void InvokeEvent(string eventName)
+    public static void SummonEvent(string eventName)
     {
         if (Instance.eventRegistry.TryGetValue(eventName, out UnityEventBase baseEvent))
         {
@@ -82,7 +82,7 @@ public class EventDispatcher : MonoBehaviour
     }
 
     // Parametreli olay çağırma (string gibi bir parametre ile)
-    public static void InvokeEvent<T>(string eventName, T param)
+    public static void SummonEvent<T>(string eventName, T param)
     {
         if (Instance.eventRegistry.TryGetValue(eventName, out UnityEventBase baseEvent))
         {

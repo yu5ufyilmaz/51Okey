@@ -5,47 +5,68 @@ using Photon.Pun;
 using Photon.Realtime;
 public class ButtonFuncs : MonoBehaviourPunCallbacks
 {
-
+    [Tooltip("The prefab for instantiating room items")]
     public RoomItem roomItemPrefab;
-    private List<RoomItem> roomItemsList = new List<RoomItem>();
+
     [SerializeField]
     private Transform _content;
 
 
+    private List<RoomItem> roomItemsList = new List<RoomItem>();
+    //Odaları yenileme süresi
+    private float timeBetweenUpdates = 1.5f;
+    private float nextUpdateTime = 0.0f;
+    //Oda sayısı
+    private int roomCount;
+
+
+    ///
+    /// <summary>
+    /// ////////////////////////////////////////////////////////////////////////////////////////
+    /// </summary>
+    /// 
+
+
+    //Lobi Manager Scripti 
     void Start()
     {
         PhotonNetwork.JoinLobby();
     }
 
 
-
-
-    //Buraya oda ayarlarının değiştirilebilineceği ayar panelinin açılıp oradan RoomOptionsı değiştirebilinecek kodlar yazılabilir.
     public void CreateGame()
     {
         if (PhotonNetwork.InLobby)
-        {
-            EventDispatcher.InvokeEvent("CreateRoom");
-        }
+            EventDispatcher.SummonEvent("CreateRoom");
     }
 
 
 
 
 
-    //Oda kurma ya da odaya girme kısmı buradan ama daha optimize yazılınabilinir.
     public void JoinRoom(string _roomName)
     {
-        EventDispatcher.InvokeEvent("JoinRoom", _roomName);
+        if (PhotonNetwork.InLobby)
+            EventDispatcher.SummonEvent("JoinRoom", _roomName);
+    }
+    public void JoinRandomRoom()
+    {
+        if (PhotonNetwork.InLobby)
+            EventDispatcher.SummonEvent("JoinRandomRoomOrCreate", roomCount);
     }
 
 
 
 
-    //Buraası Oda Listesini yenileme kısmı Oda bulmayla alakalı sorunları Buradan çözücez.
+    //Burası Oda Listesini yenileme kısmı Oda bulmayla alakalı sorunları Buradan çözüceğiz.
     public override void OnRoomListUpdate(List<RoomInfo> roomList)
     {
-        UpdateRoomList(roomList);
+        if (Time.time >= nextUpdateTime)
+        {
+            roomCount = roomList.Count;
+            UpdateRoomList(roomList);
+            nextUpdateTime = Time.time + timeBetweenUpdates; // 1.5 saniye
+        }
     }
     void UpdateRoomList(List<RoomInfo> list)
     {
@@ -66,21 +87,10 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
     }
 
 
-
-
-
-    public override void OnConnectedToMaster()
-    {
-        PhotonNetwork.JoinLobby();
-    }
     public override void OnJoinedLobby()
     {
-
         Debug.Log("Joined Lobby");
     }
 
-    public override void OnLeftRoom()
-    {
-        Debug.Log("Left Room");
-    }
+
 }
