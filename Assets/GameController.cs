@@ -56,26 +56,22 @@ public class GameController : MonoBehaviour
 
     }
 
-    public void ReorderBlocks()
-    {
-        bool _noOneMoreChild = true;
-        while (_noOneMoreChild)
+ public void ReorderBlocks()
+{
+    bool moreChangesNeeded;
+    do {
+        moreChangesNeeded = false;
+        for (int i = 0; i < placeHoldersParent.transform.childCount; i++)
         {
-            for (int i = 0; i < placeHoldersParent.transform.childCount; i++)
+            Transform child = placeHoldersParent.transform.GetChild(i);
+            if (child.childCount > 1)
             {
-                if (placeHoldersParent.transform.GetChild(i).childCount > 1)
-                {
-                    if (i != placeHoldersParent.transform.childCount - 1)
-                    {
-                        placeHoldersParent.transform.GetChild(i).GetChild(1).parent = placeHoldersParent.transform.GetChild(i+1);
-                    }
-                    else
-                    {
-                        placeHoldersParent.transform.GetChild(i).GetChild(1).parent = placeHoldersParent.transform.GetChild(0);
-                    }
-                   
-                }
+                moreChangesNeeded = true;
+                Transform nextParent = placeHoldersParent.transform.GetChild((i + 1) % placeHoldersParent.transform.childCount);
+                child.GetChild(1).parent = nextParent;
             }
         }
-    }
+    } while (moreChangesNeeded);
+}
+
 }
