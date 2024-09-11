@@ -39,6 +39,11 @@ MonoBehaviour:
   - DestroySpaceship
   - Fire
   - RespawnSpaceship
+  - CreateRoom
+  - JoinRandomRoomOrCreate
+  - JoinRoom
+  - SummonEvent
+  - SummonEventOverNetwork
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 0

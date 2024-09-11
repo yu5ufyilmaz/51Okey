@@ -8,11 +8,12 @@ public class ExitButton : MonoBehaviourPunCallbacks
     //Oyuncunun bulunduğu odadan çıktıktan sonra tekrardan Lobbye bağlanmasını sağlayan Fonksiyonlar
     public void ExitGame()
     {
+        PhotonNetwork.CurrentRoom.SetMasterClient(PhotonNetwork.LocalPlayer);
         PhotonNetwork.LeaveRoom();
         SceneChangeManager.Instance.ChangeScene("LobbyMenu");
     }
     public override void OnLeftRoom()
-    {
+    { 
         Debug.Log("Left Room");
     }
 
