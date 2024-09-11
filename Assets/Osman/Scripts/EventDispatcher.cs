@@ -1,8 +1,9 @@
+using Photon.Pun; // Import Photon PUN
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class EventDispatcher : MonoBehaviour
+public class EventDispatcher : MonoBehaviourPunCallbacks // Inherit from MonoBehaviourPunCallbacks to use Photon functions
 {
     private Dictionary<string, UnityEventBase> eventRegistry;
 
@@ -73,7 +74,8 @@ public class EventDispatcher : MonoBehaviour
     }
 
     // Parametresiz olay çağırma
-    public static void SummonEvent(string eventName)
+    [PunRPC] // Mark this method as an RPC method
+    public void SummonEvent(string eventName)
     {
         if (Instance.eventRegistry.TryGetValue(eventName, out UnityEventBase baseEvent))
         {
@@ -82,11 +84,33 @@ public class EventDispatcher : MonoBehaviour
     }
 
     // Parametreli olay çağırma (string gibi bir parametre ile)
-    public static void SummonEvent<T>(string eventName, T param)
+    [PunRPC] // Mark this method as an RPC method
+    public void SummonEvent<T>(string eventName, T param)
     {
         if (Instance.eventRegistry.TryGetValue(eventName, out UnityEventBase baseEvent))
         {
             (baseEvent as UnityEvent<T>)?.Invoke(param);
+        }
+    }
+
+    // Call an event via RPC (network)
+    public static void SummonEventOverNetwork(string eventName)
+    {
+        // Ensure the PhotonView is available
+        PhotonView photonView = Instance.GetComponent<PhotonView>();
+        if (photonView != null)
+        {
+            // Call the RPC event to be executed on all clients
+            photonView.RPC("SummonEvent", RpcTarget.All, eventName);
+        }
+    }
+
+    public static void SummonEventOverNetwork<T>(string eventName, T param)
+    {
+        PhotonView photonView = Instance.GetComponent<PhotonView>();
+        if (photonView != null)
+        {
+            photonView.RPC("SummonEvent", RpcTarget.All, eventName, param);
         }
     }
 
