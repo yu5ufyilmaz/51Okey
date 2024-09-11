@@ -43,6 +43,7 @@ public class PhotonManager : MonoBehaviourPunCallbacks
     public override void OnLeftLobby()
     {
         Debug.Log("Left Lobby");
+        PhotonNetwork.CurrentRoom.SetMasterClient(PhotonNetwork.LocalPlayer);
     }
 
 
