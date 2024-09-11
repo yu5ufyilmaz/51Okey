@@ -16,5 +16,8 @@ EditorBuildSettings:
     guid: 8ed11ab4131089c4f9ffc96563d23784
   - enabled: 1
     path: Assets/Osman/Scenes/Table.unity
+    guid: 5a674dbeb13d4ec4a92e128dd0af5b45
+  - enabled: 0
+    path: Assets/Osman/Scenes/Table.unity
     guid: 26466acef07b09e4997b866a59f0d55a
   m_configObjects: {}
