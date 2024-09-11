@@ -37,7 +37,7 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
     public void CreateGame()
     {
         if (PhotonNetwork.InLobby)
-            EventDispatcher.SummonEvent("CreateRoom");
+            EventDispatcher.SummonEventOverNetwork("CreateRoom");
     }
 
 
@@ -45,12 +45,12 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
     public void JoinRoom(string _roomName)
     {
         if (PhotonNetwork.InLobby)
-            EventDispatcher.SummonEvent("JoinRoom", _roomName);
+            EventDispatcher.SummonEventOverNetwork("JoinRoom", _roomName);
     }
     public void JoinRandomRoom()
     {
         if (PhotonNetwork.InLobby)
-            EventDispatcher.SummonEvent("JoinRandomRoomOrCreate", roomCount);
+            EventDispatcher.SummonEventOverNetwork("JoinRandomRoomOrCreate", roomCount);
     }
 
     public void RefreshList()
