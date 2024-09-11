@@ -6,6 +6,7 @@ using UnityEngine;
 
 public class RoomManager : MonoBehaviourPunCallbacks
 {
+ 
 
     [Tooltip("Oda boş kaldığında ne kadar süre sonra otomatik olarak kapanacağını ayarlayan milisaniye cinsinden bir değerdir.")]
     [SerializeField] private int emptyRoomTtl = 0;
@@ -23,6 +24,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
 
     void Start()
     {
+  
         //Bu Scriptte oluşturduğum Fonksiyonları diğer scriptlerde çağırmak için bu fonksiyonları kullanabiliriz.
         EventDispatcher.RegisterFunction("CreateRoom", CreateRoom);
         EventDispatcher.RegisterFunction<string>("JoinRoom", JoinRoom);
@@ -39,6 +41,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
     }
     //Create Game butonuna bastığımızda çalışır. 
     //Burada ki Oda ayarları Oyuncular tarafından değiştirilebilir olması gerekir EKLENECEK.
+    [PunRPC]
     public void CreateRoom()
     {
         RoomOptions roomOptions = new RoomOptions();

@@ -1,80 +1,52 @@
-using System.Collections;
 using System.Collections.Generic;
+using Photon.Pun;
+using Photon.Realtime;
 using UnityEngine;
 
-public class GameController : MonoBehaviour
+public class GameController : MonoBehaviourPunCallbacks
 {
-    public GameObject placeHoldersParent;
-    public static List<GameObject> allPlaceHolders;
-    public GameObject blankBlockPrefab;
+    private List<int> allTiles;
+    private int tilesPerPlayer = 14;
 
-    public List<Sprite> sprites;
-    public List<Sprite> player1Blocks, player2Blocks, player3Blocks, player4Blocks;
-
-    public static GameController Instance { get; private set; }
-
-    private void Awake()
-    {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(this.gameObject); // Ensure singleton behavior
-            return;
-        }
-        Instance = this;
-        DontDestroyOnLoad(this.gameObject);
-        allPlaceHolders = new List<GameObject>(GameObject.FindGameObjectsWithTag("PlaceHolder"));
-    }
-
-   
-
-    // Start is called before the first frame update
     void Start()
     {
-        sprites.AddRange(sprites);
-        StartGame();
+        if (PhotonNetwork.IsMasterClient)
+        {
+            InitializeTiles(); // Only the MasterClient will initialize the tiles
+        }
     }
 
-    public void StartGame()
+    public override void OnPlayerEnteredRoom(Player newPlayer)
     {
-        for (int i = 0; i < 14; i++)
+        if (PhotonNetwork.CurrentRoom.PlayerCount == 4)
         {
-            player1Blocks.Add(sprites[Random.Range(0, sprites.Count)]);
-            player2Blocks.Add(sprites[Random.Range(0, sprites.Count)]);
-            player3Blocks.Add(sprites[Random.Range(0, sprites.Count)]);
-            player4Blocks.Add(sprites[Random.Range(0, sprites.Count)]);
+            photonView.RPC("DistributeTiles", RpcTarget.AllBuffered); // Distribute to all players
         }
-
-        player1Blocks.Add(sprites[Random.Range(0, sprites.Count)]);
-
-        for (int i = 0; i < player1Blocks.Count; i++)
-        {
-            Transform parent = placeHoldersParent.transform.GetChild(i);
-            GameObject gameObject = Instantiate(blankBlockPrefab, Vector3.zero, Quaternion.identity);
-            gameObject.GetComponent<OkeyBlock>().SetBlockSprite(player1Blocks[i]);
-            gameObject.transform.parent = parent;
-        }
-
     }
 
-    public void ReorderBlocks()
+    [PunRPC]
+    void DistributeTiles()
     {
-        bool _noOneMoreChild = true;
-        while (_noOneMoreChild)
-        {
-            _noOneMoreChild = false;
-            for (int i = 0; i < placeHoldersParent.transform.childCount; i++)
-            {
+        List<int> playerTiles = new List<int>();
 
-                if (placeHoldersParent.transform.GetChild(i).childCount > 1 && placeHoldersParent.transform.GetChild(i).name != "placeHolder")
-                {
-                    _noOneMoreChild = true;
-                    if (i != placeHoldersParent.transform.childCount - 1)
-                        placeHoldersParent.transform.GetChild(i).GetChild(0).parent = placeHoldersParent.transform.GetChild(i + 1);
-                    else
-                        placeHoldersParent.transform.GetChild(i).GetChild(0).parent = placeHoldersParent.transform.GetChild(0);
-                }
-            }
+        for (int i = 0; i < tilesPerPlayer; i++)
+        {
+            int tileIndex = Random.Range(0, allTiles.Count);
+            playerTiles.Add(allTiles[tileIndex]);
+            allTiles.RemoveAt(tileIndex); // Remove the tile from the pool
         }
+
+        Debug.Log("Tiles distributed to player: " + PhotonNetwork.LocalPlayer.NickName);
+        // Now you have the tiles for the player in playerTiles.
+        // You can use this list for further gameplay mechanics.
     }
 
+    void InitializeTiles()
+    {
+        // Example: Initialize 52 tiles. Modify this according to your game's rules.
+        for (int i = 1; i <= 52; i++)
+        {
+            allTiles.Add(i); // Add tiles 1-52 to the list
+        }
+    }
 }
