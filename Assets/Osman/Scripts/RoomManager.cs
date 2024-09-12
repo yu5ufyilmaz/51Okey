@@ -21,7 +21,8 @@ public class RoomManager : MonoBehaviourPunCallbacks
     [Tooltip("Oda Gizlensin mi?")]
     [SerializeField] bool isVisible = true;
     private int maxPlayers = 4;
-    
+
+    [SerializeField] private GameObject _playerPrefab;
 
     void Start()
     {
@@ -44,8 +45,9 @@ public class RoomManager : MonoBehaviourPunCallbacks
         roomOptions.IsOpen = isOpen;
         roomOptions.IsVisible = isVisible;
         PhotonNetwork.CreateRoom(PhotonNetwork.NickName, roomOptions, TypedLobby.Default);
+
         SceneChangeManager.Instance.ChangeScene("Table");
-        
+
     }
 
 
@@ -54,8 +56,8 @@ public class RoomManager : MonoBehaviourPunCallbacks
     public void JoinRoom(string _roomName)
     {
         PhotonNetwork.JoinRoom(_roomName);
-        Debug.Log(PhotonNetwork.MasterClient.NickName);
         SceneChangeManager.Instance.ChangeScene("Table");
+
     }
 
     //Join Game Butonuna bastığımızda eğer ki hiç oda kurulmamışsa oda oluşturacak kurulu odalar varsa rastgele birini seçecek ve ona katılacak
@@ -73,7 +75,6 @@ public class RoomManager : MonoBehaviourPunCallbacks
             CreateRoom();
         }
     }
-
 
 
 }

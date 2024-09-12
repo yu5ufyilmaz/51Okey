@@ -39,9 +39,6 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
         if (PhotonNetwork.InLobby)
             EventDispatcher.SummonEvent("CreateRoom");
     }
-
-
-
     public void JoinRoom(string _roomName)
     {
         if (PhotonNetwork.InLobby)
