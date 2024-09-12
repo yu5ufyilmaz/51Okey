@@ -9,6 +9,7 @@ public class ExitButton : MonoBehaviourPunCallbacks
     public void ExitGame()
     {
         PhotonNetwork.CurrentRoom.SetMasterClient(PhotonNetwork.LocalPlayer);
+        Debug.Log(PhotonNetwork.MasterClient.NickName);
         PhotonNetwork.LeaveRoom();
         SceneChangeManager.Instance.ChangeScene("LobbyMenu");
     }

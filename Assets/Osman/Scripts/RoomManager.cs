@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class RoomManager : MonoBehaviourPunCallbacks
 {
- 
+
 
     [Tooltip("Oda boş kaldığında ne kadar süre sonra otomatik olarak kapanacağını ayarlayan milisaniye cinsinden bir değerdir.")]
     [SerializeField] private int emptyRoomTtl = 0;
@@ -21,24 +21,18 @@ public class RoomManager : MonoBehaviourPunCallbacks
     [Tooltip("Oda Gizlensin mi?")]
     [SerializeField] bool isVisible = true;
     private int maxPlayers = 4;
+    
 
     void Start()
     {
-  
+
         //Bu Scriptte oluşturduğum Fonksiyonları diğer scriptlerde çağırmak için bu fonksiyonları kullanabiliriz.
         EventDispatcher.RegisterFunction("CreateRoom", CreateRoom);
         EventDispatcher.RegisterFunction<string>("JoinRoom", JoinRoom);
         EventDispatcher.RegisterFunction<int>("JoinRandomRoomOrCreate", JoinRandomRoomOrCreate);
     }
 
-    private void Update()
-    {
-        /*  if (PhotonNetwork.)
-          {
-              isOpen = false;
-              isVisible = false;
-          }*/
-    }
+
     //Create Game butonuna bastığımızda çalışır. 
     //Burada ki Oda ayarları Oyuncular tarafından değiştirilebilir olması gerekir EKLENECEK.
     public void CreateRoom()
@@ -51,6 +45,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
         roomOptions.IsVisible = isVisible;
         PhotonNetwork.CreateRoom(PhotonNetwork.NickName, roomOptions, TypedLobby.Default);
         SceneChangeManager.Instance.ChangeScene("Table");
+        
     }
 
 
@@ -59,6 +54,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
     public void JoinRoom(string _roomName)
     {
         PhotonNetwork.JoinRoom(_roomName);
+        Debug.Log(PhotonNetwork.MasterClient.NickName);
         SceneChangeManager.Instance.ChangeScene("Table");
     }
 
