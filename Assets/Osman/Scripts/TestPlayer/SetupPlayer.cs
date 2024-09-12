@@ -12,6 +12,7 @@ public class PlayerSetup : MonoBehaviourPunCallbacks
 
     public void IsLocal()
     {
+        
     }
 
     void Start()

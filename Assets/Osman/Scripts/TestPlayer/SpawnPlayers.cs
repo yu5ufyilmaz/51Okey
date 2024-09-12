@@ -23,37 +23,33 @@ public class SpawnPlayers : MonoBehaviourPunCallbacks
     {
         GameObject _player = PhotonNetwork.Instantiate(_playerPrefab.name, new Vector3(0f, 0f, 0f), Quaternion.identity, 0);
         //player count kısmı oda içerisinde kaç kişi olduğuna göre değişmeyecek
-        playerCount = PhotonNetwork.CurrentRoom.PlayerCount - 1;
-        Debug.Log(playerCount);
         _player.GetComponent<PhotonView>().RPC("SetPlayerName", RpcTarget.AllBuffered, nickName);
+        UpdatePlayerQueue();
         _player.GetComponent<PhotonView>().RPC("SetPlayerQueue", RpcTarget.AllBuffered, playerCount);
     }
 
-    public void PlayerPlacement()
+    public void UpdatePlayerQueue()
     {
+        int playerCount = PhotonNetwork.CurrentRoom.PlayerCount;
 
-            switch (playerCount)
-            {
-                case 0:
-                    _playerNickName_P2.text = PhotonNetwork.PlayerList[1].NickName;
-                    _playerNickName_P3.text = PhotonNetwork.PlayerList[2].NickName;
-                    _playerNickName_P4.text = PhotonNetwork.PlayerList[3].NickName;
-                    break;
-                case 1:
-                    _playerNickName_P2.text = PhotonNetwork.PlayerList[2].NickName;
-                    _playerNickName_P3.text = PhotonNetwork.PlayerList[3].NickName;
-                    _playerNickName_P4.text = PhotonNetwork.PlayerList[0].NickName;
-                    break;
-                case 2:
-                    _playerNickName_P2.text = PhotonNetwork.PlayerList[3].NickName;
-                    _playerNickName_P3.text = PhotonNetwork.PlayerList[0].NickName;
-                    _playerNickName_P4.text = PhotonNetwork.PlayerList[1].NickName;
-                    break;
-                case 3:
-                    _playerNickName_P2.text = PhotonNetwork.PlayerList[0].NickName;
-                    _playerNickName_P3.text = PhotonNetwork.PlayerList[1].NickName;
-                    _playerNickName_P4.text = PhotonNetwork.PlayerList[2].NickName;
-                    break;
-            }
+        List<Player> players = new List<Player>(PhotonNetwork.PlayerList);
+        players.Sort((x, y) => x.ActorNumber.CompareTo(y.ActorNumber));  // Oyuncuları ActorNumber’a göre sırala (sabit bir sıra için)
+
+        // Oda içerisindeki oyuncuları yerleştir
+        if (playerCount > 1) _playerNickName_P2.text = players[1 % playerCount].NickName;
+        if (playerCount > 2) _playerNickName_P3.text = players[2 % playerCount].NickName;
+        if (playerCount > 3) _playerNickName_P4.text = players[3 % playerCount].NickName;
+    }
+
+    // Odaya yeni oyuncu girdiğinde sırayı güncelle
+    public override void OnPlayerEnteredRoom(Player newPlayer)
+    {
+        UpdatePlayerQueue();
+    }
+
+    // Bir oyuncu çıktığında sırayı güncelle
+    public override void OnPlayerLeftRoom(Player otherPlayer)
+    {
+        UpdatePlayerQueue();
     }
 }
