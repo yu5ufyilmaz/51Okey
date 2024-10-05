@@ -1,58 +1,45 @@
+using System.Collections.Generic;
 using Photon.Pun;
-using TMPro;
 using UnityEngine;
 
 public class SpawnPlayers : MonoBehaviourPunCallbacks
 {
-    public GameObject playerPrefab;  
-    public RectTransform[] spawnPositions;  
-    public TextMeshProUGUI[] playerNameTexts;  
+    public GameObject playerPrefab;  // Oyuncu prefab'i
+    public RectTransform[] spawnPositions;  // UI'daki oyuncu pozisyonları (fiziksel spawn yerleri)
+
+    private List<int> availablePositions = new List<int>();  // Kullanılabilir pozisyonlar
 
     public override void OnJoinedRoom()
     {
-        AssignPlayerPosition(); 
+        AssignRandomPositionAndInstantiate();
     }
 
-    public override void OnPlayerEnteredRoom(Photon.Realtime.Player newPlayer)
+    private void AssignRandomPositionAndInstantiate()
     {
-        AssignPlayerPosition(); 
-    }
-
-    private void AssignPlayerPosition()
-    {
-        if (spawnPositions == null || spawnPositions.Length == 0)
+        // Kullanılabilir pozisyonları oluştur
+        availablePositions.Clear();
+        for (int i = 0; i < spawnPositions.Length; i++)
         {
-            Debug.LogError("Spawn positions not set! Make sure to assign them in the inspector.");
-            return;
+            availablePositions.Add(i);
         }
 
-        if (playerPrefab == null)
+        if (availablePositions.Count > 0 && playerPrefab != null)
         {
-            Debug.LogError("Player prefab is not assigned! Make sure to assign the prefab in the inspector.");
-            return;
+            // Rastgele bir pozisyon seç
+            int randomIndex = Random.Range(0, availablePositions.Count);
+            int spawnIndex = availablePositions[randomIndex];
+            availablePositions.RemoveAt(randomIndex);
+
+            Vector3 spawnPosition = spawnPositions[spawnIndex].transform.position;
+            Quaternion spawnRotation = Quaternion.identity;
+
+            // Prefab'i Instantiate et
+            PhotonNetwork.Instantiate(playerPrefab.name, spawnPosition, spawnRotation, 0);
+            Debug.Log("Player instantiated at random position: " + spawnIndex);
         }
-        
-        Photon.Realtime.Player[] players = PhotonNetwork.PlayerList;
-        Debug.Log("Total players in the room: " + players.Length);
-
-        
-        for (int i = 0; i < players.Length; i++)
+        else
         {
-            if (i < spawnPositions.Length)
-            {
-                Vector3 spawnPosition = spawnPositions[i].transform.position;
-                Quaternion spawnRotation = Quaternion.identity;
-                
-                GameObject playerInstance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPosition, spawnRotation, 0);
-                
-                playerNameTexts[i].text = players[i].NickName; 
-
-                Debug.Log("Player instantiated at UI position: " + i);
-            }
-            else
-            {
-                Debug.LogError("Player index is out of bounds! Index: " + i + " SpawnPositions Length: " + spawnPositions.Length);
-            }
+            Debug.LogError("Not enough spawn positions available or playerPrefab is not assigned!");
         }
     }
 }

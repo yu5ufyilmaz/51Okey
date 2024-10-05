@@ -5,29 +5,57 @@ using UnityEngine;
 
 public class PlayerPositioning : MonoBehaviourPunCallbacks
 {
-    public TextMeshProUGUI[] playerNameTexts;  
+    public TextMeshProUGUI[] playerNameTexts;  // UI Text alanları (her oyuncu için)
 
     public override void OnJoinedRoom()
     {
-        SetPlayerPosition();  
+        UpdatePlayerUI();  // Odaya katıldığında UI'ı güncelle
     }
 
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
-        SetPlayerPosition();  
+        UpdatePlayerUI();  // Yeni bir oyuncu katıldığında UI'ı güncelle
     }
 
-    private void SetPlayerPosition()
+    private void UpdatePlayerUI()
     {
-        Player[] players = PhotonNetwork.PlayerList;  
-        int localPlayerIndex = System.Array.IndexOf(players, PhotonNetwork.LocalPlayer); 
-        
+        Player[] players = PhotonNetwork.PlayerList;
+        int localPlayerIndex = System.Array.IndexOf(players, PhotonNetwork.LocalPlayer);
+
+        if (localPlayerIndex == -1)
+        {
+            Debug.LogError("Local player not found in the player list!");
+            return;
+        }
+
+        // Her oyuncunun UI sıralamasını yapıyoruz (her oyuncu kendisini 1. sırada görecek)
         for (int i = 0; i < players.Length; i++)
         {
-            int adjustedIndex = (i - localPlayerIndex + players.Length) % players.Length;
-            
-            playerNameTexts[adjustedIndex].text = players[i].NickName;
-            Debug.Log("Player name written to UI: " + players[i].NickName + " at index: " + adjustedIndex);
+            if (players[i] == PhotonNetwork.LocalPlayer)
+            {
+                // Yerel oyuncu kendisini 1. sırada görür
+                playerNameTexts[0].text = players[i].NickName;
+                Debug.Log("Local player sees themselves at position 1: " + players[i].NickName);
+            }
+            else
+            {
+                // Diğer oyuncular için göreceli pozisyon
+                // Yerel oyuncunun bakış açısından diğer oyuncuların sırasını kaydırarak belirliyoruz
+                int relativeIndex = (i - localPlayerIndex + players.Length) % players.Length;
+
+                // Kendimizi 1. sırada gördüğümüz için diğer oyuncular 1'den başlar
+                int uiIndex = (relativeIndex + 1) % playerNameTexts.Length;
+
+                if (uiIndex < playerNameTexts.Length)
+                {
+                    playerNameTexts[uiIndex].text = players[i].NickName;
+                    Debug.Log("Local player sees " + players[i].NickName + " at relative position " + (uiIndex + 1));
+                }
+                else
+                {
+                    Debug.LogError("Player index out of bounds! Index: " + uiIndex + " PlayerNameTexts Length: " + playerNameTexts.Length);
+                }
+            }
         }
     }
 }
