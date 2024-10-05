@@ -1,55 +1,58 @@
-using System.Collections;
-using System.Collections.Generic;
 using Photon.Pun;
-using Photon.Realtime;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class SpawnPlayers : MonoBehaviourPunCallbacks
 {
-    public GameObject _playerPrefab;
-    public TextMeshProUGUI _playerNickName_P2, _playerNickName_P3, _playerNickName_P4;
+    public GameObject playerPrefab;  
+    public RectTransform[] spawnPositions;  
+    public TextMeshProUGUI[] playerNameTexts;  
 
-    public int playerCount;
-    private string nickName;
-
-    private void Start()
+    public override void OnJoinedRoom()
     {
-        EventDispatcher.RegisterFunction("SpawnPlayer", SpawnPlayer);
-        nickName = PhotonNetwork.NickName;
-    }
-    public void SpawnPlayer()
-    {
-        GameObject _player = PhotonNetwork.Instantiate(_playerPrefab.name, new Vector3(0f, 0f, 0f), Quaternion.identity, 0);
-        //player count kısmı oda içerisinde kaç kişi olduğuna göre değişmeyecek
-        _player.GetComponent<PhotonView>().RPC("SetPlayerName", RpcTarget.AllBuffered, nickName);
-        UpdatePlayerQueue();
-        _player.GetComponent<PhotonView>().RPC("SetPlayerQueue", RpcTarget.AllBuffered, playerCount);
+        AssignPlayerPosition(); 
     }
 
-    public void UpdatePlayerQueue()
+    public override void OnPlayerEnteredRoom(Photon.Realtime.Player newPlayer)
     {
-        int playerCount = PhotonNetwork.CurrentRoom.PlayerCount;
-
-        List<Player> players = new List<Player>(PhotonNetwork.PlayerList);
-        players.Sort((x, y) => x.ActorNumber.CompareTo(y.ActorNumber));  // Oyuncuları ActorNumber’a göre sırala (sabit bir sıra için)
-
-        // Oda içerisindeki oyuncuları yerleştir
-        if (playerCount > 1) _playerNickName_P2.text = players[1 % playerCount].NickName;
-        if (playerCount > 2) _playerNickName_P3.text = players[2 % playerCount].NickName;
-        if (playerCount > 3) _playerNickName_P4.text = players[3 % playerCount].NickName;
+        AssignPlayerPosition(); 
     }
 
-    // Odaya yeni oyuncu girdiğinde sırayı güncelle
-    public override void OnPlayerEnteredRoom(Player newPlayer)
+    private void AssignPlayerPosition()
     {
-        UpdatePlayerQueue();
-    }
+        if (spawnPositions == null || spawnPositions.Length == 0)
+        {
+            Debug.LogError("Spawn positions not set! Make sure to assign them in the inspector.");
+            return;
+        }
 
-    // Bir oyuncu çıktığında sırayı güncelle
-    public override void OnPlayerLeftRoom(Player otherPlayer)
-    {
-        UpdatePlayerQueue();
+        if (playerPrefab == null)
+        {
+            Debug.LogError("Player prefab is not assigned! Make sure to assign the prefab in the inspector.");
+            return;
+        }
+        
+        Photon.Realtime.Player[] players = PhotonNetwork.PlayerList;
+        Debug.Log("Total players in the room: " + players.Length);
+
+        
+        for (int i = 0; i < players.Length; i++)
+        {
+            if (i < spawnPositions.Length)
+            {
+                Vector3 spawnPosition = spawnPositions[i].transform.position;
+                Quaternion spawnRotation = Quaternion.identity;
+                
+                GameObject playerInstance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPosition, spawnRotation, 0);
+                
+                playerNameTexts[i].text = players[i].NickName; 
+
+                Debug.Log("Player instantiated at UI position: " + i);
+            }
+            else
+            {
+                Debug.LogError("Player index is out of bounds! Index: " + i + " SpawnPositions Length: " + spawnPositions.Length);
+            }
+        }
     }
 }
