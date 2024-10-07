@@ -1,11 +1,13 @@
 using System.Collections.Generic;
 using Photon.Pun;
+using Photon.Realtime;
 using UnityEngine;
 
 public class SpawnPlayers : MonoBehaviourPunCallbacks
 {
     public GameObject playerPrefab;  // Oyuncu prefab'i
     public RectTransform[] spawnPositions;  // UI'daki oyuncu pozisyonları (fiziksel spawn yerleri)
+    public static Dictionary<int, int> playerSpawnPositions = new Dictionary<int, int>();  // Oyuncu ID ve pozisyon eşlemesi
 
     private List<int> availablePositions = new List<int>();  // Kullanılabilir pozisyonlar
 
@@ -33,8 +35,9 @@ public class SpawnPlayers : MonoBehaviourPunCallbacks
             Vector3 spawnPosition = spawnPositions[spawnIndex].transform.position;
             Quaternion spawnRotation = Quaternion.identity;
 
-            // Prefab'i Instantiate et
-            PhotonNetwork.Instantiate(playerPrefab.name, spawnPosition, spawnRotation, 0);
+            // Prefab'i Instantiate et ve oyuncu pozisyonunu kaydet
+            GameObject playerInstance = PhotonNetwork.Instantiate(playerPrefab.name, spawnPosition, spawnRotation, 0);
+            playerSpawnPositions[PhotonNetwork.LocalPlayer.ActorNumber] = spawnIndex;
             Debug.Log("Player instantiated at random position: " + spawnIndex);
         }
         else
