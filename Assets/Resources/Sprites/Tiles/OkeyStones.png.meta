@@ -110,7 +110,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: okeystones_0
+      name: Blue_1
       rect:
         serializedVersion: 2
         x: 0
@@ -131,7 +131,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_1
+      name: Blue_2
       rect:
         serializedVersion: 2
         x: 157
@@ -152,7 +152,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_2
+      name: Blue_3
       rect:
         serializedVersion: 2
         x: 314
@@ -173,7 +173,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_3
+      name: Blue_4
       rect:
         serializedVersion: 2
         x: 471
@@ -194,7 +194,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_4
+      name: Blue_5
       rect:
         serializedVersion: 2
         x: 628
@@ -215,7 +215,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_5
+      name: Blue_6
       rect:
         serializedVersion: 2
         x: 785
@@ -236,7 +236,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_6
+      name: Blue_7
       rect:
         serializedVersion: 2
         x: 942
@@ -257,7 +257,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_7
+      name: Blue_8
       rect:
         serializedVersion: 2
         x: 1099
@@ -278,7 +278,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_8
+      name: Blue_9
       rect:
         serializedVersion: 2
         x: 1256
@@ -299,7 +299,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_9
+      name: Blue_10
       rect:
         serializedVersion: 2
         x: 1413
@@ -320,7 +320,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_10
+      name: Blue_11
       rect:
         serializedVersion: 2
         x: 1570
@@ -341,7 +341,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_11
+      name: Blue_12
       rect:
         serializedVersion: 2
         x: 1727
@@ -362,7 +362,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_12
+      name: Blue_13
       rect:
         serializedVersion: 2
         x: 1884
@@ -383,7 +383,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_13
+      name: Black_1
       rect:
         serializedVersion: 2
         x: 0
@@ -404,7 +404,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_14
+      name: Black_2
       rect:
         serializedVersion: 2
         x: 157
@@ -425,7 +425,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_15
+      name: Black_3
       rect:
         serializedVersion: 2
         x: 314
@@ -446,7 +446,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_16
+      name: Black_4
       rect:
         serializedVersion: 2
         x: 471
@@ -467,7 +467,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_17
+      name: Black_5
       rect:
         serializedVersion: 2
         x: 628
@@ -488,7 +488,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_18
+      name: Black_6
       rect:
         serializedVersion: 2
         x: 785
@@ -509,7 +509,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_19
+      name: Black_7
       rect:
         serializedVersion: 2
         x: 942
@@ -530,7 +530,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_20
+      name: Black_8
       rect:
         serializedVersion: 2
         x: 1099
@@ -551,7 +551,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_21
+      name: Black_9
       rect:
         serializedVersion: 2
         x: 1256
@@ -572,7 +572,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_22
+      name: Black_10
       rect:
         serializedVersion: 2
         x: 1413
@@ -593,7 +593,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_23
+      name: Black_11
       rect:
         serializedVersion: 2
         x: 1570
@@ -614,7 +614,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_24
+      name: Black_12
       rect:
         serializedVersion: 2
         x: 1727
@@ -635,7 +635,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_25
+      name: Black_13
       rect:
         serializedVersion: 2
         x: 1884
@@ -656,13 +656,13 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_26
+      name: Red_1
       rect:
         serializedVersion: 2
         x: 0
-        y: 451.2
-        width: 157.53847
-        height: 224.8
+        y: 449
+        width: 158
+        height: 225
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -677,7 +677,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_27
+      name: Red_2
       rect:
         serializedVersion: 2
         x: 157
@@ -698,7 +698,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_28
+      name: Red_3
       rect:
         serializedVersion: 2
         x: 314
@@ -719,7 +719,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_29
+      name: Red_4
       rect:
         serializedVersion: 2
         x: 471
@@ -740,7 +740,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_30
+      name: Red_5
       rect:
         serializedVersion: 2
         x: 628
@@ -761,7 +761,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_31
+      name: Red_6
       rect:
         serializedVersion: 2
         x: 785
@@ -782,7 +782,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_32
+      name: Red_7
       rect:
         serializedVersion: 2
         x: 942
@@ -803,7 +803,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_33
+      name: Red_8
       rect:
         serializedVersion: 2
         x: 1099
@@ -824,7 +824,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_34
+      name: Red_9
       rect:
         serializedVersion: 2
         x: 1256
@@ -845,7 +845,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_35
+      name: Red_10
       rect:
         serializedVersion: 2
         x: 1413
@@ -866,7 +866,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_36
+      name: Red_11
       rect:
         serializedVersion: 2
         x: 1570
@@ -887,7 +887,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_37
+      name: Red_12
       rect:
         serializedVersion: 2
         x: 1727
@@ -908,7 +908,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_38
+      name: Red_13
       rect:
         serializedVersion: 2
         x: 1884
@@ -929,7 +929,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_39
+      name: Green_1
       rect:
         serializedVersion: 2
         x: 0
@@ -950,7 +950,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_40
+      name: Green_2
       rect:
         serializedVersion: 2
         x: 157
@@ -971,7 +971,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_41
+      name: Green_3
       rect:
         serializedVersion: 2
         x: 314
@@ -992,7 +992,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_42
+      name: Green_4
       rect:
         serializedVersion: 2
         x: 471
@@ -1013,7 +1013,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_43
+      name: Green_5
       rect:
         serializedVersion: 2
         x: 628
@@ -1034,7 +1034,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_44
+      name: Green_6
       rect:
         serializedVersion: 2
         x: 785
@@ -1055,7 +1055,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_45
+      name: Green_7
       rect:
         serializedVersion: 2
         x: 942
@@ -1076,7 +1076,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_46
+      name: Green_8
       rect:
         serializedVersion: 2
         x: 1099
@@ -1097,7 +1097,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_47
+      name: Green_9
       rect:
         serializedVersion: 2
         x: 1256
@@ -1118,7 +1118,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_48
+      name: Green_10
       rect:
         serializedVersion: 2
         x: 1413
@@ -1139,7 +1139,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_49
+      name: Green_11
       rect:
         serializedVersion: 2
         x: 1570
@@ -1160,7 +1160,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_50
+      name: Green_12
       rect:
         serializedVersion: 2
         x: 1727
@@ -1181,7 +1181,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_51
+      name: Green_13
       rect:
         serializedVersion: 2
         x: 1884
@@ -1202,7 +1202,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: okeystones_52
+      name: Joker_0
       rect:
         serializedVersion: 2
         x: 0
@@ -1222,258 +1222,6 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
-    - serializedVersion: 2
-      name: okeystones_53
-      rect:
-        serializedVersion: 2
-        x: 157
-        y: 3.199997
-        width: 157.53847
-        height: 224.8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: d76a92758caf42d42af61eca9a8e07fd
-      internalID: 393697242
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: okeystones_54
-      rect:
-        serializedVersion: 2
-        x: 314
-        y: 3.199997
-        width: 157.53847
-        height: 224.8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: d6f5dc93d9e543f4fa279a70dc3faf93
-      internalID: 975747170
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: okeystones_55
-      rect:
-        serializedVersion: 2
-        x: 471
-        y: 3.199997
-        width: 157.53847
-        height: 224.8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: f879d6231a091a3449ea93e7fb189117
-      internalID: -519563735
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: okeystones_56
-      rect:
-        serializedVersion: 2
-        x: 628
-        y: 3.199997
-        width: 157.53847
-        height: 224.8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 3533e5bc8a6b52248b4a47e39175b33b
-      internalID: 47544630
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: okeystones_57
-      rect:
-        serializedVersion: 2
-        x: 785
-        y: 3.199997
-        width: 157.53847
-        height: 224.8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 2dd051fa98f3ebb42a0661c6c313a41e
-      internalID: -879244515
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: okeystones_58
-      rect:
-        serializedVersion: 2
-        x: 942
-        y: 3.199997
-        width: 157.53847
-        height: 224.8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: c6f2eb603c2e3004781b61a72bf8ff24
-      internalID: 1592519574
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: okeystones_59
-      rect:
-        serializedVersion: 2
-        x: 1099
-        y: 3.199997
-        width: 157.53847
-        height: 224.8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: b28fe5eef57a0d546901e52592e3a190
-      internalID: 610141255
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: okeystones_60
-      rect:
-        serializedVersion: 2
-        x: 1256
-        y: 3.199997
-        width: 157.53847
-        height: 224.8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 1e4b0aef50d812a408fa503637978118
-      internalID: 523066331
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: okeystones_61
-      rect:
-        serializedVersion: 2
-        x: 1413
-        y: 3.199997
-        width: 157.53847
-        height: 224.8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: e716e77f2cb0045448ec5d67da644c76
-      internalID: -1259167939
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: okeystones_62
-      rect:
-        serializedVersion: 2
-        x: 1570
-        y: 3.199997
-        width: 157.53847
-        height: 224.8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: c0ce2f966fd40934fb4b86e3ccb442b3
-      internalID: 1556038261
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: okeystones_63
-      rect:
-        serializedVersion: 2
-        x: 1727
-        y: 3.199997
-        width: 157.53847
-        height: 224.8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 05f42d7bebe3317409f5f9548f1d1eb5
-      internalID: 2133982326
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: okeystones_64
-      rect:
-        serializedVersion: 2
-        x: 1884
-        y: 3.199997
-        width: 157.53847
-        height: 224.8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: d52d7ea3fdba0224f8369fd590bb8255
-      internalID: 1041913380
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
     outline: []
     physicsShape: []
     bones: []
@@ -1485,55 +1233,59 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      okeystones_0: 1847878576
-      okeystones_1: 268470106
-      okeystones_10: -161994354
-      okeystones_11: -465710002
-      okeystones_12: -147999406
-      okeystones_13: -634447082
-      okeystones_14: 249290109
-      okeystones_15: -1392581292
-      okeystones_16: -1604685182
-      okeystones_17: 629713654
-      okeystones_18: -1459579647
-      okeystones_19: 383451229
-      okeystones_2: -798677120
-      okeystones_20: -1618327001
-      okeystones_21: 631892217
-      okeystones_22: -81478948
-      okeystones_23: 1369274368
-      okeystones_24: -115864076
-      okeystones_25: -1991620431
-      okeystones_26: 1389689467
-      okeystones_27: -192879979
-      okeystones_28: -1652114934
-      okeystones_29: -1699126094
-      okeystones_3: 725976647
-      okeystones_30: 346519380
-      okeystones_31: -2010136268
-      okeystones_32: -922907323
-      okeystones_33: -877619103
-      okeystones_34: -90238167
-      okeystones_35: 859738031
-      okeystones_36: -593912290
-      okeystones_37: -439049277
-      okeystones_38: 1014204045
-      okeystones_39: -497903613
-      okeystones_4: -709796923
-      okeystones_40: -1959879362
-      okeystones_41: 2026929223
-      okeystones_42: -246306700
-      okeystones_43: 690355596
-      okeystones_44: 1637838409
-      okeystones_45: 417452401
-      okeystones_46: -2138039429
-      okeystones_47: -2007052014
-      okeystones_48: -177716963
-      okeystones_49: 1109692161
-      okeystones_5: 1139619898
-      okeystones_50: 1813442878
-      okeystones_51: -419759022
-      okeystones_52: 817831955
+      Black_1: -634447082
+      Black_10: -81478948
+      Black_11: 1369274368
+      Black_12: -115864076
+      Black_13: -1991620431
+      Black_2: 249290109
+      Black_3: -1392581292
+      Black_4: -1604685182
+      Black_5: 629713654
+      Black_6: -1459579647
+      Black_7: 383451229
+      Black_8: -1618327001
+      Black_9: 631892217
+      Blue_1: 1847878576
+      Blue_10: 1144505352
+      Blue_11: -161994354
+      Blue_12: -465710002
+      Blue_13: -147999406
+      Blue_2: 268470106
+      Blue_3: -798677120
+      Blue_4: 725976647
+      Blue_5: -709796923
+      Blue_6: 1139619898
+      Blue_7: -1820256700
+      Blue_8: -1437957932
+      Blue_9: -1155626201
+      Green_1: -497903613
+      Green_10: -177716963
+      Green_11: 1109692161
+      Green_12: 1813442878
+      Green_13: -419759022
+      Green_2: -1959879362
+      Green_3: 2026929223
+      Green_4: -246306700
+      Green_5: 690355596
+      Green_6: 1637838409
+      Green_7: 417452401
+      Green_8: -2138039429
+      Green_9: -2007052014
+      Joker_0: 817831955
+      Red_1: 1389689467
+      Red_10: 859738031
+      Red_11: -593912290
+      Red_12: -439049277
+      Red_13: 1014204045
+      Red_2: -192879979
+      Red_3: -1652114934
+      Red_4: -1699126094
+      Red_5: 346519380
+      Red_6: -2010136268
+      Red_7: -922907323
+      Red_8: -877619103
+      Red_9: -90238167
       okeystones_53: 393697242
       okeystones_54: 975747170
       okeystones_55: -519563735
@@ -1541,15 +1293,11 @@ TextureImporter:
       okeystones_57: -879244515
       okeystones_58: 1592519574
       okeystones_59: 610141255
-      okeystones_6: -1820256700
       okeystones_60: 523066331
       okeystones_61: -1259167939
       okeystones_62: 1556038261
       okeystones_63: 2133982326
       okeystones_64: 1041913380
-      okeystones_7: -1437957932
-      okeystones_8: -1155626201
-      okeystones_9: 1144505352
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
