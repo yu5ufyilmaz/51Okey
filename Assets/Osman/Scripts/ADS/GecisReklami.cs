@@ -25,7 +25,43 @@ public class GecisReklami : MonoBehaviour
         GecisReklamiOlustur();
     }
 
+    void ReklamOlaylariniDinle(InterstitialAd ad)
+    {
+        ad.OnAdPaid += (AdValue adValue) =>
+        {
+            Debug.Log(string.Format("OnAdPaid: {0}",
+            adValue.Value,
+            adValue.CurrencyCode));
+        };
 
+        ad.OnAdImpressionRecorded += () =>
+        {
+            Debug.Log("Ücretli geçiş gösterildi.");
+        };
+
+        ad.OnAdClicked += () =>
+        {
+            Debug.Log("Ücretli geçiş tıklandı.");
+        };
+
+        ad.OnAdFullScreenContentOpened += () =>
+        {
+            Debug.Log("Ücretli geçiş tam ekran açıldı.");
+        };
+        //Bu ikisi şart.
+        ad.OnAdFullScreenContentClosed += () =>
+        {
+
+           Debug.Log("Ücretli geçiş tam ekran kapanıldı.");
+           GecisReklamiOlustur();
+        };
+
+        ad.OnAdFullScreenContentFailed += (AdError error) =>
+        {
+            Debug.Log(string.Format("OnAdFullScreenContentFailed: {0}", error));
+            GecisReklamiOlustur();
+        };
+    }
     public void GecisReklamiOlustur()
     {
         if(_GecisReklami != null)
@@ -47,6 +83,7 @@ public class GecisReklami : MonoBehaviour
             _GecisReklami = Ad;
             
         });
+        ReklamOlaylariniDinle(_GecisReklami);
     }
 
     public void GecisReklamiGoster()
