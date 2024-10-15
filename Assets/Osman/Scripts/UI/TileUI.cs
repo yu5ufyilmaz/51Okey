@@ -1,12 +1,14 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using System.Collections;
 
 public class TileUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     private Transform originalParent;
     private CanvasGroup canvasGroup;
-    public Image tileImage; // Tile'in görüntüsünü göstermek için Image bileşeni
+    public Image tileImage;
+    public float moveSpeed = 5f; // Hareket hızı ayarı
 
     private void Awake()
     {
@@ -18,7 +20,7 @@ public class TileUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
     {
         if (tileData != null && tileImage != null)
         {
-            tileImage.sprite = tileData.tileSprite; // TileData'dan alınan sprite'ı tileImage'a ayarla
+            tileImage.sprite = tileData.tileSprite;
         }
         else
         {
@@ -29,8 +31,8 @@ public class TileUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
     public void OnBeginDrag(PointerEventData eventData)
     {
         originalParent = transform.parent;
-        canvasGroup.blocksRaycasts = false; // Sürüklenen taşı bırakılabilir hale getir
-        transform.SetParent(transform.root, true); // Root seviyeye çıkar
+        canvasGroup.blocksRaycasts = false;
+        transform.SetParent(transform.root, true);
     }
 
     public void OnDrag(PointerEventData eventData)
@@ -46,7 +48,6 @@ public class TileUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
         Transform closestPlaceholder = null;
         float closestDistance = float.MaxValue;
 
-        // En yakın placeholder'ı bul
         foreach (Transform placeholder in parentContainer)
         {
             if (placeholder.CompareTag("Placeholder"))
@@ -60,26 +61,20 @@ public class TileUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
             }
         }
 
-        // Eğer en yakın placeholder'a yakınsa oraya yerleştir
         if (closestPlaceholder != null && closestDistance < 100f)
         {
-            // Taşımızı hedef placeholder'a yerleştir
-            transform.SetParent(closestPlaceholder, false);
-            transform.localPosition = Vector3.zero;
-            transform.localScale = Vector3.one; // Boyutu orijinal hale getir
-
+            StartCoroutine(SmoothMove(transform, closestPlaceholder));
             int targetIndex = closestPlaceholder.GetSiblingIndex();
 
-            // Sağ veya sol kaydırma kontrolü
             if (closestPlaceholder.childCount > 1)
             {
                 Transform displacedTile = closestPlaceholder.GetChild(0);
-            
-                if (targetIndex < originalParent.GetSiblingIndex()) // Sola kaydırma
+
+                if (targetIndex < originalParent.GetSiblingIndex())
                 {
                     ShiftTilesLeft(parentContainer, displacedTile, targetIndex - 1);
                 }
-                else // Sağa kaydırma
+                else
                 {
                     ShiftTilesRight(parentContainer, displacedTile, targetIndex + 1);
                 }
@@ -87,15 +82,9 @@ public class TileUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
         }
         else
         {
-            // Eğer uygun bir yere bırakılmadıysa eski yerine dön
-            transform.SetParent(originalParent, false);
-            transform.localPosition = Vector3.zero;
-            transform.localScale = Vector3.one; // Boyutu orijinal hale getir
+            StartCoroutine(SmoothMove(transform, originalParent));
         }
     }
-
-
-
 
     private void ShiftTilesRight(Transform parentContainer, Transform tileToShift, int startIndex)
     {
@@ -103,32 +92,19 @@ public class TileUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
         {
             Transform currentPlaceholder = parentContainer.GetChild(i);
 
-            // Eğer mevcut placeholder boşsa taşı buraya yerleştir ve işlemi durdur
             if (currentPlaceholder.childCount == 0)
             {
-                tileToShift.SetParent(currentPlaceholder, false);
-                tileToShift.localPosition = Vector3.zero;
-                tileToShift.localScale = Vector3.one; // Boyutu orijinal hale getir
+                StartCoroutine(SmoothMove(tileToShift, currentPlaceholder));
                 return;
             }
             else
             {
-                // Mevcut placeholder doluysa, bir sonrakine geç
                 Transform nextTileToShift = currentPlaceholder.GetChild(0);
-                tileToShift.SetParent(currentPlaceholder, false);
-                tileToShift.localPosition = Vector3.zero;
-                tileToShift.localScale = Vector3.one; // Boyutu orijinal hale getir
-
-                // Bir sonraki taşı sağa kaydırma için ayarla
+                StartCoroutine(SmoothMove(tileToShift, currentPlaceholder));
                 tileToShift = nextTileToShift;
             }
         }
     }
-
-
-
-
-
 
     private void ShiftTilesLeft(Transform parentContainer, Transform tileToShift, int startIndex)
     {
@@ -136,51 +112,36 @@ public class TileUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
         {
             Transform currentPlaceholder = parentContainer.GetChild(i);
 
-            // Eğer mevcut placeholder boşsa taşı buraya yerleştir ve işlemi durdur
             if (currentPlaceholder.childCount == 0)
             {
-                tileToShift.SetParent(currentPlaceholder, false);
-                tileToShift.localPosition = Vector3.zero;
-                tileToShift.localScale = Vector3.one; // Boyutu orijinal hale getir
+                StartCoroutine(SmoothMove(tileToShift, currentPlaceholder));
                 return;
             }
             else
             {
-                // Mevcut placeholder doluysa, bir sonrakine geç
                 Transform nextTileToShift = currentPlaceholder.GetChild(0);
-                tileToShift.SetParent(currentPlaceholder, false);
-                tileToShift.localPosition = Vector3.zero;
-                tileToShift.localScale = Vector3.one; // Boyutu orijinal hale getir
-
-                // Bir sonraki taşı sola kaydırma için ayarla
+                StartCoroutine(SmoothMove(tileToShift, currentPlaceholder));
                 tileToShift = nextTileToShift;
             }
         }
     }
 
-
-    // En yakın boş placeholder'ı bulur veya boş bir yere bırakılmasını sağlar
-    private Transform FindEmptyPlaceholder()
+    private IEnumerator SmoothMove(Transform tile, Transform targetPlaceholder)
     {
-        Transform parentContainer = originalParent.parent; // Placeholderların bağlı olduğu parent
-        int currentIndex = originalParent.GetSiblingIndex();
-        
-        // Sağdaki boş yeri bul
-        for (int i = currentIndex + 1; i < parentContainer.childCount; i++)
+        Vector3 startPos = tile.position;
+        Vector3 targetPos = targetPlaceholder.position;
+        float elapsedTime = 0f;
+        float journeyTime = 0.5f / moveSpeed;
+
+        while (elapsedTime < journeyTime)
         {
-            Transform placeholder = parentContainer.GetChild(i);
-            if (placeholder.childCount == 0)
-                return placeholder;
+            tile.position = Vector3.Lerp(startPos, targetPos, (elapsedTime / journeyTime));
+            elapsedTime += Time.deltaTime;
+            yield return null;
         }
 
-        // Solda boş yer yoksa, sola bak
-        for (int i = currentIndex - 1; i >= 0; i--)
-        {
-            Transform placeholder = parentContainer.GetChild(i);
-            if (placeholder.childCount == 0)
-                return placeholder;
-        }
-
-        return null; // Boş placeholder bulunamadı
+        tile.SetParent(targetPlaceholder, false);
+        tile.localPosition = Vector3.zero;
+        tile.localScale = Vector3.one;
     }
 }
