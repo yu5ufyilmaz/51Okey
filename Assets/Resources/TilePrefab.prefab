@@ -10,29 +10,34 @@ GameObject:
   m_Component:
   - component: {fileID: 3946476103105228049}
   - component: {fileID: 5421399205044031588}
-  m_Layer: 0
+  - component: {fileID: 5032357142389691761}
+  m_Layer: 5
   m_Name: TilePrefab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &3946476103105228049
-Transform:
+--- !u!224 &3946476103105228049
+RectTransform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1914628353354098140}
-  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1519.701, y: 241.43535, z: -6.8093524}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3079723711940065893}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &5421399205044031588
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -46,6 +51,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tileImage: {fileID: 1081918049763665644}
+--- !u!225 &5032357142389691761
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1914628353354098140}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &8787413836127887193
 GameObject:
   m_ObjectHideFlags: 0
@@ -57,7 +74,7 @@ GameObject:
   - component: {fileID: 3079723711940065893}
   - component: {fileID: 4632494919405816146}
   - component: {fileID: 1081918049763665644}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: RimmyStone
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -72,7 +89,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8787413836127887193}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 6.8093524}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -80,8 +97,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 97.80737, y: 46.824646}
-  m_SizeDelta: {x: 113.017, y: 169.0885}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 125, y: 160}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4632494919405816146
 CanvasRenderer:
@@ -111,7 +128,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: -634447082, guid: bdb72b4a39ef49d45b4454794f93943d, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

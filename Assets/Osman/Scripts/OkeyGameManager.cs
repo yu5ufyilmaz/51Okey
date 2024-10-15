@@ -2,16 +2,15 @@ using System.Collections.Generic;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
-using UnityEngine.UI;
+using TMPro;
 
 public class OkeyGameManager : MonoBehaviourPunCallbacks
 {
     public GameObject playerPrefab;  // Oyuncu prefab'i
     public RectTransform[] spawnPositions;  // UI'daki oyuncu pozisyonları
-    public GameObject tilePrefab;  // Okey taşı prefab'i
-    public Transform playerTileContainer;  // Tüm oyuncuların taşlarının yerleştirileceği ana container (Grid Layout içeriyor)
-    
-    public List<Sprite> tileSprites; // Okey taşlarının sprite'ları
+    public TileManager tileManager;  // TileManager scriptine referans
+    public TextMeshProUGUI[] playerNameTexts; // Oyuncu isimlerinin yazdırılacağı UI elemanları
+    public Transform[] playerTileContainers; // Oyuncuların taşlarının yerleştirileceği Placeholder'lar
 
     private List<int> availablePositions = new List<int>();
 
@@ -19,9 +18,16 @@ public class OkeyGameManager : MonoBehaviourPunCallbacks
     {
         AssignRandomPositionAndInstantiate();  // Oyuncuyu rastgele bir pozisyona yerleştir ve instantiate et
         AssignRelativePlayerPositions();       // Oyunculara göreceli pozisyonlarını belirle
-        if (PhotonNetwork.IsMasterClient)      // Sadece MasterClient taşları dağıtır
+
+        if (PhotonNetwork.IsMasterClient)  // Sadece MasterClient taşları dağıtır
         {
-            DistributeTiles();                 // Taşları oyunculara dağıt
+            if (tileManager == null)
+            {
+                Debug.LogError("TileManager is not assigned in OkeyGameManager!");
+                return;
+            }
+
+            tileManager.DistributeTiles();  // Taşları dağıt (parametresiz)
         }
     }
 
@@ -44,7 +50,7 @@ public class OkeyGameManager : MonoBehaviourPunCallbacks
             int spawnIndex = availablePositions[randomIndex];
             availablePositions.RemoveAt(randomIndex);
 
-            Vector3 spawnPosition = spawnPositions[spawnIndex].transform.position;
+            Vector3 spawnPosition = spawnPositions[spawnIndex].position;
             Quaternion spawnRotation = Quaternion.identity;
 
             PhotonNetwork.Instantiate(playerPrefab.name, spawnPosition, spawnRotation, 0);
@@ -70,33 +76,12 @@ public class OkeyGameManager : MonoBehaviourPunCallbacks
         for (int i = 0; i < players.Length; i++)
         {
             int relativeIndex = (i - localPlayerIndex + players.Length) % players.Length;
-
             Debug.Log("Local player sees " + players[i].NickName + " at relative position " + (relativeIndex + 1));
-        }
-    }
 
-    private void DistributeTiles()
-    {
-        Player[] players = PhotonNetwork.PlayerList;
-        int playerCount = players.Length;
-        int tilesForFirstPlayer = 15;
-        int tilesForOtherPlayers = 14;
-
-        for (int playerIndex = 0; playerIndex < playerCount; playerIndex++)
-        {
-            int tilesToGive = (playerIndex == 0) ? tilesForFirstPlayer : tilesForOtherPlayers;
-
-            // Her oyuncunun taşları için alt container oluştur
-            Transform playerContainer = playerTileContainer.GetChild(playerIndex);  // PlayerTileContainer altındaki her bir placeholder
-
-            for (int i = 0; i < tilesToGive; i++)
+            if (relativeIndex < playerNameTexts.Length)
             {
-                GameObject newTile = Instantiate(tilePrefab, playerContainer);
-                newTile.GetComponent<Image>().sprite = tileSprites[Random.Range(0, tileSprites.Count)];  // Taşa rastgele bir sprite atanıyor
-                newTile.name = "Tile_" + i;  // Taşın adını belirleme (debug için)
+                playerNameTexts[relativeIndex].text = players[i].NickName;
             }
-
-            Debug.Log(players[playerIndex].NickName + " received " + tilesToGive + " tiles.");
         }
     }
 }
