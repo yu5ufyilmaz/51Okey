@@ -1,30 +1,37 @@
-using System.Collections;
-using System.Collections.Generic;
 using Photon.Pun;
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 
 public class PlayerSetup : MonoBehaviourPunCallbacks
 {
     public string playerName;
     public int playerQueue;
-    public TextMeshProUGUI nickNameText;
+    private TextMeshProUGUI nickNameText;
 
-    public void IsLocal()
-    {
-        
-    }
-
+    
     void Start()
-    {
-        Debug.Log("Taşlar dağıtılıyor...");
+    { 
+        if (nickNameText != null && photonView.IsMine)
+        {
+            nickNameText.text = playerName;
+        }
     }
+
     [PunRPC]
     public void SetPlayerName(string _playerName)
     {
         playerName = _playerName;
-        nickNameText.text = playerName;
+        
+        if (nickNameText != null)
+        {
+            nickNameText.text = playerName;  
+        }
+        else
+        {
+            Debug.LogError("NickNameText is not assigned! Please assign it in the inspector.");
+        }
     }
+
     [PunRPC]
     public void SetPlayerQueue(int _playerQueue)
     {
