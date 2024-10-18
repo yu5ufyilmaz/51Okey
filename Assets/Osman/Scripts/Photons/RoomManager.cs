@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
@@ -9,14 +10,16 @@ public class RoomManager : MonoBehaviourPunCallbacks
     [SerializeField] private bool isOpen = true;
     [SerializeField] private bool isVisible = true;
     private int maxPlayers = 4;
-    
+
     [SerializeField] private GameObject _playerPrefab;
+    public List<int> availableSeats = new List<int>();
 
     void Start()
     {
         EventDispatcher.RegisterFunction("CreateRoom", CreateRoom);
         EventDispatcher.RegisterFunction<string>("JoinRoom", JoinRoom);
         EventDispatcher.RegisterFunction<int>("JoinRandomRoomOrCreate", JoinRandomRoomOrCreate);
+
     }
 
     // Oda oluşturma işlemi
@@ -33,7 +36,9 @@ public class RoomManager : MonoBehaviourPunCallbacks
         PhotonNetwork.CreateRoom(PhotonNetwork.NickName, roomOptions, TypedLobby.Default);
 
         SceneChangeManager.Instance.ChangeScene("Table");
+
     }
+
 
     // Odaya katılma işlemi
     public void JoinRoom(string _roomName)

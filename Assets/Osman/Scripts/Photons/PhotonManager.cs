@@ -34,13 +34,6 @@ public class PhotonManager : MonoBehaviourPunCallbacks
     }
 
 
-    public override void OnJoinedRoom()
-    {
-        EventDispatcher.SummonEvent("SpawnPlayer");
-        Debug.Log(PhotonNetwork.CurrentRoom.Name + " joined");
-    }
-
-
     public override void OnLeftLobby()
     {
         Debug.Log("Left Lobby");

@@ -13,10 +13,6 @@ public class ExitButton : MonoBehaviourPunCallbacks
         PhotonNetwork.LeaveRoom();
         SceneChangeManager.Instance.ChangeScene("LobbyMenu");
     }
-    public override void OnLeftRoom()
-    { 
-        Debug.Log("Left Room");
-    }
 
     public override void OnConnectedToMaster()
     {

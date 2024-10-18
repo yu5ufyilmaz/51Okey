@@ -166,6 +166,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3dfb9775c6b6eb742a8274276a34e784, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  roomManager: {fileID: 0}
   playerPrefab: {fileID: 2306633761159361300, guid: 360cb31b283c02148846d66182271d76, type: 3}
   spawnPositions:
   - {fileID: 310720358}
@@ -215,6 +216,7 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  availablePositions: 00000000010000000200000003000000
 --- !u!1 &225572200
 GameObject:
   m_ObjectHideFlags: 0
