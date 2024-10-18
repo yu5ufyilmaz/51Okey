@@ -13,15 +13,23 @@ public class OkeyGameManager : MonoBehaviourPunCallbacks
     public TileManager tileManager;  // TileManager scriptine referans
     public TextMeshProUGUI[] playerNameTexts; // Oyuncu isimlerinin yazdırılacağı UI elemanları
     public Transform[] playerTileContainers; // Oyuncuların taşlarının yerleştirileceği Placeholder'lar
+    [SerializeField] private bool[] seatOccupied = new bool[4];
 
-    [SerializeField] private List<int> availablePositions = new List<int>();
+    private List<int> availablePositions = new List<int>();
     int spawnIndex = 0;
 
 
-
+    private void Start()
+    {
+        // Başlangıçta tüm pozisyonları kullanılabilir olarak işaretle
+        for (int i = 0; i < seatOccupied.Length; i++)
+        {
+            availablePositions.Add(i);
+        }
+    }
     public override void OnJoinedRoom()
     {
-        AssignRandomPositionAndInstantiate();  // Oyuncuyu rastgele bir pozisyona yerleştir ve instantiate et
+        AssignPositionAndInstantiate();  // Oyuncuyu rastgele bir pozisyona yerleştir ve instantiate et
         AssignRelativePlayerPositions();       // Oyunculara göreceli pozisyonlarını belirle
 
         /*     if (PhotonNetwork.IsMasterClient)  // Sadece MasterClient taşları dağıtır
@@ -41,63 +49,47 @@ public class OkeyGameManager : MonoBehaviourPunCallbacks
     public override void OnLeftRoom()
     {
         PlayerLeftRoom();
-        UpdatePlayerPositions();
+
     }
 
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
         AssignRelativePlayerPositions();  // Yeni bir oyuncu katıldığında oyuncuların göreceli pozisyonlarını güncelle
     }
-
-    private int CheckEmptyPlace()
+  /*  private int FindNextAvailableSeat()
     {
-        if (availablePositions.Count <= 0)
-            return -1; // Tüm pozisyonlar doluysa -1 döndür.
-
-        int minValue = availablePositions[0]; // İlk elemanı en küçük kabul et
-
-        // Listedeki diğer elemanlarla karşılaştır
-        for (int i = 1; i < availablePositions.Count; i++)
+        for (int i = 0; i < seatOccupied.Length; i++)
         {
-            if (availablePositions[i] < minValue)
+            if (seatOccupied[i] == false)
             {
-                minValue = availablePositions[i];
+                return i;
             }
+            return i;
         }
-
-        return minValue; // En küçük değeri döndür
+        return -1; // Tüm pozisyonlar doluysa
     }
+*/
 
-    private void AssignRandomPositionAndInstantiate()
+
+    private void AssignPositionAndInstantiate()
     {
-
-        if (availablePositions.Count > 0 && playerPrefab != null)
+        //int spawnIndex = FindNextAvailableSeat();
+        if (spawnIndex != -1 && playerPrefab != null)
         {
-
-            spawnIndex = CheckEmptyPlace();
-            Debug.Log("Spawn index: " + CheckEmptyPlace());
+            // Pozisyonu doldur ve listeden çıkar
+            seatOccupied[spawnIndex] = true;
             availablePositions.Remove(spawnIndex);
 
-            if (spawnIndex != -1)
-            {
+            Vector3 spawnPosition = spawnPositions[spawnIndex].position;
+            Quaternion spawnRotation = Quaternion.identity;
 
-                // Pozisyonu kullanılabilir listesinden kaldır.
-
-                Vector3 spawnPosition = spawnPositions[spawnIndex].position;
-                Quaternion spawnRotation = Quaternion.identity;
-
-                // Oyuncuyu belirlenen pozisyona yerleştir.
-                PhotonNetwork.Instantiate(playerPrefab.name, spawnPosition, spawnRotation, 0);
-                Debug.Log("Player instantiated at position: " + spawnIndex);
-            }
-            else
-            {
-                Debug.LogError("No available spawn positions found!");
-            }
+            // Oyuncuyu belirlenen pozisyona yerleştir
+            PhotonNetwork.Instantiate(playerPrefab.name, spawnPosition, spawnRotation, 0);
+            Debug.Log("Player instantiated at position: " + spawnIndex);
         }
         else
         {
-            Debug.LogError("Not enough spawn positions available or playerPrefab is not assigned!");
+            Debug.LogError("No available spawn positions found or playerPrefab is not assigned!");
         }
     }
 
@@ -148,23 +140,5 @@ public class OkeyGameManager : MonoBehaviourPunCallbacks
         }
     }
 
-    private void UpdatePlayerPositions()
-    {
-        Player[] players = PhotonNetwork.PlayerList;
 
-        // Tüm UI isim metinlerini önce "Oyuncu Bekleniyor" olarak ayarla
-        for (int i = 0; i < playerNameTexts.Length; i++)
-        {
-            playerNameTexts[i].text = "Oyuncu Bekleniyor";
-        }
-
-        // Mevcut oyuncular için doğru isimleri yerleştir
-        for (int i = 0; i < players.Length; i++)
-        {
-            if (i < playerNameTexts.Length)
-            {
-                playerNameTexts[i].text = players[i].NickName;
-            }
-        }
-    }
 }
