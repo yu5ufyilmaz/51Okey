@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 2
   tags:
   - Placeholder
+  - SeatManager
   layers:
   - Default
   - TransparentFX

@@ -4,29 +4,24 @@ using Photon.Realtime;
 using UnityEngine;
 using TMPro;
 using System.Linq;
+using Unity.VisualScripting.Dependencies.Sqlite;
 
 public class OkeyGameManager : MonoBehaviourPunCallbacks
 {
-    [SerializeField] private RoomManager roomManager;
+    //[SerializeField] private GameObject seatManagerPrefab;
     public GameObject playerPrefab;  // Oyuncu prefab'i
-    public RectTransform[] spawnPositions;  // UI'daki oyuncu pozisyonları
     public TileManager tileManager;  // TileManager scriptine referans
+
+    public RectTransform[] spawnPositions;  // UI'daki oyuncu pozisyonları
+
+
     public TextMeshProUGUI[] playerNameTexts; // Oyuncu isimlerinin yazdırılacağı UI elemanları
     public Transform[] playerTileContainers; // Oyuncuların taşlarının yerleştirileceği Placeholder'lar
-    [SerializeField] private bool[] seatOccupied = new bool[4];
 
-    private List<int> availablePositions = new List<int>();
-    int spawnIndex = 0;
+    public int spawnIndex;
 
+    PhotonView playerPhotonView;
 
-    private void Start()
-    {
-        // Başlangıçta tüm pozisyonları kullanılabilir olarak işaretle
-        for (int i = 0; i < seatOccupied.Length; i++)
-        {
-            availablePositions.Add(i);
-        }
-    }
     public override void OnJoinedRoom()
     {
         AssignPositionAndInstantiate();  // Oyuncuyu rastgele bir pozisyona yerleştir ve instantiate et
@@ -46,46 +41,32 @@ public class OkeyGameManager : MonoBehaviourPunCallbacks
 
     }
 
-    public override void OnLeftRoom()
-    {
-        PlayerLeftRoom();
-
-    }
 
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
         AssignRelativePlayerPositions();  // Yeni bir oyuncu katıldığında oyuncuların göreceli pozisyonlarını güncelle
     }
-  /*  private int FindNextAvailableSeat()
-    {
-        for (int i = 0; i < seatOccupied.Length; i++)
-        {
-            if (seatOccupied[i] == false)
-            {
-                return i;
-            }
-            return i;
-        }
-        return -1; // Tüm pozisyonlar doluysa
-    }
-*/
-
-
     private void AssignPositionAndInstantiate()
     {
-        //int spawnIndex = FindNextAvailableSeat();
-        if (spawnIndex != -1 && playerPrefab != null)
-        {
-            // Pozisyonu doldur ve listeden çıkar
-            seatOccupied[spawnIndex] = true;
-            availablePositions.Remove(spawnIndex);
 
-            Vector3 spawnPosition = spawnPositions[spawnIndex].position;
+        if (playerPrefab != null)
+        {
+
             Quaternion spawnRotation = Quaternion.identity;
 
             // Oyuncuyu belirlenen pozisyona yerleştir
-            PhotonNetwork.Instantiate(playerPrefab.name, spawnPosition, spawnRotation, 0);
-            Debug.Log("Player instantiated at position: " + spawnIndex);
+            GameObject player = PhotonNetwork.Instantiate(playerPrefab.name, Vector3.zero, spawnRotation, 0);
+
+            ;
+
+            Vector3 spawnPosition = spawnPositions[spawnIndex].position;
+
+            playerPhotonView = player.GetComponent<PhotonView>();
+
+
+            playerPhotonView.RPC("SetPlayerName", RpcTarget.AllBuffered, PhotonNetwork.NickName);
+            playerPhotonView.RPC("SetPlayerSeat", RpcTarget.AllBuffered, spawnPosition);
+
         }
         else
         {
@@ -93,10 +74,14 @@ public class OkeyGameManager : MonoBehaviourPunCallbacks
         }
     }
 
+
+
+
     private void AssignRelativePlayerPositions()
     {
         Player[] players = PhotonNetwork.PlayerList;
         int localPlayerIndex = System.Array.IndexOf(players, PhotonNetwork.LocalPlayer);
+
 
         if (localPlayerIndex == -1)
         {
@@ -113,32 +98,12 @@ public class OkeyGameManager : MonoBehaviourPunCallbacks
 
             if (relativeIndex < playerNameTexts.Length)
             {
-                playerNameTexts[relativeIndex].text = players[i].NickName;
+                //playerNameTexts[relativeIndex].text = players[i].NickName;
             }
         }
     }
 
-    private void PlayerLeftRoom()
-    {
-        Player[] players = PhotonNetwork.PlayerList;
-        int localPlayerIndex = System.Array.IndexOf(players, PhotonNetwork.LocalPlayer);
 
-        // Tüm UI isim metinlerini "Oyuncu Bekleniyor" olarak ayarla
-        for (int i = 0; i < playerNameTexts.Length; i++)
-        {
-            playerNameTexts[i].text = "Oyuncu Bekleniyor";
-        }
-
-        // Mevcut oyuncuların isimlerini doğru pozisyonlara yerleştir
-        for (int i = 0; i < players.Length; i++)
-        {
-            int relativeIndex = (i - localPlayerIndex + players.Length) % players.Length;
-            if (relativeIndex < playerNameTexts.Length)
-            {
-                playerNameTexts[relativeIndex].text = players[i].NickName;
-            }
-        }
-    }
 
 
 }

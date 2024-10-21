@@ -11,8 +11,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
     [SerializeField] private bool isVisible = true;
     private int maxPlayers = 4;
 
-    [SerializeField] private GameObject _playerPrefab;
-    public List<int> availableSeats = new List<int>();
+
 
     void Start()
     {
@@ -34,6 +33,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
             IsVisible = isVisible
         };
         PhotonNetwork.CreateRoom(PhotonNetwork.NickName, roomOptions, TypedLobby.Default);
+
 
         SceneChangeManager.Instance.ChangeScene("Table");
 
