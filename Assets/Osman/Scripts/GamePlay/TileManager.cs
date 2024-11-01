@@ -1,20 +1,26 @@
 using System.Collections.Generic;
+using Photon.Pun;
 using UnityEngine;
 
-public class TileManager : MonoBehaviour
+public class TileManager : MonoBehaviourPunCallbacks
 {
     public GameObject tilePrefab; // Prefab for tiles
     public Transform playerTileContainer; // Parent container for arranging tiles
     public TileData[] tileDataArray; // All tiles data, including Jokers
 
-    private List<TileData> allTiles = new List<TileData>();
+    [SerializeField] private List<TileData> allTiles = new List<TileData>();
+
     private Transform[] playerTileContainers; // Array for individual placeholders
 
     void Start()
     {
         InitializePlaceholders();  // Placeholders'ı diziye ekle
+        //photonView.RPC("GenerateTiles", RpcTarget.AllBuffered);
+        //photonView.RPC("ShuffleTiles", RpcTarget.AllBuffered, allTiles);
         GenerateTiles();  // Create all tiles
+
         ShuffleTiles(allTiles);  // Shuffle tiles for random distribution
+
     }
 
     // Placeholders'ı playerTileContainers dizisine otomatik ekle
@@ -30,6 +36,7 @@ public class TileManager : MonoBehaviour
     }
 
     // Tiles'ı oluştur ve listeye ekle
+    [PunRPC]
     void GenerateTiles()
     {
         foreach (TileData tileData in tileDataArray)
@@ -49,6 +56,7 @@ public class TileManager : MonoBehaviour
         }
     }
 
+    [PunRPC]
     // Tiles'ı karıştır
     void ShuffleTiles(List<TileData> tiles)
     {
@@ -60,41 +68,49 @@ public class TileManager : MonoBehaviour
             tiles[randomIndex] = temp;
         }
     }
-
+    void RemoveTileFromList(TileData tileData)
+    {
+        allTiles.Remove(tileData);
+    }
     // Tiles'ı placeholders'a dağıt
     public void DistributeTiles()
     {
-        for (int i = 0; i < 14; i++)  // Her oyuncuya 14 taş dağıt
-        {
-            if (i >= allTiles.Count || i >= playerTileContainers.Length)
+        for (int player = 0; player < PhotonNetwork.PlayerList.Length; player++)
+            for (int i = 0; i < 14; i++)  // Her oyuncuya 14 taş dağıt
             {
-                Debug.LogWarning("Index out of bounds. Check the number of tiles and placeholders.");
-                continue;
-            }
+                if (i >= allTiles.Count || i >= playerTileContainers.Length)
+                {
+                    Debug.LogWarning("Index out of bounds. Check the number of tiles and placeholders.");
+                    continue;
+                }
 
-            // Daha önceki çocukları temizle
-            foreach (Transform child in playerTileContainers[i])
-            {
-                Destroy(child.gameObject);
-            }
+                // Daha önceki çocukları temizle
+                foreach (Transform child in playerTileContainers[i])
+                {
+                    Destroy(child.gameObject);
+                }
 
-            TileData tileData = allTiles[i];
-            GameObject tileInstance = Instantiate(tilePrefab, playerTileContainers[i]);
-        
-            TileUI tileUI = tileInstance.GetComponent<TileUI>();
-            if (tileUI != null)
-            {
-                tileUI.SetTileData(tileData); // TileData'yı TileUI'a aktar
-            }
-            else
-            {
-                Debug.LogError("TileUI component is missing on tilePrefab.");
-            }
+                TileData tileData = allTiles[i];
+                GameObject tileInstance = Instantiate(tilePrefab, playerTileContainers[i]);
+                photonView.RPC("RemoveTileFromList", RpcTarget.AllBuffered, tileData);
+                TileUI tileUI = tileInstance.GetComponent<TileUI>();
+                allTiles.Remove(tileData);
+                if (tileUI != null)
+                {
+                    tileUI.SetTileData(tileData); // TileData'yı TileUI'a aktar
+                }
+                else
+                {
+                    Debug.LogError("TileUI component is missing on tilePrefab.");
+                }
 
-            // Pozisyon sıfırlama: Tile'ın placeholder'ın merkezine oturmasını sağlar
-            tileInstance.transform.localPosition = Vector3.zero;
+                // Pozisyon sıfırlama: Tile'ın placeholder'ın merkezine oturmasını sağlar
+                tileInstance.transform.localPosition = Vector3.zero;
 
-            Debug.Log("Tile parent: " + tileInstance.transform.parent.name);
-        }
+                Debug.Log("Tile parent: " + tileInstance.transform.parent.name);
+
+                // Dağıtılan taşı currentTiles listesinden sil
+
+            }
     }
 }

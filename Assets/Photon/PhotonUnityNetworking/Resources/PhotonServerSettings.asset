@@ -58,6 +58,8 @@ MonoBehaviour:
   - FindAvailableSeats
   - AssignSeatToPlayer
   - FreeSeat
+  - GenerateTiles
+  - ShuffleTiles
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

@@ -7,11 +7,12 @@ using TMPro;
 
 public class SeatManager : MonoBehaviourPunCallbacks
 {
-    private List<int> availableSeats = new List<int> { 1, 2, 3, 4 };
-    private Dictionary<int, int> playerSeatMap = new Dictionary<int, int>(); // Maps player actor number to seat number
+    public List<int> availableSeats = new List<int> { 1, 2, 3, 4 };
+    public Dictionary<int, int> playerSeatMap = new Dictionary<int, int>(); // Maps player actor number to seat number
 
     public TMP_Text[] seatTextFields; // Array of Text components to display player names
-
+    public TileManager tileManager;
+    #region Player Join and Left Functions
     public override void OnJoinedRoom()
     {
         // If the player is the first to join, assign them a seat
@@ -31,7 +32,16 @@ public class SeatManager : MonoBehaviourPunCallbacks
         if (availableSeats.Count > 0 && PhotonNetwork.IsMasterClient)
         {
             int seatNumber = availableSeats[0];
-            availableSeats.RemoveAt(0); // Remove the assigned seat
+            for (int i = 0; i < availableSeats.Count; i++)
+            {
+                if (availableSeats[i] <= seatNumber)
+                {
+                    seatNumber = availableSeats[i];
+                    availableSeats.RemoveAt(i);
+                    break;
+                }
+            }
+            // Remove the assigned seat
             // Use RPC to assign the seat to the player on all clients
             photonView.RPC("AssignSeatToPlayer", RpcTarget.AllBuffered, newPlayer.ActorNumber, seatNumber);
         }
@@ -41,17 +51,22 @@ public class SeatManager : MonoBehaviourPunCallbacks
     public override void OnPlayerLeftRoom(Player otherPlayer)
     {
         // Free the seat that was occupied by the player who left
-        int seatNumber = GetSeatNumberOfPlayer(otherPlayer);
-        if (seatNumber != -1)
+        int seatNumber_E = GetSeatNumberOfPlayer(otherPlayer);
+        if (seatNumber_E != -1)
         {
-            availableSeats.Add(seatNumber);
+            availableSeats.Add(seatNumber_E);
             availableSeats.Sort(); // Keep the list sorted for the smallest seat number
             // Use RPC to remove the seat assignment from all clients
-            photonView.RPC("FreeSeat", RpcTarget.AllBuffered, seatNumber);
+            photonView.RPC("FreeSeat", RpcTarget.AllBuffered, seatNumber_E);
         }
         UpdateSeatDisplay(); // Update the seat display for the local player
     }
+    #endregion
 
+
+
+    #region Seat Assignment Functions
+    //Burada Oyuncuya kendimiz bir özellik ekliyoruz Set Custom Properties ile Her oyuncunun oturduğu seati biliyoruz.
     [PunRPC]
     private void AssignSeatToPlayer(int actorNumber, int seatNumber)
     {
@@ -61,6 +76,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
             // Store seat assignment in player's custom properties
             player.SetCustomProperties(new ExitGames.Client.Photon.Hashtable { { "SeatNumber", seatNumber } });
             playerSeatMap[actorNumber] = seatNumber; // Update the player-seat map
+
             Debug.Log($"Player {player.NickName} is assigned to seat {seatNumber}");
         }
         UpdateSeatDisplay(); // Update the seat display for the local player
@@ -89,35 +105,93 @@ public class SeatManager : MonoBehaviourPunCallbacks
     }
     private int GetSeatNumberOfPlayer(Player player)
     {
-        if (player.CustomProperties.TryGetValue("SeatNumber", out object seatNumber))
+        player.CustomProperties.TryGetValue("SeatNumber", out object seatNumber);
+        if (seatNumber != null)
         {
+            Debug.Log("Seat Number: " + (int)seatNumber);
             return (int)seatNumber;
         }
-        return -1; // Seat number not found
+        else
+            return -1; // Seat number not found
     }
+    #endregion
 
+
+
+    #region Relative Player Order
+    //Seat Text changes from there.
     private void UpdateSeatDisplay()
     {
-        // Get the local player's seat number
-        int localSeatNumber = GetSeatNumberOfPlayer(PhotonNetwork.LocalPlayer);
-        if (localSeatNumber == -1) return;
-
-        // Create a sorted list of players based on seat numbers
-        List<KeyValuePair<int, int>> sortedPlayers = new List<KeyValuePair<int, int>>(playerSeatMap);
-        sortedPlayers.Sort((x, y) => x.Value.CompareTo(y.Value)); // Sort by seat number
-
-        // Find the local player's position in the sorted list
-        int localPlayerIndex = sortedPlayers.FindIndex(pair => pair.Key == PhotonNetwork.LocalPlayer.ActorNumber);
-
-        // Update the seatTextFields with relative positions
-        for (int i = 0; i < seatTextFields.Length; i++)
+        Player[] players = PhotonNetwork.PlayerList;
+        int localPlayerIndex = System.Array.IndexOf(players, PhotonNetwork.LocalPlayer);
+        if (localPlayerIndex == -1)
         {
-            int relativeIndex = (localPlayerIndex + i) % sortedPlayers.Count;
-            int displayIndex = (i == 0) ? 0 : (4 - i) % sortedPlayers.Count; // Adjust for player's view
-            int actorNumber = sortedPlayers[relativeIndex].Key;
-            Player player = PhotonNetwork.CurrentRoom.GetPlayer(actorNumber);
+            Debug.LogError("Local player not found in the player list!");
+            return;
+        }
+        // Clear seat text fields first
+        for (int i = 0; i < players.Length; i++)
+        {
+            // Her oyuncu için relativeIndex, kendisini sıfırıncı indexte görmeli ve diğerlerini göreceli olarak sıralamalıdır
+            int relativeIndex = (i - localPlayerIndex + players.Length) % players.Length;
 
-            seatTextFields[displayIndex].text = player != null ? player.NickName : "Empty";
+            if (relativeIndex < seatTextFields.Length)
+            {
+                seatTextFields[relativeIndex].text = players[i].NickName;
+            }
+        }
+        StartGame();
+    }
+
+
+
+
+    private List<Player> GetRelativePlayerOrder(Player localPlayer)
+    {
+        List<Player> orderedPlayers = new List<Player>(PhotonNetwork.PlayerList);
+
+        // Sort players by seat number, excluding the local player initially
+        orderedPlayers.Sort((a, b) =>
+        {
+            int seatA = GetSeatNumberOfPlayer(a);
+            int seatB = GetSeatNumberOfPlayer(b);
+            return seatA.CompareTo(seatB);
+        });
+
+        // Create a new list to maintain the order
+        List<Player> relativeOrder = new List<Player>();
+        relativeOrder.Add(localPlayer); // Add the local player first
+
+        // Add other players in order
+        foreach (var player in orderedPlayers)
+        {
+            if (player.ActorNumber != localPlayer.ActorNumber)
+            {
+                relativeOrder.Add(player);
+            }
+        }
+
+        return relativeOrder;
+    }
+    #endregion
+
+
+    #region Starting Game
+    private void StartGame()
+    {
+        if (PhotonNetwork.PlayerList.Length == 4)
+        {
+
+
+            if (tileManager == null)
+            {
+                Debug.LogError("TileManager is not assigned in OkeyGameManager!");
+                return;
+            }
+            Debug.Log("TileManager is assigned in OkeyGameManager!");
+            tileManager.DistributeTiles(); // Taşları dağıt (parametresiz)
+
         }
     }
+    #endregion
 }
