@@ -1,7 +1,6 @@
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
-using UnityEngine.UI;
 using System.Collections.Generic;
 using TMPro;
 
@@ -11,17 +10,38 @@ public class SeatManager : MonoBehaviourPunCallbacks
     public Dictionary<int, int> playerSeatMap = new Dictionary<int, int>(); // Maps player actor number to seat number
 
     public TMP_Text[] seatTextFields; // Array of Text components to display player names
-    public TileManager tileManager;
+    public TileDistrubite tileDistrubite;
+
+    [Header("Player Spawn Settings")]
+    public int spawnIndex;
+    public GameObject playerPrefab;
+    public GameObject tileManagerPrefab;
+    PhotonView playerPhotonView;
+    public RectTransform[] spawnPositions;
+    bool gameIsStart = false;
+
+
+
+
+    private void Awake()
+    {
+        TileSerialization.RegisterCustomTypes(); // Custom serialization for TileDataInfo
+    }
     #region Player Join and Left Functions
     public override void OnJoinedRoom()
     {
+        AssignPositionAndInstantiate();
         // If the player is the first to join, assign them a seat
         if (PhotonNetwork.IsMasterClient && availableSeats.Count > 0)
         {
             int seatNumber = availableSeats[0];
             availableSeats.RemoveAt(0); // Remove the assigned seat
             // Use RPC to assign the seat to the player on all clients
+            GameObject tileManager = PhotonNetwork.Instantiate(tileManagerPrefab.name, Vector3.zero, Quaternion.identity, 0);
+            Debug.Log(tileManager.name);
+            tileDistrubite = tileManager.GetComponent<TileDistrubite>();
             photonView.RPC("AssignSeatToPlayer", RpcTarget.AllBuffered, PhotonNetwork.LocalPlayer.ActorNumber, seatNumber);
+
         }
         UpdateSeatDisplay(); // Update the seat display for the local player
     }
@@ -38,6 +58,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
                 {
                     seatNumber = availableSeats[i];
                     availableSeats.RemoveAt(i);
+
                     break;
                 }
             }
@@ -45,6 +66,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
             // Use RPC to assign the seat to the player on all clients
             photonView.RPC("AssignSeatToPlayer", RpcTarget.AllBuffered, newPlayer.ActorNumber, seatNumber);
         }
+        StartGame();
         UpdateSeatDisplay(); // Update the seat display for the local player
     }
 
@@ -62,9 +84,35 @@ public class SeatManager : MonoBehaviourPunCallbacks
         UpdateSeatDisplay(); // Update the seat display for the local player
     }
     #endregion
+    #region  Spawn and Instantiate Players
+    private void AssignPositionAndInstantiate()
+    {
+
+        if (playerPrefab != null)
+        {
+
+            Quaternion spawnRotation = Quaternion.identity;
+
+            // Oyuncuyu belirlenen pozisyona yerleştir
+            GameObject player = PhotonNetwork.Instantiate(playerPrefab.name, Vector3.zero, spawnRotation, 0);
 
 
+            Vector3 spawnPosition = spawnPositions[spawnIndex].position;
 
+            playerPhotonView = player.GetComponent<PhotonView>();
+
+            Player playerr = PhotonNetwork.LocalPlayer;
+
+            playerPhotonView.RPC("SetPlayerName", RpcTarget.AllBuffered, PhotonNetwork.NickName);
+            playerPhotonView.RPC("SetPlayerSeat", RpcTarget.AllBuffered, spawnPosition);
+
+        }
+        else
+        {
+            Debug.LogError("No available spawn positions found or playerPrefab is not assigned!");
+        }
+    }
+    #endregion
     #region Seat Assignment Functions
     //Burada Oyuncuya kendimiz bir özellik ekliyoruz Set Custom Properties ile Her oyuncunun oturduğu seati biliyoruz.
     [PunRPC]
@@ -75,6 +123,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
         {
             // Store seat assignment in player's custom properties
             player.SetCustomProperties(new ExitGames.Client.Photon.Hashtable { { "SeatNumber", seatNumber } });
+            playerPhotonView.RPC("SetPlayerQueue", RpcTarget.AllBuffered, seatNumber);
             playerSeatMap[actorNumber] = seatNumber; // Update the player-seat map
 
             Debug.Log($"Player {player.NickName} is assigned to seat {seatNumber}");
@@ -115,9 +164,6 @@ public class SeatManager : MonoBehaviourPunCallbacks
             return -1; // Seat number not found
     }
     #endregion
-
-
-
     #region Relative Player Order
     //Seat Text changes from there.
     private void UpdateSeatDisplay()
@@ -140,7 +186,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
                 seatTextFields[relativeIndex].text = players[i].NickName;
             }
         }
-        StartGame();
+
     }
 
 
@@ -174,23 +220,24 @@ public class SeatManager : MonoBehaviourPunCallbacks
         return relativeOrder;
     }
     #endregion
-
-
     #region Starting Game
     private void StartGame()
     {
-        if (PhotonNetwork.PlayerList.Length == 4)
+        if (gameIsStart == false)
         {
-
-
-            if (tileManager == null)
+            if (PhotonNetwork.PlayerList.Length == 4)
             {
-                Debug.LogError("TileManager is not assigned in OkeyGameManager!");
-                return;
+                // Check if all players are assigned seat
+                if (tileDistrubite != null && PhotonNetwork.IsMasterClient)
+                {
+                    Debug.Log(PhotonNetwork.LocalPlayer.NickName + " is the master client.");
+                    tileDistrubite.ShuffleTiles();
+                    //tileDistrubite.photonView.RPC("ShuffleTiles", RpcTarget.AllBuffered);
+                    gameIsStart = true;
+                }
+                //tileDistrubite.photonView.RPC("GenerateAndSharePlayerTiles", RpcTarget.AllBuffered);
+                //tileDistrubite.DistributeTilesToAllPlayers();}
             }
-            Debug.Log("TileManager is assigned in OkeyGameManager!");
-            tileManager.DistributeTiles(); // Taşları dağıt (parametresiz)
-
         }
     }
     #endregion

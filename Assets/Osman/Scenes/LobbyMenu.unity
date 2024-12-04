@@ -155,7 +155,7 @@ MonoBehaviour:
   cleanupCacheOnLeave: 1
   isOpen: 1
   isVisible: 1
-  _playerPrefab: {fileID: 2306633761159361300, guid: 360cb31b283c02148846d66182271d76, type: 3}
+  tileManagerPrefab: {fileID: 1234000771159635203, guid: 0336b4d40469c474b9229a574002fb34, type: 3}
 --- !u!4 &24851927
 Transform:
   m_ObjectHideFlags: 0

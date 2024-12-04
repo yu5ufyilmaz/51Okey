@@ -60,6 +60,15 @@ MonoBehaviour:
   - FreeSeat
   - GenerateTiles
   - ShuffleTiles
+  - RemoveTileFromList
+  - AddTile
+  - SyncTileList
+  - SendTileData
+  - ReceiveTiles
+  - GeneratePlayerTiles
+  - GenerateAndSharePlayerTiles
+  - ReceivePlayerTiles
+  - SyncShuffledTiles
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

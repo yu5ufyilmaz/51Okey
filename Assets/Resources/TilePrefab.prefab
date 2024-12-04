@@ -51,6 +51,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tileImage: {fileID: 1081918049763665644}
+  moveSpeed: 5
 --- !u!225 &5032357142389691761
 CanvasGroup:
   m_ObjectHideFlags: 0

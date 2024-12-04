@@ -16,11 +16,11 @@ public class TileUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
         originalParent = transform.parent;
     }
 
-    public void SetTileData(TileData tileData)
+    public void SetTileData(TileDataInfo tileData)
     {
         if (tileData != null && tileImage != null)
         {
-            tileImage.sprite = tileData.tileSprite;
+           // tileImage.sprite = tileData.tile;
         }
         else
         {

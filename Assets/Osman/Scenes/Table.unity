@@ -122,94 +122,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &122011790
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 122011792}
-  - component: {fileID: 122011793}
-  m_Layer: 0
-  m_Name: OkeyGameManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &122011792
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 122011790}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 444.08252, y: 312.15393, z: -3.428126}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &122011793
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 122011790}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3dfb9775c6b6eb742a8274276a34e784, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  playerPrefab: {fileID: 2306633761159361300, guid: 360cb31b283c02148846d66182271d76, type: 3}
-  spawnPositions:
-  - {fileID: 310720358}
-  - {fileID: 1767459037}
-  - {fileID: 1005441319}
-  - {fileID: 225572201}
-  playerTileContainers:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  spawnIndex: 0
 --- !u!1 &225572200
 GameObject:
   m_ObjectHideFlags: 0
@@ -242,7 +154,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -940, y: 91}
+  m_AnchoredPosition: {x: 19, y: 637}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &274549480
@@ -355,7 +267,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -18, y: -224}
+  m_AnchoredPosition: {x: -14, y: -317}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &359440219
@@ -1336,7 +1248,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -3, y: 491}
+  m_AnchoredPosition: {x: -1242, y: 139}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1079088911
@@ -1454,129 +1366,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!1 &1121277959
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1121277961}
-  - component: {fileID: 1121277960}
-  - component: {fileID: 1121277962}
-  m_Layer: 0
-  m_Name: TileManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1121277960
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1121277959}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0f1c297aac7e1a44f9c5c503bc963568, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  tilePrefab: {fileID: 1914628353354098140, guid: 0123802f9d89da046a73c39e01bb485d, type: 3}
-  playerTileContainer: {fileID: 359440220}
-  tileDataArray:
-  - {fileID: 11400000, guid: c4525ba29b4750342bf8f98c55164b1d, type: 2}
-  - {fileID: 11400000, guid: 8d25dd68d95f269498f3d009460c5925, type: 2}
-  - {fileID: 11400000, guid: 7b91a09d3ff348742a3e5bbe38b8b716, type: 2}
-  - {fileID: 11400000, guid: c0af77dbc0077084794d2ebed52e10d8, type: 2}
-  - {fileID: 11400000, guid: 43ca627346d74294c947370b5d688a0e, type: 2}
-  - {fileID: 11400000, guid: aac60b424abd99a4eaf49993d186b8f8, type: 2}
-  - {fileID: 11400000, guid: 063c5d4ec90be6e4685403779cd7cb11, type: 2}
-  - {fileID: 11400000, guid: 35efb8b29d5fcee45a512ce1f639ca0c, type: 2}
-  - {fileID: 11400000, guid: 09a3ce5d84ad8aa4fbdf0c15cd969996, type: 2}
-  - {fileID: 11400000, guid: 53cf20c843562bd45a3c3f3f8700aa6d, type: 2}
-  - {fileID: 11400000, guid: 618e1ac05ed0f8f458755773f26241c3, type: 2}
-  - {fileID: 11400000, guid: 2f1566ed1035a8d4190a9e48df3add6d, type: 2}
-  - {fileID: 11400000, guid: 005ad0713b5a6b94f864ded24f757457, type: 2}
-  - {fileID: 11400000, guid: e2bd31ff7cc362f4aba1e566bcdf6ce9, type: 2}
-  - {fileID: 11400000, guid: 28c7a9e7e778a214b89132817b749d5c, type: 2}
-  - {fileID: 11400000, guid: f8c79a2b1ed0e4145a6e47cc5a2cde9d, type: 2}
-  - {fileID: 11400000, guid: b1edee0be6bc76e41a9d6284a7839b6d, type: 2}
-  - {fileID: 11400000, guid: 8aeb2285982e5924e84111e69f261b1f, type: 2}
-  - {fileID: 11400000, guid: e84134a530516c04aad23ea548f838c6, type: 2}
-  - {fileID: 11400000, guid: 9860371ce7df40d419227cd031513d23, type: 2}
-  - {fileID: 11400000, guid: b417cfc09be737b4f94f56362fabca0e, type: 2}
-  - {fileID: 11400000, guid: 24e40ff056862994cb16691d1c78214f, type: 2}
-  - {fileID: 11400000, guid: 77c2493e19c3b0e419243349c638a2ce, type: 2}
-  - {fileID: 11400000, guid: be13042316af89f489d5dc52e4d8d69a, type: 2}
-  - {fileID: 11400000, guid: e42755460a33a0442aefd3171b440177, type: 2}
-  - {fileID: 11400000, guid: 8403a7149228c794b86e2151269ff179, type: 2}
-  - {fileID: 11400000, guid: c9cd9d1e9efb5d746b13a0449bfff132, type: 2}
-  - {fileID: 11400000, guid: e3b11f8dd5872104191716db34f31884, type: 2}
-  - {fileID: 11400000, guid: 5c28836bbfbd82e45b9d82aec350bc42, type: 2}
-  - {fileID: 11400000, guid: 4a14accd8783ffe46a1a00486ae436e3, type: 2}
-  - {fileID: 11400000, guid: 6b06be49bb7fb90448e0f779a1f85e6e, type: 2}
-  - {fileID: 11400000, guid: 366f4dfbdeda5804fb924a991bfffae5, type: 2}
-  - {fileID: 11400000, guid: 646664878ab695042bc21d2bcf28cea9, type: 2}
-  - {fileID: 11400000, guid: 7accdeed7bb771c4baed4f1529fb4425, type: 2}
-  - {fileID: 11400000, guid: 8e212a4a2d5b3ec4d9786aa319af3680, type: 2}
-  - {fileID: 11400000, guid: 0526b848c09e68a42940a3487595be9a, type: 2}
-  - {fileID: 11400000, guid: 63e89f6c3413e854abcb2d15e33e2df7, type: 2}
-  - {fileID: 11400000, guid: f117224a2335f5742ae4a0206a80a093, type: 2}
-  - {fileID: 11400000, guid: bfbffd0dee617d542916babae49c853d, type: 2}
-  - {fileID: 11400000, guid: 9cadf1f4f3b68014d9b8e363a88dccd6, type: 2}
-  - {fileID: 11400000, guid: e2eb9d013f669e04690910b5f270443a, type: 2}
-  - {fileID: 11400000, guid: c05eec8a96b57b24e8db0d215a4ca12d, type: 2}
-  - {fileID: 11400000, guid: 4a5cff2788956f2448d9aa46bc375476, type: 2}
-  - {fileID: 11400000, guid: 49dc16fe91c64dc4c89b059c86d5afca, type: 2}
-  - {fileID: 11400000, guid: 88936cb5b47628b47a91d9c55db42952, type: 2}
-  - {fileID: 11400000, guid: 2ef1069cea20b914280bd4dee6f1a57e, type: 2}
-  - {fileID: 11400000, guid: 1facf44d2fa25704d8a8ae83aa73705e, type: 2}
-  - {fileID: 11400000, guid: 267dbe55baa514840882e6f6cf952284, type: 2}
-  - {fileID: 11400000, guid: cdc645ef3d5345b42bd1635671249e0b, type: 2}
-  - {fileID: 11400000, guid: a9dce7523508bd048baa4a2aeb0a9a3c, type: 2}
-  - {fileID: 11400000, guid: ee65c5d0ed189ac4e9ce66142e57f5bb, type: 2}
-  - {fileID: 11400000, guid: 9c61cf882ba5a604584c038ed8811c96, type: 2}
-  - {fileID: 11400000, guid: 147cb4864aae1ad4387dd0b4bb15f552, type: 2}
---- !u!4 &1121277961
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1121277959}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 846.9401, y: 402.2965, z: -7.3712664}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1121277962
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1121277959}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ObservedComponentsFoldoutOpen: 1
-  Group: 0
-  prefixField: -1
-  Synchronization: 3
-  OwnershipTransfer: 0
-  observableSearch: 2
-  ObservedComponents: []
-  sceneViewId: 2
-  InstantiationId: 0
-  isRuntimeInstantiated: 0
 --- !u!1 &1139517739
 GameObject:
   m_ObjectHideFlags: 0
@@ -1881,7 +1670,15 @@ MonoBehaviour:
   - {fileID: 1196127073}
   - {fileID: 1139517740}
   - {fileID: 827903827}
-  tileManager: {fileID: 1121277960}
+  tileDistrubite: {fileID: 0}
+  spawnIndex: 0
+  playerPrefab: {fileID: 2306633761159361300, guid: 360cb31b283c02148846d66182271d76, type: 3}
+  tileManagerPrefab: {fileID: 1234000771159635203, guid: 0336b4d40469c474b9229a574002fb34, type: 3}
+  spawnPositions:
+  - {fileID: 310720358}
+  - {fileID: 1767459037}
+  - {fileID: 1005441319}
+  - {fileID: 225572201}
 --- !u!4 &1237226876
 Transform:
   m_ObjectHideFlags: 0
@@ -2084,7 +1881,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 924, y: 99}
+  m_AnchoredPosition: {x: 1219, y: 103}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1788037697
@@ -5676,6 +5473,4 @@ SceneRoots:
   - {fileID: 1079088916}
   - {fileID: 1788037700}
   - {fileID: 952696956}
-  - {fileID: 122011792}
-  - {fileID: 1121277961}
   - {fileID: 1237226876}

@@ -10,6 +10,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
     [SerializeField] private bool isOpen = true;
     [SerializeField] private bool isVisible = true;
     private int maxPlayers = 4;
+    [SerializeField] private GameObject tileManagerPrefab;
 
 
 
@@ -36,7 +37,6 @@ public class RoomManager : MonoBehaviourPunCallbacks
 
 
         SceneChangeManager.Instance.ChangeScene("Table");
-
     }
 
 

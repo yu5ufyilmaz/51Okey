@@ -1,13 +1,12 @@
+using System.Collections.Generic;
 using Photon.Pun;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UIElements;
 
-public class PlayerSetup : MonoBehaviourPunCallbacks
+public class SetupPlayer : MonoBehaviourPunCallbacks
 {
     public string playerName;
     public int playerQueue;
-    //private TextMeshProUGUI nickNameText;
+    public List<Tiles> playerTilesInfo = new List<Tiles>();
 
 
 
@@ -36,5 +35,37 @@ public class PlayerSetup : MonoBehaviourPunCallbacks
     public void SetPlayerSeat(Vector3 newPosition)
     {
         transform.position = newPosition;
+    }
+
+
+    [PunRPC]
+    public void DistributeTiles(int playerId, List<TileDataInfo> tileDataList)
+    {
+        if (PhotonNetwork.LocalPlayer.ActorNumber == playerId)
+        {
+            List<Tiles> playerTiles = new List<Tiles>();
+            foreach (var tileData in tileDataList)
+            {
+                playerTiles.Add(tileData.ToTile());
+                playerTilesInfo.Add(tileData.ToTile());
+            }
+            Debug.Log("Taşlar başarıyla dağıtıldı.");
+
+            // Taşları UI'de veya oyun alanında gösterebilirsiniz
+        }
+    }
+
+    public void AssignTilesOnce(List<Tiles> tiles)
+    {
+        if (playerTilesInfo.Count > 0)
+        {
+            Debug.LogWarning($"Player {playerName} already has assigned tiles. Skipping re-assignment.");
+            return;
+        }
+
+        playerTilesInfo.AddRange(tiles);
+        Debug.Log($"Assigned {tiles.Count} tiles to player {playerName}.");
+
+        // UI veya diğer güncellemeler yapılabilir
     }
 }
