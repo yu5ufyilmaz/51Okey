@@ -7,6 +7,7 @@ public class TileUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
 {
     private Transform originalParent;
     private CanvasGroup canvasGroup;
+    string spritePath = "Sprites/Tiles";
     public Image tileImage;
     public float moveSpeed = 5f; // Hareket hızı ayarı
 
@@ -16,11 +17,28 @@ public class TileUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
         originalParent = transform.parent;
     }
 
-    public void SetTileData(TileDataInfo tileData)
+    public void SetTileData(Tiles tileData)
     {
+
         if (tileData != null && tileImage != null)
         {
-           // tileImage.sprite = tileData.tile;
+            Debug.Log("TileDataInfo: " + tileImage.sprite.name + " yüklendi.");
+            // Sprite adını oluştur
+            string spriteName = tileData.color.ToString() + "_" + tileData.number.ToString();
+
+            // Sprite'ı Resources klasöründen yükle
+            Sprite loadedSprite = Resources.Load<Sprite>($"{spritePath}/{spriteName}.jpg");
+
+            // Eğer sprite başarıyla yüklendiyse, Image bileşenine ekle
+            if (loadedSprite != null)
+            {
+                tileImage.sprite = loadedSprite;
+                Debug.Log("TileData: " + spriteName + " yüklendi.");
+            }
+            else
+            {
+                Debug.LogError($"Sprite bulunamadı: {spritePath}/{spriteName}");
+            }
         }
         else
         {

@@ -119,7 +119,7 @@ public class TileManager : MonoBehaviourPunCallbacks
             TileUI tileUI = tileInstance.GetComponent<TileUI>();
             if (tileUI != null)
             {
-                tileUI.SetTileData(tileDataInfo);
+                //tileUI.SetTileData(tileDataInfo);
             }
             else
             {

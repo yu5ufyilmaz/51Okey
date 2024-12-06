@@ -23,6 +23,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
 
 
 
+
     private void Awake()
     {
         TileSerialization.RegisterCustomTypes(); // Custom serialization for TileDataInfo

@@ -9,14 +9,15 @@ using Random = UnityEngine.Random;
 
 public class TileDistrubite : MonoBehaviourPunCallbacks
 {
+    public GameObject tilePrefab; // Tile prefab
     public List<Tiles> allTiles = new List<Tiles>();
+    [Header("Player Tiles")]
     public List<Tiles> playerTiles1 = new List<Tiles>();
     public List<Tiles> playerTiles2 = new List<Tiles>();
     public List<Tiles> playerTiles3 = new List<Tiles>();
     public List<Tiles> playerTiles4 = new List<Tiles>();
     public Transform playerTileContainer; // Tile container for player
     private Transform[] playerTileContainers; // Player tile placeholders
-    public Dictionary<int, GameObject> playerObjects = new Dictionary<int, GameObject>();
     #region Generate and Shuffle Tiles
     private void Awake()
     {
@@ -94,9 +95,12 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         // İlk oyuncuya 15, diğer oyunculara 14 taş verilecek
         int tilesForFirstPlayer = 15;
         int tilesForOtherPlayers = 14;
+        Player player = PhotonNetwork.LocalPlayer;
+        player.CustomProperties.TryGetValue("SeatNumber", out object seatNumber);
 
         for (int i = 0; i < 4; i++)
         {
+            Debug.Log("Player: " + seatNumber);
             if (i == 0)
             {
                 for (int j = 0; j < tilesForFirstPlayer; j++)
@@ -110,6 +114,11 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                     Tiles tile = allTiles[0];
                     allTiles.RemoveAt(0);
                     playerTiles1.Add(tile);
+                    if ((int)seatNumber == 1)
+                    {
+                        Debug.Log("Player 1");
+                        InstantiateTiles(j, tile);
+                    }
                 }
             }
             else
@@ -130,18 +139,50 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                     {
                         case 1:
                             playerTiles2.Add(tile);
+                            if ((int)seatNumber == 2)
+                            {
+                                Debug.Log("Player 2");
+                                InstantiateTiles(j, tile);
+                            }
                             break;
                         case 2:
                             playerTiles3.Add(tile);
+                            Debug.Log("Player 3");
+                            if ((int)seatNumber == 3)
+                            {
+                                InstantiateTiles(j, tile);
+                            }
                             break;
                         case 3:
                             playerTiles4.Add(tile);
+                            Debug.Log("Player 4");
+                            if ((int)seatNumber == 4)
+                            {
+                                InstantiateTiles(j, tile);
+                            }
+
                             break;
                     }
+
                 }
             }
+
         }
 
+    }
+    void InstantiateTiles(int tilecount, Tiles tile)
+    {
+            GameObject tileInstance = Instantiate(tilePrefab, playerTileContainers[tilecount]);
+
+            TileUI tileUI = tileInstance.GetComponent<TileUI>();
+            if (tileUI != null)
+            {
+                tileUI.SetTileData(tile);
+            }
+            else
+            {
+                Debug.LogError("TileUI component missing on tilePrefab.");
+            }
     }
 
 
