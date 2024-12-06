@@ -47,6 +47,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   allTiles: []
+  playerTiles1: []
+  playerTiles2: []
+  playerTiles3: []
+  playerTiles4: []
   playerTileContainer: {fileID: 0}
 --- !u!114 &8801788710803842167
 MonoBehaviour:

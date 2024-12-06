@@ -10,6 +10,10 @@ using Random = UnityEngine.Random;
 public class TileDistrubite : MonoBehaviourPunCallbacks
 {
     public List<Tiles> allTiles = new List<Tiles>();
+    public List<Tiles> playerTiles1 = new List<Tiles>();
+    public List<Tiles> playerTiles2 = new List<Tiles>();
+    public List<Tiles> playerTiles3 = new List<Tiles>();
+    public List<Tiles> playerTiles4 = new List<Tiles>();
     public Transform playerTileContainer; // Tile container for player
     private Transform[] playerTileContainers; // Player tile placeholders
     public Dictionary<int, GameObject> playerObjects = new Dictionary<int, GameObject>();
@@ -91,99 +95,52 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         int tilesForFirstPlayer = 15;
         int tilesForOtherPlayers = 14;
 
-        // Check if all players have seats assigned
-        foreach (var player in PhotonNetwork.PlayerList)
+        for (int i = 0; i < 4; i++)
         {
-            if (!player.CustomProperties.ContainsKey("SeatNumber"))
+            if (i == 0)
             {
-                Debug.LogWarning($"Player {player.NickName} does not have a seat assigned. Distribution aborted.");
-                return;
-            }
-        }
-        // İlk oyuncuyu belirle
-        Player firstPlayer = PhotonNetwork.PlayerList[0]; // İlk oyuncu
-        int firstPlayerActorNumber = firstPlayer.ActorNumber;
-
-        // İlk oyuncuya taşları dağıt
-        List<Tiles> assignedTilesForFirstPlayer = new List<Tiles>();
-        for (int j = 0; j < tilesForFirstPlayer; j++)
-        {
-            if (allTiles.Count == 0)
-            {
-                Debug.LogWarning("No more tiles left to distribute!");
-                return;
-            }
-
-            Tiles tile = allTiles[0];
-            allTiles.RemoveAt(0);
-            assignedTilesForFirstPlayer.Add(tile);
-        }
-
-        // İlk oyuncunun nesnesini bul
-        GameObject firstPlayerObject = PhotonView.Find(firstPlayerActorNumber)?.gameObject;
-        if (firstPlayerObject == null)
-        {
-            Debug.LogError($"Player object not found for ActorNumber {firstPlayerActorNumber}");
-            return;
-        }
-
-        // İlk oyuncuya taşları ata
-        SetupPlayer firstPlayerSetup = firstPlayerObject.GetComponent<SetupPlayer>();
-        if (firstPlayerSetup == null)
-        {
-            Debug.LogError($"SetupPlayer component not found on player object {firstPlayerObject.name}");
-            return;
-        }
-
-        firstPlayerSetup.AssignTilesOnce(assignedTilesForFirstPlayer);
-        Debug.Log($"Tiles distributed to Player {firstPlayer.NickName}: {assignedTilesForFirstPlayer.Count} tiles.");
-
-        // Diğer oyunculara taşları dağıt
-        foreach (var player in PhotonNetwork.PlayerList)
-        {
-            if (player.ActorNumber == firstPlayerActorNumber) // İlk oyuncuyu atla
-            {
-                continue;
-            }
-
-            int actorNumber = player.ActorNumber;
-
-            // Prepare tiles for the player
-            List<Tiles> assignedTiles = new List<Tiles>();
-            for (int j = 0; j < tilesForOtherPlayers; j++)
-            {
-                if (allTiles.Count == 0)
+                for (int j = 0; j < tilesForFirstPlayer; j++)
                 {
-                    Debug.LogWarning("No more tiles left to distribute!");
-                    return;
+                    if (allTiles.Count == 0)
+                    {
+                        Debug.LogWarning("No more tiles left to distribute!");
+                        return;
+                    }
+
+                    Tiles tile = allTiles[0];
+                    allTiles.RemoveAt(0);
+                    playerTiles1.Add(tile);
                 }
-
-                Tiles tile = allTiles[0];
-                allTiles.RemoveAt(0);
-                assignedTiles.Add(tile);
             }
-
-            // Find player object
-            GameObject playerObject = PhotonView.Find(actorNumber)?.gameObject;
-            if (playerObject == null)
+            else
             {
-                Debug.LogError($"Player object not found for ActorNumber {actorNumber}");
-                continue;
-            }
 
-            // Assign tiles via SetupPlayer
-            SetupPlayer setupPlayer = playerObject.GetComponent<SetupPlayer>();
-            if (setupPlayer == null)
-            {
-                Debug.LogError($"SetupPlayer component not found on player object {playerObject.name}. Please ensure it is attached to the correct player prefab.");
-                continue;
-            }
+                for (int j = 0; j < tilesForOtherPlayers; j++)
+                {
+                    if (allTiles.Count == 0)
+                    {
+                        Debug.LogWarning("No more tiles left to distribute!");
+                        return;
+                    }
 
-            setupPlayer.AssignTilesOnce(assignedTiles);
-            Debug.Log($"Tiles distributed to Player {player.NickName}: {assignedTiles.Count} tiles.");
+                    Tiles tile = allTiles[0];
+                    allTiles.RemoveAt(0);
+
+                    switch (i)
+                    {
+                        case 1:
+                            playerTiles2.Add(tile);
+                            break;
+                        case 2:
+                            playerTiles3.Add(tile);
+                            break;
+                        case 3:
+                            playerTiles4.Add(tile);
+                            break;
+                    }
+                }
+            }
         }
-
-
 
     }
 

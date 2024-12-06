@@ -37,24 +37,6 @@ public class SetupPlayer : MonoBehaviourPunCallbacks
         transform.position = newPosition;
     }
 
-
-    [PunRPC]
-    public void DistributeTiles(int playerId, List<TileDataInfo> tileDataList)
-    {
-        if (PhotonNetwork.LocalPlayer.ActorNumber == playerId)
-        {
-            List<Tiles> playerTiles = new List<Tiles>();
-            foreach (var tileData in tileDataList)
-            {
-                playerTiles.Add(tileData.ToTile());
-                playerTilesInfo.Add(tileData.ToTile());
-            }
-            Debug.Log("Taşlar başarıyla dağıtıldı.");
-
-            // Taşları UI'de veya oyun alanında gösterebilirsiniz
-        }
-    }
-
     public void AssignTilesOnce(List<Tiles> tiles)
     {
         if (playerTilesInfo.Count > 0)
