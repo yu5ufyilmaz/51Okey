@@ -168,7 +168,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                     playerTiles1.Add(tile);
                     if ((int)seatNumber == 1)
                     {
-                        Debug.Log("Player 1");
+                        //Debug.Log("Player 1");
                         InstantiateTiles(j, tile);
                     }
                 }
@@ -193,13 +193,13 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                             playerTiles2.Add(tile);
                             if ((int)seatNumber == 2)
                             {
-                                Debug.Log("Player 2");
+                                //Debug.Log("Player 2");
                                 InstantiateTiles(j, tile);
                             }
                             break;
                         case 2:
                             playerTiles3.Add(tile);
-                            Debug.Log("Player 3");
+                            //Debug.Log("Player 3");
                             if ((int)seatNumber == 3)
                             {
                                 InstantiateTiles(j, tile);
@@ -207,7 +207,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                             break;
                         case 3:
                             playerTiles4.Add(tile);
-                            Debug.Log("Player 4");
+                            //Debug.Log("Player 4");
                             if ((int)seatNumber == 4)
                             {
                                 InstantiateTiles(j, tile);

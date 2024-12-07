@@ -30,7 +30,7 @@ public class TileUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
                 spriteName = tileData.color.ToString() + "_" + tileData.number.ToString();
 
             // Yüklenmeye çalışılan sprite yolunu logla
-            Debug.Log($"Yüklenmeye çalışılan sprite: {spritePath}/{spriteName}");
+            //Debug.Log($"Yüklenmeye çalışılan sprite: {spritePath}/{spriteName}");
 
             // Sprite'ı Resources klasöründen yükle
 
@@ -40,7 +40,7 @@ public class TileUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
             if (loadedSprite != null)
             {
                 tileImage.sprite = loadedSprite;
-                Debug.Log("TileData: " + spriteName + " yüklendi.");
+               // Debug.Log("TileData: " + spriteName + " yüklendi.");
             }
             else
             {
