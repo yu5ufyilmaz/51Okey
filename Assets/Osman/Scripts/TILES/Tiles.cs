@@ -1,7 +1,7 @@
 using UnityEngine;
 
 public enum TileColor {Red,Blue,Black,Green}
-public enum TileType {Number,Joker}
+public enum TileType {Number,Joker,FakeJoker}
 
 [System.Serializable]
 public class Tiles

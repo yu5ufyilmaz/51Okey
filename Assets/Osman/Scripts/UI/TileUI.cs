@@ -2,12 +2,14 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using System.Collections;
+using UnityEngine.Tilemaps;
 
 public class TileUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     private Transform originalParent;
     private CanvasGroup canvasGroup;
     string spritePath = "Sprites/Tiles";
+    string spriteName;
     public Image tileImage;
     public float moveSpeed = 5f; // Hareket hızı ayarı
 
@@ -19,15 +21,20 @@ public class TileUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
 
     public void SetTileData(Tiles tileData)
     {
-
         if (tileData != null && tileImage != null)
         {
-            Debug.Log("TileDataInfo: " + tileImage.sprite.name + " yüklendi.");
             // Sprite adını oluştur
-            string spriteName = tileData.color.ToString() + "_" + tileData.number.ToString();
+            if (tileData.type == TileType.FakeJoker)
+                spriteName = "FakeJoker";
+            else
+                spriteName = tileData.color.ToString() + "_" + tileData.number.ToString();
+
+            // Yüklenmeye çalışılan sprite yolunu logla
+            Debug.Log($"Yüklenmeye çalışılan sprite: {spritePath}/{spriteName}");
 
             // Sprite'ı Resources klasöründen yükle
-            Sprite loadedSprite = Resources.Load<Sprite>($"{spritePath}/{spriteName}.jpg");
+
+            Sprite loadedSprite = Resources.Load<Sprite>($"{spritePath}/{spriteName}");
 
             // Eğer sprite başarıyla yüklendiyse, Image bileşenine ekle
             if (loadedSprite != null)

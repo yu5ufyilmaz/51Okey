@@ -51,7 +51,6 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         //List<Tiles> playerTiles = new List<Tiles>();
         foreach (TileColor color in Enum.GetValues(typeof(TileColor)))
         {
-
             for (int i = 1; i <= 13; i++)
             {
                 // Add two copies of each tile
@@ -59,10 +58,20 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 allTiles.Add(new Tiles(color, i, TileType.Number));
             }
         }
+        AddFakeJokerTiles();
+    }
+    private void AddFakeJokerTiles()
+    {
+        // İki sahte okey taşı ekle
+        Tiles fakeJoker1 = new Tiles(TileColor.Green, 1, TileType.FakeJoker); // Renk None, numara 1
+        Tiles fakeJoker2 = new Tiles(TileColor.Green, 2, TileType.FakeJoker); // Renk None, numara 2
 
+        allTiles.Add(fakeJoker1);
+        allTiles.Add(fakeJoker2);
+
+        Debug.Log("İki sahte okey taşı eklendi: " + fakeJoker1.number + ", " + fakeJoker2.number);
     }
 
-    [PunRPC]
     public void ShuffleTiles()
     {
         Debug.Log("Shuffling tiles...");
@@ -74,7 +83,50 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             allTiles[randomIndex] = temp;
         }
 
+        // Joker taşlarını belirle
+
+        SetIndicatorTile();
+
         // Karıştırılmış listeyi tüm istemcilere ilet
+
+    }
+    private void SetIndicatorTile()
+    {
+        if (allTiles.Count == 0) return;
+
+        // İlk taşımızı gösterge taşı olarak seç
+        Tiles indicatorTile = allTiles[0];
+        allTiles.RemoveAt(0); // Taşı listeden çıkar
+
+        Debug.Log("Gösterge taşımız budur: " + indicatorTile.color + " " + indicatorTile.number);
+
+        // Gösterge taşının bir üst numarasını bul
+        int upperNumber = indicatorTile.number + 1;
+        if (upperNumber > 13)
+        {
+            upperNumber = 1; // 13 ise 1 olacak
+        }
+
+        // Sahte okey taşlarını güncelle
+        UpdateFakeJokerTiles(upperNumber, indicatorTile.color);
+    }
+    private void UpdateFakeJokerTiles(int upperNumber, TileColor color)
+    {
+        foreach (var tile in allTiles)
+        {
+            // Eğer sahte okey taşları listede varsa ve numarası üst numaraya eşitse, tipini joker yap
+            if (tile.type == TileType.Number && tile.number == upperNumber && tile.color == color)
+            {
+                tile.type = TileType.Joker; // Joker taşını ayarla
+                tile.color = color;
+                Debug.Log("Sahte okey taşı güncellendi: " + tile.color + " " + tile.number + " -> Joker taşına dönüştürüldü.");
+            }
+            else if (tile.type == TileType.FakeJoker)
+            {
+                tile.color = color;
+                tile.number = upperNumber;
+            }
+        }
         photonView.RPC("SyncShuffledTiles", RpcTarget.All, allTiles.ToArray());
     }
 
@@ -172,17 +224,17 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     }
     void InstantiateTiles(int tilecount, Tiles tile)
     {
-            GameObject tileInstance = Instantiate(tilePrefab, playerTileContainers[tilecount]);
+        GameObject tileInstance = Instantiate(tilePrefab, playerTileContainers[tilecount]);
 
-            TileUI tileUI = tileInstance.GetComponent<TileUI>();
-            if (tileUI != null)
-            {
-                tileUI.SetTileData(tile);
-            }
-            else
-            {
-                Debug.LogError("TileUI component missing on tilePrefab.");
-            }
+        TileUI tileUI = tileInstance.GetComponent<TileUI>();
+        if (tileUI != null)
+        {
+            tileUI.SetTileData(tile);
+        }
+        else
+        {
+            Debug.LogError("TileUI component missing on tilePrefab.");
+        }
     }
 
 
