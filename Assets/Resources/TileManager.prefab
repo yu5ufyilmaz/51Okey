@@ -53,6 +53,9 @@ MonoBehaviour:
   playerTiles3: []
   playerTiles4: []
   playerTileContainer: {fileID: 0}
+  dropTileContainer: {fileID: 0}
+  indicatorTileContainer: {fileID: 0}
+  middleTileContainer: {fileID: 0}
 --- !u!114 &8801788710803842167
 MonoBehaviour:
   m_ObjectHideFlags: 0

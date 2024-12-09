@@ -3,6 +3,7 @@ using Photon.Realtime;
 using UnityEngine;
 using System.Collections.Generic;
 using TMPro;
+using System.Collections;
 
 public class SeatManager : MonoBehaviourPunCallbacks
 {
@@ -222,23 +223,63 @@ public class SeatManager : MonoBehaviourPunCallbacks
     }
     #endregion
     #region Starting Game
+    public GameObject[] imageGameObjects;
     private void StartGame()
     {
-        if (gameIsStart == false)
+        if (!gameIsStart)
         {
             if (PhotonNetwork.PlayerList.Length == 4)
             {
-                // Check if all players are assigned seat
+                // Check if all players are assigned a seat
                 if (tileDistrubite != null && PhotonNetwork.IsMasterClient)
                 {
                     Debug.Log(PhotonNetwork.LocalPlayer.NickName + " is the master client.");
-                    tileDistrubite.ShuffleTiles();
-                    //tileDistrubite.photonView.RPC("ShuffleTiles", RpcTarget.AllBuffered);
-                    gameIsStart = true;
+                    StartCoroutine(CountdownAndShuffle());
                 }
-                //tileDistrubite.photonView.RPC("GenerateAndSharePlayerTiles", RpcTarget.AllBuffered);
-                //tileDistrubite.DistributeTilesToAllPlayers();}
             }
+        }
+    }
+
+    private IEnumerator CountdownAndShuffle()
+    {
+        // Countdown from 3 to 0
+        for (int i = 3; i > 0; i--)
+        {
+            Debug.Log($"Countdown: {i}");
+            UpdateImageStates(i); // Update image states for the current countdown number
+            yield return new WaitForSeconds(1f); // Wait for 1 second
+        }
+
+        // After countdown, shuffle the tiles
+        tileDistrubite.ShuffleTiles();
+        gameIsStart = true; // Set the game as started
+    }
+
+    private void UpdateImageStates(int countdownValue)
+    {
+        // Activate the corresponding image for the countdown value
+        for (int i = 0; i < imageGameObjects.Length; i++)
+        {
+            if (i == countdownValue - 1) // Activate the image corresponding to the countdown value
+            {
+                imageGameObjects[i].SetActive(true);
+            }
+            else
+            {
+                imageGameObjects[i].SetActive(false);
+            }
+        }
+
+        // Optionally, deactivate all images after a short delay
+        StartCoroutine(DeactivateImagesAfterDelay());
+    }
+
+    private IEnumerator DeactivateImagesAfterDelay()
+    {
+        yield return new WaitForSeconds(1f); // Wait for 1 second
+        for (int i = 0; i < imageGameObjects.Length; i++)
+        {
+            //imageGameObjects[i].SetActive(false); // Deactivate all images
         }
     }
     #endregion

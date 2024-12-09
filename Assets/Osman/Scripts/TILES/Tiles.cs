@@ -17,9 +17,5 @@ public class Tiles
         this.type = type;
     }
 
-    public TileDataInfo ToTileDataInfo()
-    {
-        return new TileDataInfo(color, number, type);
-    }
 }
 

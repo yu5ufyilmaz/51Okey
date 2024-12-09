@@ -1,8 +1,8 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.UI;
-using System.Collections;
 using UnityEngine.Tilemaps;
+using UnityEngine.UI;
 
 public class TileUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
@@ -40,7 +40,6 @@ public class TileUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
             if (loadedSprite != null)
             {
                 tileImage.sprite = loadedSprite;
-               // Debug.Log("TileData: " + spriteName + " yüklendi.");
             }
             else
             {

@@ -11,21 +11,32 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 {
     public GameObject tilePrefab; // Tile prefab
     public List<Tiles> allTiles = new List<Tiles>();
+
     [Header("Player Tiles")]
     public List<Tiles> playerTiles1 = new List<Tiles>();
     public List<Tiles> playerTiles2 = new List<Tiles>();
     public List<Tiles> playerTiles3 = new List<Tiles>();
     public List<Tiles> playerTiles4 = new List<Tiles>();
+
     public Transform playerTileContainer; // Tile container for player
     private Transform[] playerTileContainers; // Player tile placeholders
+    public Transform dropTileContainer; // Tile container for player
+    private Transform[] dropTileContainers;
+    public Transform indicatorTileContainer;
+    public Transform middleTileContainer;
+
     #region Generate and Shuffle Tiles
     private void Awake()
     {
         TileSerialization.RegisterCustomTypes(); // Custom serialization for TileDataInfo
     }
+
     private void Start()
     {
+        indicatorTileContainer = GameObject.Find("IndicatorTileContainer").transform;
+        dropTileContainer = GameObject.Find("DropTileContainers").transform;
         playerTileContainer = GameObject.Find("PlayerTileContainer").transform;
+        middleTileContainer = GameObject.Find("MiddleTileContainer").transform;
         InitializePlaceholders();
         GeneratePlayerTiles();
     }
@@ -39,6 +50,18 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         for (int i = 0; i < placeholderCount; i++)
         {
             playerTileContainers[i] = playerTileContainer.GetChild(i);
+        }
+        InitializeDropPlaceholders();
+    }
+
+    private void InitializeDropPlaceholders()
+    {
+        int placeholderCount = dropTileContainer.childCount;
+        dropTileContainers = new Transform[placeholderCount];
+
+        for (int i = 0; i < placeholderCount; i++)
+        {
+            dropTileContainers[i] = dropTileContainer.GetChild(i);
         }
     }
 
@@ -60,6 +83,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         }
         AddFakeJokerTiles();
     }
+
     private void AddFakeJokerTiles()
     {
         // İki sahte okey taşı ekle
@@ -88,15 +112,28 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         SetIndicatorTile();
 
         // Karıştırılmış listeyi tüm istemcilere ilet
-
     }
+
     private void SetIndicatorTile()
     {
-        if (allTiles.Count == 0) return;
+        if (allTiles.Count == 0)
+            return;
 
         // İlk taşımızı gösterge taşı olarak seç
         Tiles indicatorTile = allTiles[0];
-        allTiles.RemoveAt(0); // Taşı listeden çıkar
+        allTiles.RemoveAt(0);
+        GameObject indicatorTileObject = Instantiate(tilePrefab, indicatorTileContainer);
+        TileUI tileUI = indicatorTileObject.GetComponent<TileUI>();
+        if (tileUI != null)
+        {
+            tileUI.SetTileData(indicatorTile);
+        }
+        else
+        {
+            Debug.LogError("TileUI component missing on tilePrefab.");
+        }
+        
+
 
         Debug.Log("Gösterge taşımız budur: " + indicatorTile.color + " " + indicatorTile.number);
 
@@ -110,6 +147,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         // Sahte okey taşlarını güncelle
         UpdateFakeJokerTiles(upperNumber, indicatorTile.color);
     }
+
     private void UpdateFakeJokerTiles(int upperNumber, TileColor color)
     {
         foreach (var tile in allTiles)
@@ -119,7 +157,13 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             {
                 tile.type = TileType.Joker; // Joker taşını ayarla
                 tile.color = color;
-                Debug.Log("Sahte okey taşı güncellendi: " + tile.color + " " + tile.number + " -> Joker taşına dönüştürüldü.");
+                Debug.Log(
+                    "Sahte okey taşı güncellendi: "
+                        + tile.color
+                        + " "
+                        + tile.number
+                        + " -> Joker taşına dönüştürüldü."
+                );
             }
             else if (tile.type == TileType.FakeJoker)
             {
@@ -137,7 +181,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         allTiles.AddRange(shuffledTiles);
         DistributeTilesToAllPlayers();
     }
-    #endregion 
+    #endregion
 
     #region Distrubite Tiles
 
@@ -147,6 +191,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         // İlk oyuncuya 15, diğer oyunculara 14 taş verilecek
         int tilesForFirstPlayer = 15;
         int tilesForOtherPlayers = 14;
+
         Player player = PhotonNetwork.LocalPlayer;
         player.CustomProperties.TryGetValue("SeatNumber", out object seatNumber);
 
@@ -175,7 +220,6 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             }
             else
             {
-
                 for (int j = 0; j < tilesForOtherPlayers; j++)
                 {
                     if (allTiles.Count == 0)
@@ -215,13 +259,12 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
                             break;
                     }
-
                 }
             }
-
         }
-
+        PlaceRemainingTilesInMiddleContainer();
     }
+
     void InstantiateTiles(int tilecount, Tiles tile)
     {
         GameObject tileInstance = Instantiate(tilePrefab, playerTileContainers[tilecount]);
@@ -237,7 +280,81 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         }
     }
 
+    private void PlaceRemainingTilesInMiddleContainer()
+    {
+        for (int i = 0; i < allTiles.Count; i++)
+        {
+            GameObject tileInstance = Instantiate(tilePrefab, middleTileContainer);
+        }
+    }
 
+
+    #endregion
+
+    #region GamePlay
+    /*public void DrawTileFromLeftOrCenter()
+    {
+        Player player = PhotonNetwork.LocalPlayer;
+        player.CustomProperties.TryGetValue("SeatNumber", out object seatNumber);
+        List<Tiles> sourceTiles = new List<Tiles>();
+
+        // Sol veya merkezden taş çekme
+        if ((int)seatNumber == 1) // Örnek: 1. oyuncu
+        {
+            // Sol drop container'dan veya merkezden taş çek
+            if (playerTiles1.Count < 15) // Eğer 15 taş yoksa
+            {
+                if (dropTileContainers[0].childCount > 0) // Sol container'da taş varsa
+                {
+                    //Tiles tile = GetTileFromContainer(dropTileContainers[0]);
+                    //playerTiles1.Add(tile);
+                    //InstantiateTiles(playerTiles1.Count - 1, tile);
+                }
+                else if (dropTileContainers[1].childCount > 0) // Merkez container'da taş varsa
+                {
+                    //Tiles tile = GetTileFromContainer(dropTileContainers[1]);
+                    //playerTiles1.Add(tile);
+                    //InstantiateTiles(playerTiles1.Count - 1, tile);
+                }
+            }
+        }
+    }*/
+
+
+    public void DropExcessTile()
+    {
+        Player player = PhotonNetwork.LocalPlayer;
+        player.CustomProperties.TryGetValue("SeatNumber", out object seatNumber);
+
+        if (playerTiles1.Count == 15) // Eğer 15 taş varsa
+        {
+            Tiles excessTile = playerTiles1[14]; // Fazla taş
+            playerTiles1.RemoveAt(14); // Fazla taşı elden çıkar
+
+            // Sağdaki drop container'a bırak
+            if (dropTileContainers[2].childCount < 1) // Sağ container boşsa
+            {
+                GameObject tileInstance = Instantiate(tilePrefab, dropTileContainers[2]);
+                TileUI tileUI = tileInstance.GetComponent<TileUI>();
+                if (tileUI != null)
+                {
+                    tileUI.SetTileData(excessTile);
+                }
+                else
+                {
+                    Debug.LogError("TileUI component missing on tilePrefab.");
+                }
+            }
+        }
+    }
+    /*
+    private Tiles GetTileFromContainer(Transform container)
+    {
+        // Container'dan bir taş al
+        Tiles tile = container.GetChild(0).GetComponent<TileUI>().GetTileData();
+        Destroy(container.GetChild(0).gameObject); // Taşı yok et
+        return tile;
+    }*/
 
     #endregion
 }
