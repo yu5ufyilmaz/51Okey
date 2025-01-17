@@ -12,7 +12,7 @@ public class TileUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
     string spriteName;
     public Image tileImage;
     public float moveSpeed = 5f; // Hareket hızı ayarı
-
+    #region Tile Set UI
     private void Awake()
     {
         canvasGroup = GetComponent<CanvasGroup>();
@@ -51,9 +51,13 @@ public class TileUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
             Debug.LogError("TileData veya TileImage eksik!");
         }
     }
-
+    #endregion
+    #region Tile Drag
+    public bool isIndicatorTile = false; // Yeni değişken
     public void OnBeginDrag(PointerEventData eventData)
     {
+        if (isIndicatorTile) return; // Eğer bu bir gösterge taşıysa, hareket etme
+
         originalParent = transform.parent;
         canvasGroup.blocksRaycasts = false;
         transform.SetParent(transform.root, true);
@@ -61,11 +65,15 @@ public class TileUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
 
     public void OnDrag(PointerEventData eventData)
     {
+        if (isIndicatorTile) return; // Eğer bu bir gösterge taşıysa, hareket etme
+
         transform.position = Input.mousePosition;
     }
 
     public void OnEndDrag(PointerEventData eventData)
     {
+        if (isIndicatorTile) return; // Eğer bu bir gösterge taşıysa, hareket etme
+
         canvasGroup.blocksRaycasts = true;
 
         Transform parentContainer = originalParent.parent;
@@ -168,4 +176,5 @@ public class TileUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
         tile.localPosition = Vector3.zero;
         tile.localScale = Vector3.one;
     }
+    #endregion
 }
