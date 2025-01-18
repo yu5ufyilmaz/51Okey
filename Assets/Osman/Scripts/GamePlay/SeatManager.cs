@@ -67,7 +67,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
             // Remove the assigned seat
             // Use RPC to assign the seat to the player on all clients
             photonView.RPC("AssignSeatToPlayer", RpcTarget.AllBuffered, newPlayer.ActorNumber, seatNumber);
-        }
+        }                   
         StartGame();
         UpdateSeatDisplay(); // Update the seat display for the local player
     }

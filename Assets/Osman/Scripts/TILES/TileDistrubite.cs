@@ -12,6 +12,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 {
     public GameObject tilePrefab; // Tile prefab
     public List<Tiles> allTiles = new List<Tiles>();
+    public List<int> availableQueues = new List<int> { 1, 2, 3, 4 };
 
     [Header("Player Tiles")]
     public List<Tiles> playerTiles1 = new List<Tiles>();
@@ -179,6 +180,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             }
         }
         photonView.RPC("SyncShuffledTiles", RpcTarget.All, allTiles.ToArray());
+        AssignPlayerQueue();
     }
     #endregion
     [PunRPC]
@@ -186,53 +188,73 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     {
         allTiles.Clear();
         allTiles.AddRange(shuffledTiles);
-        AssignPlayerQueue();
+
         DistributeTilesToAllPlayers();
-        
+
     }
     #endregion
 
     #region Assign Player Queue
+
+
     public void AssignPlayerQueue()
     {
-        // Mevcut oyuncuları al
-        var players = PhotonNetwork.CurrentRoom.Players.Values.ToList();
-
-        // Rastgele bir oyuncu seç
-        int randomIndex = Random.Range(0, players.Count);
-        Player startingPlayer = players[randomIndex];
-        
-        // Seçilen oyuncuya PlayerQue değerini 1 olarak ata
-        startingPlayer.SetCustomProperties(new ExitGames.Client.Photon.Hashtable { { "PlayerQue", 1 } });
-        Debug.Log("Oyuncu " + startingPlayer.NickName + " sırası: " + 1);
-        // Diğer oyunculara sırasıyla 2, 3, 4 değerlerini ata
-        for (int i = 0; i < players.Count; i++)
+        if (PhotonNetwork.IsMasterClient)
         {
-            if (players[i] != startingPlayer)
+            var players = PhotonNetwork.CurrentRoom.Players.Values.ToList();
+
+            // Rastgele bir oyuncu seç
+            int randomIndex = Random.Range(0, players.Count);
+            Player selectedPlayer = players[randomIndex];
+
+            // Seçilen oyuncunun koltuk numarasını al
+            selectedPlayer.CustomProperties.TryGetValue("SeatNumber", out object seatNumberValue);
+            int selectedPlayerSeat = (int)seatNumberValue;
+
+            // Seçilen oyuncuya PlayerQue değerini 1 olarak ata
+            selectedPlayer.SetCustomProperties(new ExitGames.Client.Photon.Hashtable { { "PlayerQue", 1 } });
+            Debug.Log("Seçilen oyuncu " + selectedPlayer.NickName + " sırası: 1");
+
+            // Diğer oyunculara sıraları atama
+            int queueValue = 2; // 2. sıradan başla
+
+            // Oyuncuların sıralarını ayarlama
+            for (int i = 0; i < players.Count; i++)
             {
-                int queueValue = (i < randomIndex) ? i + 2 : i + 1; // Seçilen oyuncudan önceki oyunculara 2, 3, ... atama
-                players[i].SetCustomProperties(new ExitGames.Client.Photon.Hashtable { { "PlayerQue", queueValue } });
-                Debug.Log("Oyuncu " + players[i].NickName + " sırası: " + queueValue);
+                Player player = players[i];
+
+                // Seçilen oyuncu hariç diğer oyuncular için
+                if (player != selectedPlayer)
+                {
+                    // Koltuk numarasını al
+                    player.CustomProperties.TryGetValue("SeatNumber", out object otherSeatNumberValue);
+                    int otherSeatNumber = (int)otherSeatNumberValue;
+
+                    // Seçilen oyuncunun koltuk numarasına göre sırayı ayarla
+                    int position = (selectedPlayerSeat + (i % (players.Count - 1))) % players.Count;
+
+                    // Eğer pozisyon 0 ise, bu 1. koltuk
+                    if (position == 0)
+                    {
+                        position = players.Count; // 4. koltuk
+                    }
+
+                    player.SetCustomProperties(new ExitGames.Client.Photon.Hashtable { { "PlayerQue", queueValue } });
+                    Debug.Log("Oyuncu " + player.NickName + " sırası: " + queueValue);
+                    queueValue++;
+                }
             }
         }
     }
-    public int RandomQue()
-    {
-        // Mevcut oyuncu sayısını al
-        int playerCount = PhotonNetwork.CurrentRoom.PlayerCount;
 
-        // Rastgele bir oyuncu sırası seç
-        return Random.Range(1, playerCount + 1); // 1 ile playerCount arasında bir değer döndür
-    }
+
     #endregion
     #region Distrubite Tiles
     public void DistributeTilesToAllPlayers()
     {
         // İlk oyuncuya 15, diğer oyunculara 14 taş verilecek
         int tilesForFirstPlayer = 15;
-        int tilesForOtherPlayers = 14;
-
-        // Mevcut oyuncuları al
+        int tilesForOtherPlayers = 14;// Mevcut oyuncuları al
         var players = PhotonNetwork.CurrentRoom.Players.Values.ToList();
 
         // Oyuncuların sıralarını almak için bir liste oluştur
@@ -250,14 +272,9 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         for (int i = 0; i < orderedPlayers.Count; i++)
         {
             Player player = orderedPlayers[i];
-            Debug.Log("Oyuncu " + player.NickName + " sırası: " + (i + 1)); // Oyuncunun sırasını yazdır
-        }
-
-        for (int i = 0; i < orderedPlayers.Count; i++)
-        {
-            Player player = orderedPlayers[i];
             player.CustomProperties.TryGetValue("SeatNumber", out object seatNumber);
 
+            // Taşları dağıtım
             int tilesToGive = (i == 0) ? tilesForFirstPlayer : tilesForOtherPlayers; // İlk oyuncuya 15, diğerlerine 14 taş ver
 
             for (int j = 0; j < tilesToGive; j++)
@@ -272,36 +289,27 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 allTiles.RemoveAt(0);
 
                 // Oyuncunun taşlarını ekle
-                switch (i)
+                if ((int)seatNumber == (i + 1)) // SeatNumber'a göre kontrol et
                 {
-                    case 0:
-                        playerTiles1.Add(tile);
-                        if ((int)seatNumber == 1)
-                        {
+                    switch (i)
+                    {
+                        case 0:
+                            playerTiles1.Add(tile);
                             InstantiateTiles(j, tile);
-                        }
-                        break;
-                    case 1:
-                        playerTiles2.Add(tile);
-                        if ((int)seatNumber == 2)
-                        {
+                            break;
+                        case 1:
+                            playerTiles2.Add(tile);
                             InstantiateTiles(j, tile);
-                        }
-                        break;
-                    case 2:
-                        playerTiles3.Add(tile);
-                        if ((int)seatNumber == 3)
-                        {
+                            break;
+                        case 2:
+                            playerTiles3.Add(tile);
                             InstantiateTiles(j, tile);
-                        }
-                        break;
-                    case 3:
-                        playerTiles4.Add(tile);
-                        if ((int)seatNumber == 4)
-                        {
+                            break;
+                        case 3:
+                            playerTiles4.Add(tile);
                             InstantiateTiles(j, tile);
-                        }
-                        break;
+                            break;
+                    }
                 }
             }
         }

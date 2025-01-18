@@ -48,6 +48,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tilePrefab: {fileID: 1914628353354098140, guid: 0123802f9d89da046a73c39e01bb485d, type: 3}
   allTiles: []
+  availableQueues: 01000000020000000300000004000000
   playerTiles1: []
   playerTiles2: []
   playerTiles3: []
