@@ -4,6 +4,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using TMPro;
 using System.Collections;
+using UnityEngine.UIElements;
 
 public class SeatManager : MonoBehaviourPunCallbacks
 {
@@ -67,7 +68,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
             // Remove the assigned seat
             // Use RPC to assign the seat to the player on all clients
             photonView.RPC("AssignSeatToPlayer", RpcTarget.AllBuffered, newPlayer.ActorNumber, seatNumber);
-        }                   
+        }
         StartGame();
         UpdateSeatDisplay(); // Update the seat display for the local player
     }
@@ -125,7 +126,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
         {
             // Store seat assignment in player's custom properties
             player.SetCustomProperties(new ExitGames.Client.Photon.Hashtable { { "SeatNumber", seatNumber } });
-            playerPhotonView.RPC("SetPlayerQueue", RpcTarget.AllBuffered, seatNumber);
+
             playerSeatMap[actorNumber] = seatNumber; // Update the player-seat map
 
             Debug.Log($"Player {player.NickName} is assigned to seat {seatNumber}");
@@ -193,7 +194,6 @@ public class SeatManager : MonoBehaviourPunCallbacks
 
 
 
-
     private List<Player> GetRelativePlayerOrder(Player localPlayer)
     {
         List<Player> orderedPlayers = new List<Player>(PhotonNetwork.PlayerList);
@@ -246,7 +246,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
         for (int i = 3; i > 0; i--)
         {
             Debug.Log($"Countdown: {i}");
-            UpdateImageStates(i); // Update image states for the current countdown number
+            //UpdateImageStates(i); // Update image states for the current countdown number
             yield return new WaitForSeconds(1f); // Wait for 1 second
         }
 
