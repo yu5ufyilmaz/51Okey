@@ -11,7 +11,7 @@ using Random = UnityEngine.Random;
 public class TileDistrubite : MonoBehaviourPunCallbacks
 {
     public GameObject tilePrefab; // Tile prefab
-    public List<Tiles> allTiles = new List<Tiles>();
+    [SerializeField]private List<Tiles> allTiles = new List<Tiles>();
 
     [Header("Player Tiles")]
     public List<Tiles> playerTiles1 = new List<Tiles>();
@@ -284,7 +284,6 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     #endregion
 
     #region Distribute Tiles
-    private bool isQueueAssigned = false;
 
     [PunRPC]
     public void AssignQueueComplete()
@@ -317,12 +316,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                     playerTiles1.Add(tile);
                     if (GetQueueNumberOfPlayer(player) == 1)
                     {
-                        Debug.Log("Player 1");
                         InstantiateTiles(j, tile);
-                    }
-                    else
-                    {
-                        Debug.Log("Not Player 1");
                     }
                 }
             }
@@ -345,7 +339,6 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                             playerTiles2.Add(tile);
                             if (GetQueueNumberOfPlayer(player) == 2)
                             {
-                                Debug.Log("Player 2");
                                 InstantiateTiles(j, tile);
                             }
                             break;
@@ -353,7 +346,6 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                             playerTiles3.Add(tile);
                             if (GetQueueNumberOfPlayer(player) == 3)
                             {
-                                Debug.Log("Player 3");
                                 InstantiateTiles(j, tile);
                             }
                             break;
@@ -361,7 +353,6 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                             playerTiles4.Add(tile);
                             if (GetQueueNumberOfPlayer(player) == 4)
                             {
-                                Debug.Log("Player 4");
                                 InstantiateTiles(j, tile);
                             }
                             break;
