@@ -12,6 +12,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
     public Dictionary<int, int> playerSeatMap = new Dictionary<int, int>(); // Maps player actor number to seat number
 
     public TMP_Text[] seatTextFields; // Array of Text components to display player names
+    public GameObject[] tiledropOffset;
     public TileDistrubite tileDistrubite;
 
     [Header("Player Spawn Settings")]
@@ -186,6 +187,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
 
             if (relativeIndex < seatTextFields.Length)
             {
+                tiledropOffset[relativeIndex].name = players[i].NickName;
                 seatTextFields[relativeIndex].text = players[i].NickName;
             }
         }

@@ -8,6 +8,8 @@ TagManager:
   - SeatManager
   - MiddleHolder
   - Indicator
+  - RightPlaceholder
+  - OtherSideTileContainer
   layers:
   - Default
   - TransparentFX

@@ -50,9 +50,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 40630386d104117448d4a49822b818aa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  tileDataInfo:
+    color: 0
+    number: 0
+    type: 0
+  playerTiles: []
+  middleTileContainer: {fileID: 0}
+  rightTileContainer: {fileID: 0}
+  leftTileContainer: {fileID: 0}
+  playerTileContainer: {fileID: 0}
+  tileDistrubite: {fileID: 0}
   tileImage: {fileID: 1081918049763665644}
   moveSpeed: 5
   isIndicatorTile: 0
+  isInMiddleTileContainer: 0
 --- !u!225 &5032357142389691761
 CanvasGroup:
   m_ObjectHideFlags: 0

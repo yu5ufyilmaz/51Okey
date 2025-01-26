@@ -11,7 +11,7 @@ using Random = UnityEngine.Random;
 public class TileDistrubite : MonoBehaviourPunCallbacks
 {
     public GameObject tilePrefab; // Tile prefab
-    [SerializeField]private List<Tiles> allTiles = new List<Tiles>();
+    [SerializeField] private List<Tiles> allTiles = new List<Tiles>();
 
     [Header("Player Tiles")]
     public List<Tiles> playerTiles1 = new List<Tiles>();
@@ -250,7 +250,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         }
     }
 
-    private int GetQueueNumberOfPlayer(Player player)
+    public int GetQueueNumberOfPlayer(Player player)
     {
         if (player.CustomProperties.TryGetValue("PlayerQue", out object queueValue))
         {
@@ -288,7 +288,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void AssignQueueComplete()
     {
-          Debug.Log("Player queue assignment completed.");
+        Debug.Log("Player queue assignment completed.");
     }
     public void DistributeTilesToAllPlayers()
     {
@@ -414,5 +414,61 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             }
         }
     }
+    [PunRPC]
+    public void RemoveTileFromPlayerList(int playerNumber, int tileIndex)
+    {
+
+        switch (playerNumber)
+        {
+            case 1:
+                InstatiateSideTiles(playerNumber, playerTiles1[tileIndex]);
+                playerTiles1.RemoveAt(tileIndex);
+                Debug.Log($"Player {playerNumber} removed tile: {playerTiles1[tileIndex]}");
+                break;
+            case 2:
+                InstatiateSideTiles(playerNumber, playerTiles2[tileIndex]);
+                playerTiles2.RemoveAt(tileIndex);
+                Debug.Log($"Player {playerNumber} removed tile: {playerTiles2[tileIndex]}");
+                break;
+            case 3:
+                InstatiateSideTiles(playerNumber, playerTiles3[tileIndex]);
+                playerTiles3.RemoveAt(tileIndex);
+                Debug.Log($"Player {playerNumber} removed tile: {playerTiles3[tileIndex]}");
+                break;
+            case 4:
+                InstatiateSideTiles(playerNumber, playerTiles4[tileIndex]);
+                playerTiles4.RemoveAt(tileIndex);
+                Debug.Log($"Player {playerNumber} removed tile: {playerTiles4[tileIndex]}");
+                break;
+        }
+
+    }
+
+    void InstatiateSideTiles(int playerCount, Tiles tile)
+    {
+        Player[] player = PhotonNetwork.PlayerList;
+        for (int i = 0; i < player.Length; i++)
+        {
+            if (player[i].CustomProperties.TryGetValue("PlayerQue", out object playerQue))
+            {
+                int playerQueInt = (int)playerQue;
+                if (playerQueInt == playerCount)
+                {
+
+                    Transform sideTileContainer = GameObject.Find(player[i].NickName).transform;
+
+                    GameObject tileInstance = Instantiate(tilePrefab, sideTileContainer);
+                    TileUI tileUI = tileInstance.GetComponent<TileUI>();
+                    if (tileUI != null)
+                    {
+                        tileUI.SetTileData(tile);
+                    }
+
+                }
+            }
+        }
+
+    }
+
     #endregion
 }
