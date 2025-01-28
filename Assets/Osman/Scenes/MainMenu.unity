@@ -1671,6 +1671,7 @@ MonoBehaviour:
   network: {fileID: 1308220958}
   signInMenu: {fileID: 688840064}
   setUsernameMenu: {fileID: 1044854425}
+  isAvailableText: {fileID: 934491374}
   confirmButton: {fileID: 1400153453}
   inputUsername: {fileID: 1624504754}
 --- !u!1 &929228714
@@ -3125,11 +3126,23 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 1400153454}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 885144576}
+        m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
+        m_MethodName: CheckUsernameAndSignIn
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1400153454
 MonoBehaviour:
   m_ObjectHideFlags: 0

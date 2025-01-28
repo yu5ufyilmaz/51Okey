@@ -27,7 +27,7 @@ public class MenuManager : MonoBehaviour
       {
          isAvailableText.gameObject.SetActive(true);
          confirmButton.interactable = true;
-         network.CheckUsername(text, isAvailableText, confirmButton);
+         network.CheckUsername(text.Trim(), isAvailableText, confirmButton);
       }
       else
       {
@@ -49,9 +49,11 @@ public class MenuManager : MonoBehaviour
          Debug.Log("Kullanıcı var");
       }
    }
-   public void SignInWithGoogle() => network.SignInWithGoogle();
    
    public void SignInAnonymous() => network.SignInAnonymous();
+   public void SignInWithGoogle() => network.SignInWithGoogle();
+   
+   public void CheckUsernameAndSignIn() => network.SetUsername();
    public void OpenSetUNameMenu(string uName, int signInMethod)
    {
       Debug.Log("çalıştı");
@@ -59,9 +61,9 @@ public class MenuManager : MonoBehaviour
       setUsernameMenu.SetActive(true);
       
       inputUsername.text = uName;
-      inputUsername.enabled = signInMethod == 2;
+     // inputUsername.enabled = signInMethod == 2;
       
-      if (signInMethod == 1) //Anon ise
-         confirmButton.interactable = true;
+      // if (signInMethod == 1) //Anon ise
+      //    confirmButton.interactable = true;
    }
 }

@@ -14,7 +14,9 @@ using UnityEngine.Rendering;
 public class FirebaseNetwork : MonoBehaviour
 {
     private string WebAPI = "146708517675-vf1e66haqk77sj8nngrhjgufbr7v7pp8.apps.googleusercontent.com";
+    private string username;
     public MenuManager menuManager;
+    private bool isUsernameExist;
     FirebaseAuth auth;
     FirebaseUser fuser;
     public Button defaultButton;
@@ -106,14 +108,14 @@ public class FirebaseNetwork : MonoBehaviour
                    }
                    DataSnapshot snapshot = vTask.Result;
                    Debug.Log("Anon user is signed in");
-                   string username = "user_" + (snapshot.ChildrenCount + 1);
-                   menuManager.OpenSetUNameMenu( username ,1);
-                   reference.Child(fuser.UserId).Child("Username").SetValueAsync(username).ContinueWithOnMainThread(task =>
-                   {
-                       if (task.IsFaulted || task.IsCanceled)
-                           return;
-                       // Yazma işlemi tamamlanınca gerçekleşecekler
-                   } );
+                   //string username = "user_" + (snapshot.ChildrenCount + 1);
+                   menuManager.OpenSetUNameMenu( "" ,1);
+                   // reference.Child(fuser.UserId).Child("Username").SetValueAsync(username).ContinueWithOnMainThread(task =>
+                   // {
+                   //     if (task.IsFaulted || task.IsCanceled)
+                   //         return;
+                   //     // Yazma işlemi tamamlanınca gerçekleşecekler
+                   // } );
                });
             }
            
@@ -149,6 +151,22 @@ public class FirebaseNetwork : MonoBehaviour
             });
         }
     }
+
+    public void SetUsername()
+    {
+        if (fuser == null)
+        {
+            Debug.LogError("Kullanıcı oturumu açık değil! SetUsername çalıştırılamıyor.");
+            return;
+        }
+
+        if (!isUsernameExist)
+        {
+            reference.Child(fuser.UserId).Child("Username").SetValueAsync(username);
+            Debug.Log("Kayıt tamamlandı.");
+        }
+    }
+    
     
     public void CheckUsername(string text, TextMeshProUGUI isAvailableText, Button confirmButton)
     {
@@ -163,6 +181,8 @@ public class FirebaseNetwork : MonoBehaviour
             DataSnapshot snapshot = task.Result;
             if (snapshot.HasChildren)
             {
+                isUsernameExist = true;
+                username = "";
                 Debug.Log(snapshot.Child("Username"));
                 isAvailableText.text = "This username is not available";
                 isAvailableText.color = Color.red;
@@ -170,6 +190,8 @@ public class FirebaseNetwork : MonoBehaviour
             }
             else
             {
+                isUsernameExist = false;
+                username = text;
                 Debug.Log("Müsaaait");
                 isAvailableText.text = "This username is available";
                 isAvailableText.color = Color.green;
