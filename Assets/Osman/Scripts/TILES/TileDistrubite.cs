@@ -11,7 +11,7 @@ using Random = UnityEngine.Random;
 public class TileDistrubite : MonoBehaviourPunCallbacks
 {
     public GameObject tilePrefab; // Tile prefab
-    [SerializeField] private List<Tiles> allTiles = new List<Tiles>();
+    public List<Tiles> allTiles = new List<Tiles>();
 
     [Header("Player Tiles")]
     public List<Tiles> playerTiles1 = new List<Tiles>();
@@ -422,28 +422,80 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         {
             case 1:
                 InstatiateSideTiles(playerNumber, playerTiles1[tileIndex]);
-                playerTiles1.RemoveAt(tileIndex);
                 Debug.Log($"Player {playerNumber} removed tile: {playerTiles1[tileIndex]}");
+                playerTiles1.RemoveAt(tileIndex);
+
                 break;
             case 2:
                 InstatiateSideTiles(playerNumber, playerTiles2[tileIndex]);
-                playerTiles2.RemoveAt(tileIndex);
                 Debug.Log($"Player {playerNumber} removed tile: {playerTiles2[tileIndex]}");
+                playerTiles2.RemoveAt(tileIndex);
+
                 break;
             case 3:
                 InstatiateSideTiles(playerNumber, playerTiles3[tileIndex]);
-                playerTiles3.RemoveAt(tileIndex);
                 Debug.Log($"Player {playerNumber} removed tile: {playerTiles3[tileIndex]}");
+                playerTiles3.RemoveAt(tileIndex);
+
                 break;
             case 4:
                 InstatiateSideTiles(playerNumber, playerTiles4[tileIndex]);
-                playerTiles4.RemoveAt(tileIndex);
                 Debug.Log($"Player {playerNumber} removed tile: {playerTiles4[tileIndex]}");
+                playerTiles4.RemoveAt(tileIndex);
+
                 break;
         }
 
     }
+    [PunRPC]
+    public void AddTileFromMiddlePlayerList(int playerNumber)
+    {
+        switch (playerNumber)
+        {
+            case 1:
+                playerTiles1.Add(allTiles[0]);
+                Debug.Log($"Player {playerNumber} added tile: {allTiles[0]}");
+                break;
+            case 2:
+                playerTiles2.Add(allTiles[0]);
+                Debug.Log($"Player {playerNumber} added tile: {allTiles[0]}");
+                break;
+            case 3:
+                playerTiles3.Add(allTiles[0]);
+                Debug.Log($"Player {playerNumber} added tile: {allTiles[0]}");
+                break;
+            case 4:
+                playerTiles4.Add(allTiles[0]);
+                Debug.Log($"Player {playerNumber} added tile: {allTiles[0]}");
+                break;
+        }
+        allTiles.RemoveAt(0);
+    }
 
+    [PunRPC]
+    public void AddTileFromDropPlayerList(int playerNumber)
+    {
+        switch (playerNumber)
+        {
+            case 1:
+                playerTiles1.Add(allTiles[0]);
+                Debug.Log($"Player {playerNumber} added tile: {allTiles[0]}");
+                break;
+            case 2:
+                playerTiles2.Add(allTiles[0]);
+                Debug.Log($"Player {playerNumber} added tile: {allTiles[0]}");
+                break;
+            case 3:
+                playerTiles3.Add(allTiles[0]);
+                Debug.Log($"Player {playerNumber} added tile: {allTiles[0]}");
+                break;
+            case 4:
+                playerTiles4.Add(allTiles[0]);
+                Debug.Log($"Player {playerNumber} added tile: {allTiles[0]}");
+                break;
+        }
+        allTiles.RemoveAt(0);
+    }
     void InstatiateSideTiles(int playerCount, Tiles tile)
     {
         Player[] player = PhotonNetwork.PlayerList;

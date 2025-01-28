@@ -77,6 +77,8 @@ MonoBehaviour:
   - StartGameRPC
   - PlaceTile
   - RemoveTileFromPlayerList
+  - AddTileFromMiddlePlayerList
+  - AddTileFromDropPlayerList
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

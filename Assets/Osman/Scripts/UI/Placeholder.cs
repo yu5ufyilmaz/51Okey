@@ -21,6 +21,7 @@ public class Placeholder : MonoBehaviour, IDropHandler
             }
             else if (transform.childCount == 1) // Placeholder doluysa kaydırma yap
             {
+                Debug.Log("Placeholder dolu");
                 Transform existingTile = transform.GetChild(0);
                 Transform newPlaceholder = FindEmptyPlaceholder(transform, existingTile, droppedTile);
 

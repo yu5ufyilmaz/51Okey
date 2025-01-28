@@ -210,7 +210,7 @@ GameObject:
   - component: {fileID: 293609010}
   m_Layer: 5
   m_Name: LeftTileContainer
-  m_TagString: Placeholder
+  m_TagString: LeftTileContainer
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
@@ -461,7 +461,7 @@ GameObject:
   - component: {fileID: 460873786}
   m_Layer: 5
   m_Name: MiddleTileContainer
-  m_TagString: MiddleHolder
+  m_TagString: Placeholder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1327,7 +1327,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a41d0b1f81cb70e46b947fe27110eb4d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isRight: 0
+  isRight: 1
 --- !u!222 &675003202
 CanvasRenderer:
   m_ObjectHideFlags: 0
