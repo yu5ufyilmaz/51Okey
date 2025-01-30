@@ -6,6 +6,7 @@ using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 using Random = UnityEngine.Random;
 
 public class TileDistrubite : MonoBehaviourPunCallbacks
@@ -18,7 +19,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     public List<Tiles> playerTiles2 = new List<Tiles>();
     public List<Tiles> playerTiles3 = new List<Tiles>();
     public List<Tiles> playerTiles4 = new List<Tiles>();
-
+    public Tiles dropTile;
     public Transform playerTileContainer; // Player tile container
     private Transform[] playerTileContainers; // Player tile placeholders
     public Transform dropTileContainer; // Drop tile container
@@ -414,6 +415,8 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             }
         }
     }
+
+
     [PunRPC]
     public void RemoveTileFromPlayerList(int playerNumber, int tileIndex)
     {
@@ -424,6 +427,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 InstatiateSideTiles(playerNumber, playerTiles1[tileIndex]);
                 Debug.Log($"Player {playerNumber} removed tile: {playerTiles1[tileIndex]}");
                 playerTiles1.RemoveAt(tileIndex);
+                
 
                 break;
             case 2:
@@ -472,30 +476,36 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         allTiles.RemoveAt(0);
     }
 
+    List<GameObject> droppedTiles = new List<GameObject>();
     [PunRPC]
     public void AddTileFromDropPlayerList(int playerNumber)
     {
         switch (playerNumber)
         {
             case 1:
-                playerTiles1.Add(allTiles[0]);
-                Debug.Log($"Player {playerNumber} added tile: {allTiles[0]}");
+                playerTiles1.Add(dropTile);
+                Debug.Log($"Player {playerNumber} added tile: {dropTile}");
+                DestroySideTiles(1);
                 break;
             case 2:
-                playerTiles2.Add(allTiles[0]);
-                Debug.Log($"Player {playerNumber} added tile: {allTiles[0]}");
+                playerTiles2.Add(dropTile);
+                Debug.Log($"Player {playerNumber} added tile: {dropTile}");
+                DestroySideTiles(2);
                 break;
             case 3:
-                playerTiles3.Add(allTiles[0]);
-                Debug.Log($"Player {playerNumber} added tile: {allTiles[0]}");
+                playerTiles3.Add(dropTile);
+                Debug.Log($"Player {playerNumber} added tile: {dropTile}");
+                DestroySideTiles(3);
                 break;
             case 4:
-                playerTiles4.Add(allTiles[0]);
-                Debug.Log($"Player {playerNumber} added tile: {allTiles[0]}");
+                playerTiles4.Add(dropTile);
+                Debug.Log($"Player {playerNumber} added tile: {dropTile}");
+                DestroySideTiles(4);
                 break;
         }
-        allTiles.RemoveAt(0);
+
     }
+
     void InstatiateSideTiles(int playerCount, Tiles tile)
     {
         Player[] player = PhotonNetwork.PlayerList;
@@ -511,6 +521,8 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
                     GameObject tileInstance = Instantiate(tilePrefab, sideTileContainer);
                     TileUI tileUI = tileInstance.GetComponent<TileUI>();
+                    dropTile = tile;
+                    droppedTiles.Add(tileInstance);
                     if (tileUI != null)
                     {
                         tileUI.SetTileData(tile);
@@ -519,8 +531,38 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 }
             }
         }
-
     }
+    void DestroySideTiles(int playerCount)
+    {
+        for (int i = droppedTiles.Count - 1; i >= 0; i--) // Ters döngü kullanarak güvenli bir şekilde silme işlemi yapıyoruz
+        {
+            GameObject tile = droppedTiles[i];
+            Transform sideTileContainer = tile.transform.parent;
+            string playerName = sideTileContainer.name;
+            Player[] players = PhotonNetwork.PlayerList;
 
+            bool shouldDestroy = false;
+
+            for (int j = 0; j < players.Length; j++)
+            {
+                if (players[j].NickName == playerName && players[j].CustomProperties.TryGetValue("PlayerQue", out object playerQue))
+                {
+                    shouldDestroy = true; // Eğer bu oyuncunun sırası ise, yok etme işlemi yapılacak
+
+                }
+            }
+
+            if (shouldDestroy)
+            {
+                Debug.Log($"Destroying tile: {tile.name} for player {playerName} (Player Queue: {playerCount})");
+                Destroy(tile);
+                droppedTiles.RemoveAt(i);
+            }
+            else
+            {
+                Debug.Log($"Not destroying tile: {tile.name} for player {playerName} (Player Queue: {playerCount})");
+            }
+        }
+    }
     #endregion
 }

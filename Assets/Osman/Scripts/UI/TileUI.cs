@@ -139,6 +139,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                 return (true, true); // Taş atılabilir, taş çekilebilir
         }
     }
+    bool fromLeftContainer = false;
     public void OnBeginDrag(PointerEventData eventData)
     {
         var (canDrop, canDraw) = CanMoveTile();
@@ -159,7 +160,10 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             Debug.LogWarning("Buradaki taşı hareket ettiremezsiniz!"); // Hata ayıklama logu
             return;
         }
-
+        if (gameObject.transform.parent == leftTileContainer)
+        {
+            fromLeftContainer = true;
+        }
         originalParent = transform.parent;
         canvasGroup.blocksRaycasts = false;
         transform.SetParent(transform.root, true);
@@ -190,6 +194,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             Debug.LogWarning("Buradaki taşı hareket ettiremezsiniz!"); // Hata ayıklama logu
             return;
         }
+
         transform.position = Input.mousePosition;
 
     }
@@ -245,11 +250,14 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                         inMiddle = false;
                         Debug.Log("Taş çekme işlemi gerçekleştirildi");
                     }
-                    else if (gameObject.transform.parent == leftTileContainer)
+                    else if (fromLeftContainer == true)
                     {
                         PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object queueValue);
-                        tileDistrubite.photonView.RPC("AddTileFromMiddlePlayerList", RpcTarget.AllBuffered, queueValue);
                         StartCoroutine(SmoothMove(transform, closestPlaceholder));
+
+                        Debug.Log("Soldan taş çekme işlemi gerçekleştirildi");
+                        tileDistrubite.photonView.RPC("AddTileFromDropPlayerList", RpcTarget.AllBuffered, queueValue);
+                        fromLeftContainer = false;
                     }
                     else
                     {
@@ -267,7 +275,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                 }
                 else
                 {
-                    if (gameObject.transform.parent == middleTileContainer || gameObject.transform.parent == leftTileContainer)
+                    if (gameObject.transform.parent == middleTileContainer || fromLeftContainer == true)
                     {
                         Debug.LogWarning("Şu an taş çekemezsin 15 taşın var");
                         StartCoroutine(SmoothMove(transform, originalParent));
@@ -333,9 +341,10 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object queueValue);
         StartCoroutine(SmoothMove(transform, rightTileContainer)); // Taşı en yakın boş placeholder'a yerleştir
         int tileIndex = playerTiles.IndexOf(tileDataInfo);
-        
+
         // RemoveTileFromPlayerList();
         tileDistrubite.photonView.RPC("RemoveTileFromPlayerList", RpcTarget.AllBuffered, queueValue, tileIndex);
+        Destroy(gameObject);
         // Sıra diğer oyuncuya geçsin
         turnManager.photonView.RPC("NextTurn", RpcTarget.AllBuffered);
     }
