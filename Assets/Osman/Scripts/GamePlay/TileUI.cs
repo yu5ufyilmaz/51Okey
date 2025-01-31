@@ -10,6 +10,7 @@ using UnityEngine.UI;
 public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [SerializeField] Tiles tileDataInfo;
+    [SerializeField] ScoreManager scoreManager;
     [SerializeField] List<Tiles> playerTiles;
     public Transform middleTileContainer; // Orta taş havuzu
     public Transform rightTileContainer; // Sağ taş alanı
@@ -36,6 +37,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
     private void Start()
     {
+        scoreManager = GameObject.Find("ScoreManager").GetComponent<ScoreManager>();
         middleTileContainer = GameObject.Find("MiddleTileContainer").transform;
         rightTileContainer = GameObject.Find("RightTileContainer").transform;
         leftTileContainer = GameObject.FindWithTag("LeftTileContainer").transform;
@@ -335,6 +337,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         {
             StartCoroutine(SmoothMove(transform, originalParent)); // Taşı orijinal konumuna geri döndür
         }
+        scoreManager.CalculateScoreForPlayer(PhotonNetwork.LocalPlayer.ActorNumber);
     }
     void NextTurnEvents()
     {

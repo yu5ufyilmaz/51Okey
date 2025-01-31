@@ -52,6 +52,10 @@ MonoBehaviour:
   playerTiles2: []
   playerTiles3: []
   playerTiles4: []
+  dropTile:
+    color: 0
+    number: 0
+    type: 0
   playerTileContainer: {fileID: 0}
   dropTileContainer: {fileID: 0}
   indicatorTileContainer: {fileID: 0}

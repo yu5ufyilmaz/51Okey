@@ -79,6 +79,7 @@ MonoBehaviour:
   - RemoveTileFromPlayerList
   - AddTileFromMiddlePlayerList
   - AddTileFromDropPlayerList
+  - SycncDropTile
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

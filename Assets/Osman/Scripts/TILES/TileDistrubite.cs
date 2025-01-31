@@ -389,6 +389,23 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     #endregion
 
     #region GamePlay
+    public List<Tiles> GetPlayerTiles(int playerNumber)
+    {
+        switch (playerNumber)
+        {
+            case 1:
+                return playerTiles1;
+            case 2:
+                return playerTiles2;
+            case 3:
+                return playerTiles3;
+            case 4:
+                return playerTiles4;
+            default:
+                Debug.LogError($"Invalid player number: {playerNumber}");
+                return new List<Tiles>(); // Boş bir liste döndür
+        }
+    }
     public void DropExcessTile()
     {
         Player player = PhotonNetwork.LocalPlayer;
@@ -427,7 +444,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 InstatiateSideTiles(playerNumber, playerTiles1[tileIndex]);
                 Debug.Log($"Player {playerNumber} removed tile: {playerTiles1[tileIndex]}");
                 playerTiles1.RemoveAt(tileIndex);
-                
+
 
                 break;
             case 2:
