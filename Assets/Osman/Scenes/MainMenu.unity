@@ -1580,7 +1580,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 624745c48211558439f3e6c790d47ea4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _network: {fileID: 0}
+  network: {fileID: 1308220958}
   signInMenu: {fileID: 688840064}
   setUsernameMenu: {fileID: 1044854425}
   isAvailableText: {fileID: 934491374}

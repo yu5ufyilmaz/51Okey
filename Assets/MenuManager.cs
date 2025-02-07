@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using TMPro;
 using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class MenuManager : MonoBehaviour
@@ -46,6 +47,7 @@ public class MenuManager : MonoBehaviour
       }
       else
       {
+         SceneManager.LoadSceneAsync("LobbyMenu");
          Debug.Log("Kullanıcı var");
       }
    }
