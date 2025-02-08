@@ -2510,6 +2510,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a9983b70910635846b8db8c1210aa393, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  username: 
   menuManager: {fileID: 885144576}
   defaultButton: {fileID: 1763605612}
 --- !u!4 &1308220959
@@ -2647,6 +2648,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerNameInput: {fileID: 0}
   buttonText: {fileID: 0}
+  firebaseNetwork: {fileID: 0}
 --- !u!1 &1376193552
 GameObject:
   m_ObjectHideFlags: 0

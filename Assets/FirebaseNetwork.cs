@@ -15,7 +15,7 @@ using UnityEngine.SceneManagement;
 public class FirebaseNetwork : MonoBehaviour
 {
     private string WebAPI = "146708517675-vf1e66haqk77sj8nngrhjgufbr7v7pp8.apps.googleusercontent.com";
-    private string username;
+    public string username;
     public MenuManager menuManager;
     private bool isUsernameExist;
     FirebaseAuth auth;
@@ -36,7 +36,7 @@ public class FirebaseNetwork : MonoBehaviour
     private void Start()
     {
         InitializeFirebase();
-      
+
     }
 
     private AudioClip microphoneClip;
@@ -49,8 +49,8 @@ public class FirebaseNetwork : MonoBehaviour
             Debug.Log("esc bastın");
         }
 
-      
-        
+
+
     }
 
     public bool CurrentUser()
@@ -59,7 +59,8 @@ public class FirebaseNetwork : MonoBehaviour
     }
     private void InitializeFirebase()
     {
-        FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task => {
+        FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task =>
+        {
             DependencyStatus dependencyStatus = task.Result;
             if (dependencyStatus == DependencyStatus.Available)
             {
@@ -67,7 +68,7 @@ public class FirebaseNetwork : MonoBehaviour
                 fuser = auth.CurrentUser;
                 defaultButton.interactable = true;
                 reference = FirebaseDatabase.DefaultInstance.RootReference.Child("Users");
-                 Debug.Log("Firebase initialized");
+                Debug.Log("Firebase initialized");
                 // reference.Child("User1").Child("Name").SetValueAsync("Yusuf");
                 // reference.Child("User1").Child("Age").SetValueAsync("23");
                 //
@@ -81,13 +82,13 @@ public class FirebaseNetwork : MonoBehaviour
             {
                 defaultButton.interactable = false;
             }
-        
+
         });
     }
 
     public void SignInAnonymous()
     {
-        
+
         Debug.Log("FirebaseNetwork - SignInAnonymous Called");
         auth.SignInAnonymouslyAsync().ContinueWithOnMainThread(task =>
         {
@@ -97,29 +98,29 @@ public class FirebaseNetwork : MonoBehaviour
             }
             else
             {
-               AuthResult authResult = task.Result;
-               fuser = authResult.User;
+                AuthResult authResult = task.Result;
+                fuser = authResult.User;
 
-               reference.GetValueAsync().ContinueWithOnMainThread(vTask =>
-               {
-                   if (vTask.IsFaulted || vTask.IsCanceled)
-                   {
-                       Debug.LogError("Error A");
-                       return;
-                   }
-                   DataSnapshot snapshot = vTask.Result;
-                   Debug.Log("Anon user is signed in");
-                   //string username = "user_" + (snapshot.ChildrenCount + 1);
-                   menuManager.OpenSetUNameMenu( "" ,1);
-                   // reference.Child(fuser.UserId).Child("Username").SetValueAsync(username).ContinueWithOnMainThread(task =>
-                   // {
-                   //     if (task.IsFaulted || task.IsCanceled)
-                   //         return;
-                   //     // Yazma işlemi tamamlanınca gerçekleşecekler
-                   // } );
-               });
+                reference.GetValueAsync().ContinueWithOnMainThread(vTask =>
+                {
+                    if (vTask.IsFaulted || vTask.IsCanceled)
+                    {
+                        Debug.LogError("Error A");
+                        return;
+                    }
+                    DataSnapshot snapshot = vTask.Result;
+                    Debug.Log("Anon user is signed in");
+                    //string username = "user_" + (snapshot.ChildrenCount + 1);
+                    menuManager.OpenSetUNameMenu("", 1);
+                    // reference.Child(fuser.UserId).Child("Username").SetValueAsync(username).ContinueWithOnMainThread(task =>
+                    // {
+                    //     if (task.IsFaulted || task.IsCanceled)
+                    //         return;
+                    //     // Yazma işlemi tamamlanınca gerçekleşecekler
+                    // } );
+                });
             }
-           
+
         });
     }
 
@@ -147,7 +148,7 @@ public class FirebaseNetwork : MonoBehaviour
                 {
                     Debug.LogError(task.Exception);
                 }
-                
+
                 fuser = auth.CurrentUser;
             });
         }
@@ -163,12 +164,29 @@ public class FirebaseNetwork : MonoBehaviour
 
         if (!isUsernameExist)
         {
-            reference.Child(fuser.UserId).Child("Username").SetValueAsync(username);
-            Debug.Log("Kayıt tamamlandı.");
+            reference.Child(fuser.UserId).Child("Username").SetValueAsync(username).ContinueWithOnMainThread(task =>
+            {
+                if (task.IsFaulted || task.IsCanceled)
+                {
+                    Debug.LogError("Error setting username in Firebase.");
+                    return;
+                }
+
+                // Save the username to PlayerPrefs
+                PlayerPrefs.SetString("Username", username);
+                PlayerPrefs.Save(); // Make sure to save the changes
+                Debug.Log("Kayıt tamamlandı. Username saved to PlayerPrefs.");
+            });
         }
     }
-    
-    
+
+    // Optional: Method to retrieve the username from PlayerPrefs
+    public string GetUsername()
+    {
+        return PlayerPrefs.GetString("Username", ""); // Returns an empty string if not found
+    }
+
+
     public void CheckUsername(string text, TextMeshProUGUI isAvailableText, Button confirmButton)
     {
         reference.OrderByChild("Username").EqualTo(text).GetValueAsync().ContinueWithOnMainThread(task =>
@@ -178,7 +196,7 @@ public class FirebaseNetwork : MonoBehaviour
                 Debug.LogError(task.Exception);
                 return;
             }
-           
+
             DataSnapshot snapshot = task.Result;
             if (snapshot.HasChildren)
             {

@@ -19,7 +19,7 @@ public class SceneChangeManager : MonoBehaviour
             Destroy(gameObject);
         }
     }
-    
+
     public void ChangeScene(string sceneName)
     {
         StartCoroutine(LoadSceneAsync(sceneName));
@@ -28,7 +28,7 @@ public class SceneChangeManager : MonoBehaviour
     private IEnumerator LoadSceneAsync(string sceneName)
     {
         AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(sceneName);
-        
+
         while (!asyncLoad.isDone)
         {
             Debug.Log("Loading progress: " + (asyncLoad.progress * 100) + "%");

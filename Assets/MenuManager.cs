@@ -7,12 +7,13 @@ using TMPro;
 using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Photon.Pun;
 
-public class MenuManager : MonoBehaviour
+public class MenuManager : MonoBehaviourPunCallbacks
 {
    public FirebaseNetwork network;
-   public GameObject signInMenu,setUsernameMenu;
-   
+   public GameObject signInMenu, setUsernameMenu;
+
    public TextMeshProUGUI isAvailableText;
    public Button confirmButton;
    public TMP_InputField inputUsername;
@@ -47,24 +48,25 @@ public class MenuManager : MonoBehaviour
       }
       else
       {
-         SceneManager.LoadSceneAsync("LobbyMenu");
+         PhotonNetwork.NickName = network.GetUsername();
+         SceneChangeManager.Instance.ChangeScene("LobbyMenu");
          Debug.Log("Kullanıcı var");
       }
    }
-   
+
    public void SignInAnonymous() => network.SignInAnonymous();
    public void SignInWithGoogle() => network.SignInWithGoogle();
-   
+
    public void CheckUsernameAndSignIn() => network.SetUsername();
    public void OpenSetUNameMenu(string uName, int signInMethod)
    {
       Debug.Log("çalıştı");
       signInMenu.SetActive(false);
       setUsernameMenu.SetActive(true);
-      
+
       inputUsername.text = uName;
-     // inputUsername.enabled = signInMethod == 2;
-      
+      // inputUsername.enabled = signInMethod == 2;
+
       // if (signInMethod == 1) //Anon ise
       //    confirmButton.interactable = true;
    }
