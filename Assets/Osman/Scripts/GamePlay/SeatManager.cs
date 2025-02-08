@@ -14,11 +14,13 @@ public class SeatManager : MonoBehaviourPunCallbacks
     public TMP_Text[] seatTextFields; // Array of Text components to display player names
     public GameObject[] tiledropOffset;
     public TileDistrubite tileDistrubite;
+    public ScoreManager sManager;
 
     [Header("Player Spawn Settings")]
     public int spawnIndex;
     public GameObject playerPrefab;
     public GameObject tileManagerPrefab;
+    public GameObject scoreManagerPrefab;
     PhotonView playerPhotonView;
     public RectTransform[] spawnPositions;
     bool gameIsStart = false;
@@ -42,6 +44,9 @@ public class SeatManager : MonoBehaviourPunCallbacks
             availableSeats.RemoveAt(0); // Remove the assigned seat
             // Use RPC to assign the seat to the player on all clients
             GameObject tileManager = PhotonNetwork.Instantiate(tileManagerPrefab.name, Vector3.zero, Quaternion.identity, 0);
+            GameObject scoreManager = PhotonNetwork.Instantiate(scoreManagerPrefab.name, Vector3.zero, Quaternion.identity, 0);
+            scoreManager.SetActive(true);
+            sManager = scoreManager.GetComponent<ScoreManager>();
             Debug.Log(tileManager.name);
             tileDistrubite = tileManager.GetComponent<TileDistrubite>();
             photonView.RPC("AssignSeatToPlayer", RpcTarget.AllBuffered, PhotonNetwork.LocalPlayer.ActorNumber, seatNumber);

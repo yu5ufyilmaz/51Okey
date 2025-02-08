@@ -11,6 +11,7 @@ TagManager:
   - RightPlaceholder
   - OtherSideTileContainer
   - LeftTileContainer
+  - PlayerBoard
   layers:
   - Default
   - TransparentFX

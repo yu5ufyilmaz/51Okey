@@ -5,12 +5,13 @@ using Photon.Pun; // Photon kütüphanesini ekleyin
 public class Placeholder : MonoBehaviour, IDropHandler
 {
     public bool isRight = false;
+    public bool isDrop = false;
     public void OnDrop(PointerEventData eventData)
     {
         GameObject droppedTile = eventData.pointerDrag;
 
         if (droppedTile == null) return;
-        if (isRight == false)
+        if (isDrop == false)
         {
             if (transform.childCount == 0) // Placeholder boşsa taşı bırak
             {

@@ -5,7 +5,9 @@ using System.Linq;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.SocialPlatforms;
 using UnityEngine.Tilemaps;
 using Random = UnityEngine.Random;
 
@@ -13,6 +15,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 {
     public GameObject tilePrefab; // Tile prefab
     public List<Tiles> allTiles = new List<Tiles>();
+    public List<TileUI> tileUIs;
 
     [Header("Player Tiles")]
     public List<Tiles> playerTiles1 = new List<Tiles>();
@@ -44,7 +47,17 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         InitializePlaceholders(); // Initialize tile placeholders
         GeneratePlayerTiles(); // Generate player tiles
     }
+    public void RegisterTileUI(TileUI tileUI)
+    {
+        tileUIs.Add(tileUI);
+    }
 
+    public TileUI GetTileUI(Tiles tile)
+    {
+        // Burada, tile ile ilişkili TileUI bileşenini döndürmelisiniz
+        // Örneğin, tile'ın bir ID'si varsa, bu ID ile tileUIs listesinden arama yapabilirsiniz.
+        return tileUIs.FirstOrDefault(t => t.tileDataInfo == tile);
+    }
     // Initialize placeholders for player tiles
     private void InitializePlaceholders()
     {
@@ -389,8 +402,10 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     #endregion
 
     #region GamePlay
-    public List<Tiles> GetPlayerTiles(int playerNumber)
+    public List<Tiles> GetPlayerTiles()
     {
+        PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object queueValue);
+        int playerNumber = (int)queueValue;
         switch (playerNumber)
         {
             case 1:
@@ -533,9 +548,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 int playerQueInt = (int)playerQue;
                 if (playerQueInt == playerCount)
                 {
-
                     Transform sideTileContainer = GameObject.Find(player[i].NickName).transform;
-
                     GameObject tileInstance = Instantiate(tilePrefab, sideTileContainer);
                     TileUI tileUI = tileInstance.GetComponent<TileUI>();
                     dropTile = tile;
@@ -551,34 +564,23 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     }
     void DestroySideTiles(int playerCount)
     {
-        for (int i = droppedTiles.Count - 1; i >= 0; i--) // Ters döngü kullanarak güvenli bir şekilde silme işlemi yapıyoruz
+        Player player = PhotonNetwork.LocalPlayer;
+        GameObject droppedTile = droppedTiles.Last();
+        for (int j = 0; j < 4; j++)
         {
-            GameObject tile = droppedTiles[i];
-            Transform sideTileContainer = tile.transform.parent;
-            string playerName = sideTileContainer.name;
-            Player[] players = PhotonNetwork.PlayerList;
-
-            bool shouldDestroy = false;
-
-            for (int j = 0; j < players.Length; j++)
+            player.CustomProperties.TryGetValue("PlayerQue", out object playerQue);
+            int playerQueInt = (int)playerQue;
+            if (droppedTiles.Count > 0)
             {
-                if (players[j].NickName == playerName && players[j].CustomProperties.TryGetValue("PlayerQue", out object playerQue))
-                {
-                    shouldDestroy = true; // Eğer bu oyuncunun sırası ise, yok etme işlemi yapılacak
+                if (droppedTiles[droppedTiles.Count - 1] == droppedTile)
+                    droppedTiles.RemoveAt(droppedTiles.Count - 1);
+            }
+            if (playerQueInt != playerCount)
+            {
+                Destroy(droppedTile);
 
-                }
             }
 
-            if (shouldDestroy)
-            {
-                Debug.Log($"Destroying tile: {tile.name} for player {playerName} (Player Queue: {playerCount})");
-                Destroy(tile);
-                droppedTiles.RemoveAt(i);
-            }
-            else
-            {
-                Debug.Log($"Not destroying tile: {tile.name} for player {playerName} (Player Queue: {playerCount})");
-            }
         }
     }
     #endregion

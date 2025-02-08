@@ -299,6 +299,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 1
 --- !u!222 &293609012
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -381,58 +382,6 @@ RectTransform:
   m_AnchoredPosition: {x: -14, y: -317}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!1 &347607135
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 347607137}
-  - component: {fileID: 347607136}
-  m_Layer: 0
-  m_Name: ScoreManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &347607136
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 347607135}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: da784ed126a196743b1951f27b9dd91f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  player1Score: 0
-  player2Score: 0
-  player3Score: 0
-  player4Score: 0
-  player1PerCount: 0
-  player2PerCount: 0
-  player3PerCount: 0
-  player4PerCount: 0
---- !u!4 &347607137
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 347607135}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 265.80582, y: 183.53021, z: 0.6403566}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &359440219
 GameObject:
   m_ObjectHideFlags: 0
@@ -444,7 +393,7 @@ GameObject:
   - component: {fileID: 359440220}
   m_Layer: 5
   m_Name: PlayerTileContainer
-  m_TagString: Untagged
+  m_TagString: PlayerBoard
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -602,6 +551,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!222 &460873788
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1117,6 +1067,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 1
+  isDrop: 0
 --- !u!222 &660335910
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1380,6 +1331,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 1
+  isDrop: 0
 --- !u!222 &675003202
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1933,6 +1885,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 1
 --- !u!222 &1049210038
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2441,9 +2394,11 @@ MonoBehaviour:
   - {fileID: 1658037685}
   - {fileID: 293609008}
   tileDistrubite: {fileID: 0}
+  sManager: {fileID: 0}
   spawnIndex: 0
   playerPrefab: {fileID: 2306633761159361300, guid: 360cb31b283c02148846d66182271d76, type: 3}
   tileManagerPrefab: {fileID: 1234000771159635203, guid: 0336b4d40469c474b9229a574002fb34, type: 3}
+  scoreManagerPrefab: {fileID: 7508102072090288530, guid: 13dab1ce64819b54a899655c94a28317, type: 3}
   spawnPositions:
   - {fileID: 310720358}
   - {fileID: 1767459037}
@@ -2704,6 +2659,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 1
 --- !u!222 &1249080355
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3023,6 +2979,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 1
 --- !u!222 &1658037689
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3482,6 +3439,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188767059649716
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3495,6 +3453,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188767239731335
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3508,6 +3467,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188767284217824
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3521,6 +3481,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188767292308686
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3534,6 +3495,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188767332642701
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3547,6 +3509,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188767336895268
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3560,6 +3523,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188767342897872
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3573,6 +3537,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188767427105095
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3586,6 +3551,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188767533258589
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3599,6 +3565,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188767619330524
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3612,6 +3579,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188767897056890
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3625,6 +3593,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188767943357930
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3638,6 +3607,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188768058577974
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3651,6 +3621,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188768088961871
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3664,6 +3635,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188768126846572
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3677,6 +3649,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188768160166503
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3690,6 +3663,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188768179921810
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3703,6 +3677,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188768185234863
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3716,6 +3691,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188768240709620
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3729,6 +3705,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188768258282890
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3742,6 +3719,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188768312376616
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3755,6 +3733,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188768327916414
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3768,6 +3747,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188768463206874
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3781,6 +3761,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188768506947995
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3794,6 +3775,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188768597198584
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3807,6 +3789,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188768716483064
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3820,6 +3803,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188768826762820
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3833,6 +3817,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188769025120639
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3846,6 +3831,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!114 &3117188769047260906
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3859,6 +3845,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isRight: 0
+  isDrop: 0
 --- !u!212 &3687944780528153410
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -6809,4 +6796,3 @@ SceneRoots:
   - {fileID: 952696956}
   - {fileID: 1237226876}
   - {fileID: 1797013799}
-  - {fileID: 347607137}
