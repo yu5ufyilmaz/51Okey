@@ -9,9 +9,6 @@ EditorBuildSettings:
     path: Assets/Osman/Scenes/MainMenu.unity
     guid: 01b48a25a5ce5f54d90c9c41719ee437
   - enabled: 1
-    path: Assets/Scenes/SampleScene.unity
-    guid: 8c9cfa26abfee488c85f1582747f6a02
-  - enabled: 1
     path: Assets/Osman/Scenes/LobbyMenu.unity
     guid: 8ed11ab4131089c4f9ffc96563d23784
   - enabled: 1
@@ -19,5 +16,5 @@ EditorBuildSettings:
     guid: 5a674dbeb13d4ec4a92e128dd0af5b45
   - enabled: 0
     path: Assets/Osman/Scenes/Table.unity
-    guid: 26466acef07b09e4997b866a59f0d55a
+    guid: 5a674dbeb13d4ec4a92e128dd0af5b45
   m_configObjects: {}

@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "146708517675",
+    "firebase_url": "https://okey-online-c37c2-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "okey-online-c37c2",
+    "storage_bucket": "okey-online-c37c2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:146708517675:android:867e0c125bf07279972b6e",
+        "android_client_info": {
+          "package_name": "com.KhazadGame.Okey"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "146708517675-vf1e66haqk77sj8nngrhjgufbr7v7pp8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB1SrENHsf7w04GVcrlPaiVydBAbon5UfQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "146708517675-vf1e66haqk77sj8nngrhjgufbr7v7pp8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
