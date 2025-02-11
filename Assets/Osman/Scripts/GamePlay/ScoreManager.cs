@@ -205,7 +205,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         Debug.Log("YEŞİLS DEŞIL");
         return false;
     }
-
     private bool CheckPattern(List<Tiles> tiles, int[] pattern)
     {
         for (int i = 0; i < pattern.Length; i++)
@@ -218,8 +217,43 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 if (tiles[j].type == TileType.Joker)
                 {
                     // Joker taşının puanını, mevcut desenin numarasına eşit yap
-                    tiles[j].number = expectedNumber; // Joker taşının numarasını ayarla
-                    continue; // Joker taşını geçerli say
+                    bool isValidJoker = false;
+
+                    // Joker taşının solundaki taş yoksa
+                    if (j == 0)
+                    {
+                        // Joker taşının sağındaki taşın beklenen numaraya eşit olup olmadığını kontrol et
+                        if (j < tiles.Count - 1 && tiles[j + 1].number == expectedNumber + 1)
+                        {
+                            tiles[j].number = expectedNumber; // Joker taşının numarasını ayarla
+                            isValidJoker = true; // Joker geçerli
+                        }
+                    }
+                    // Joker taşının sağındaki taş yoksa
+                    else if (j == tiles.Count - 1)
+                    {
+                        // Joker taşının solundaki taşın beklenen numaraya eşit olup olmadığını kontrol et
+                        if (tiles[j - 1].number == expectedNumber - 1)
+                        {
+                            tiles[j].number = expectedNumber; // Joker taşının numarasını ayarla
+                            isValidJoker = true; // Joker geçerli
+                        }
+                    }
+                    else
+                    {
+                        // Joker taşının hem solundaki hem de sağındaki taşları kontrol et
+                        if (tiles[j - 1].number == expectedNumber - 1 || tiles[j + 1].number == expectedNumber + 1)
+                        {
+                            tiles[j].number = expectedNumber; // Joker taşının numarasını ayarla
+                            isValidJoker = true; // Joker geçerli
+                        }
+                    }
+
+                    if (!isValidJoker)
+                    {
+                        valid = false; // Joker geçerli değil
+                        break;
+                    }
                 }
                 else if (tiles[j].number == expectedNumber)
                 {

@@ -101,8 +101,8 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     private void AddFakeJokerTiles()
     {
         // Add two fake joker tiles
-        Tiles fakeJoker1 = new Tiles(TileColor.Green, 1, TileType.FakeJoker); // Fake joker tile 1
-        Tiles fakeJoker2 = new Tiles(TileColor.Green, 2, TileType.FakeJoker); // Fake joker tile 2
+        Tiles fakeJoker1 = new Tiles(TileColor.black, 1, TileType.FakeJoker); // Fake joker tile 1
+        Tiles fakeJoker2 = new Tiles(TileColor.black, 2, TileType.FakeJoker); // Fake joker tile 2
 
         allTiles.Add(fakeJoker1);
         allTiles.Add(fakeJoker2);
