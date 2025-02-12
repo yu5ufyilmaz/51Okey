@@ -91,6 +91,8 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             // Sprite adını oluştur
             if (tileData.type == TileType.FakeJoker)
                 spriteName = "FakeJoker";
+            else if (tileData.type == TileType.Joker)
+                spriteName = "Empty";
             else
                 spriteName = tileData.color.ToString() + "_" + tileData.number.ToString();
 
@@ -247,19 +249,17 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
 
         // Eğer en yakın placeholder boşsa ve taş oraya bırakılabiliyorsa
-        if (closestPlaceholder != null && closestDistance < 25f)
+        if (closestPlaceholder != null && closestDistance < 40f)
         {
             if (turnManager.IsPlayerTurn() == true)
             {
-                if (playerTiles.Count < 15)
+                if (turnManager.canDrop == false)
                 {
                     if (inMiddle == true)
                     {
-
-
                         SetTileData(tileDistrubite.allTiles[0]);
                         tileDistrubite.photonView.RPC("AddTileFromMiddlePlayerList", RpcTarget.AllBuffered, queueValue);
-
+                        turnManager.canDrop = true;
                         StartCoroutine(SmoothMove(transform, closestPlaceholder));
 
                         inMiddle = false;
@@ -273,6 +273,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
                         Debug.Log("Soldan taş çekme işlemi gerçekleştirildi");
                         tileDistrubite.photonView.RPC("AddTileFromDropPlayerList", RpcTarget.AllBuffered, queueValue);
+                        turnManager.canDrop = true;
                         tileDistrubite.dropTile = this.tileDataInfo;
                         fromLeftContainer = false;
                     }
@@ -368,12 +369,32 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object queueValue);
         StartCoroutine(SmoothMove(transform, rightTileContainer)); // Taşı en yakın boş placeholder'a yerleştir
         int tileIndex = playerTiles.IndexOf(tileDataInfo);
-
-        // RemoveTileFromPlayerList();
+        scoreManager.RemoveMeldedTiles();
         tileDistrubite.photonView.RPC("RemoveTileFromPlayerList", RpcTarget.AllBuffered, queueValue, tileIndex);
         Destroy(gameObject);
+        turnManager.canDrop = false;
         // Sıra diğer oyuncuya geçsin
+
         turnManager.photonView.RPC("NextTurn", RpcTarget.AllBuffered);
+
+    }
+
+
+    private void DestroyTileGameObject(Tiles tile)
+    {
+        // Taşın GameObject'ini bul ve yok et
+        foreach (Transform placeholder in playerTileContainer)
+        {
+            if (placeholder.childCount > 0)
+            {
+                TileUI tileUI = placeholder.GetChild(0).GetComponent<TileUI>();
+                if (tileUI != null && tileUI.tileDataInfo == tile)
+                {
+                    Destroy(placeholder.GetChild(0).gameObject);
+                    return; // İlk eşleşmeyi bulduktan sonra döngüden çık
+                }
+            }
+        }
     }
     #endregion
 

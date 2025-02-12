@@ -2,10 +2,16 @@ using System.Collections;
 using System.Collections.Generic;
 using Photon.Pun;
 using UnityEngine;
+using UnityEngine.SocialPlatforms.Impl;
 
 public class ExitButton : MonoBehaviourPunCallbacks
 {
     //Oyuncunun bulunduğu odadan çıktıktan sonra tekrardan Lobbye bağlanmasını sağlayan Fonksiyonlar
+    ScoreManager scoreManager;
+    private void Start()
+    {
+
+    }
     public void ExitGame()
     {
         PhotonNetwork.CurrentRoom.SetMasterClient(PhotonNetwork.LocalPlayer);
@@ -17,5 +23,19 @@ public class ExitButton : MonoBehaviourPunCallbacks
     public override void OnConnectedToMaster()
     {
         PhotonNetwork.JoinLobby();
+    }
+
+    public void MeldTileButton()
+    {
+        if (scoreManager == null)
+        {
+            if (GameObject.Find("ScoreManager(Clone)") != null)
+            {
+                scoreManager = GameObject.Find("ScoreManager(Clone)").GetComponent<ScoreManager>();
+                scoreManager.OnButtonClick();
+            }
+        }
+
+
     }
 }

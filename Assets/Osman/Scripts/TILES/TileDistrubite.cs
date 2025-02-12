@@ -16,6 +16,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     public GameObject tilePrefab; // Tile prefab
     public List<Tiles> allTiles = new List<Tiles>();
     public List<TileUI> tileUIs;
+    private TurnManager turnManager;
 
     [Header("Player Tiles")]
     public List<Tiles> playerTiles1 = new List<Tiles>();
@@ -43,7 +44,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         dropTileContainer = GameObject.Find("DropTileContainers").transform;
         playerTileContainer = GameObject.Find("PlayerTileContainer").transform;
         middleTileContainer = GameObject.Find("MiddleTileContainer").transform;
-
+        turnManager = GameObject.Find("TurnManager").GetComponent<TurnManager>();
         InitializePlaceholders(); // Initialize tile placeholders
         GeneratePlayerTiles(); // Generate player tiles
     }
@@ -421,31 +422,27 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 return new List<Tiles>(); // Boş bir liste döndür
         }
     }
-    public void DropExcessTile()
+    // Meld edilmiş taşları saklamak için liste
+
+    [PunRPC]
+    public void MeldTiles(int playerNumber, int tileIndex)
     {
-        Player player = PhotonNetwork.LocalPlayer;
-        player.CustomProperties.TryGetValue("SeatNumber", out object seatNumber);
-
-        if (playerTiles1.Count == 15) // If the player has 15 tiles
+        switch (playerNumber)
         {
-            Tiles excessTile = playerTiles1[14]; // Excess tile
-            playerTiles1.RemoveAt(14); // Remove the excess tile
-
-            // Drop the tile in the right drop container
-            if (dropTileContainers[2].childCount < 1) // If the right container is empty
-            {
-                GameObject tileInstance = Instantiate(tilePrefab, dropTileContainers[2]);
-                TileUI tileUI = tileInstance.GetComponent<TileUI>();
-                if (tileUI != null)
-                {
-                    tileUI.SetTileData(excessTile);
-                }
-                else
-                {
-                    Debug.LogError("TileUI component missing on tilePrefab.");
-                }
-            }
+            case 1:
+                playerTiles1.RemoveAt(tileIndex);
+                break;
+            case 2:
+                playerTiles2.RemoveAt(tileIndex);
+                break;
+            case 3:
+                playerTiles3.RemoveAt(tileIndex);
+                break;
+            case 4:
+                playerTiles4.RemoveAt(tileIndex);
+                break;
         }
+
     }
 
 
@@ -491,18 +488,22 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             case 1:
                 playerTiles1.Add(allTiles[0]);
                 Debug.Log($"Player {playerNumber} added tile: {allTiles[0]}");
+
                 break;
             case 2:
                 playerTiles2.Add(allTiles[0]);
                 Debug.Log($"Player {playerNumber} added tile: {allTiles[0]}");
+
                 break;
             case 3:
                 playerTiles3.Add(allTiles[0]);
                 Debug.Log($"Player {playerNumber} added tile: {allTiles[0]}");
+
                 break;
             case 4:
                 playerTiles4.Add(allTiles[0]);
                 Debug.Log($"Player {playerNumber} added tile: {allTiles[0]}");
+
                 break;
         }
         allTiles.RemoveAt(0);
@@ -518,21 +519,25 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 playerTiles1.Add(dropTile);
                 Debug.Log($"Player {playerNumber} added tile: {dropTile}");
                 DestroySideTiles(1);
+
                 break;
             case 2:
                 playerTiles2.Add(dropTile);
                 Debug.Log($"Player {playerNumber} added tile: {dropTile}");
                 DestroySideTiles(2);
+
                 break;
             case 3:
                 playerTiles3.Add(dropTile);
                 Debug.Log($"Player {playerNumber} added tile: {dropTile}");
                 DestroySideTiles(3);
+
                 break;
             case 4:
                 playerTiles4.Add(dropTile);
                 Debug.Log($"Player {playerNumber} added tile: {dropTile}");
                 DestroySideTiles(4);
+
                 break;
         }
 

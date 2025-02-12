@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 5421399205044031588}
   - component: {fileID: 5032357142389691761}
   m_Layer: 5
-  m_Name: TilePrefab
+  m_Name: MeldTilePrefab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -27,8 +27,8 @@ RectTransform:
   m_GameObject: {fileID: 1914628353354098140}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 0.36, y: 0.36, z: 0.36}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 3079723711940065893}
   m_Father: {fileID: 0}

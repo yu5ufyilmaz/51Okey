@@ -10,15 +10,20 @@ public class TurnManager : MonoBehaviourPunCallbacks
 
     private int currentTurnPlayer = 1; // İlk sıradaki oyuncu
     [SerializeField] private bool localPlayerTurn;
+    public bool canDrop = false;
 
 
     public void StartGame()
     {
-
-        if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object queueValue))
+        Player player = PhotonNetwork.LocalPlayer;
+        player.CustomProperties.TryGetValue("PlayerQue", out object queueValue);
+        int queueValueInt = (int)queueValue;
+        if (queueValueInt == 1)
         {
-            localPlayerTurn = true;
+            canDrop = true;
         }
+        else
+            Debug.Log(queueValueInt);
 
     }
     public bool IsPlayerTurn()
@@ -37,6 +42,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
     {
         localPlayerTurn = false;
         currentTurnPlayer++;
+        
         if (currentTurnPlayer > PhotonNetwork.PlayerList.Length)
         {
             currentTurnPlayer = 1; // Döngü başa döner

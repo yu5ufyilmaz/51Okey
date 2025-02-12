@@ -7,46 +7,71 @@ using UnityEngine;
 
 public class ScoreManager : MonoBehaviourPunCallbacks
 {
-    private Dictionary<int, int> playerScores; // Oyuncu ID'si ve puanı
-    private Dictionary<int, int> playerPerCounts; // Oyuncu ID'si ve per sayısı
+    public Dictionary<int, int> playerScores; // Oyuncu ID'si ve puanı
+    [SerializeField] Transform numberPerPlaceHolder;
+    private Transform[] numberPerPlaceHolders; // Player tile placeholders
+    [SerializeField] Transform colorPerPlaceHolder;
+    private Transform[] colorPerPlaceHolders;
     [SerializeField] private TileDistrubite tileDistrubite; // Taşları yöneten sınıf
+    private TurnManager turnManager;
     public Transform playerTileContainer; // Oyuncu taşı bölmesi
-
-    // Editörde görünür hale getirmek için
-    [Header("Player Scores")]
-    public int player1Score;
-    public int player2Score;
-    public int player3Score;
-    public int player4Score;
-
-    [Header("Player Per Counts")]
-    public int player1PerCount;
-    public int player2PerCount;
-    public int player3PerCount;
-    public int player4PerCount;
-
-    // Per gruplarını saklamak için
-    [Header("Per Groups")]
-    [SerializeField] private List<List<Tiles>> perGroups; // Editörde görünür hale getirmek için
+    public GameObject tilePrefab;
 
     // Yeni değişkenler
     [Header("Per Count and Total Score")]
     public int totalPerCount; // Toplam per sayısı
     public int totalScore; // Toplam puan
 
-
-    private Dictionary<Tiles, Tiles> replacedTiles = new Dictionary<Tiles, Tiles>(); // Jokerin yerini aldığı taşlar
-    private Dictionary<Tiles, int> jokerReplacementNumbers = new Dictionary<Tiles, int>();
     private void Start()
     {
+        turnManager = GameObject.Find("TurnManager").GetComponent<TurnManager>();
         tileDistrubite = GameObject.Find("TileManager(Clone)").GetComponent<TileDistrubite>();
         playerTileContainer = GameObject.Find("PlayerTileContainer").transform;
+        colorPerPlaceHolder = GameObject.Find("ColorPerPlaceHolder").transform;
+        numberPerPlaceHolder = GameObject.Find("NumberPerPlaceHolder").transform;
+        turnManager.StartGame();
         playerScores = new Dictionary<int, int>();
-        playerPerCounts = new Dictionary<int, int>();
-        perGroups = new List<List<Tiles>>(); // Per gruplarını başlat
+        InitializeMeldPlaceholders();
     }
+    private void InitializeMeldPlaceholders()
+    {
+        int placeholderCount = numberPerPlaceHolder.childCount;
+        numberPerPlaceHolders = new Transform[placeholderCount];
 
-    #region Per Islemleri
+        int placeholderCount2 = colorPerPlaceHolder.childCount;
+        colorPerPlaceHolders = new Transform[placeholderCount2];
+
+        for (int i = 0; i < placeholderCount2; i++)
+        {
+            colorPerPlaceHolders[i] = colorPerPlaceHolder.GetChild(i);
+        }
+
+        for (int i = 0; i < placeholderCount; i++)
+        {
+            numberPerPlaceHolders[i] = numberPerPlaceHolder.GetChild(i);
+        }
+    }
+    public void UpdatePlayerScore(int playerId, int score)
+    {
+        if (playerScores.ContainsKey(playerId))
+        {
+            playerScores[playerId] += score; // Mevcut puanı güncelle
+        }
+        else
+        {
+            playerScores[playerId] = score; // Yeni oyuncu için puanı ayarla
+        }
+
+        // Photon Custom Properties ile puanı güncelle
+        UpdatePlayerCustomProperties(playerId);
+    }
+    private void UpdatePlayerCustomProperties(int playerId)
+    {
+        Photon.Realtime.Player player = PhotonNetwork.CurrentRoom.Players[playerId];
+        player.SetCustomProperties(new ExitGames.Client.Photon.Hashtable { { "PlayerScore", playerScores[playerId] } });
+    }
+    #region Per Kontrol İslemleri
+    private List<List<Tiles>> validPers = new List<List<Tiles>>();
     public void CheckForPer()
     {
         Photon.Realtime.Player player = PhotonNetwork.LocalPlayer;
@@ -62,6 +87,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
         // Geçerli perleri kontrol et
         HashSet<List<Tiles>> countedPers = new HashSet<List<Tiles>>(); // Daha önce sayılan perleri tutmak için
+        validPers.Clear();
         foreach (var per in groups)
         {
 
@@ -74,8 +100,10 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 {
                     countedPers.Add(per); // Bu peri sayılanlar listesine ekle
                     Debug.Log(countedPers + " TAŞ VAR.");
+                    validPers.Add(per);
                     perCount++; // Geçerli per sayısını artır
                     score += CalculateGroupScore(per); // Geçerli puanı ekle
+                    UpdatePlayerScore(playerIdInt, score);
                 }
                 else
                 {
@@ -154,9 +182,18 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     }
     public bool IsSingleColor(List<Tiles> tiles)
     {
+
         TileColor? firstColor = null;
+        bool isFirstJoker = false;
+        if (tiles.Count > 0 && tiles[0].type == TileType.Joker)
+        {
+            isFirstJoker = true;
+        }
+
         foreach (var tile in tiles)
         {
+            if (isFirstJoker && tile == tiles[0]) continue;
+
             if (firstColor == null) firstColor = tile.color;
             else if (firstColor == tile.color) continue;
             else if (tile.type == TileType.Joker) continue;
@@ -188,7 +225,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     {
         if (tiles.Count < 3)
         {
-            Debug.Log("YEŞİLS DEŞIL " + tiles.Count);
             return false;
         }
 
@@ -198,11 +234,8 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         // İlk desen kontrolü
         if (CheckPattern(tiles, pattern) || CheckPattern(tiles, revPattern))
         {
-            Debug.Log("YEŞİLS");
             return true;
         }
-
-        Debug.Log("YEŞİLS DEŞIL");
         return false;
     }
     private bool CheckPattern(List<Tiles> tiles, int[] pattern)
@@ -213,7 +246,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             for (int j = 0; j < tiles.Count; j++)
             {
                 int expectedNumber = pattern[(i + j > pattern.Length - 1 ? pattern.Length - 1 : i + j)];
-
                 if (tiles[j].type == TileType.Joker)
                 {
                     // Joker taşının puanını, mevcut desenin numarasına eşit yap
@@ -223,7 +255,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                     if (j == 0)
                     {
                         // Joker taşının sağındaki taşın beklenen numaraya eşit olup olmadığını kontrol et
-                        if (j < tiles.Count - 1 && tiles[j + 1].number == expectedNumber + 1)
+                        if (tiles.Count > 1 && tiles[j + 1].number == expectedNumber + 1 || tiles.Count > 1 && tiles[j + 1].number == expectedNumber - 1)
                         {
                             tiles[j].number = expectedNumber; // Joker taşının numarasını ayarla
                             isValidJoker = true; // Joker geçerli
@@ -233,7 +265,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                     else if (j == tiles.Count - 1)
                     {
                         // Joker taşının solundaki taşın beklenen numaraya eşit olup olmadığını kontrol et
-                        if (tiles[j - 1].number == expectedNumber - 1)
+                        if (tiles[j - 1].number == expectedNumber - 1 || tiles[j - 1].number == expectedNumber + 1)
                         {
                             tiles[j].number = expectedNumber; // Joker taşının numarasını ayarla
                             isValidJoker = true; // Joker geçerli
@@ -242,10 +274,15 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                     else
                     {
                         // Joker taşının hem solundaki hem de sağındaki taşları kontrol et
-                        if (tiles[j - 1].number == expectedNumber - 1 || tiles[j + 1].number == expectedNumber + 1)
+                        if (tiles[j - 1].number == expectedNumber - 1 || tiles[j - 1].number == expectedNumber + 1)
                         {
                             tiles[j].number = expectedNumber; // Joker taşının numarasını ayarla
                             isValidJoker = true; // Joker geçerli
+                        }
+                        else if (tiles[j + 1].number == expectedNumber + 1 || tiles[j + 1].number == expectedNumber - 1)
+                        {
+                            tiles[j].number = expectedNumber; // Joker taşının numarasını ayarla
+                            isValidJoker = true; // Joker gezocht
                         }
                     }
 
@@ -254,6 +291,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                         valid = false; // Joker geçerli değil
                         break;
                     }
+                    else continue;
                 }
                 else if (tiles[j].number == expectedNumber)
                 {
@@ -273,12 +311,10 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     {
         if (tiles.Count < 3)
         {
-            Debug.Log("KIRMIZI" + tiles.Count);
             return false;
         }
         if (tiles.Count > 4)
         {
-            Debug.Log("KIRMIZI" + tiles.Count);
             return false;
         }
         Tiles notJokerStones = null;
@@ -308,7 +344,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             }
             else
             {
-                Debug.Log("KIRMIZI");
                 return false;
             }
         }
@@ -318,7 +353,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         .Select(group => group.First());
         if (filteredList.Count() + (jokerStones.Count) != tiles.Count)
         {
-            Debug.Log("KIRMIZI");
             return false;
         }
 
@@ -326,7 +360,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         {
             joker.number = notJokerStones.number;
         }
-        Debug.Log("YEŞİL");
         return true;
 
     }
@@ -339,9 +372,248 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             score += tile.number; // Normal taşın puanını ekle
 
         }
-
-        Debug.Log($"Toplam Puan: {score}"); // Puanı kontrol etmek için
         return score;
+    }
+    #endregion
+
+    #region Per Açma İşlemleri
+
+    public void OnButtonClick()
+    {
+        // Oyuncunun sırasını kontrol et
+        if (turnManager.canDrop == true)
+        {  // Belirli bir puan değerinden fazla mı?
+            if (totalScore > 10) // Örneğin, 50 puan
+            {
+                ShowValidPers();
+            }
+            else
+            {
+                Debug.Log("Yeterli puan yok.");
+            }
+        }
+        else
+        {
+            Debug.Log("Oyuncunun sırası degil.");
+        }
+    }
+    public void ShowValidPers()
+    {
+        // Geçerli perleri kontrol et
+        PlaceValidPers(validPers); // Geçerli perleri yerleştir
+    }
+    private void PlaceValidPers(List<List<Tiles>> validPers)
+    {
+        bool[] occupiedRowsNumber = new bool[4]; // 4 satırın dolu olup olmadığını takip etmek için
+        bool[] occupiedRows = new bool[4]; // 4 satırın dolu olup olmadığını takip etmek için
+
+        // Renkli perler için yerleştirme
+        foreach (var per in validPers)
+        {
+            if (IsSingleColor(per) && SingleColorCheck(per)) // Renkli per kontrolü
+            {
+                int rowIndex = -1; // Satır indeksini başlat
+                for (int r = 0; r < 4; r++) // 4 satır var
+                {
+                    if (!occupiedRows[r]) // Eğer satır dolu değilse
+                    {
+                        bool allColumnsFull = true; // O sıradaki tüm sütunların dolu olup olmadığını kontrol et
+                        for (int c = 0; c < 13; c++) // Her satırda 13 sütun var
+                        {
+                            int columnIndex = r * 13 + c; // Sütun indeksini hesapla
+                            if (columnIndex < colorPerPlaceHolders.Length && colorPerPlaceHolders[columnIndex].childCount == 0)
+                            {
+                                allColumnsFull = false; // Eğer bir sütun boşsa, tüm sütunlar dolu değil
+                                break;
+                            }
+                        }
+
+                        if (!allColumnsFull) // Eğer o sıradaki sütunlar dolu değilse
+                        {
+                            rowIndex = r; // Bu satırı seç
+                            break;
+                        }
+                    }
+                }
+
+                // Eğer uygun bir satır bulunduysa, taşları yerleştir
+                if (rowIndex != -1)
+                {
+                    foreach (var tile in per)
+                    {
+                        int columnIndex = rowIndex * 13 + (tile.number - 1); // Taşın numarasına göre sütun indeksini al
+                        if (columnIndex < colorPerPlaceHolders.Length)
+                        {
+                            // Taşı yerleştir
+                            Debug.Log(tile.color + " " + tile.number + " taşı" + rowIndex + ". satır" + columnIndex + ". sütune yerleştirildi.");
+                            GameObject tileInstance = Instantiate(tilePrefab, colorPerPlaceHolders[columnIndex]);
+                            TileUI tileUI = tileInstance.GetComponent<TileUI>();
+                            if (tileUI != null)
+                            {
+                                tileUI.SetTileData(tile);
+                            }
+                            else
+                            {
+                                Debug.LogError("TileUI component missing on tilePrefab.");
+                            }
+                            int playerTileIndex = GetTileIndex(tile);
+                            DeactivatePlayerTile(playerTileIndex);
+                        }
+                    }
+                    occupiedRows[rowIndex] = true; // Bu satırı dolu olarak işaretle
+                }
+                else
+                {
+                    Debug.Log("Tüm renkli sütunlar dolu.");
+                }
+            }
+            else
+            {
+                Debug.Log("Renkli per bulunamadı");
+            }
+        }
+
+        // Sayı perleri için yerleştirme
+        foreach (var per in validPers)
+        {
+            if (MultiColorCheck(per)) // Sayı per kontrolü
+            {
+                int rowIndex = -1; // Satır indeksini başlat
+                for (int r = 0; r < 4; r++) // 4 satır var
+                {
+                    if (!occupiedRowsNumber[r]) // Eğer satır dolu değilse
+                    {
+                        bool allColumnsFull = true; // O sıradaki tüm sütunların dolu olup olmadığını kontrol et
+                        for (int c = 0; c < 4; c++) // Her satırda 13 sütun var
+                        {
+                            int columnIndex = r * 4 + c; // Sütun indeksini hesapla
+                            if (columnIndex < numberPerPlaceHolder.childCount && numberPerPlaceHolder.GetChild(columnIndex).childCount == 0)
+                            {
+                                allColumnsFull = false; // Eğer bir sütun boşsa, tüm sütunlar dolu değil
+                                break;
+                            }
+                        }
+
+                        if (!allColumnsFull) // Eğer o sıradaki sütunlar dolu değilse
+                        {
+                            rowIndex = r; // Bu satırı seç
+                            break;
+                        }
+                    }
+                }
+
+                // Eğer uygun bir satır bulunduysa, taşları yerleştir
+                if (rowIndex != -1)
+                {
+                    foreach (var tile in per)
+                    {
+                        int tileIndex = per.IndexOf(tile);
+                        int columnIndex = rowIndex * 4 + (tileIndex); // Taşın numarasına göre sütun indeksini al
+                        if (columnIndex < numberPerPlaceHolder.childCount)
+                        {
+                            // Taşı yerleştir
+                            GameObject tileInstance = Instantiate(tilePrefab, numberPerPlaceHolders[columnIndex]);
+                            TileUI tileUI = tileInstance.GetComponent<TileUI>();
+                            if (tileUI != null)
+                            {
+                                tileUI.SetTileData(tile);
+                            }
+                            else
+                            {
+                                Debug.LogError("TileUI component missing on tilePrefab.");
+                            }
+                            int playerTileIndex = GetTileIndex(tile);
+                            DeactivatePlayerTile(playerTileIndex);
+                        }
+                    }
+                    occupiedRowsNumber[rowIndex] = true; // Bu satırı dolu olarak işaretle
+                }
+                else
+                {
+                    Debug.Log("Tüm sayı sütunları dolu.");
+                }
+            }
+            else
+            {
+                Debug.Log("Sayı per bulunamadı");
+            }
+        }
+    }
+    private List<Tiles> meldedTiles = new List<Tiles>();
+    public void RemoveMeldedTiles()
+    {
+        List<Tiles> playerTiles = tileDistrubite.GetPlayerTiles();
+        int playerQue = GetPlayerQue();
+        foreach (var tile in meldedTiles)
+        {
+            int tileIndex = playerTiles.IndexOf(tile);
+            tileDistrubite.photonView.RPC("RemoveMeldedTiles", RpcTarget.AllBuffered, playerQue, tileIndex);
+            DestroyTileGameObject(tile);
+        }
+
+    }
+
+    private void DestroyTileGameObject(Tiles tile)
+    {
+        // Taşın GameObject'ini bul ve yok et
+        foreach (Transform placeholder in playerTileContainer)
+        {
+            if (placeholder.childCount > 0)
+            {
+                TileUI tileUI = placeholder.GetChild(0).GetComponent<TileUI>();
+                if (tileUI != null && tileUI.tileDataInfo == tile)
+                {
+                    Destroy(placeholder.GetChild(0).gameObject);
+                    return; // İlk eşleşmeyi bulduktan sonra döngüden çık
+                }
+            }
+        }
+    }
+    private int GetTileIndex(Tiles tile)
+    {
+        // Oyuncunun taş listesini al
+        List<Tiles> playerTiles = tileDistrubite.GetPlayerTiles();
+        return playerTiles.IndexOf(tile); // Taşın indeksini döndür
+    }
+    int GetPlayerQue()
+    {
+
+        PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object queueValue);
+
+        return (int)queueValue;
+    }
+    private void DeactivatePlayerTile(int tileIndex)
+    {
+        // Oyuncunun taş listesini al
+        List<Tiles> playerTiles = tileDistrubite.GetPlayerTiles();
+
+        // Eğer indeks geçerli ise
+        if (tileIndex >= 0 && tileIndex < playerTiles.Count)
+        {
+            Tiles tileToDeactivate = playerTiles[tileIndex];
+
+            // TileUI bileşenini bulmak için tüm TileUI nesnelerini kontrol et
+            foreach (Transform placeholder in playerTileContainer)
+            {
+                if (placeholder.childCount > 0)
+                {
+                    TileUI tileUI = placeholder.GetChild(0).GetComponent<TileUI>();
+                    if (tileUI != null && tileUI.tileDataInfo == tileToDeactivate)
+                    {
+                        // GameObject'i devre dışı bırak
+                        meldedTiles.Add(tileToDeactivate);
+                        placeholder.gameObject.SetActive(false);
+
+                        Debug.Log($"Tile {tileToDeactivate.color} {tileToDeactivate.number} devre dışı bırakıldı.");
+                        return; // İlk eşleşmeyi bulduktan sonra döngüden çık
+                    }
+                }
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Geçersiz taş indeksi: " + tileIndex);
+        }
     }
     #endregion
 }

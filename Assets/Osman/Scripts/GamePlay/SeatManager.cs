@@ -15,6 +15,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
     public GameObject[] tiledropOffset;
     public TileDistrubite tileDistrubite;
     public ScoreManager sManager;
+    private TurnManager turnManager;
 
     [Header("Player Spawn Settings")]
     public int spawnIndex;
@@ -44,10 +45,8 @@ public class SeatManager : MonoBehaviourPunCallbacks
             availableSeats.RemoveAt(0); // Remove the assigned seat
             // Use RPC to assign the seat to the player on all clients
             GameObject tileManager = PhotonNetwork.Instantiate(tileManagerPrefab.name, Vector3.zero, Quaternion.identity, 0);
-            GameObject scoreManager = PhotonNetwork.Instantiate(scoreManagerPrefab.name, Vector3.zero, Quaternion.identity, 0);
-            scoreManager.SetActive(true);
-            sManager = scoreManager.GetComponent<ScoreManager>();
-            Debug.Log(tileManager.name);
+
+            turnManager = GameObject.Find("TurnManager").GetComponent<TurnManager>();
             tileDistrubite = tileManager.GetComponent<TileDistrubite>();
             photonView.RPC("AssignSeatToPlayer", RpcTarget.AllBuffered, PhotonNetwork.LocalPlayer.ActorNumber, seatNumber);
 
@@ -240,6 +239,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
                 // Check if all players are assigned a seat
                 if (tileDistrubite != null && PhotonNetwork.IsMasterClient)
                 {
+
                     Debug.Log(PhotonNetwork.LocalPlayer.NickName + " is the master client.");
                     StartCoroutine(CountdownAndShuffle());
                 }
@@ -258,8 +258,12 @@ public class SeatManager : MonoBehaviourPunCallbacks
         }
 
         // After countdown, shuffle the tiles
+        GameObject scoreManager = PhotonNetwork.Instantiate(scoreManagerPrefab.name, Vector3.zero, Quaternion.identity, 0);
+        scoreManager.SetActive(true);
+        sManager = scoreManager.GetComponent<ScoreManager>();
         tileDistrubite.ShuffleTiles();
         gameIsStart = true; // Set the game as started
+        
     }
 
     private void UpdateImageStates(int countdownValue)
