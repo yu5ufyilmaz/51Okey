@@ -30,7 +30,14 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     public Transform rightTileContainer; // Sağ taş alanı
     public Transform leftTileContainer; // Sol taş alanı
     public Transform playerTileContainer; // Oyuncu taşı bölmesi
+    private Transform playerMeldContainers;
+    [SerializeField] private Transform numberPerPlaceHolder;
+    Transform[] numberPerPlaceHolders; // Player tile placeholders
+    [SerializeField] Transform colorPerPlaceHolder;
+    private Transform[] colorPerPlaceHolders;
 
+    [SerializeField] int tileRow;
+    [SerializeField] int tileColumn;
 
     // Durum Değişkenleri
     public Tiles tileDataInfo;
@@ -55,6 +62,13 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         rightTileContainer = GameObject.Find("RightTileContainer").transform;
         leftTileContainer = GameObject.FindWithTag("LeftTileContainer").transform;
         playerTileContainer = GameObject.Find("PlayerTileContainer").transform;
+
+        playerMeldContainers = GameObject.Find(PhotonNetwork.LocalPlayer.NickName + " meld").transform;
+        if (playerMeldContainers != null)
+        {
+            colorPerPlaceHolder = playerMeldContainers.GetChild(0);
+            numberPerPlaceHolder = playerMeldContainers.GetChild(1);
+        }
         CheckPlace();
         if (gameObject.transform.parent == middleTileContainer)
         {
@@ -79,6 +93,27 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
             Debug.LogWarning("Current transform is not a child of playerTileContainer");
         }
+    }
+    public void CheckMeldPlace()
+    {
+        if (transform.parent.parent == colorPerPlaceHolder)
+        {
+            tilePlaceInt = transform.parent.GetSiblingIndex();
+        }
+        else if (transform.parent.parent == numberPerPlaceHolder)
+        {
+            tilePlaceInt = transform.parent.GetSiblingIndex();
+        }
+        else
+        {
+
+            Debug.LogWarning("Current transform is not a child of playerTileContainer");
+        }
+    }
+    public void CheckRowColoumn(int rowIndex, int columnIndex)
+    {
+        tileRow = rowIndex;
+        tileColumn = columnIndex;
     }
     #endregion
 
@@ -369,9 +404,10 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object queueValue);
         StartCoroutine(SmoothMove(transform, rightTileContainer)); // Taşı en yakın boş placeholder'a yerleştir
         int tileIndex = playerTiles.IndexOf(tileDataInfo);
-        scoreManager.RemoveMeldedTiles();
         tileDistrubite.photonView.RPC("RemoveTileFromPlayerList", RpcTarget.AllBuffered, queueValue, tileIndex);
+        scoreManager.RemoveMeldedTiles();
         Destroy(gameObject);
+
         turnManager.canDrop = false;
         // Sıra diğer oyuncuya geçsin
 

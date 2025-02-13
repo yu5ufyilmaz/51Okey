@@ -17,12 +17,18 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     public List<Tiles> allTiles = new List<Tiles>();
     public List<TileUI> tileUIs;
     private TurnManager turnManager;
+    public ScoreManager scoreManager;
 
     [Header("Player Tiles")]
     public List<Tiles> playerTiles1 = new List<Tiles>();
     public List<Tiles> playerTiles2 = new List<Tiles>();
     public List<Tiles> playerTiles3 = new List<Tiles>();
     public List<Tiles> playerTiles4 = new List<Tiles>();
+    [Header("Melded Tiles")]
+    public List<Tiles> meltedTiles1 = new List<Tiles>();
+    public List<Tiles> meltedTiles2 = new List<Tiles>();
+    public List<Tiles> meltedTiles3 = new List<Tiles>();
+    public List<Tiles> meltedTiles4 = new List<Tiles>();
     public Tiles dropTile;
     public Transform playerTileContainer; // Player tile container
     private Transform[] playerTileContainers; // Player tile placeholders
@@ -44,7 +50,10 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         dropTileContainer = GameObject.Find("DropTileContainers").transform;
         playerTileContainer = GameObject.Find("PlayerTileContainer").transform;
         middleTileContainer = GameObject.Find("MiddleTileContainer").transform;
+
+
         turnManager = GameObject.Find("TurnManager").GetComponent<TurnManager>();
+
         InitializePlaceholders(); // Initialize tile placeholders
         GeneratePlayerTiles(); // Generate player tiles
     }
@@ -113,6 +122,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
     public void ShuffleTiles()
     {
+
         Debug.Log("Shuffling tiles...");
         for (int i = 0; i < allTiles.Count; i++)
         {
@@ -194,6 +204,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void SyncShuffledTiles(Tiles[] shuffledTiles)
     {
+        scoreManager = GameObject.Find("ScoreManager(Clone)").GetComponent<ScoreManager>();
         allTiles.Clear();
         allTiles.AddRange(shuffledTiles);
         DistributeTilesToAllPlayers(); // Distribute shuffled tiles to players
@@ -403,6 +414,72 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     #endregion
 
     #region GamePlay
+    [PunRPC]
+    public void DeactivatePlayerTile(int playerQue, int tileIndex)
+    { // Oyuncunun taş listesini al
+        List<Tiles> playerTiless = new List<Tiles>();
+        switch (playerQue)
+        {
+            case 1:
+                playerTiless = playerTiles1;
+                break;
+            case 2:
+                playerTiless = playerTiles2;
+                break;
+            case 3:
+                playerTiless = playerTiles3;
+                break;
+            case 4:
+                playerTiless = playerTiles4;
+                break;
+        }
+
+        // Eğer indeks geçerli ise
+        if (tileIndex >= 0 && tileIndex < playerTiless.Count)
+        {
+            Tiles tileToDeactivate = playerTiless[tileIndex];
+
+            // TileUI bileşenini bulmak için tüm TileUI nesnelerini kontrol et
+            foreach (Transform placeholder in playerTileContainer)
+            {
+                if (placeholder.childCount > 0)
+                {
+                    TileUI tileUI = placeholder.GetChild(0).GetComponent<TileUI>();
+                    if (tileUI != null && tileUI.tileDataInfo == tileToDeactivate)
+                    {
+                        scoreManager.meldedTiles.Add(tileToDeactivate);
+
+                        switch (playerQue)
+                        {
+                            case 1:
+                                meltedTiles1.Add(tileToDeactivate);
+                                break;
+                            case 2:
+                                meltedTiles2.Add(tileToDeactivate);
+                                break;
+                            case 3:
+                                meltedTiles3.Add(tileToDeactivate);
+                                break;
+                            case 4:
+                                meltedTiles4.Add(tileToDeactivate);
+                                break;
+                        }
+
+                        placeholder.GetChild(0).gameObject.SetActive(false); // GameObject'i devre dışı bırak
+
+                        Debug.Log($"Tile {tileToDeactivate.color} {tileToDeactivate.number} devre dışı bırakıldı.");
+                        return; // İlk eşleşmeyi bulduktan sonra döngüden çık
+                    }
+                }
+            }
+        }
+
+        else
+        {
+            Debug.LogWarning("Geçersiz taş indeksi: " + tileIndex);
+        }
+
+    }
     public List<Tiles> GetPlayerTiles()
     {
         PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object queueValue);
@@ -422,6 +499,26 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 return new List<Tiles>(); // Boş bir liste döndür
         }
     }
+
+    public List<Tiles> GetMeltedTiles()
+    {
+        PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object queueValue);
+        int playerNumber = (int)queueValue;
+        switch (playerNumber)
+        {
+            case 1:
+                return meltedTiles1;
+            case 2:
+                return meltedTiles2;
+            case 3:
+                return meltedTiles3;
+            case 4:
+                return meltedTiles4;
+            default:
+                Debug.LogError($"Invalid player number: {playerNumber}");
+                return new List<Tiles>(); // Boş bir liste döndür
+        }
+    }
     // Meld edilmiş taşları saklamak için liste
 
     [PunRPC]
@@ -431,21 +528,44 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         {
             case 1:
                 playerTiles1.RemoveAt(tileIndex);
+                // scoreManager.MeldValidPers(playerNumber, sco);
                 break;
             case 2:
                 playerTiles2.RemoveAt(tileIndex);
+                // InstatiateMeldTiles(playerNumber, playerTiles2[tileIndex]);
                 break;
             case 3:
                 playerTiles3.RemoveAt(tileIndex);
+                // InstatiateMeldTiles(playerNumber, playerTiles3[tileIndex]);
                 break;
             case 4:
                 playerTiles4.RemoveAt(tileIndex);
+                // InstatiateMeldTiles(playerNumber, playerTiles4[tileIndex]);
                 break;
         }
 
     }
 
 
+    [PunRPC]
+    public void AddMeltedTiles(int playerNumber)
+    {
+        switch (playerNumber)
+        {
+            case 1:
+                meltedTiles1 = GetMeltedTiles();
+                break;
+            case 2:
+                meltedTiles2 = GetMeltedTiles();
+                break;
+            case 3:
+                meltedTiles3 = GetMeltedTiles();
+                break;
+            case 4:
+                meltedTiles4 = GetMeltedTiles();
+                break;
+        }
+    }
     [PunRPC]
     public void RemoveTileFromPlayerList(int playerNumber, int tileIndex)
     {
@@ -562,7 +682,6 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                     {
                         tileUI.SetTileData(tile);
                     }
-
                 }
             }
         }

@@ -49,10 +49,15 @@ MonoBehaviour:
   tilePrefab: {fileID: 1914628353354098140, guid: 0123802f9d89da046a73c39e01bb485d, type: 3}
   allTiles: []
   tileUIs: []
+  scoreManager: {fileID: 0}
   playerTiles1: []
   playerTiles2: []
   playerTiles3: []
   playerTiles4: []
+  meltedTiles1: []
+  meltedTiles2: []
+  meltedTiles3: []
+  meltedTiles4: []
   dropTile:
     color: 0
     number: 0

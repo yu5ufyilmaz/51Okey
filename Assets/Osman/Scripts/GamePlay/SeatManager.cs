@@ -13,6 +13,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
 
     public TMP_Text[] seatTextFields; // Array of Text components to display player names
     public GameObject[] tiledropOffset;
+    public GameObject[] meldTileOffsets;
     public TileDistrubite tileDistrubite;
     public ScoreManager sManager;
     private TurnManager turnManager;
@@ -48,6 +49,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
 
             turnManager = GameObject.Find("TurnManager").GetComponent<TurnManager>();
             tileDistrubite = tileManager.GetComponent<TileDistrubite>();
+
             photonView.RPC("AssignSeatToPlayer", RpcTarget.AllBuffered, PhotonNetwork.LocalPlayer.ActorNumber, seatNumber);
 
         }
@@ -191,6 +193,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
 
             if (relativeIndex < seatTextFields.Length)
             {
+                meldTileOffsets[relativeIndex].name = players[i].NickName + " meld";
                 tiledropOffset[relativeIndex].name = players[i].NickName;
                 seatTextFields[relativeIndex].text = players[i].NickName;
             }
@@ -249,6 +252,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
 
     private IEnumerator CountdownAndShuffle()
     {
+
         // Countdown from 3 to 0
         for (int i = 3; i > 0; i--)
         {
@@ -261,9 +265,11 @@ public class SeatManager : MonoBehaviourPunCallbacks
         GameObject scoreManager = PhotonNetwork.Instantiate(scoreManagerPrefab.name, Vector3.zero, Quaternion.identity, 0);
         scoreManager.SetActive(true);
         sManager = scoreManager.GetComponent<ScoreManager>();
+
         tileDistrubite.ShuffleTiles();
+
         gameIsStart = true; // Set the game as started
-        
+
     }
 
     private void UpdateImageStates(int countdownValue)

@@ -35,7 +35,7 @@ public class ExitButton : MonoBehaviourPunCallbacks
                 scoreManager.OnButtonClick();
             }
         }
-
-
+        else
+            scoreManager.OnButtonClick();
     }
 }
