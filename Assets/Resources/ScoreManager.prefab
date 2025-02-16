@@ -53,6 +53,7 @@ MonoBehaviour:
   totalScore: 0
   occupiedRowsNumber: 00000000
   occupiedRows: 00000000
+  meldTileGO: []
   meldedTiles: []
 --- !u!114 &-7472011219972581762
 MonoBehaviour:

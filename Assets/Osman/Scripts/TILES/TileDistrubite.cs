@@ -14,6 +14,7 @@ using Random = UnityEngine.Random;
 public class TileDistrubite : MonoBehaviourPunCallbacks
 {
     public GameObject tilePrefab; // Tile prefab
+    public GameObject meldTilePrefab; // Meld tile prefab
     public List<Tiles> allTiles = new List<Tiles>();
     public List<TileUI> tileUIs;
     private TurnManager turnManager;
@@ -25,10 +26,11 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     public List<Tiles> playerTiles3 = new List<Tiles>();
     public List<Tiles> playerTiles4 = new List<Tiles>();
     [Header("Melded Tiles")]
-    public List<Tiles> meltedTiles1 = new List<Tiles>();
-    public List<Tiles> meltedTiles2 = new List<Tiles>();
-    public List<Tiles> meltedTiles3 = new List<Tiles>();
-    public List<Tiles> meltedTiles4 = new List<Tiles>();
+    public List<List<Tiles>> meltedTiles1 = new List<List<Tiles>>();
+    public List<List<Tiles>> meltedTiles2 = new List<List<Tiles>>();
+    public List<List<Tiles>> meltedTiles3 = new List<List<Tiles>>();
+    public List<List<Tiles>> meltedTiles4 = new List<List<Tiles>>();
+    public List<List<Tiles>> validMeltedTiles = new List<List<Tiles>>();
     public Tiles dropTile;
     public Transform playerTileContainer; // Player tile container
     private Transform[] playerTileContainers; // Player tile placeholders
@@ -60,13 +62,6 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     public void RegisterTileUI(TileUI tileUI)
     {
         tileUIs.Add(tileUI);
-    }
-
-    public TileUI GetTileUI(Tiles tile)
-    {
-        // Burada, tile ile ilişkili TileUI bileşenini döndürmelisiniz
-        // Örneğin, tile'ın bir ID'si varsa, bu ID ile tileUIs listesinden arama yapabilirsiniz.
-        return tileUIs.FirstOrDefault(t => t.tileDataInfo == tile);
     }
     // Initialize placeholders for player tiles
     private void InitializePlaceholders()
@@ -135,7 +130,16 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         // Set the indicator tile
         SetIndicatorTile();
     }
+    [PunRPC]
+    public void SyncShuffledTiles(Tiles[] shuffledTiles)
+    {
+        scoreManager = GameObject.Find("ScoreManager(Clone)").GetComponent<ScoreManager>();
+        allTiles.Clear();
+        allTiles.AddRange(shuffledTiles);
+        DistributeTilesToAllPlayers(); // Distribute shuffled tiles to players
+    }
     #endregion
+
     #region Find Joker Tile
     private void SetIndicatorTile()
     {
@@ -200,15 +204,6 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         photonView.RPC("SyncShuffledTiles", RpcTarget.All, allTiles.ToArray());
     }
     #endregion
-
-    [PunRPC]
-    public void SyncShuffledTiles(Tiles[] shuffledTiles)
-    {
-        scoreManager = GameObject.Find("ScoreManager(Clone)").GetComponent<ScoreManager>();
-        allTiles.Clear();
-        allTiles.AddRange(shuffledTiles);
-        DistributeTilesToAllPlayers(); // Distribute shuffled tiles to players
-    }
 
     #region Assign Player Queue
     [PunRPC]
@@ -414,72 +409,8 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     #endregion
 
     #region GamePlay
-    [PunRPC]
-    public void DeactivatePlayerTile(int playerQue, int tileIndex)
-    { // Oyuncunun taş listesini al
-        List<Tiles> playerTiless = new List<Tiles>();
-        switch (playerQue)
-        {
-            case 1:
-                playerTiless = playerTiles1;
-                break;
-            case 2:
-                playerTiless = playerTiles2;
-                break;
-            case 3:
-                playerTiless = playerTiles3;
-                break;
-            case 4:
-                playerTiless = playerTiles4;
-                break;
-        }
 
-        // Eğer indeks geçerli ise
-        if (tileIndex >= 0 && tileIndex < playerTiless.Count)
-        {
-            Tiles tileToDeactivate = playerTiless[tileIndex];
-
-            // TileUI bileşenini bulmak için tüm TileUI nesnelerini kontrol et
-            foreach (Transform placeholder in playerTileContainer)
-            {
-                if (placeholder.childCount > 0)
-                {
-                    TileUI tileUI = placeholder.GetChild(0).GetComponent<TileUI>();
-                    if (tileUI != null && tileUI.tileDataInfo == tileToDeactivate)
-                    {
-                        scoreManager.meldedTiles.Add(tileToDeactivate);
-
-                        switch (playerQue)
-                        {
-                            case 1:
-                                meltedTiles1.Add(tileToDeactivate);
-                                break;
-                            case 2:
-                                meltedTiles2.Add(tileToDeactivate);
-                                break;
-                            case 3:
-                                meltedTiles3.Add(tileToDeactivate);
-                                break;
-                            case 4:
-                                meltedTiles4.Add(tileToDeactivate);
-                                break;
-                        }
-
-                        placeholder.GetChild(0).gameObject.SetActive(false); // GameObject'i devre dışı bırak
-
-                        Debug.Log($"Tile {tileToDeactivate.color} {tileToDeactivate.number} devre dışı bırakıldı.");
-                        return; // İlk eşleşmeyi bulduktan sonra döngüden çık
-                    }
-                }
-            }
-        }
-
-        else
-        {
-            Debug.LogWarning("Geçersiz taş indeksi: " + tileIndex);
-        }
-
-    }
+    #region Tile Pick or Drop Actiions
     public List<Tiles> GetPlayerTiles()
     {
         PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object queueValue);
@@ -497,73 +428,6 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             default:
                 Debug.LogError($"Invalid player number: {playerNumber}");
                 return new List<Tiles>(); // Boş bir liste döndür
-        }
-    }
-
-    public List<Tiles> GetMeltedTiles()
-    {
-        PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object queueValue);
-        int playerNumber = (int)queueValue;
-        switch (playerNumber)
-        {
-            case 1:
-                return meltedTiles1;
-            case 2:
-                return meltedTiles2;
-            case 3:
-                return meltedTiles3;
-            case 4:
-                return meltedTiles4;
-            default:
-                Debug.LogError($"Invalid player number: {playerNumber}");
-                return new List<Tiles>(); // Boş bir liste döndür
-        }
-    }
-    // Meld edilmiş taşları saklamak için liste
-
-    [PunRPC]
-    public void MeldTiles(int playerNumber, int tileIndex)
-    {
-        switch (playerNumber)
-        {
-            case 1:
-                playerTiles1.RemoveAt(tileIndex);
-                // scoreManager.MeldValidPers(playerNumber, sco);
-                break;
-            case 2:
-                playerTiles2.RemoveAt(tileIndex);
-                // InstatiateMeldTiles(playerNumber, playerTiles2[tileIndex]);
-                break;
-            case 3:
-                playerTiles3.RemoveAt(tileIndex);
-                // InstatiateMeldTiles(playerNumber, playerTiles3[tileIndex]);
-                break;
-            case 4:
-                playerTiles4.RemoveAt(tileIndex);
-                // InstatiateMeldTiles(playerNumber, playerTiles4[tileIndex]);
-                break;
-        }
-
-    }
-
-
-    [PunRPC]
-    public void AddMeltedTiles(int playerNumber)
-    {
-        switch (playerNumber)
-        {
-            case 1:
-                meltedTiles1 = GetMeltedTiles();
-                break;
-            case 2:
-                meltedTiles2 = GetMeltedTiles();
-                break;
-            case 3:
-                meltedTiles3 = GetMeltedTiles();
-                break;
-            case 4:
-                meltedTiles4 = GetMeltedTiles();
-                break;
         }
     }
     [PunRPC]
@@ -600,6 +464,8 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         }
 
     }
+
+
     [PunRPC]
     public void AddTileFromMiddlePlayerList(int playerNumber)
     {
@@ -628,7 +494,6 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         }
         allTiles.RemoveAt(0);
     }
-
     List<GameObject> droppedTiles = new List<GameObject>();
     [PunRPC]
     public void AddTileFromDropPlayerList(int playerNumber)
@@ -707,5 +572,273 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
         }
     }
+    #endregion
+
+    #region Meld Tiles
+    [PunRPC]
+    void MergeValidpers(List<Tiles> validMeltedTiless, int playerQue)
+    {
+        switch (playerQue)
+        {
+            case 1:
+                meltedTiles1.Add(validMeltedTiless);
+                break;
+            case 2:
+                meltedTiles2.Add(validMeltedTiless);
+                break;
+            case 3:
+                meltedTiles3.Add(validMeltedTiless);
+                break;
+            case 4:
+                meltedTiles4.Add(validMeltedTiless);
+                break;
+        }
+    }
+    [PunRPC]
+    public void DeactivatePlayerTile(int playerQue, int tileIndex)
+    { // Oyuncunun taş listesini al
+        List<Tiles> playerTiless = new List<Tiles>();
+        switch (playerQue)
+        {
+            case 1:
+                playerTiless = playerTiles1;
+                break;
+            case 2:
+                playerTiless = playerTiles2;
+                break;
+            case 3:
+                playerTiless = playerTiles3;
+                break;
+            case 4:
+                playerTiless = playerTiles4;
+                break;
+        }
+
+        // Eğer indeks geçerli ise
+        if (tileIndex >= 0 && tileIndex < playerTiless.Count)
+        {
+            Tiles tileToDeactivate = playerTiless[tileIndex];
+
+            // TileUI bileşenini bulmak için tüm TileUI nesnelerini kontrol et
+            foreach (Transform placeholder in playerTileContainer)
+            {
+                if (placeholder.childCount > 0)
+                {
+                    TileUI tileUI = placeholder.GetChild(0).GetComponent<TileUI>();
+                    if (tileUI != null && tileUI.tileDataInfo == tileToDeactivate)
+                    {
+                        scoreManager.meldedTiles.Add(tileToDeactivate);
+                        placeholder.GetChild(0).gameObject.SetActive(false); // GameObject'i devre dışı bırak
+
+                        Debug.Log($"Tile {tileToDeactivate.color} {tileToDeactivate.number} devre dışı bırakıldı.");
+                        return; // İlk eşleşmeyi bulduktan sonra döngüden çık
+                    }
+                }
+            }
+        }
+
+        else
+        {
+            Debug.LogWarning("Geçersiz taş indeksi: " + tileIndex);
+        }
+
+    }
+
+
+    [PunRPC]
+    public void MeldTiles(int playerNumber, int tileIndex)
+    {
+        switch (playerNumber)
+        {
+            case 1:
+                InstatiateMeldTiles(playerNumber);
+                playerTiles1.RemoveAt(tileIndex);
+
+                break;
+            case 2:
+
+                InstatiateMeldTiles(playerNumber);
+                playerTiles2.RemoveAt(tileIndex);
+
+                break;
+            case 3:
+                InstatiateMeldTiles(playerNumber);
+                playerTiles3.RemoveAt(tileIndex);
+
+                break;
+            case 4:
+                InstatiateMeldTiles(playerNumber);
+                playerTiles4.RemoveAt(tileIndex);
+
+                break;
+        }
+        validMeltedTiles.Clear();
+
+    }
+
+
+
+
+    bool[] occupiedRows = new bool[4];
+    bool[] occupiedRowsNumber = new bool[4];
+    void InstatiateMeldTiles(int playerCount)
+    {
+        Player[] player = PhotonNetwork.PlayerList;
+        switch (playerCount)
+        {
+            case 1:
+                occupiedRows = scoreManager.occupiedRows;
+                occupiedRowsNumber = scoreManager.occupiedRowsNumber;
+                validMeltedTiles = meltedTiles1;
+                break;
+            case 2:
+                occupiedRows = scoreManager.occupiedRows;
+                occupiedRowsNumber = scoreManager.occupiedRowsNumber;
+                validMeltedTiles = meltedTiles2;
+                break;
+            case 3:
+                occupiedRows = scoreManager.occupiedRows;
+                occupiedRowsNumber = scoreManager.occupiedRowsNumber;
+                validMeltedTiles = meltedTiles3;
+                break;
+            case 4:
+                occupiedRows = scoreManager.occupiedRows;
+                occupiedRowsNumber = scoreManager.occupiedRowsNumber;
+                validMeltedTiles = meltedTiles4;
+                break;
+        }
+        // Oyuncunun adını taşıyan MeldTileContainer'ı bul
+        for (int i = 0; i < player.Length; i++)
+        {
+            if (player[i].CustomProperties.TryGetValue("PlayerQue", out object playerQue))
+            {
+                int playerQueInt = (int)playerQue;
+
+                if (playerQueInt == playerCount)
+                {
+
+                    Transform meldTileContainer = GameObject.Find(player[i].NickName + " meld").transform;
+                    Transform colorTileMeldContainer = meldTileContainer.GetChild(0);
+                    Transform numberTileContainer = meldTileContainer.GetChild(1);
+                    Debug.Log("validMeltedTiles: " + validMeltedTiles.Count);
+
+                    foreach (var per in validMeltedTiles)
+                    {
+                        if (scoreManager.IsSingleColor(per) && scoreManager.SingleColorCheck(per))
+                        {
+
+
+                            int rowIndex = -1; // Satır indeksini başlat
+                            for (int r = 0; r < 4; r++) // 4 satır var
+                            {
+                                if (!occupiedRows[r]) // Eğer satır dolu değilse
+                                {
+                                    bool allColumnsFull = true; // O sıradaki tüm sütunların dolu olup olmadığını kontrol et
+                                    for (int c = 0; c < 13; c++) // Her satırda 13 sütun var
+                                    {
+                                        int columnIndex = r * 13 + c; // Sütun indeksini hesapla
+                                        if (columnIndex < colorTileMeldContainer.childCount && colorTileMeldContainer.GetChild(columnIndex).childCount == 0)
+                                        {
+                                            allColumnsFull = false; // Eğer bir sütun boşsa, tüm sütunlar dolu değil
+                                            break;
+                                        }
+                                    }
+
+                                    if (!allColumnsFull) // Eğer o sıradaki sütunlar dolu değilse
+                                    {
+                                        rowIndex = r; // Bu satırı seç
+                                        break;
+                                    }
+                                }
+                            }
+                            if (rowIndex != -1)
+                            {
+                                foreach (var tiles in per)
+                                {
+                                    int columnIndex = rowIndex * 13 + (tiles.number - 1); // Taşın numarasına göre sütun indeksini al
+                                    if (columnIndex < colorTileMeldContainer.childCount)
+                                    {
+                                        // Taşı yerleştir
+                                        Debug.Log(tiles.color + " " + tiles.number + " taşı " + rowIndex + ". satır " + columnIndex + ". sütune yerleştirildi.");
+                                        GameObject tileInstanceColor = Instantiate(meldTilePrefab, colorTileMeldContainer.GetChild(columnIndex));
+                                        TileUI tileUI = tileInstanceColor.GetComponent<TileUI>();
+                                        tileUI.CheckRowColoumn(rowIndex, columnIndex);
+                                        if (tileUI != null)
+                                        {
+                                            tileUI.SetTileData(tiles);
+                                        }
+                                        else
+                                        {
+                                            Debug.LogError("TileUI component missing on tilePrefab.");
+                                        }
+                                    }
+                                    occupiedRows[rowIndex] = true; // Bu satırı dolu olarak işaretle
+                                }
+                            }
+                        }
+                    }
+                    foreach (var per in validMeltedTiles)
+                    {
+                        if (scoreManager.MultiColorCheck(per))
+                        {
+
+                            int rowIndex = -1; // Satır indeksini başlat
+                            for (int r = 0; r < 4; r++) // 4 satır var
+                            {
+                                if (!occupiedRowsNumber[r]) // Eğer satır dolu değilse
+                                {
+                                    bool allColumnsFull = true; // O sıradaki tüm sütunların dolu olup olmadığını kontrol et
+                                    for (int c = 0; c < 4; c++) // Her satırda 13 sütun var
+                                    {
+                                        int columnIndex = r * 4 + c; // Sütun indeksini hesapla
+                                        if (columnIndex < numberTileContainer.childCount && numberTileContainer.GetChild(columnIndex).childCount == 0)
+                                        {
+                                            allColumnsFull = false; // Eğer bir sütun boşsa, tüm sütunlar dolu değil
+                                            break;
+                                        }
+                                    }
+
+                                    if (!allColumnsFull) // Eğer o sıradaki sütunlar dolu değilse
+                                    {
+                                        rowIndex = r; // Bu satırı seç
+                                        break;
+                                    }
+                                }
+                            }
+
+                            // Eğer uygun bir satır bulunduysa, taşları yerleştir
+                            if (rowIndex != -1)
+                            {
+                                foreach (var tiles in per)
+                                {
+                                    int tileIndex = per.IndexOf(tiles);
+                                    int columnIndex = rowIndex * 4 + (tileIndex); // Taşın numarasına göre sütun indeksini al
+                                    if (columnIndex < numberTileContainer.childCount)
+                                    {
+                                        // Taşı yerleştir
+                                        GameObject tileInstance = Instantiate(meldTilePrefab, numberTileContainer.GetChild(columnIndex));
+                                        TileUI tileUI = tileInstance.GetComponent<TileUI>();
+                                        tileUI.CheckRowColoumn(rowIndex, columnIndex);
+                                        if (tileUI != null)
+                                        {
+                                            tileUI.SetTileData(tiles);
+                                        }
+                                        else
+                                        {
+                                            Debug.LogError("TileUI component missing on tilePrefab.");
+                                        }
+                                    }
+
+                                    occupiedRowsNumber[rowIndex] = true; // Bu satırı dolu olarak işaretle
+                                }
+                            }
+
+                        }
+                    }
+                }
+            }
+        }
+    }
+    #endregion
     #endregion
 }

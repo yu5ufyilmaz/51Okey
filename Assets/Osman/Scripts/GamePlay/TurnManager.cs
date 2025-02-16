@@ -22,8 +22,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
         {
             canDrop = true;
         }
-        else
-            Debug.Log(queueValueInt);
+
 
     }
     public bool IsPlayerTurn()
@@ -42,7 +41,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
     {
         localPlayerTurn = false;
         currentTurnPlayer++;
-        
+
         if (currentTurnPlayer > PhotonNetwork.PlayerList.Length)
         {
             currentTurnPlayer = 1; // Döngü başa döner

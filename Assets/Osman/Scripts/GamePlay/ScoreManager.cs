@@ -15,7 +15,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     Transform colorPerPlaceHolder;
     private Transform[] colorPerPlaceHolders;
     private TileDistrubite tileDistrubite; // Taşları yöneten sınıf
-    [SerializeField]private TurnManager turnManager;
+    [SerializeField] private TurnManager turnManager;
     public Transform playerTileContainer; // Oyuncu taşı bölmesi
     public GameObject tilePrefab;
 
@@ -23,7 +23,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     [Header("Per Count and Total Score")]
     public int totalPerCount; // Toplam per sayısı
     public int totalScore; // Toplam puan
-
+    #region Generated Methods
     private void Start()
     {
         Player player = PhotonNetwork.LocalPlayer;
@@ -80,8 +80,9 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         Photon.Realtime.Player player = PhotonNetwork.CurrentRoom.Players[playerId];
         player.SetCustomProperties(new ExitGames.Client.Photon.Hashtable { { "PlayerScore", playerScores[playerId] } });
     }
+    #endregion
     #region Per Kontrol İslemleri
-    private List<List<Tiles>> validPers = new List<List<Tiles>>();
+    public List<List<Tiles>> validPers = new List<List<Tiles>>();
     public void CheckForPer()
     {
         Photon.Realtime.Player player = PhotonNetwork.LocalPlayer;
@@ -98,6 +99,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         // Geçerli perleri kontrol et
         HashSet<List<Tiles>> countedPers = new HashSet<List<Tiles>>(); // Daha önce sayılan perleri tutmak için
         validPers.Clear();
+
         foreach (var per in groups)
         {
 
@@ -111,6 +113,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                     countedPers.Add(per); // Bu peri sayılanlar listesine ekle
                     Debug.Log(countedPers + " TAŞ VAR.");
                     validPers.Add(per);
+
                     perCount++; // Geçerli per sayısını artır
                     score += CalculateGroupScore(per); // Geçerli puanı ekle
                     UpdatePlayerScore(playerIdInt, score);
@@ -219,11 +222,19 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
             if (IsSingleColor(per) && SingleColorCheck(per))
             {
+                foreach (var tile in per)
+                {
+                    tile.perType = TilePerType.Color;
+                }
                 Debug.Log("SingleColor per bulundu.");
                 return true; // Per bulundu
             }
             else if (MultiColorCheck(per))
             {
+                foreach (var tile in per)
+                {
+                    tile.perType = TilePerType.Number;
+                }
                 Debug.Log("MultiColor per bulundu.");
                 return true; // Per bulundu
             }
@@ -418,9 +429,11 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     {
         // Geçerli perleri kontrol et
         PlaceValidPers(validPers); // Geçerli perleri yerleştir
+        //tileDistrubite.photonView.RPC("MergeValidpers", RpcTarget.AllBuffered);
     }
-    [SerializeField] bool[] occupiedRowsNumber = new bool[4];
-    [SerializeField] bool[] occupiedRows = new bool[4];
+    public bool[] occupiedRowsNumber = new bool[4];
+    public bool[] occupiedRows = new bool[4];
+    public List<GameObject> meldTileGO = new List<GameObject>();
     private void PlaceValidPers(List<List<Tiles>> validPers)
     {
 
@@ -464,8 +477,10 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                             // Taşı yerleştir
                             Debug.Log(tile.color + " " + tile.number + " taşı " + rowIndex + ". satır " + columnIndex + ". sütune yerleştirildi.");
                             GameObject tileInstance = Instantiate(tilePrefab, colorPerPlaceHolders[columnIndex]);
+                            meldTileGO.Add(tileInstance);
                             TileUI tileUI = tileInstance.GetComponent<TileUI>();
                             tileUI.CheckRowColoumn(rowIndex, columnIndex);
+
                             if (tileUI != null)
                             {
                                 tileUI.SetTileData(tile);
@@ -480,6 +495,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                         }
                     }
                     occupiedRows[rowIndex] = true; // Bu satırı dolu olarak işaretle
+                    tileDistrubite.photonView.RPC("MergeValidpers", RpcTarget.AllBuffered, per, GetPlayerQue());
                 }
                 else
                 {
@@ -533,6 +549,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                             // Taşı yerleştir
                             GameObject tileInstance = Instantiate(tilePrefab, numberPerPlaceHolders[columnIndex]);
                             TileUI tileUI = tileInstance.GetComponent<TileUI>();
+                            meldTileGO.Add(tileInstance);
                             tileUI.CheckRowColoumn(rowIndex, columnIndex);
                             if (tileUI != null)
                             {
@@ -548,6 +565,8 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                         }
                     }
                     occupiedRowsNumber[rowIndex] = true; // Bu satırı dolu olarak işaretle
+
+                    tileDistrubite.photonView.RPC("MergeValidpers", RpcTarget.AllBuffered, per, GetPlayerQue());
                 }
                 else
                 {
@@ -563,18 +582,16 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     public List<Tiles> meldedTiles = new List<Tiles>();
     public void RemoveMeldedTiles()
     {
+
         if (meldedTiles.Count == 0) return;
+
         List<Tiles> playerTiles = tileDistrubite.GetPlayerTiles();
         int playerQue = GetPlayerQue();
         foreach (var tile in meldedTiles)
         {
-
             int tileIndex = playerTiles.IndexOf(tile);
             tileDistrubite.photonView.RPC("MeldTiles", RpcTarget.AllBuffered, playerQue, tileIndex);
             DestroyTileGameObject(tile);
-
-
-            //MeldValidPers(playerQue, validPers);
         }
         meldedTiles.Clear();
 
