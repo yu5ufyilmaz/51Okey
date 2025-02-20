@@ -38,4 +38,17 @@ public class ExitButton : MonoBehaviourPunCallbacks
         else
             scoreManager.OnButtonClick();
     }
+    public void MeldPairTileButton()
+    {
+        if (scoreManager == null)
+        {
+            if (GameObject.Find("ScoreManager(Clone)") != null)
+            {
+                scoreManager = GameObject.Find("ScoreManager(Clone)").GetComponent<ScoreManager>();
+                scoreManager.OnPairButtonClick();
+            }
+        }
+        else
+            scoreManager.OnPairButtonClick();
+    }
 }

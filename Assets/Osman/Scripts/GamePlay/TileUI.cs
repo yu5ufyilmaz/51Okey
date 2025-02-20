@@ -383,12 +383,6 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         int tileIndex = playerTiles.IndexOf(tileDataInfo);
 
         tileDistrubite.photonView.RPC("RemoveTileFromPlayerList", RpcTarget.AllBuffered, queueValue, tileIndex);
-        for (int i = 0; i < scoreManager.meldTileGO.Count; i++)
-        {
-
-            Destroy(scoreManager.meldTileGO[i]);
-            scoreManager.meldTileGO.RemoveAt(i);
-        }
         scoreManager.RemoveMeldedTiles();
 
         Destroy(gameObject);

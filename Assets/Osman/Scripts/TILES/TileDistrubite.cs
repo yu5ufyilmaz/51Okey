@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
@@ -438,26 +439,22 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         {
             case 1:
                 InstatiateSideTiles(playerNumber, playerTiles1[tileIndex]);
-                Debug.Log($"Player {playerNumber} removed tile: {playerTiles1[tileIndex]}");
                 playerTiles1.RemoveAt(tileIndex);
 
 
                 break;
             case 2:
                 InstatiateSideTiles(playerNumber, playerTiles2[tileIndex]);
-                Debug.Log($"Player {playerNumber} removed tile: {playerTiles2[tileIndex]}");
                 playerTiles2.RemoveAt(tileIndex);
 
                 break;
             case 3:
                 InstatiateSideTiles(playerNumber, playerTiles3[tileIndex]);
-                Debug.Log($"Player {playerNumber} removed tile: {playerTiles3[tileIndex]}");
                 playerTiles3.RemoveAt(tileIndex);
 
                 break;
             case 4:
                 InstatiateSideTiles(playerNumber, playerTiles4[tileIndex]);
-                Debug.Log($"Player {playerNumber} removed tile: {playerTiles4[tileIndex]}");
                 playerTiles4.RemoveAt(tileIndex);
 
                 break;
@@ -473,22 +470,21 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         {
             case 1:
                 playerTiles1.Add(allTiles[0]);
-                Debug.Log($"Player {playerNumber} added tile: {allTiles[0]}");
+
 
                 break;
             case 2:
                 playerTiles2.Add(allTiles[0]);
-                Debug.Log($"Player {playerNumber} added tile: {allTiles[0]}");
+
 
                 break;
             case 3:
                 playerTiles3.Add(allTiles[0]);
-                Debug.Log($"Player {playerNumber} added tile: {allTiles[0]}");
+
 
                 break;
             case 4:
                 playerTiles4.Add(allTiles[0]);
-                Debug.Log($"Player {playerNumber} added tile: {allTiles[0]}");
 
                 break;
         }
@@ -502,25 +498,24 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         {
             case 1:
                 playerTiles1.Add(dropTile);
-                Debug.Log($"Player {playerNumber} added tile: {dropTile}");
+
                 DestroySideTiles(1);
 
                 break;
             case 2:
                 playerTiles2.Add(dropTile);
-                Debug.Log($"Player {playerNumber} added tile: {dropTile}");
+
                 DestroySideTiles(2);
 
                 break;
             case 3:
                 playerTiles3.Add(dropTile);
-                Debug.Log($"Player {playerNumber} added tile: {dropTile}");
+
                 DestroySideTiles(3);
 
                 break;
             case 4:
                 playerTiles4.Add(dropTile);
-                Debug.Log($"Player {playerNumber} added tile: {dropTile}");
                 DestroySideTiles(4);
 
                 break;
@@ -575,22 +570,30 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     #endregion
 
     #region Meld Tiles
+    private List<List<Vector2Int>> meltedTilesPositions1 = new List<List<Vector2Int>>();
+    private List<List<Vector2Int>> meltedTilesPositions2 = new List<List<Vector2Int>>();
+    private List<List<Vector2Int>> meltedTilesPositions3 = new List<List<Vector2Int>>();
+    private List<List<Vector2Int>> meltedTilesPositions4 = new List<List<Vector2Int>>();
     [PunRPC]
-    void MergeValidpers(List<Tiles> validMeltedTiless, int playerQue)
+    void MergeValidpers(List<Tiles> validMeltedTiless, int playerQue, List<Vector2Int> positions)
     {
         switch (playerQue)
         {
             case 1:
                 meltedTiles1.Add(validMeltedTiless);
+                meltedTilesPositions1.Add(positions);
                 break;
             case 2:
                 meltedTiles2.Add(validMeltedTiless);
+                meltedTilesPositions2.Add(positions);
                 break;
             case 3:
                 meltedTiles3.Add(validMeltedTiless);
+                meltedTilesPositions3.Add(positions);
                 break;
             case 4:
                 meltedTiles4.Add(validMeltedTiless);
+                meltedTilesPositions4.Add(positions);
                 break;
         }
     }
@@ -673,41 +676,41 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 break;
         }
         validMeltedTiles.Clear();
+        positions.Clear();
 
     }
 
+    List<List<Vector2Int>> positions = new List<List<Vector2Int>>();
 
-
-
-    bool[] occupiedRows = new bool[4];
-    bool[] occupiedRowsNumber = new bool[4];
     void InstatiateMeldTiles(int playerCount)
     {
         Player[] player = PhotonNetwork.PlayerList;
+        Player localPlayer = PhotonNetwork.LocalPlayer;
+        localPlayer.CustomProperties.TryGetValue("PlayerQue", out object localPlayerQue);
+        int localPlayerQueInt = (int)localPlayerQue;
+        if (localPlayerQueInt == playerCount) return;
+
+
         switch (playerCount)
         {
             case 1:
-                occupiedRows = scoreManager.occupiedRows;
-                occupiedRowsNumber = scoreManager.occupiedRowsNumber;
                 validMeltedTiles = meltedTiles1;
+                positions = meltedTilesPositions1;
                 break;
             case 2:
-                occupiedRows = scoreManager.occupiedRows;
-                occupiedRowsNumber = scoreManager.occupiedRowsNumber;
                 validMeltedTiles = meltedTiles2;
+                positions = meltedTilesPositions2;
                 break;
             case 3:
-                occupiedRows = scoreManager.occupiedRows;
-                occupiedRowsNumber = scoreManager.occupiedRowsNumber;
                 validMeltedTiles = meltedTiles3;
+                positions = meltedTilesPositions3;
                 break;
             case 4:
-                occupiedRows = scoreManager.occupiedRows;
-                occupiedRowsNumber = scoreManager.occupiedRowsNumber;
                 validMeltedTiles = meltedTiles4;
+                positions = meltedTilesPositions4;
                 break;
         }
-        // Oyuncunun adını taşıyan MeldTileContainer'ı bul
+        // Boyut kontrolü
         for (int i = 0; i < player.Length; i++)
         {
             if (player[i].CustomProperties.TryGetValue("PlayerQue", out object playerQue))
@@ -716,129 +719,109 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
                 if (playerQueInt == playerCount)
                 {
-
                     Transform meldTileContainer = GameObject.Find(player[i].NickName + " meld").transform;
                     Transform colorTileMeldContainer = meldTileContainer.GetChild(0);
                     Transform numberTileContainer = meldTileContainer.GetChild(1);
-                    Debug.Log("validMeltedTiles: " + validMeltedTiles.Count);
-
-                    foreach (var per in validMeltedTiles)
+                    Transform pairTileContainer = meldTileContainer.GetChild(2);
+                    // Taşları konum bilgileri ile yerleştirin
+                    for (int j = 0; j < validMeltedTiles.Count; j++)
                     {
+                        var per = validMeltedTiles[j];
+                        List<Vector2Int> perPosition = positions[j];
+
+                        if (per.Count != perPosition.Count)
+                        {
+                            Debug.LogError("Per and perPosition count mismatch!");
+                            continue; // Geçersiz durumu atla
+                        }
+
                         if (scoreManager.IsSingleColor(per) && scoreManager.SingleColorCheck(per))
                         {
-
-
-                            int rowIndex = -1; // Satır indeksini başlat
-                            for (int r = 0; r < 4; r++) // 4 satır var
+                            foreach (var tiles in per)
                             {
-                                if (!occupiedRows[r]) // Eğer satır dolu değilse
+                                int perIndex = per.IndexOf(tiles);
+                                Vector2Int position = perPosition[perIndex];
+                                int rowIndex = position.x;
+                                int columnIndex = rowIndex * 13 + (tiles.number - 1);
+                                if (columnIndex < colorTileMeldContainer.childCount)
                                 {
-                                    bool allColumnsFull = true; // O sıradaki tüm sütunların dolu olup olmadığını kontrol et
-                                    for (int c = 0; c < 13; c++) // Her satırda 13 sütun var
+                                    GameObject tileInstanceColor = Instantiate(meldTilePrefab, colorTileMeldContainer.GetChild(columnIndex));
+                                    TileUI tileUI = tileInstanceColor.GetComponent<TileUI>();
+                                    tileUI.CheckRowColoumn(rowIndex, columnIndex);
+                                    if (tileUI != null)
                                     {
-                                        int columnIndex = r * 13 + c; // Sütun indeksini hesapla
-                                        if (columnIndex < colorTileMeldContainer.childCount && colorTileMeldContainer.GetChild(columnIndex).childCount == 0)
-                                        {
-                                            allColumnsFull = false; // Eğer bir sütun boşsa, tüm sütunlar dolu değil
-                                            break;
-                                        }
+                                        tileUI.SetTileData(tiles);
                                     }
-
-                                    if (!allColumnsFull) // Eğer o sıradaki sütunlar dolu değilse
+                                    else
                                     {
-                                        rowIndex = r; // Bu satırı seç
-                                        break;
+                                        Debug.LogError("TileUI component missing on tilePrefab.");
                                     }
-                                }
-                            }
-                            if (rowIndex != -1)
-                            {
-                                foreach (var tiles in per)
-                                {
-                                    int columnIndex = rowIndex * 13 + (tiles.number - 1); // Taşın numarasına göre sütun indeksini al
-                                    if (columnIndex < colorTileMeldContainer.childCount)
-                                    {
-                                        // Taşı yerleştir
-                                        Debug.Log(tiles.color + " " + tiles.number + " taşı " + rowIndex + ". satır " + columnIndex + ". sütune yerleştirildi.");
-                                        GameObject tileInstanceColor = Instantiate(meldTilePrefab, colorTileMeldContainer.GetChild(columnIndex));
-                                        TileUI tileUI = tileInstanceColor.GetComponent<TileUI>();
-                                        tileUI.CheckRowColoumn(rowIndex, columnIndex);
-                                        if (tileUI != null)
-                                        {
-                                            tileUI.SetTileData(tiles);
-                                        }
-                                        else
-                                        {
-                                            Debug.LogError("TileUI component missing on tilePrefab.");
-                                        }
-                                    }
-                                    occupiedRows[rowIndex] = true; // Bu satırı dolu olarak işaretle
                                 }
                             }
                         }
-                    }
-                    foreach (var per in validMeltedTiles)
-                    {
                         if (scoreManager.MultiColorCheck(per))
                         {
 
-                            int rowIndex = -1; // Satır indeksini başlat
-                            for (int r = 0; r < 4; r++) // 4 satır var
+                            foreach (var tiles in per)
                             {
-                                if (!occupiedRowsNumber[r]) // Eğer satır dolu değilse
+                                Vector2Int position = perPosition[per.IndexOf(tiles)];
+                                int rowIndex = position.x;
+                                int columnIndex = position.y;
+
+                                if (columnIndex < numberTileContainer.childCount)
                                 {
-                                    bool allColumnsFull = true; // O sıradaki tüm sütunların dolu olup olmadığını kontrol et
-                                    for (int c = 0; c < 4; c++) // Her satırda 13 sütun var
+                                    // Taşı yerleştir
+                                    GameObject tileInstanceColor = Instantiate(meldTilePrefab, numberTileContainer.GetChild(columnIndex));
+                                    TileUI tileUI = tileInstanceColor.GetComponent<TileUI>();
+                                    tileUI.CheckRowColoumn(rowIndex, columnIndex);
+                                    if (tileUI != null)
                                     {
-                                        int columnIndex = r * 4 + c; // Sütun indeksini hesapla
-                                        if (columnIndex < numberTileContainer.childCount && numberTileContainer.GetChild(columnIndex).childCount == 0)
-                                        {
-                                            allColumnsFull = false; // Eğer bir sütun boşsa, tüm sütunlar dolu değil
-                                            break;
-                                        }
+                                        tileUI.SetTileData(tiles);
+                                    }
+                                    else
+                                    {
+                                        Debug.LogError("TileUI component missing on tilePrefab.");
                                     }
 
-                                    if (!allColumnsFull) // Eğer o sıradaki sütunlar dolu değilse
-                                    {
-                                        rowIndex = r; // Bu satırı seç
-                                        break;
-                                    }
                                 }
+
                             }
-
-                            // Eğer uygun bir satır bulunduysa, taşları yerleştir
-                            if (rowIndex != -1)
-                            {
-                                foreach (var tiles in per)
-                                {
-                                    int tileIndex = per.IndexOf(tiles);
-                                    int columnIndex = rowIndex * 4 + (tileIndex); // Taşın numarasına göre sütun indeksini al
-                                    if (columnIndex < numberTileContainer.childCount)
-                                    {
-                                        // Taşı yerleştir
-                                        GameObject tileInstance = Instantiate(meldTilePrefab, numberTileContainer.GetChild(columnIndex));
-                                        TileUI tileUI = tileInstance.GetComponent<TileUI>();
-                                        tileUI.CheckRowColoumn(rowIndex, columnIndex);
-                                        if (tileUI != null)
-                                        {
-                                            tileUI.SetTileData(tiles);
-                                        }
-                                        else
-                                        {
-                                            Debug.LogError("TileUI component missing on tilePrefab.");
-                                        }
-                                    }
-
-                                    occupiedRowsNumber[rowIndex] = true; // Bu satırı dolu olarak işaretle
-                                }
-                            }
-
                         }
+                        if (scoreManager.IsSingleColor(per) && scoreManager.CheckForDoublePer(per))
+                        {
+                            foreach (var tiles in per)
+                            {
+                                Vector2Int position = perPosition[per.IndexOf(tiles)];
+                                int rowIndex = position.x;
+                                int columnIndex = position.y;
+
+                                if (columnIndex < pairTileContainer.childCount)
+                                {
+                                    // Taşı yerleştir
+                                    GameObject tileInstancePair = Instantiate(meldTilePrefab, pairTileContainer.GetChild(columnIndex));
+                                    TileUI tileUI = tileInstancePair.GetComponent<TileUI>();
+                                    tileUI.CheckRowColoumn(rowIndex, columnIndex);
+                                    if (tileUI != null)
+                                    {
+                                        tileUI.SetTileData(tiles);
+                                    }
+                                    else
+                                    {
+                                        Debug.LogError("TileUI component missing on tilePrefab.");
+                                    }
+
+                                }
+                            }
+                        }
+
                     }
                 }
             }
+
         }
     }
+
+
     #endregion
     #endregion
 }
