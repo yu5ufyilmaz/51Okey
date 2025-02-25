@@ -27,7 +27,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     public int totalScore; // Toplam puan
     public int pairTotalScore;
     public int pairTotalPerCount;
-    #region Generated Methods
+    #region GENERATE_METHODS
     private void Start()
     {
         Player player = PhotonNetwork.LocalPlayer;
@@ -93,69 +93,22 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         player.SetCustomProperties(new ExitGames.Client.Photon.Hashtable { { "PlayerScore", playerScores[playerId] } });
     }
     #endregion
-    #region Per Kontrol İslemleri
+
+
+
+
+
+
+    #region PER_CONTROL_METHODS
+
+
+
+
+
+
+
+    #region For all per groups check
     public List<List<Tiles>> validPerss = new List<List<Tiles>>();
-    public void CheckForPer()
-    {
-        Photon.Realtime.Player player = PhotonNetwork.LocalPlayer;
-        player.CustomProperties.TryGetValue("PlayerQue", out object playerId);
-        int playerIdInt = (int)playerId; // Per gruplarını başlat
-
-        // Per gruplarını güncelle
-        var groups = GetSplittedGroups();
-        Debug.Log("Per gruplarını kontrol ediyor..." + groups.Count + " grup var.");
-
-        int perCount = 0; // Geçerli per sayısını sıfırla
-        int pairPerCount = 0;
-        int score = 0; // Geçerli puanı sıfırla
-        int pairScore = 0;
-
-        // Geçerli perleri kontrol et
-        HashSet<List<Tiles>> countedPers = new HashSet<List<Tiles>>(); // Daha önce sayılan perleri tutmak için
-        validPerss.Clear();
-
-        foreach (var per in groups)
-        {
-
-            // Her grup için kontrol et
-            if (ControlPer(new List<List<Tiles>> { per })) // Geçerli per kontrolü
-            {
-
-                // Eğer bu per daha önce sayılmadıysa
-                if (!countedPers.Contains(per))
-                {
-                    countedPers.Add(per); // Bu peri sayılanlar listesine ekle
-                    Debug.Log(countedPers + " TAŞ VAR.");
-                    validPerss.Add(per);
-                    if (CheckForDoublePer(per))
-                    {
-                        pairPerCount++;
-                        pairScore += CalculateDoublePerScore(per); // Çift per puanını ekle
-                    }
-                    else
-                    {
-                        perCount++; // Geçerli per sayısını artır
-                        score += CalculateGroupScore(per); // Geçerli puanı ekle
-                    }
-                    UpdatePlayerScore(playerIdInt, score);
-                }
-                else
-                {
-                    Debug.Log("Bu per daha önce sayılmış.");
-                }
-            }
-            else
-            {
-                Debug.Log("Geçerli Per bulunamadı.");
-            }
-        }
-        totalScore = score;
-        pairTotalScore = pairScore;
-        totalPerCount = countedPers.Count;
-        pairTotalPerCount = pairPerCount;
-        Debug.Log($"Toplam Geçerli Per Sayısı: {totalPerCount}, Toplam Puan: {totalScore}");
-    }
-
     public List<List<Tiles>> GetSplittedGroups()
     {
         List<List<Tiles>> perGroups = new List<List<Tiles>>(); // Per gruplarını bul ve sakla
@@ -236,6 +189,127 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
         return perGroups;
     }
+    public void CheckForPer()
+    {
+        Photon.Realtime.Player player = PhotonNetwork.LocalPlayer;
+        player.CustomProperties.TryGetValue("PlayerQue", out object playerId);
+        int playerIdInt = (int)playerId; // Per gruplarını başlat
+
+        // Per gruplarını güncelle
+        var groups = GetSplittedGroups();
+        Debug.Log("Per gruplarını kontrol ediyor..." + groups.Count + " grup var.");
+
+        int perCount = 0; // Geçerli per sayısını sıfırla
+        int pairPerCount = 0;
+        int score = 0; // Geçerli puanı sıfırla
+        int pairScore = 0;
+
+        // Geçerli perleri kontrol et
+        HashSet<List<Tiles>> countedPers = new HashSet<List<Tiles>>(); // Daha önce sayılan perleri tutmak için
+        validPerss.Clear();
+
+        foreach (var per in groups)
+        {
+
+            // Her grup için kontrol et
+            if (ControlPer(new List<List<Tiles>> { per })) // Geçerli per kontrolü
+            {
+
+                // Eğer bu per daha önce sayılmadıysa
+                if (!countedPers.Contains(per))
+                {
+                    countedPers.Add(per); // Bu peri sayılanlar listesine ekle
+                    Debug.Log(countedPers + " TAŞ VAR.");
+                    validPerss.Add(per);
+                    if (CheckForDoublePer(per))
+                    {
+                        pairPerCount++;
+                        pairScore += CalculateDoublePerScore(per); // Çift per puanını ekle
+                    }
+                    else
+                    {
+                        perCount++; // Geçerli per sayısını artır
+                        score += CalculateGroupScore(per); // Geçerli puanı ekle
+                    }
+                    UpdatePlayerScore(playerIdInt, score);
+                }
+                else
+                {
+                    Debug.Log("Bu per daha önce sayılmış.");
+                }
+            }
+            else
+            {
+                Debug.Log("Geçerli Per bulunamadı.");
+            }
+        }
+        totalScore = score;
+        pairTotalScore = pairScore;
+        totalPerCount = countedPers.Count;
+        pairTotalPerCount = pairPerCount;
+        Debug.Log($"Toplam Geçerli Per Sayısı: {totalPerCount}, Toplam Puan: {totalScore}");
+    }
+    #endregion
+    #region Is pers valid or not
+    public bool ControlPer(List<List<Tiles>> perGroups)
+    {
+        foreach (var per in perGroups)
+        {
+            Debug.Log("Bu perde " + per.Count + " taş var.");
+
+            if (IsSingleColor(per) && SingleColorCheck(per))
+            {
+                foreach (var tile in per)
+                {
+                    tile.perType = TilePerType.Color;
+                }
+                Debug.Log("SingleColor per bulundu.");
+                return true; // Per bulundu
+            }
+            else if (MultiColorCheck(per))
+            {
+                foreach (var tile in per)
+                {
+                    tile.perType = TilePerType.Number;
+                }
+                Debug.Log("MultiColor per bulundu.");
+                return true; // Per bulundu
+            }
+            else if (CheckForDoublePer(per) && IsSingleColor(per))
+            {
+                foreach (var tile in per)
+                {
+                    tile.perType = TilePerType.Pair;
+                }
+                Debug.Log("Double per bulundu.");
+                return true;
+            }
+        }
+        return false; // Hiçbir per bulunamadı
+    }
+
+
+    public bool IsSingleColor(List<Tiles> tiles)
+    {
+
+        TileColor? firstColor = null;
+        bool isFirstJoker = false;
+        if (tiles.Count > 0 && tiles[0].type == TileType.Joker)
+        {
+            isFirstJoker = true;
+        }
+
+        foreach (var tile in tiles)
+        {
+            if (isFirstJoker && tile == tiles[0]) continue;
+
+            if (firstColor == null) firstColor = tile.color;
+            else if (firstColor == tile.color) continue;
+            else if (tile.type == TileType.Joker) continue;
+            else return false;
+        }
+        return true;
+    }
     public bool CheckForDoublePer(List<Tiles> tiles)
     {
         // Çift per kontrolü için taş sayısı 2 olmalı
@@ -283,70 +357,13 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         {
             // Joker taşının numarasını normal taşın numarasına eşitle
             jokerStones[0].number = normalTile.number; // Normal taşın numarasını joker taşına ata
+            jokerStones[0].color = normalTile.color;
             return true;
         }
 
         // Normal taşlar aynı numaraya sahipse, çift per
         return normalTile != null;
     }
-    public bool IsSingleColor(List<Tiles> tiles)
-    {
-
-        TileColor? firstColor = null;
-        bool isFirstJoker = false;
-        if (tiles.Count > 0 && tiles[0].type == TileType.Joker)
-        {
-            isFirstJoker = true;
-        }
-
-        foreach (var tile in tiles)
-        {
-            if (isFirstJoker && tile == tiles[0]) continue;
-
-            if (firstColor == null) firstColor = tile.color;
-            else if (firstColor == tile.color) continue;
-            else if (tile.type == TileType.Joker) continue;
-            else return false;
-        }
-        return true;
-    }
-    public bool ControlPer(List<List<Tiles>> perGroups)
-    {
-        foreach (var per in perGroups)
-        {
-            Debug.Log("Bu perde " + per.Count + " taş var.");
-
-            if (IsSingleColor(per) && SingleColorCheck(per))
-            {
-                foreach (var tile in per)
-                {
-                    tile.perType = TilePerType.Color;
-                }
-                Debug.Log("SingleColor per bulundu.");
-                return true; // Per bulundu
-            }
-            else if (MultiColorCheck(per))
-            {
-                foreach (var tile in per)
-                {
-                    tile.perType = TilePerType.Number;
-                }
-                Debug.Log("MultiColor per bulundu.");
-                return true; // Per bulundu
-            }
-            else if (CheckForDoublePer(per) && IsSingleColor(per))
-            {
-                foreach (var tile in per)
-                {
-                    tile.perType = TilePerType.Pair;
-                }
-                Debug.Log("Double per bulundu.");
-                return true;
-            }
-        }
-        return false; // Hiçbir per bulunamadı
-    }
-
     public bool SingleColorCheck(List<Tiles> tiles)
     {
         if (tiles.Count < 3)
@@ -384,6 +401,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                         if (tiles.Count > 1 && tiles[j + 1].number == expectedNumber + 1 || tiles.Count > 1 && tiles[j + 1].number == expectedNumber - 1)
                         {
                             tiles[j].number = expectedNumber; // Joker taşının numarasını ayarla
+                            tiles[j].color = tiles[j + 1].color;
                             isValidJoker = true; // Joker geçerli
                         }
                     }
@@ -394,6 +412,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                         if (tiles[j - 1].number == expectedNumber - 1 || tiles[j - 1].number == expectedNumber + 1)
                         {
                             tiles[j].number = expectedNumber; // Joker taşının numarasını ayarla
+                            tiles[j].color = tiles[j - 1].color;
                             isValidJoker = true; // Joker geçerli
                         }
                     }
@@ -403,11 +422,13 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                         if (tiles[j - 1].number == expectedNumber - 1 || tiles[j - 1].number == expectedNumber + 1)
                         {
                             tiles[j].number = expectedNumber; // Joker taşının numarasını ayarla
+                            tiles[j].color = tiles[j - 1].color;
                             isValidJoker = true; // Joker geçerli
                         }
                         else if (tiles[j + 1].number == expectedNumber + 1 || tiles[j + 1].number == expectedNumber - 1)
                         {
                             tiles[j].number = expectedNumber; // Joker taşının numarasını ayarla
+                            tiles[j].color = tiles[j + 1].color;
                             isValidJoker = true; // Joker gezocht
                         }
                     }
@@ -489,6 +510,8 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         return true;
 
     }
+    #endregion
+    #region Calulate functions
     private int CalculateGroupScore(List<Tiles> tiles)
     {
         int score = 0;
@@ -511,8 +534,20 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         return score;
     }
     #endregion
+    #endregion
 
-    #region Per Açma İşlemleri
+
+
+    #region MELD_PER_METHODS
+
+
+
+
+
+    #region Button functions
+    public bool isMeldPair = false;
+    public bool isMeldStraight = false;
+
     int GetPlayerQue()
     {
 
@@ -526,9 +561,9 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         // Oyuncunun sırasını kontrol et
         if (turnManager.canDrop == true)
         {  // Belirli bir puan değerinden fazla mı?
-            if (totalScore > 10) // Örneğin, 50 puan
+            if (totalScore >= 3) // Örneğin, 50 puan
             {
-                ShowValidPers();
+                PlaceValidPers(validPerss);
             }
             else
             {
@@ -544,7 +579,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     {
         if (turnManager.canDrop == true)
         {  // Belirli bir puan değerinden fazla mı?
-            if (pairTotalScore > 10) // Örneğin, 50 puan
+            if (pairTotalScore >= 2) // Örneğin, 50 puan
             {
                 PlacePairPers(validPerss);
             }
@@ -558,16 +593,24 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             Debug.Log("Oyuncunun sırası degil.");
         }
     }
-    public void ShowValidPers()
+    public void OnTakeBackButtonClick()
     {
-        // Geçerli perleri kontrol et
-        PlaceValidPers(validPerss); // Geçerli perleri yerleştir
-        //tileDistrubite.photonView.RPC("MergeValidpers", RpcTarget.AllBuffered);
+        if (turnManager.canDrop == true)
+        {
+            TakeBackPers();
+        }
+        else
+        {
+            Debug.Log("Oyuncunun sırası degil.");
+        }
     }
+    #endregion
+    #region Place pers on locale
     public bool[] occupiedRowsNumber = new bool[4];
     public bool[] occupiedRows = new bool[4];
     public bool[] occupiedRowsPair = new bool[8];
     public List<GameObject> meldTileGO = new List<GameObject>();
+    public List<Tiles> meldedTiles = new List<Tiles>();
 
     private void PlaceValidPers(List<List<Tiles>> validPers)
     {
@@ -778,6 +821,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                         {
                             // Taşı yerleştir
                             positions.Add(new Vector2Int(rowIndex, columnIndex));
+
                             GameObject tileInstance = Instantiate(tilePrefab, pairPerPlaceHolders[columnIndex]);
                             TileUI tileUI = tileInstance.GetComponent<TileUI>();
                             meldTileGO.Add(tileInstance);
@@ -813,7 +857,84 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         }
     }
 
-    public List<Tiles> meldedTiles = new List<Tiles>();
+    void TakeBackPers()
+    {
+        // Eğer geri alınacak taş yoksa, işlemi durdur
+        if (meldedTiles.Count == 0) return;
+        List<Tiles> playerTiles = tileDistrubite.GetPlayerTiles();
+        Tiles tiles = meldedTiles[0];
+        int playerQue = GetPlayerQue();
+        // Oyuncunun taş listesini al
+        // Geri alınan taşları tahtadan sil
+        foreach (var tile in meldedTiles)
+        {
+            tiles = tile;
+            // Taşın mevcut indeksini bul
+            int tileIndex = playerTiles.IndexOf(tile);
+            if (tileIndex != -1)
+            {
+                // Taşın GameObject'ini bul ve yok et
+                foreach (Transform placeholder in playerTileContainer)
+                {
+                    if (placeholder.childCount > 0)
+                    {
+                        TileUI tileUI = placeholder.GetChild(0).GetComponent<TileUI>();
+                        if (tileUI != null && tileUI.tileDataInfo == tile)
+                        {
+                            // Taşı görünür yap
+                            placeholder.GetChild(0).gameObject.SetActive(true); // Taşı görünür yap
+
+                            Debug.Log($"Tile {tile.color} {tile.number} geri alındı.");
+
+                            break; // İlk eşleşmeyi bulduktan sonra döngüden çık
+                        }
+                    }
+                }
+            }
+
+        }
+
+        foreach (GameObject meldTile in meldTileGO)
+        {
+
+            if (meldTileGO.Count > 0)
+            {
+                TileUI tileUI = meldTile.GetComponent<TileUI>();
+                if (meldTile.transform.parent.parent == colorPerPlaceHolder)
+                {
+                    occupiedRows[tileUI.tileRow] = false;
+                    //tileDistrubite.photonView.RPC("UnMergeValidPers", RpcTarget.AllBuffered, tiles, GetPlayerQue());
+                }
+                else if (meldTile.transform.parent.parent == numberPerPlaceHolder)
+                {
+                    //tileDistrubite.photonView.RPC("UnMergeValidPers", RpcTarget.AllBuffered, tiles, GetPlayerQue());
+
+                    occupiedRowsNumber[tileUI.tileRow] = false;
+                }
+                else if (meldTile.transform.parent.parent == pairPerPlaceHolder)
+                {
+                    //tileDistrubite.photonView.RPC("UnMergeValidPers", RpcTarget.AllBuffered, tiles, GetPlayerQue());
+                    occupiedRowsPair[tileUI.tileRow] = false;
+                }
+                Destroy(meldTile); // Taşı yok et
+            }
+        }
+        tileDistrubite.photonView.RPC("UnMergeValidPers", RpcTarget.AllBuffered, playerQue);
+        meldedTiles.RemoveAll(x => x != null);
+        meldedTiles.Clear();
+        // Geri alınan taşları temizle
+
+        meldTileGO.Clear();
+        // Tahtadaki satırları sıfırla
+
+    }
+    #endregion
+
+    #region Taş işleme
+
+
+    #endregion
+    #region Hide and remove tiles from the Board
     public void RemoveMeldedTiles()
     {
 
@@ -853,5 +974,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             }
         }
     }
+    #endregion
     #endregion
 }

@@ -569,7 +569,11 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     }
     #endregion
 
-    #region Meld Tiles
+    #region MELD_TILES
+
+
+
+
     private List<List<Vector2Int>> meltedTilesPositions1 = new List<List<Vector2Int>>();
     private List<List<Vector2Int>> meltedTilesPositions2 = new List<List<Vector2Int>>();
     private List<List<Vector2Int>> meltedTilesPositions3 = new List<List<Vector2Int>>();
@@ -594,6 +598,30 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             case 4:
                 meltedTiles4.Add(validMeltedTiless);
                 meltedTilesPositions4.Add(positions);
+                break;
+        }
+    }
+    [PunRPC]
+    void UnMergeValidPers(int playerQue)
+    {
+        switch (playerQue)
+        {
+            case 1:
+
+                meltedTiles1.Clear();
+                meltedTilesPositions1.Clear();
+                break;
+            case 2:
+                meltedTiles2.Clear();
+                meltedTilesPositions2.Clear();
+                break;
+            case 3:
+                meltedTiles3.Clear();
+                meltedTilesPositions3.Clear();
+                break;
+            case 4:
+                meltedTiles4.Clear();
+                meltedTilesPositions4.Clear();
                 break;
         }
     }
@@ -633,7 +661,6 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                         scoreManager.meldedTiles.Add(tileToDeactivate);
                         placeholder.GetChild(0).gameObject.SetActive(false); // GameObject'i devre dışı bırak
 
-                        Debug.Log($"Tile {tileToDeactivate.color} {tileToDeactivate.number} devre dışı bırakıldı.");
                         return; // İlk eşleşmeyi bulduktan sonra döngüden çık
                     }
                 }
@@ -820,7 +847,304 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
         }
     }
+    #region Taş İşleme
+    [SerializeField] List<Tiles> availableTiles = new List<Tiles>();
+    [PunRPC]
+    public void CheckForAvailableTiles(int playerQue)
+    {
+        // Her bir oyuncunun melded taşlarını kontrol et
+        switch (playerQue)
+        {
+            case 1:
+                photonView.RPC("CheckMeldedTiles", RpcTarget.AllBuffered, meltedTiles1);
 
+
+                break;
+            case 2:
+                photonView.RPC("CheckMeldedTiles", RpcTarget.AllBuffered, meltedTiles2);
+
+
+                break;
+            case 3:
+                photonView.RPC("CheckMeldedTiles", RpcTarget.AllBuffered, meltedTiles3);
+
+
+                break;
+            case 4:
+                photonView.RPC("CheckMeldedTiles", RpcTarget.AllBuffered, meltedTiles4);
+
+                break;
+        }
+
+
+
+
+
+    }
+    [PunRPC]
+    private void CheckMeldedTiles(List<List<Tiles>> meldedTiles)
+    {
+        foreach (var meld in meldedTiles)
+        {
+            var availableFromMeld = GetAvailableTiles(meld);
+
+            foreach (var tile in availableFromMeld)
+            {
+                // Eğer availableTiles listesinde yoksa ekle
+                if (!availableTiles.Any(t => t.color == tile.color && t.number == tile.number && t.type == tile.type))
+                {
+                    availableTiles.Add(tile);
+                }
+            }
+
+
+            // Eğer işlek taşlar varsa, oyunculara bildir
+            if (availableTiles.Count > 0)
+            {
+                photonView.RPC("NotifyPlayers", RpcTarget.AllBuffered);
+                photonView.RPC("CheckPlayerTilesForAvailable", RpcTarget.AllBuffered); // Oyuncu taşlarını kontrol et
+            }
+            else
+            {
+                Debug.Log("No available tiles for meld.");
+            }
+        }
+    }
+
+    private List<Tiles> GetAvailableTiles(List<Tiles> meld)
+    {
+        List<Tiles> availableTiles = new List<Tiles>();
+
+        if (scoreManager.IsSingleColor(meld) && scoreManager.SingleColorCheck(meld))
+        {
+            // Perin taşlarını analiz et
+            if (meld.Count > 0)
+            {
+                // Melded taşların numaralarını al
+                var numbers = meld.Select(tile => tile.number).ToList();
+                var colors = meld.Select(tile => tile.color).Distinct().ToList();
+                bool hasJoker = meld.Any(tile => tile.type == TileType.Joker); // Joker taşı var mı?
+
+                // En küçük ve en büyük sayıyı bul
+                int minNumber = numbers.Min();
+                int maxNumber = numbers.Max();
+
+                // En küçük sayının bir eksiğini ekle
+                if (minNumber > 1) // 1'den küçük olamaz
+                {
+                    var newTile = new Tiles(meld[0].color, minNumber - 1, TileType.Number);
+                    availableTiles.Add(newTile); // Renk olarak ilk taşın rengini kullan
+                    FindTilePosition(newTile);
+                }
+
+                // En büyük sayının bir fazlasını ekle
+                if (maxNumber < 13) // 13'ten büyük olamaz
+                {
+                    var newTile = new Tiles(meld[0].color, minNumber + 1, TileType.Number);
+                    availableTiles.Add(newTile); // Renk olarak ilk taşın rengini kullan
+                    FindTilePosition(newTile);
+                }
+
+                // Eğer joker varsa, jokerin yerini aldığı taşın rengini ve numarasını kullan
+                if (hasJoker)
+                {
+                    // Joker taşını bul
+                    var jokerTile = meld.First(tile => tile.type == TileType.Joker);
+
+                    // Jokerin yerini aldığı taşın rengini ve numarasını bul
+                    // Joker taşının yerini aldığı taşın rengini ve numarasını kullanarak işlek taşları ekle
+                    foreach (var tile in meld)
+                    {
+                        if (tile.type == TileType.Joker)
+                        {
+                            // Jokerin yerini aldığı taşın rengini ve numarasını kullan
+                            availableTiles.Add(new Tiles(meld[0].color, tile.number, TileType.Number));
+                            FindTilePosition(tile);
+                        }
+                    }
+                }
+            }
+        }
+        else if (scoreManager.MultiColorCheck(meld))
+        {
+            // MultiColor perleri için
+            if (meld.Count >= 3)
+            {
+                var numberGroups = meld.GroupBy(tile => tile.number).ToList();
+                var missingColors = new List<TileColor>(); // TileColor türünde bir liste
+                bool hasJoker = meld.Any(tile => tile.type == TileType.Joker); // Joker taşı var mı?
+
+                // Hangi renklerin eksik olduğunu bul
+                foreach (var numberGroup in numberGroups)
+                {
+                    if (numberGroup.Count() < 4) // 4 renkten eksik olanları bul
+                    {
+                        missingColors.AddRange(GetMissingColors(numberGroup.Select(tile => tile.color).ToList()));
+                    }
+                }
+
+                // Eksik renklerdeki taşları ekle
+                foreach (var color in missingColors.Distinct())
+                {
+                    foreach (var number in numberGroups.Select(g => g.Key).Distinct())
+                    {
+                        var newTile = new Tiles(color, number, TileType.Number);
+                        availableTiles.Add(newTile);
+                        FindTilePosition(newTile);
+                    }
+                }
+
+                // Eğer 3 taş varsa ve bir tanesi joker ise eksik olan renklerdeki taşları ekle
+                if (meld.Count == 3 && hasJoker)
+                {
+                    var nonJokerTiles = meld.Where(tile => tile.type != TileType.Joker).ToList();
+                    if (nonJokerTiles.Count == 2)
+                    {
+                        // Jokerin yerini aldığı taşın numarasını kullanarak eksik renklerdeki taşları ekle
+                        foreach (var missingColor in GetMissingColors(nonJokerTiles.Select(tile => tile.color).ToList()))
+                        {
+                            foreach (var number in nonJokerTiles.Select(t => t.number).Distinct())
+                            {
+                                var newTile = new Tiles(missingColor, number, TileType.Number);
+                                availableTiles.Add(newTile);
+                                FindTilePosition(newTile);
+                            }
+                        }
+                    }
+                }
+
+                // Eğer 4 taş varsa ve bir tanesi joker ise eksik olan renklerdeki taşları ekle
+                if (meld.Count == 4 && hasJoker)
+                {
+                    var nonJokerTiles = meld.Where(tile => tile.type != TileType.Joker).ToList();
+                    if (nonJokerTiles.Count == 3)
+                    {
+                        // Jokerin yerini aldığı taşın numarasını kullanarak eksik renklerdeki taşları ekle
+                        foreach (var missingColor in GetMissingColors(nonJokerTiles.Select(tile => tile.color).ToList()))
+                        {
+                            foreach (var number in nonJokerTiles.Select(t => t.number).Distinct())
+                            {
+                                var newTile = new Tiles(missingColor, number, TileType.Number);
+                                availableTiles.Add(newTile);
+                                FindTilePosition(newTile);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        else if (scoreManager.CheckForDoublePer(meld) && scoreManager.IsSingleColor(meld))
+        {
+            // Çift perler için
+            if (meld.Any(tile => tile.type == TileType.Joker))
+            {
+                // Jokerin yerine geçtiği taş işlek olmalı
+                var jokerTile = meld.First(tile => tile.type == TileType.Joker);
+                availableTiles.Add(new Tiles(jokerTile.color, jokerTile.number, TileType.Number)); // Jokerin temsil ettiği taş
+            }
+        }
+
+        return availableTiles.Distinct().ToList(); // Tekrar eden taşları kaldır
+    }
+
+    // Eksik renkleri bulmak için yardımcı bir metod
+    private List<TileColor> GetMissingColors(List<TileColor> existingColors)
+    {
+        var allColors = new List<TileColor> { TileColor.red, TileColor.blue, TileColor.black, TileColor.yellow }; // Tüm renkler
+        return allColors.Except(existingColors).ToList();
+    }
+    private void FindTilePosition(Tiles tile)
+    {
+        // Mevcut açılmış taşların konum bilgilerini almak için gerekli değişkenler
+        List<List<List<Tiles>>> allMeldedTiles = new List<List<List<Tiles>>> { meltedTiles1, meltedTiles2, meltedTiles3, meltedTiles4 };
+        List<List<List<Vector2Int>>> allMeldedPositions = new List<List<List<Vector2Int>>> { meltedTilesPositions1, meltedTilesPositions2, meltedTilesPositions3, meltedTilesPositions4 };
+
+        // Oyuncu sayısını almak için PhotonNetwork.PlayerList kullanıyoruz
+        int playerCount = PhotonNetwork.PlayerList.Length;
+
+        // Mevcut açılmış taşların konumlarını bul
+        for (int i = 0; i < playerCount; i++)
+        {
+            var meldedTiles = allMeldedTiles[i];
+            var positions = allMeldedPositions[i];
+
+            for (int j = 0; j < meldedTiles.Count; j++)
+            {
+                var per = meldedTiles[j];
+                List<Vector2Int> perPosition = positions[j];
+
+                // Eğer taşın mevcut olduğu per ile eşleşiyorsa
+                for (int k = 0; k < per.Count; k++)
+                {
+                    var existingTile = per[k];
+
+                    // Renk, numara ve tür karşılaştırması
+                    if (existingTile.color == tile.color && existingTile.number == tile.number && existingTile.type == tile.type)
+                    {
+                        // Taşın konumunu bul
+                        if (k < perPosition.Count) // İndeksin geçerli olup olmadığını kontrol et
+                        {
+                            Vector2Int position = perPosition[k];
+                            int rowIndex = position.x;
+                            int columnIndex = position.y;
+
+                            // Taşın konumunu belirle
+                            Debug.Log($"Taşın konumu belirlendi: Renk: {tile.color}, Numara: {tile.number}, Satır: {rowIndex}, Sütun: {columnIndex}");
+
+                            // Burada taşın konumunu güncelleyebilir veya başka işlemler yapabilirsiniz
+                            PlaceTileInPlaceholder(tile, rowIndex, columnIndex);
+                            return; // Uygun per bulundu, döngüden çık
+                        }
+                        else
+                        {
+                            Debug.LogError($"Geçersiz indeks: {k} perPosition listesinde. Boyut: {perPosition.Count}");
+                        }
+                    }
+                }
+            }
+        }
+
+        // Eğer hiç eşleşme bulunamazsa
+        Debug.Log("NAFBER MÜDÜRs: Taş mevcut perlerde bulunamadı.");
+    }
+    private void PlaceTileInPlaceholder(Tiles tile, int rowIndex, int columnIndex)
+    {
+        // Taşı uygun konuma yerleştirmek için gerekli işlemleri yapın
+        Debug.Log($"Taş yerleştirildi: Renk: {tile.color}, Numara: {tile.number}, Satır: {rowIndex}, Sütun: {columnIndex}");
+        // Burada taşın görselini yerleştirmek için gerekli kodu ekleyin
+    }
+
+    [PunRPC]
+    private void NotifyPlayers()
+    {
+        // Oyunculara işlek taşları bildirin
+        foreach (var tile in availableTiles)
+        {
+            Debug.Log($"İşlek taş: {tile.color} {tile.number}");
+            // Burada UI güncellemesi veya diğer bildirim mekanizmalarını ekleyebilirsiniz
+        }
+    }
+    [PunRPC]
+    private void CheckPlayerTilesForAvailable()
+    {
+        // Her oyuncunun taşlarını kontrol et
+        List<Tiles> playerTiles = GetPlayerTiles(); // Mevcut GetPlayerTiles metodunu kullan
+
+        foreach (var tile in availableTiles)
+        {
+            // Eğer oyuncunun taşları arasında availableTiles'da bulunan bir taş varsa
+            if (playerTiles.Any(playerTile => playerTile.color == tile.color && playerTile.number == tile.number) || playerTiles.Any(playertile => playertile.type == TileType.Joker))
+            {
+                Debug.Log($"Eşleşen taş bulundu: {tile.color} {tile.number}");
+            }
+            else
+            {
+                Debug.Log("Bu taş sende yok" + tile.color + " " + tile.number);
+            }
+        }
+    }
+
+    #endregion
 
     #endregion
     #endregion

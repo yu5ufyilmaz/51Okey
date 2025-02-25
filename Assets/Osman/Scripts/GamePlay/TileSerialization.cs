@@ -11,6 +11,7 @@ public static class TileSerialization
         PhotonPeer.RegisterType(typeof(List<Tiles>), 101, SerializeListOfTiles, DeserializeListOfTiles);
         PhotonPeer.RegisterType(typeof(Vector2Int), 102, SerializeVector2Int, DeserializeVector2Int);
         PhotonPeer.RegisterType(typeof(List<Vector2Int>), 103, SerializeListOfVector2Int, DeserializeListOfVector2Int);
+        PhotonPeer.RegisterType(typeof(List<List<Tiles>>), 104, SerializeListOfListsOfTiles, DeserializeListOfListsOfTiles);
     }
     private static short SerializeTiles(StreamBuffer outStream, object customObject)
     {
@@ -99,6 +100,32 @@ public static class TileSerialization
         }
 
         return list; // Listeyi döndür
+    }
+    private static short SerializeListOfListsOfTiles(StreamBuffer outStream, object customObject)
+    {
+        List<List<Tiles>> listOfLists = (List<List<Tiles>>)customObject;
+        outStream.WriteByte((byte)listOfLists.Count); // Write outer list count
+
+        foreach (var innerList in listOfLists)
+        {
+            SerializeListOfTiles(outStream, innerList); // Serialize each inner List<Tiles>
+        }
+
+        return 0; // Success
+    }
+
+    private static object DeserializeListOfListsOfTiles(StreamBuffer inStream, short length)
+    {
+        int outerCount = inStream.ReadByte(); // Read outer list count
+        List<List<Tiles>> listOfLists = new List<List<Tiles>>(outerCount);
+
+        for (int i = 0; i < outerCount; i++)
+        {
+            List<Tiles> innerList = (List<Tiles>)DeserializeListOfTiles(inStream, 0); // Deserialize each inner List<Tiles>
+            listOfLists.Add(innerList); // Add to outer list
+        }
+
+        return listOfLists; // Return the outer list
     }
     private static byte[] ReadBytes(StreamBuffer inStream, int count)
     {

@@ -51,8 +51,13 @@ MonoBehaviour:
   tilePrefab: {fileID: 1914628353354098140, guid: 647b397df211a6b45a92d85cfb21760b, type: 3}
   totalPerCount: 0
   totalScore: 0
+  pairTotalScore: 0
+  pairTotalPerCount: 0
+  isMeldPair: 0
+  isMeldStraight: 0
   occupiedRowsNumber: 00000000
   occupiedRows: 00000000
+  occupiedRowsPair: 0000000000000000
   meldTileGO: []
   meldedTiles: []
 --- !u!114 &-7472011219972581762

@@ -58,8 +58,11 @@ MonoBehaviour:
   rightTileContainer: {fileID: 0}
   leftTileContainer: {fileID: 0}
   playerTileContainer: {fileID: 0}
+  tileRow: 0
+  tileColumn: 0
   tileDataInfo:
     color: 0
+    perType: 0
     number: 0
     type: 0
   tilePlaceInt: 0
@@ -111,7 +114,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 125, y: 160}
+  m_SizeDelta: {x: 125, y: 170}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4632494919405816146
 CanvasRenderer:

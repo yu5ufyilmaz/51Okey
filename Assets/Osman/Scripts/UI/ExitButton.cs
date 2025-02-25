@@ -51,4 +51,18 @@ public class ExitButton : MonoBehaviourPunCallbacks
         else
             scoreManager.OnPairButtonClick();
     }
+
+    public void TakeBackTileButton()
+    {
+        if (scoreManager == null)
+        {
+            if (GameObject.Find("ScoreManager(Clone)") != null)
+            {
+                scoreManager = GameObject.Find("ScoreManager(Clone)").GetComponent<ScoreManager>();
+                scoreManager.OnTakeBackButtonClick();
+            }
+        }
+        else
+            scoreManager.OnTakeBackButtonClick();
+    }
 }

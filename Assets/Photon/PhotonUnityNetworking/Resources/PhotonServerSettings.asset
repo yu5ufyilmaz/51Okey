@@ -85,6 +85,11 @@ MonoBehaviour:
   - DeactivatePlayerTile
   - TranslateMeldTiles
   - MergeValidpers
+  - UnMerfePers
+  - UnMergeValidPers
+  - CheckForAvailableTiles
+  - NotifyPlayers
+  - CheckPlayerTilesForAvailable
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

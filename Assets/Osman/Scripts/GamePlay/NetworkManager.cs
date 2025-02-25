@@ -17,7 +17,6 @@ public class NetworkManager : MonoBehaviour
             Destroy(gameObject);
         }
     }
-
     // Taşın yerleştirildiğini diğer oyunculara bildir
     public void NotifyTilePlaced(string playerId, Vector3 position)
     {

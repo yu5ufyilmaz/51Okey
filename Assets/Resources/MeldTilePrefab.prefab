@@ -27,7 +27,7 @@ RectTransform:
   m_GameObject: {fileID: 1914628353354098140}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.36, y: 0.36, z: 0.36}
+  m_LocalScale: {x: 0.37, y: 0.37, z: 0.37}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 3079723711940065893}
@@ -58,8 +58,11 @@ MonoBehaviour:
   rightTileContainer: {fileID: 0}
   leftTileContainer: {fileID: 0}
   playerTileContainer: {fileID: 0}
+  tileRow: 0
+  tileColumn: 0
   tileDataInfo:
     color: 0
+    perType: 0
     number: 0
     type: 0
   tilePlaceInt: 0
