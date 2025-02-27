@@ -12,6 +12,7 @@ public static class TileSerialization
         PhotonPeer.RegisterType(typeof(Vector2Int), 102, SerializeVector2Int, DeserializeVector2Int);
         PhotonPeer.RegisterType(typeof(List<Vector2Int>), 103, SerializeListOfVector2Int, DeserializeListOfVector2Int);
         PhotonPeer.RegisterType(typeof(List<List<Tiles>>), 104, SerializeListOfListsOfTiles, DeserializeListOfListsOfTiles);
+        PhotonPeer.RegisterType(typeof(List<List<Vector2Int>>), 105, SerializeListOfListsOfVector2Int, DeserializeListOfListsOfVector2Int);
     }
     private static short SerializeTiles(StreamBuffer outStream, object customObject)
     {
@@ -75,6 +76,7 @@ public static class TileSerialization
     }
 
     // List<Vector2Int> için serileştirme
+
     private static short SerializeListOfVector2Int(StreamBuffer outStream, object customObject)
     {
         List<Vector2Int> list = (List<Vector2Int>)customObject;
@@ -122,6 +124,32 @@ public static class TileSerialization
         for (int i = 0; i < outerCount; i++)
         {
             List<Tiles> innerList = (List<Tiles>)DeserializeListOfTiles(inStream, 0); // Deserialize each inner List<Tiles>
+            listOfLists.Add(innerList); // Add to outer list
+        }
+
+        return listOfLists; // Return the outer list
+    }
+    private static short SerializeListOfListsOfVector2Int(StreamBuffer outStream, object customObject)
+    {
+        List<List<Vector2Int>> listOfLists = (List<List<Vector2Int>>)customObject;
+        outStream.WriteByte((byte)listOfLists.Count); // Write outer list count
+
+        foreach (var innerList in listOfLists)
+        {
+            SerializeListOfVector2Int(outStream, innerList); // Serialize each inner List<Vector2Int>
+        }
+
+        return 0; // Success
+    }
+
+    private static object DeserializeListOfListsOfVector2Int(StreamBuffer inStream, short length)
+    {
+        int outerCount = inStream.ReadByte(); // Read outer list count
+        List<List<Vector2Int>> listOfLists = new List<List<Vector2Int>>(outerCount);
+
+        for (int i = 0; i < outerCount; i++)
+        {
+            List<Vector2Int> innerList = (List<Vector2Int>)DeserializeListOfVector2Int(inStream, 0); // Deserialize each inner List<Vector2Int>
             listOfLists.Add(innerList); // Add to outer list
         }
 
