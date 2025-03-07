@@ -14,31 +14,31 @@ using Random = UnityEngine.Random;
 
 public class TileDistrubite : MonoBehaviourPunCallbacks
 {
-    public GameObject tilePrefab; // Tile prefab
-    public GameObject meldTilePrefab; // Meld tile prefab
+    [SerializeField] GameObject tilePrefab; // Tile prefab
+    [SerializeField] GameObject meldTilePrefab; // Meld tile prefab
     public List<Tiles> allTiles = new List<Tiles>();
-    public List<TileUI> tileUIs;
+    [SerializeField] List<TileUI> tileUIs;
     private TurnManager turnManager;
-    public ScoreManager scoreManager;
+    ScoreManager scoreManager;
 
     [Header("Player Tiles")]
-    public List<Tiles> playerTiles1 = new List<Tiles>();
-    public List<Tiles> playerTiles2 = new List<Tiles>();
-    public List<Tiles> playerTiles3 = new List<Tiles>();
-    public List<Tiles> playerTiles4 = new List<Tiles>();
+    [SerializeField] List<Tiles> playerTiles1 = new List<Tiles>();
+    [SerializeField] List<Tiles> playerTiles2 = new List<Tiles>();
+    [SerializeField] List<Tiles> playerTiles3 = new List<Tiles>();
+    [SerializeField] List<Tiles> playerTiles4 = new List<Tiles>();
     [Header("Melded Tiles")]
-    public List<List<Tiles>> meltedTiles1 = new List<List<Tiles>>();
-    public List<List<Tiles>> meltedTiles2 = new List<List<Tiles>>();
-    public List<List<Tiles>> meltedTiles3 = new List<List<Tiles>>();
-    public List<List<Tiles>> meltedTiles4 = new List<List<Tiles>>();
-    public List<List<Tiles>> validMeltedTiles = new List<List<Tiles>>();
+    [SerializeField] List<List<Tiles>> meltedTiles1 = new List<List<Tiles>>();
+    [SerializeField] List<List<Tiles>> meltedTiles2 = new List<List<Tiles>>();
+    [SerializeField] List<List<Tiles>> meltedTiles3 = new List<List<Tiles>>();
+    [SerializeField] List<List<Tiles>> meltedTiles4 = new List<List<Tiles>>();
+    [SerializeField] List<List<Tiles>> validMeltedTiles = new List<List<Tiles>>();
     public Tiles dropTile;
-    public Transform playerTileContainer; // Player tile container
+    Transform playerTileContainer; // Player tile container
     private Transform[] playerTileContainers; // Player tile placeholders
-    public Transform dropTileContainer; // Drop tile container
+    Transform dropTileContainer; // Drop tile container
     private Transform[] dropTileContainers; // Drop tile placeholders
-    public Transform indicatorTileContainer; // Indicator tile container
-    public Transform middleTileContainer; // Middle tile container
+    Transform indicatorTileContainer; // Indicator tile container
+    Transform middleTileContainer; // Middle tile container
 
     #region Generate Tiles
     private void Awake()
@@ -704,7 +704,6 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         }
         validMeltedTiles.Clear();
         positions.Clear();
-
     }
 
     List<List<Vector2Int>> positions = new List<List<Vector2Int>>();
@@ -849,6 +848,11 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     }
     #region Taş İşleme
     [SerializeField] List<Tiles> availableTiles = new List<Tiles>();
+    [SerializeField] List<Vector2Int> availableTilePos1 = new List<Vector2Int>();
+    [SerializeField] List<Vector2Int> availableTilePos2 = new List<Vector2Int>();
+    [SerializeField] List<Vector2Int> availableTilePos3 = new List<Vector2Int>();
+    [SerializeField] List<Vector2Int> availableTilePos4 = new List<Vector2Int>();
+
 
     [PunRPC]
     public void CheckForAvailableTiles(int playerQue)
@@ -884,12 +888,18 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 if (!availableTiles.Any(t => t.color == tile.color && t.number == tile.number && t.type == tile.type))
                 {
                     availableTiles.Add(tile);
+                    CheckAvailableTilesPos(tile, playerQue);
                 }
             }
+
+            // Pozisyonları kontrol et
+
 
             // Eğer işlek taşlar varsa, oyunculara bildir
             if (availableTiles.Count > 0)
             {
+
+                Debug.Log("Buraya girdi");
                 photonView.RPC("NotifyPlayers", RpcTarget.AllBuffered);
                 photonView.RPC("CheckPlayerTilesForAvailable", RpcTarget.AllBuffered); // Oyuncu taşlarını kontrol et
             }
@@ -898,6 +908,64 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 Debug.Log("No available tiles for meld.");
             }
         }
+    }
+    public void CheckAvailableTilesPos(Tiles tile, int playerQue)
+    {
+        // Her bir taş için pozisyonu bul
+
+        // Taşın pozisyonunu bulmak için bir yöntem (örneğin, taşın GameObject'inin pozisyonu)
+        Vector2Int tilePosition = GetTilePosition(tile, playerQue); // Bu metodu kendin tanımlamalısın
+
+        // Pozisyonu uygun listeye ekle
+        switch (playerQue)
+        {
+            case 1:
+                availableTilePos1.Add(tilePosition);
+                break;
+            case 2:
+                availableTilePos2.Add(tilePosition);
+                break;
+            case 3:
+                availableTilePos3.Add(tilePosition);
+                break;
+            case 4:
+                availableTilePos4.Add(tilePosition);
+                break;
+        }
+
+    }
+
+    //Şuanda İşlek taşın sırasını bulmada sorunu burada yaşıyorum
+    private Vector2Int GetTilePosition(Tiles tile, int playerQue)
+    {
+        Player[] player = PhotonNetwork.PlayerList;
+        for (int i = 0; i < player.Length; i++)
+        {
+            if (player[i].CustomProperties.TryGetValue("PlayerQue", out object playerQueue))
+            {
+                int playerQueInt = (int)playerQueue;
+
+                if (playerQueInt == playerQue)
+                {
+                    Transform meldTileContainer = GameObject.Find(player[i].NickName + " meld").transform;
+                    Transform colorTileMeldContainer = meldTileContainer.GetChild(0);
+                   // Transform numberTileContainer = meldTileContainer.GetChild(1);
+                    //Transform pairTileContainer = meldTileContainer.GetChild(2);
+                    TileUI tileUI = colorTileMeldContainer.GetChild(0).GetComponent<TileUI>();
+                    if (tileUI != null && tileUI.tileDataInfo == tile)
+                    {
+                        // Taşın bulunduğu yer tutucunun konumunu döndür
+                        return new Vector2Int(colorTileMeldContainer.GetSiblingIndex(), colorTileMeldContainer.GetSiblingIndex()); // Örnek olarak, taşın bulunduğu yer tutucunun indeksini döndür
+                    }
+                }
+            }
+        }
+
+        // Taşın bulunduğu yer tutucuyu bul
+
+
+        // Eğer taş bulunamazsa, varsayılan bir değer döndür
+        return new Vector2Int(-1, -1); // Geçersiz bir konum
     }
 
     private List<Tiles> GetAvailableTiles(List<Tiles> meld, int playerQue)
@@ -921,18 +989,17 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 // En küçük sayının bir eksiğini ekle
                 if (minNumber > 1) // 1'den küçük olamaz
                 {
+
                     var newTile = new Tiles(meld[0].color, minNumber - 1, TileType.Number);
                     availableTiles.Add(newTile); // Renk olarak ilk taşın rengini kullan
-
-                    FindTilePosition(newTile, playerQue, GetTilePositionForPlayer(meld[0], playerQue));
                 }
 
                 // En büyük sayının bir fazlasını ekle
                 if (maxNumber < 13) // 13'ten büyük olamaz
                 {
+
                     var newTile = new Tiles(meld[0].color, maxNumber + 1, TileType.Number);
                     availableTiles.Add(newTile); // Renk olarak ilk taşın rengini kullan
-                    FindTilePosition(newTile, playerQue, GetTilePositionForPlayer(meld[0], playerQue));
                 }
 
                 // Eğer joker varsa, jokerin yerini aldığı taşın rengini ve numarasını kullan
@@ -943,7 +1010,6 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
                     // Jokerin yerini aldığı taşın rengini ve numarasını bul
                     availableTiles.Add(new Tiles(meld[0].color, jokerTile.number, TileType.Number));
-                    FindTilePosition(jokerTile, playerQue, GetTilePositionForPlayer(meld[0], playerQue));
                 }
             }
         }
@@ -976,7 +1042,6 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                     {
                         var newTile = new Tiles(color, number, TileType.Number);
                         availableTiles.Add(newTile);
-                        FindTilePosition(newTile, playerQue, GetTilePositionForPlayer(meld[0], playerQue));
                     }
                 }
 
@@ -993,7 +1058,6 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                             {
                                 var newTile = new Tiles(missingColor, number, TileType.Number);
                                 availableTiles.Add(newTile);
-                                FindTilePosition(newTile, playerQue, GetTilePositionForPlayer(meld[0], playerQue));
                             }
                         }
                     }
@@ -1012,7 +1076,6 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                             {
                                 var newTile = new Tiles(missingColor, number, TileType.Number);
                                 availableTiles.Add(newTile);
-                                FindTilePosition(newTile, playerQue, GetTilePositionForPlayer(meld[0], playerQue));
                             }
                         }
                     }
@@ -1027,10 +1090,8 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 // Jokerin yerine geçtiği taş işlek olmalı
                 var jokerTile = meld.First(tile => tile.type == TileType.Joker);
                 availableTiles.Add(new Tiles(jokerTile.color, jokerTile.number, TileType.Number)); // Jokerin temsil ettiği taş
-                FindTilePosition(jokerTile, playerQue, GetTilePositionForPlayer(meld[0], playerQue));
             }
         }
-
         return availableTiles.Distinct().ToList(); // Tekrar eden taşları kaldır
     }
     private List<TileColor> GetMissingColors(List<TileColor> existingColors)
@@ -1038,46 +1099,12 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         var allColors = new List<TileColor> { TileColor.red, TileColor.blue, TileColor.black, TileColor.yellow }; // Tüm renkler
         return allColors.Except(existingColors).ToList();
     }
-    private void FindTilePosition(Tiles tile, int playerQue, Vector2Int position)
+
+    public void CheckMeldTilesPos(List<Tiles> meld)
     {
-        Player[] player = PhotonNetwork.PlayerList;
-        for (int i = 0; i < player.Length; i++)
-        {
-            if (player[i].CustomProperties.TryGetValue("PlayerQue", out object playerQueue))
-            {
-                int playerQueInt = (int)playerQueue;
 
-                if (playerQueInt == playerQue)
-                {
-                    //GetTilePositionForPlayer(tile, playerQue)
-
-                    Debug.Log($"Tile {tile.number} of color {tile.color} is available for Player {player[i].NickName} at position {positions}");
-
-                }
-
-
-            }
-
-        }
     }
 
-    private Vector2Int GetTilePositionForPlayer(Tiles tile, int playerQue)
-    {
-        // Her oyuncunun pozisyonlarını kontrol et
-        switch (playerQue)
-        {
-            case 1:
-                return meltedTilesPositions1.SelectMany(pos => pos).FirstOrDefault(p => p.x == tile.number); // Örnek pozisyon bulma
-            case 2:
-                return meltedTilesPositions2.SelectMany(pos => pos).FirstOrDefault(p => p.x == tile.number);
-            case 3:
-                return meltedTilesPositions3.SelectMany(pos => pos).FirstOrDefault(p => p.x == tile.number);
-            case 4:
-                return meltedTilesPositions4.SelectMany(pos => pos).FirstOrDefault(p => p.x == tile.number);
-            default:
-                return Vector2Int.zero; // Geçersiz durum
-        }
-    }
     [PunRPC]
     private void NotifyPlayers()
     {

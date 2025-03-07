@@ -50,7 +50,6 @@ MonoBehaviour:
   meldTilePrefab: {fileID: 1914628353354098140, guid: 647b397df211a6b45a92d85cfb21760b, type: 3}
   allTiles: []
   tileUIs: []
-  scoreManager: {fileID: 0}
   playerTiles1: []
   playerTiles2: []
   playerTiles3: []
@@ -60,11 +59,11 @@ MonoBehaviour:
     perType: 0
     number: 0
     type: 0
-  playerTileContainer: {fileID: 0}
-  dropTileContainer: {fileID: 0}
-  indicatorTileContainer: {fileID: 0}
-  middleTileContainer: {fileID: 0}
   availableTiles: []
+  availableTilePos1: []
+  availableTilePos2: []
+  availableTilePos3: []
+  availableTilePos4: []
 --- !u!114 &8801788710803842167
 MonoBehaviour:
   m_ObjectHideFlags: 0

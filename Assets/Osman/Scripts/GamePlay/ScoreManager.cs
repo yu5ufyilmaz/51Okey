@@ -92,6 +92,17 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         Photon.Realtime.Player player = PhotonNetwork.CurrentRoom.Players[playerId];
         player.SetCustomProperties(new ExitGames.Client.Photon.Hashtable { { "PlayerScore", playerScores[playerId] } });
     }
+    private void UpdateAvailableColumns(int rowIndex, List<Tiles> per)
+    {
+        foreach (var tile in per)
+        {
+            int columnIndex = rowIndex * 13 + (tile.number - 1); // Taşın numarasına göre sütun indeksini al
+            if (columnIndex < availableColumns.Length)
+            {
+                availableColumns[columnIndex] = false; // Bu sütunu kullanılmaz yap
+            }
+        }
+    }
     #endregion
 
 
@@ -218,8 +229,9 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 // Eğer bu per daha önce sayılmadıysa
                 if (!countedPers.Contains(per))
                 {
+                    UpdateAvailableForPlaceholders(per);
+
                     countedPers.Add(per); // Bu peri sayılanlar listesine ekle
-                    Debug.Log(countedPers + " TAŞ VAR.");
                     validPerss.Add(per);
                     if (CheckForDoublePer(per))
                     {
@@ -841,7 +853,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                         }
                     }
                     occupiedRowsPair[rowIndex] = true;
-
                     // Burada boyut kontrolü yapıyoruz
                     if (per.Count != positions.Count)
                     {
@@ -931,7 +942,66 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     #endregion
 
     #region Taş işleme
+    private bool[] availableColumns;
+    private void UpdateAvailableForPlaceholders(List<Tiles> per)
+    {
+        if (per.Count == 0) return;
+        if (IsSingleColor(per) && SingleColorCheck(per))
+        {
+            // En büyük ve en küçük taşları bul
+            int maxTileNumber = per.Max(tile => tile.number);
+            int minTileNumber = per.Min(tile => tile.number);
 
+            // En büyük taşın bulunduğu yer tutucunun indeksini bul
+            int maxTileIndex = Array.IndexOf(per.ToArray(), per.First(tile => tile.number == maxTileNumber));
+            int minTileIndex = Array.IndexOf(per.ToArray(), per.First(tile => tile.number == minTileNumber));
+
+            // Eğer en büyük taş 13 değilse, en büyük taşın bulunduğu yer tutucunun sağındaki yer tutucunun available durumunu güncelle
+            if (maxTileNumber != 13)
+            {
+                int rightPlaceholderIndex = maxTileIndex + 1;
+                if (rightPlaceholderIndex < colorPerPlaceHolders.Length) // colorPerPlaceHolders dizisini kullanarak kontrol edin
+                {
+                    Placeholder rightPlaceholder = colorPerPlaceHolders[rightPlaceholderIndex].GetComponent<Placeholder>();
+                    if (rightPlaceholder != null)
+                    {
+                        rightPlaceholder.available = true; // PlaceHolder'daki available'ı true yap
+                    }
+                }
+            }
+
+            // Eğer en küçük taş 1'den büyükse, en küçük taşın bulunduğu yer tutucunun solundaki yer tutucunun available durumunu güncelle
+            if (minTileNumber > 1)
+            {
+                int leftPlaceholderIndex = minTileIndex - 1;
+                if (leftPlaceholderIndex >= 0)
+                {
+                    Placeholder leftPlaceholder = colorPerPlaceHolders[leftPlaceholderIndex].GetComponent<Placeholder>();
+                    if (leftPlaceholder != null)
+                    {
+                        leftPlaceholder.available = true; // PlaceHolder'daki available'ı true yap
+                    }
+                }
+            }
+
+            // Eğer perde joker içeriyorsa, jokerin bulunduğu yer tutucunun available durumunu güncelle
+            foreach (var tile in per)
+            {
+                if (tile.type == TileType.Joker)
+                {
+                    int jokerPlaceholderIndex = Array.IndexOf(per.ToArray(), tile);
+                    if (jokerPlaceholderIndex >= 0 && jokerPlaceholderIndex < colorPerPlaceHolders.Length)
+                    {
+                        Placeholder jokerPlaceholder = colorPerPlaceHolders[jokerPlaceholderIndex].GetComponent<Placeholder>();
+                        if (jokerPlaceholder != null)
+                        {
+                            jokerPlaceholder.available = true; // PlaceHolder'daki available'ı true yap
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     #endregion
     #region Hide and remove tiles from the Board

@@ -6,6 +6,7 @@ public class Placeholder : MonoBehaviour, IDropHandler
 {
     public bool isRight = false;
     public bool isDrop = false;
+    public bool available = false;
     public void OnDrop(PointerEventData eventData)
     {
         GameObject droppedTile = eventData.pointerDrag;
