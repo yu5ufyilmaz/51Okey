@@ -932,6 +932,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 availableTilePos4.Add(tilePosition);
                 break;
         }
+        positions.Clear();
 
     }
 
@@ -939,6 +940,22 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     private Vector2Int GetTilePosition(Tiles tile, int playerQue)
     {
         Player[] player = PhotonNetwork.PlayerList;
+        switch (playerQue)
+        {
+            case 1:
+
+                positions = meltedTilesPositions1;
+                break;
+            case 2:
+                positions = meltedTilesPositions2;
+                break;
+            case 3:
+                positions = meltedTilesPositions3;
+                break;
+            case 4:
+                positions = meltedTilesPositions4;
+                break;
+        }
         for (int i = 0; i < player.Length; i++)
         {
             if (player[i].CustomProperties.TryGetValue("PlayerQue", out object playerQueue))
@@ -949,7 +966,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 {
                     Transform meldTileContainer = GameObject.Find(player[i].NickName + " meld").transform;
                     Transform colorTileMeldContainer = meldTileContainer.GetChild(0);
-                   // Transform numberTileContainer = meldTileContainer.GetChild(1);
+                    // Transform numberTileContainer = meldTileContainer.GetChild(1);
                     //Transform pairTileContainer = meldTileContainer.GetChild(2);
                     TileUI tileUI = colorTileMeldContainer.GetChild(0).GetComponent<TileUI>();
                     if (tileUI != null && tileUI.tileDataInfo == tile)
@@ -973,7 +990,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         List<Tiles> availableTiles = new List<Tiles>();
 
         if (scoreManager.IsSingleColor(meld) && scoreManager.SingleColorCheck(meld))
-        {
+        {            
             // Perin taşlarını analiz et
             if (meld.Count > 0)
             {
@@ -992,14 +1009,17 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
                     var newTile = new Tiles(meld[0].color, minNumber - 1, TileType.Number);
                     availableTiles.Add(newTile); // Renk olarak ilk taşın rengini kullan
-                }
 
+                    //İşlek Taşların Konumlarını Burada bul
+                }
                 // En büyük sayının bir fazlasını ekle
                 if (maxNumber < 13) // 13'ten büyük olamaz
                 {
 
                     var newTile = new Tiles(meld[0].color, maxNumber + 1, TileType.Number);
                     availableTiles.Add(newTile); // Renk olarak ilk taşın rengini kullan
+
+                    //İşlek Taşların Konumlarını Burada bul
                 }
 
                 // Eğer joker varsa, jokerin yerini aldığı taşın rengini ve numarasını kullan
