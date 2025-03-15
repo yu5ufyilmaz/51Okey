@@ -56,14 +56,9 @@ MonoBehaviour:
   playerTiles4: []
   dropTile:
     color: 0
-    perType: 0
     number: 0
     type: 0
   availableTiles: []
-  availableTilePos1: []
-  availableTilePos2: []
-  availableTilePos3: []
-  availableTilePos4: []
 --- !u!114 &8801788710803842167
 MonoBehaviour:
   m_ObjectHideFlags: 0

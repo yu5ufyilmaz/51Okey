@@ -46,6 +46,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da784ed126a196743b1951f27b9dd91f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  colorPerPlaceHolders: []
   turnManager: {fileID: 0}
   playerTileContainer: {fileID: 0}
   tilePrefab: {fileID: 1914628353354098140, guid: 647b397df211a6b45a92d85cfb21760b, type: 3}

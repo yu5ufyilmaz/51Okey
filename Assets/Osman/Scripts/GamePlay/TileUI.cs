@@ -31,7 +31,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     public Transform rightTileContainer; // Sağ taş alanı
     public Transform leftTileContainer; // Sol taş alanı
     public Transform playerTileContainer; // Oyuncu taşı bölmesi
-    private Transform playerMeldContainers;
+    private Transform playerMeldContainer;
 
     public int tileRow;
     public int tileColumn;
@@ -54,13 +54,11 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
     private void Start()
     {
-
         middleTileContainer = GameObject.Find("MiddleTileContainer").transform;
         rightTileContainer = GameObject.Find("RightTileContainer").transform;
         leftTileContainer = GameObject.FindWithTag("LeftTileContainer").transform;
         playerTileContainer = GameObject.Find("PlayerTileContainer").transform;
-
-        playerMeldContainers = GameObject.Find(PhotonNetwork.LocalPlayer.NickName + " meld").transform;
+        playerMeldContainer = GameObject.Find("PlayerMeldContainer").transform;
         CheckPlace();
         if (gameObject.transform.parent == middleTileContainer)
         {
@@ -229,7 +227,6 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     #region On End Drag
     public void OnEndDrag(PointerEventData eventData)
     {
-
         if (gameObject.transform.parent.tag == "OtherSideTileContainer" || isIndicatorTile)
         {
             StartCoroutine(SmoothMove(transform, originalParent));
@@ -256,10 +253,6 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                 }
             }
         }
-
-
-
-
         // Eğer en yakın placeholder boşsa ve taş oraya bırakılabiliyorsa
         if (closestPlaceholder != null && closestDistance < 40f)
         {
@@ -315,10 +308,24 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                     }
                     else
                     {
+
                         if (closestPlaceholder.gameObject.GetComponent<Placeholder>().isRight == true)
                         {
                             Debug.Log("Taşı attın sıra diğer oyuncuda");
                             NextTurnEvents();
+                        }
+                        else if (closestPlaceholder.gameObject.GetComponent<Placeholder>().available == true)
+                        {
+                            if (closestPlaceholder.gameObject.GetComponent<Placeholder>().AvailableTileInfo == tileDataInfo)
+                            {
+                                StartCoroutine(SmoothMove(transform, closestPlaceholder));
+                                ActiveStoneEvents();
+
+                            }
+                            else
+                            {
+                                Debug.Log("Yanlış taşı işlemeye çalışıyrosun");
+                            }
                         }
                         else
                         {
@@ -383,6 +390,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         int tileIndex = playerTiles.IndexOf(tileDataInfo);
 
         tileDistrubite.photonView.RPC("RemoveTileFromPlayerList", RpcTarget.AllBuffered, queueValue, tileIndex);
+
         scoreManager.RemoveMeldedTiles();
         tileDistrubite.photonView.RPC("CheckForAvailableTiles", RpcTarget.AllBuffered, queueValue);
         Destroy(gameObject);
@@ -393,12 +401,22 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         turnManager.photonView.RPC("NextTurn", RpcTarget.AllBuffered);
 
     }
+    void ActiveStoneEvents()
+    {
+        PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object queueValue);
+        int tileIndex = playerTiles.IndexOf(tileDataInfo);
+        tileDistrubite.photonView.RPC("RemoveActiveTileFromPlayerList", RpcTarget.AllBuffered, queueValue, tileIndex);
+        Debug.Log("Taşı aktif edildi");
+        Destroy(gameObject);
 
+    }
     #endregion
 
     #region Shift_Tiles
     private void ShiftTilesRight(Transform parentContainer, Transform tileToShift, int startIndex)
     {
+        if (gameObject.transform.parent == middleTileContainer) return;
+        if (gameObject.transform.parent.tag == "MeldPlaceholder") return;
         for (int i = startIndex; i < parentContainer.childCount; i++)
         {
             Transform currentPlaceholder = parentContainer.GetChild(i);
@@ -429,6 +447,8 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
     private void ShiftTilesLeft(Transform parentContainer, Transform tileToShift, int startIndex)
     {
+        if (gameObject.transform.parent == middleTileContainer) return;
+        if (gameObject.transform.parent.tag == "MeldPlaceholder") return;
         for (int i = startIndex; i >= 0; i--)
         {
             Transform currentPlaceholder = parentContainer.GetChild(i);

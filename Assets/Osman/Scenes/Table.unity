@@ -136,7 +136,7 @@ GameObject:
   - component: {fileID: 14373488}
   m_Layer: 5
   m_Name: PlaceHolder (30)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -226,6 +226,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &14373490
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -248,7 +253,7 @@ GameObject:
   - component: {fileID: 18055053}
   m_Layer: 5
   m_Name: PlaceHolder (54)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -338,6 +343,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &18055055
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -360,7 +370,7 @@ GameObject:
   - component: {fileID: 25141597}
   m_Layer: 5
   m_Name: PlaceHolder (13)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -450,6 +460,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &25141599
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -472,7 +487,7 @@ GameObject:
   - component: {fileID: 34796471}
   m_Layer: 5
   m_Name: PlaceHolder (9)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -562,6 +577,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &34796473
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -584,7 +604,7 @@ GameObject:
   - component: {fileID: 46773570}
   m_Layer: 5
   m_Name: PlaceHolder (16)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -674,6 +694,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &46773572
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -696,7 +721,7 @@ GameObject:
   - component: {fileID: 66487181}
   m_Layer: 5
   m_Name: PlaceHolder (32)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -786,6 +811,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &66487183
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -808,7 +838,7 @@ GameObject:
   - component: {fileID: 72120285}
   m_Layer: 5
   m_Name: PlaceHolder (2)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -898,6 +928,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &72120287
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -971,7 +1006,7 @@ GameObject:
   - component: {fileID: 75139628}
   m_Layer: 5
   m_Name: PlaceHolder (10)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1061,6 +1096,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &75139630
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1083,7 +1123,7 @@ GameObject:
   - component: {fileID: 80711894}
   m_Layer: 5
   m_Name: PlaceHolder (1)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1173,6 +1213,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &80711896
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1195,7 +1240,7 @@ GameObject:
   - component: {fileID: 81661795}
   m_Layer: 5
   m_Name: PlaceHolder (26)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1285,6 +1330,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &81661797
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1307,7 +1357,7 @@ GameObject:
   - component: {fileID: 85235843}
   m_Layer: 5
   m_Name: PlaceHolder (43)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1397,6 +1447,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &85235845
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1419,7 +1474,7 @@ GameObject:
   - component: {fileID: 90279685}
   m_Layer: 5
   m_Name: PlaceHolder (5)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1509,6 +1564,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &90279687
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1531,7 +1591,7 @@ GameObject:
   - component: {fileID: 93253072}
   m_Layer: 5
   m_Name: PlaceHolder (51)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1621,6 +1681,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &93253074
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1643,7 +1708,7 @@ GameObject:
   - component: {fileID: 99450849}
   m_Layer: 5
   m_Name: PlaceHolder (7)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1733,6 +1798,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &99450851
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1755,7 +1825,7 @@ GameObject:
   - component: {fileID: 100321223}
   m_Layer: 5
   m_Name: PlaceHolder (11)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1845,6 +1915,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &100321225
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1867,7 +1942,7 @@ GameObject:
   - component: {fileID: 100331805}
   m_Layer: 5
   m_Name: PlaceHolder (19)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1957,6 +2032,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &100331807
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1979,7 +2059,7 @@ GameObject:
   - component: {fileID: 100749978}
   m_Layer: 5
   m_Name: PlaceHolder (50)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2069,6 +2149,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &100749980
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2091,7 +2176,7 @@ GameObject:
   - component: {fileID: 104742670}
   m_Layer: 5
   m_Name: PlaceHolder (52)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2181,6 +2266,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &104742672
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2203,7 +2293,7 @@ GameObject:
   - component: {fileID: 114487914}
   m_Layer: 5
   m_Name: PlaceHolder (40)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2293,6 +2383,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &114487916
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2315,7 +2410,7 @@ GameObject:
   - component: {fileID: 118775022}
   m_Layer: 5
   m_Name: PlaceHolder (29)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2405,6 +2500,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &118775024
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2427,7 +2527,7 @@ GameObject:
   - component: {fileID: 119465012}
   m_Layer: 5
   m_Name: PlaceHolder (3)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2517,6 +2617,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &119465014
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2673,7 +2778,7 @@ GameObject:
   - component: {fileID: 128235240}
   m_Layer: 5
   m_Name: PlaceHolder (12)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2763,6 +2868,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &128235242
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2785,7 +2895,7 @@ GameObject:
   - component: {fileID: 129187383}
   m_Layer: 5
   m_Name: PlaceHolder (12)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2875,6 +2985,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &129187385
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2897,7 +3012,7 @@ GameObject:
   - component: {fileID: 146072018}
   m_Layer: 5
   m_Name: PlaceHolder (44)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2987,6 +3102,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &146072020
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3009,7 +3129,7 @@ GameObject:
   - component: {fileID: 152410829}
   m_Layer: 5
   m_Name: PlaceHolder (19)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -3099,6 +3219,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &152410831
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3121,7 +3246,7 @@ GameObject:
   - component: {fileID: 165268455}
   m_Layer: 5
   m_Name: PlaceHolder (10)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -3211,6 +3336,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &165268457
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3233,7 +3363,7 @@ GameObject:
   - component: {fileID: 181102653}
   m_Layer: 5
   m_Name: PlaceHolder (29)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -3323,6 +3453,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &181102655
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3345,7 +3480,7 @@ GameObject:
   - component: {fileID: 184404234}
   m_Layer: 5
   m_Name: PlaceHolder (31)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -3435,6 +3570,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &184404236
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3457,7 +3597,7 @@ GameObject:
   - component: {fileID: 184791955}
   m_Layer: 5
   m_Name: PlaceHolder (4)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -3547,6 +3687,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &184791957
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3569,7 +3714,7 @@ GameObject:
   - component: {fileID: 186126537}
   m_Layer: 5
   m_Name: PlaceHolder (10)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -3659,6 +3804,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &186126539
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3732,7 +3882,7 @@ GameObject:
   - component: {fileID: 194543312}
   m_Layer: 5
   m_Name: PlaceHolder (4)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -3822,6 +3972,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &194543314
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3844,7 +3999,7 @@ GameObject:
   - component: {fileID: 196299643}
   m_Layer: 5
   m_Name: PlaceHolder (24)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -3934,6 +4089,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &196299645
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3956,7 +4116,7 @@ GameObject:
   - component: {fileID: 209249410}
   m_Layer: 5
   m_Name: PlaceHolder (16)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4046,6 +4206,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &209249412
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -4068,7 +4233,7 @@ GameObject:
   - component: {fileID: 212489882}
   m_Layer: 5
   m_Name: PlaceHolder (3)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4158,6 +4323,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &212489884
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -4180,7 +4350,7 @@ GameObject:
   - component: {fileID: 216087242}
   m_Layer: 5
   m_Name: PlaceHolder (26)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4270,6 +4440,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &216087244
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -4327,7 +4502,7 @@ GameObject:
   - component: {fileID: 227113316}
   m_Layer: 5
   m_Name: PlaceHolder (43)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4417,6 +4592,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &227113318
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -4439,7 +4619,7 @@ GameObject:
   - component: {fileID: 237042151}
   m_Layer: 5
   m_Name: PlaceHolder (8)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4529,6 +4709,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &237042153
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -4589,7 +4774,7 @@ GameObject:
   - component: {fileID: 242801611}
   m_Layer: 5
   m_Name: PlaceHolder (4)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4679,6 +4864,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &242801613
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -4701,7 +4891,7 @@ GameObject:
   - component: {fileID: 253906943}
   m_Layer: 5
   m_Name: PlaceHolder (3)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4791,6 +4981,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &253906945
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -4813,7 +5008,7 @@ GameObject:
   - component: {fileID: 255868871}
   m_Layer: 5
   m_Name: PlaceHolder (22)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4903,6 +5098,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &255868873
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -4925,7 +5125,7 @@ GameObject:
   - component: {fileID: 257773875}
   m_Layer: 5
   m_Name: PlaceHolder (43)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -5015,6 +5215,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &257773877
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -5037,7 +5242,7 @@ GameObject:
   - component: {fileID: 258831804}
   m_Layer: 5
   m_Name: PlaceHolder (38)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -5127,6 +5332,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &258831806
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -5149,7 +5359,7 @@ GameObject:
   - component: {fileID: 263963924}
   m_Layer: 5
   m_Name: PlaceHolder (38)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -5239,6 +5449,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &263963926
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -5261,7 +5476,7 @@ GameObject:
   - component: {fileID: 265919852}
   m_Layer: 5
   m_Name: PlaceHolder (30)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -5351,6 +5566,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &265919854
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -5412,7 +5632,7 @@ GameObject:
   - component: {fileID: 275237838}
   m_Layer: 5
   m_Name: PlaceHolder (13)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -5502,6 +5722,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &275237840
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -5524,7 +5749,7 @@ GameObject:
   - component: {fileID: 284856117}
   m_Layer: 5
   m_Name: PlaceHolder (16)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -5614,6 +5839,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &284856119
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -5636,7 +5866,7 @@ GameObject:
   - component: {fileID: 286585217}
   m_Layer: 5
   m_Name: PlaceHolder (8)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -5726,6 +5956,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &286585219
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -5748,7 +5983,7 @@ GameObject:
   - component: {fileID: 287019616}
   m_Layer: 5
   m_Name: PlaceHolder (10)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -5838,6 +6073,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &287019618
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -5860,7 +6100,7 @@ GameObject:
   - component: {fileID: 290893414}
   m_Layer: 5
   m_Name: PlaceHolder (50)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -5950,6 +6190,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &290893416
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -5972,7 +6217,7 @@ GameObject:
   - component: {fileID: 292807659}
   m_Layer: 5
   m_Name: PlaceHolder (7)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -6062,6 +6307,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &292807661
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -6174,6 +6424,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 1
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &293609012
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -6235,7 +6490,7 @@ GameObject:
   - component: {fileID: 309134910}
   m_Layer: 5
   m_Name: PlaceHolder (41)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -6325,6 +6580,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &309134912
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -6382,7 +6642,7 @@ GameObject:
   - component: {fileID: 341288333}
   m_Layer: 5
   m_Name: PlaceHolder (13)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -6472,6 +6732,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &341288335
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -6494,7 +6759,7 @@ GameObject:
   - component: {fileID: 341296873}
   m_Layer: 5
   m_Name: PlaceHolder (9)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -6584,6 +6849,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &341296875
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -6606,7 +6876,7 @@ GameObject:
   - component: {fileID: 341592955}
   m_Layer: 5
   m_Name: PlaceHolder (30)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -6696,6 +6966,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &341592957
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -6718,7 +6993,7 @@ GameObject:
   - component: {fileID: 347626417}
   m_Layer: 5
   m_Name: PlaceHolder (18)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -6808,6 +7083,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &347626419
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -6830,7 +7110,7 @@ GameObject:
   - component: {fileID: 349268705}
   m_Layer: 5
   m_Name: PlaceHolder (6)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -6920,6 +7200,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &349268707
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -7008,7 +7293,7 @@ GameObject:
   - component: {fileID: 362428782}
   m_Layer: 5
   m_Name: PlaceHolder (34)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -7098,6 +7383,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &362428784
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -7120,7 +7410,7 @@ GameObject:
   - component: {fileID: 364075351}
   m_Layer: 5
   m_Name: PlaceHolder (15)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -7210,6 +7500,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &364075353
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -7232,7 +7527,7 @@ GameObject:
   - component: {fileID: 369577269}
   m_Layer: 5
   m_Name: PlaceHolder (11)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -7322,6 +7617,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &369577271
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -7344,7 +7644,7 @@ GameObject:
   - component: {fileID: 373558714}
   m_Layer: 5
   m_Name: PlaceHolder (5)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -7434,6 +7734,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &373558716
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -7456,7 +7761,7 @@ GameObject:
   - component: {fileID: 373815862}
   m_Layer: 5
   m_Name: PlaceHolder (11)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -7546,6 +7851,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &373815864
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -7568,7 +7878,7 @@ GameObject:
   - component: {fileID: 376051369}
   m_Layer: 5
   m_Name: PlaceHolder (2)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -7658,6 +7968,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &376051371
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -7680,7 +7995,7 @@ GameObject:
   - component: {fileID: 400582352}
   m_Layer: 5
   m_Name: PlaceHolder (2)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -7770,6 +8085,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &400582354
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -7792,7 +8112,7 @@ GameObject:
   - component: {fileID: 400689654}
   m_Layer: 5
   m_Name: PlaceHolder (53)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -7882,6 +8202,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &400689656
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -7904,7 +8229,7 @@ GameObject:
   - component: {fileID: 404535543}
   m_Layer: 5
   m_Name: PlaceHolder (31)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -7994,6 +8319,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &404535545
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -8016,7 +8346,7 @@ GameObject:
   - component: {fileID: 404562857}
   m_Layer: 5
   m_Name: PlaceHolder (4)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -8106,6 +8436,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &404562859
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -8128,7 +8463,7 @@ GameObject:
   - component: {fileID: 405993779}
   m_Layer: 5
   m_Name: PlaceHolder (46)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -8218,6 +8553,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &405993781
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -8240,7 +8580,7 @@ GameObject:
   - component: {fileID: 412856039}
   m_Layer: 5
   m_Name: PlaceHolder (5)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -8330,6 +8670,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &412856041
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -8486,7 +8831,7 @@ GameObject:
   - component: {fileID: 418514930}
   m_Layer: 5
   m_Name: PlaceHolder (3)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -8576,6 +8921,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &418514932
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -8598,7 +8948,7 @@ GameObject:
   - component: {fileID: 426886843}
   m_Layer: 5
   m_Name: PlaceHolder (12)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -8688,6 +9038,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &426886845
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -8710,7 +9065,7 @@ GameObject:
   - component: {fileID: 429266278}
   m_Layer: 5
   m_Name: PlaceHolder (6)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -8800,6 +9155,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &429266280
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -8909,7 +9269,7 @@ GameObject:
   - component: {fileID: 457187487}
   m_Layer: 5
   m_Name: PlaceHolder (14)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -8999,6 +9359,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &457187489
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -9021,7 +9386,7 @@ GameObject:
   - component: {fileID: 457598462}
   m_Layer: 5
   m_Name: PlaceHolder (13)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -9111,6 +9476,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &457598464
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -9133,7 +9503,7 @@ GameObject:
   - component: {fileID: 460325020}
   m_Layer: 5
   m_Name: PlaceHolder (47)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -9223,6 +9593,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &460325022
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -9335,6 +9710,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &460873788
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -9357,7 +9737,7 @@ GameObject:
   - component: {fileID: 482111300}
   m_Layer: 5
   m_Name: PlaceHolder (9)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -9447,6 +9827,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &482111302
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -9469,7 +9854,7 @@ GameObject:
   - component: {fileID: 491260986}
   m_Layer: 5
   m_Name: PlaceHolder (7)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -9559,6 +9944,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &491260988
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -9581,7 +9971,7 @@ GameObject:
   - component: {fileID: 498388704}
   m_Layer: 5
   m_Name: PlaceHolder (12)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -9671,6 +10061,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &498388706
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -9693,7 +10088,7 @@ GameObject:
   - component: {fileID: 504160636}
   m_Layer: 5
   m_Name: PlaceHolder (48)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -9783,6 +10178,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &504160638
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -9805,7 +10205,7 @@ GameObject:
   - component: {fileID: 505681341}
   m_Layer: 5
   m_Name: PlaceHolder (11)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -9895,6 +10295,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &505681343
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -9917,7 +10322,7 @@ GameObject:
   - component: {fileID: 516001323}
   m_Layer: 5
   m_Name: PlaceHolder (28)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -10007,6 +10412,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &516001325
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -10029,7 +10439,7 @@ GameObject:
   - component: {fileID: 516135585}
   m_Layer: 5
   m_Name: PlaceHolder (9)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -10119,6 +10529,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &516135587
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -10141,7 +10556,7 @@ GameObject:
   - component: {fileID: 516471657}
   m_Layer: 5
   m_Name: PlaceHolder (12)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -10231,6 +10646,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &516471659
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -10253,7 +10673,7 @@ GameObject:
   - component: {fileID: 520876033}
   m_Layer: 5
   m_Name: PlaceHolder (46)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -10343,6 +10763,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &520876035
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -10365,7 +10790,7 @@ GameObject:
   - component: {fileID: 527586095}
   m_Layer: 5
   m_Name: PlaceHolder (5)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -10455,6 +10880,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &527586097
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -10477,7 +10907,7 @@ GameObject:
   - component: {fileID: 536517376}
   m_Layer: 5
   m_Name: PlaceHolder (1)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -10567,6 +10997,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &536517378
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -10589,7 +11024,7 @@ GameObject:
   - component: {fileID: 537425511}
   m_Layer: 5
   m_Name: PlaceHolder (23)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -10679,6 +11114,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &537425513
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -10701,7 +11141,7 @@ GameObject:
   - component: {fileID: 541308293}
   m_Layer: 5
   m_Name: PlaceHolder (13)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -10791,6 +11231,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &541308295
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -10813,7 +11258,7 @@ GameObject:
   - component: {fileID: 543075363}
   m_Layer: 5
   m_Name: PlaceHolder (15)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -10903,6 +11348,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &543075365
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -10925,7 +11375,7 @@ GameObject:
   - component: {fileID: 547579545}
   m_Layer: 5
   m_Name: PlaceHolder (8)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -11015,6 +11465,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &547579547
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -11037,7 +11492,7 @@ GameObject:
   - component: {fileID: 548515320}
   m_Layer: 5
   m_Name: PlaceHolder (44)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -11127,6 +11582,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &548515322
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -11214,7 +11674,7 @@ GameObject:
   - component: {fileID: 570144442}
   m_Layer: 5
   m_Name: PlaceHolder (1)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -11304,6 +11764,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &570144444
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -11326,7 +11791,7 @@ GameObject:
   - component: {fileID: 578479865}
   m_Layer: 5
   m_Name: PlaceHolder (8)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -11416,6 +11881,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &578479867
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -11571,7 +12041,7 @@ GameObject:
   - component: {fileID: 580141217}
   m_Layer: 5
   m_Name: PlaceHolder (5)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -11661,6 +12131,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &580141219
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -11817,7 +12292,7 @@ GameObject:
   - component: {fileID: 587580692}
   m_Layer: 5
   m_Name: PlaceHolder (47)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -11907,6 +12382,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &587580694
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -11929,7 +12409,7 @@ GameObject:
   - component: {fileID: 590446218}
   m_Layer: 5
   m_Name: PlaceHolder (5)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -12019,6 +12499,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &590446220
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -12041,7 +12526,7 @@ GameObject:
   - component: {fileID: 591126667}
   m_Layer: 5
   m_Name: PlaceHolder (26)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -12131,6 +12616,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &591126669
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -12153,7 +12643,7 @@ GameObject:
   - component: {fileID: 602945705}
   m_Layer: 5
   m_Name: PlaceHolder (15)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -12243,6 +12733,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &602945707
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -12265,7 +12760,7 @@ GameObject:
   - component: {fileID: 603950269}
   m_Layer: 5
   m_Name: PlaceHolder
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -12355,6 +12850,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &603950271
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -12377,7 +12877,7 @@ GameObject:
   - component: {fileID: 607448235}
   m_Layer: 5
   m_Name: PlaceHolder (40)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -12467,6 +12967,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &607448237
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -12623,7 +13128,7 @@ GameObject:
   - component: {fileID: 623052988}
   m_Layer: 5
   m_Name: PlaceHolder (36)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -12713,6 +13218,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &623052990
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -12735,7 +13245,7 @@ GameObject:
   - component: {fileID: 633409727}
   m_Layer: 5
   m_Name: PlaceHolder (5)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -12825,6 +13335,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &633409729
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -12847,7 +13362,7 @@ GameObject:
   - component: {fileID: 650893837}
   m_Layer: 5
   m_Name: PlaceHolder (11)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -12937,6 +13452,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &650893839
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -13124,6 +13644,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 1
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &660335910
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -13223,7 +13748,7 @@ GameObject:
   - component: {fileID: 665826322}
   m_Layer: 5
   m_Name: PlaceHolder (15)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -13313,6 +13838,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &665826324
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -13500,6 +14030,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 1
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &675003202
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -13522,7 +14057,7 @@ GameObject:
   - component: {fileID: 675972641}
   m_Layer: 5
   m_Name: PlaceHolder (1)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -13612,6 +14147,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &675972643
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -13634,7 +14174,7 @@ GameObject:
   - component: {fileID: 676081705}
   m_Layer: 5
   m_Name: PlaceHolder (32)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -13724,6 +14264,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &676081707
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -13746,7 +14291,7 @@ GameObject:
   - component: {fileID: 677364973}
   m_Layer: 5
   m_Name: PlaceHolder (4)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -13836,6 +14381,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &677364975
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -13858,7 +14408,7 @@ GameObject:
   - component: {fileID: 678629737}
   m_Layer: 5
   m_Name: PlaceHolder (8)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -13948,6 +14498,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &678629739
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -13970,7 +14525,7 @@ GameObject:
   - component: {fileID: 699921542}
   m_Layer: 5
   m_Name: PlaceHolder (25)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -14060,6 +14615,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &699921544
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -14082,7 +14642,7 @@ GameObject:
   - component: {fileID: 700159147}
   m_Layer: 5
   m_Name: PlaceHolder (33)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -14172,6 +14732,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &700159149
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -14194,7 +14759,7 @@ GameObject:
   - component: {fileID: 703311949}
   m_Layer: 5
   m_Name: PlaceHolder (12)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -14284,6 +14849,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &703311951
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -14306,7 +14876,7 @@ GameObject:
   - component: {fileID: 720177348}
   m_Layer: 5
   m_Name: PlaceHolder (9)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -14396,6 +14966,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &720177350
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -14418,7 +14993,7 @@ GameObject:
   - component: {fileID: 725284466}
   m_Layer: 5
   m_Name: PlaceHolder (55)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -14508,6 +15083,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &725284468
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -14530,7 +15110,7 @@ GameObject:
   - component: {fileID: 726373256}
   m_Layer: 5
   m_Name: PlaceHolder (55)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -14620,6 +15200,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &726373258
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -14642,7 +15227,7 @@ GameObject:
   - component: {fileID: 728545474}
   m_Layer: 5
   m_Name: PlaceHolder (14)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -14732,6 +15317,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &728545476
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -14754,7 +15344,7 @@ GameObject:
   - component: {fileID: 739543234}
   m_Layer: 5
   m_Name: PlaceHolder (4)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -14844,6 +15434,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &739543236
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -14866,7 +15461,7 @@ GameObject:
   - component: {fileID: 744613140}
   m_Layer: 5
   m_Name: PlaceHolder
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -14956,6 +15551,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &744613142
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -14978,7 +15578,7 @@ GameObject:
   - component: {fileID: 745190860}
   m_Layer: 5
   m_Name: PlaceHolder (9)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -15068,6 +15668,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &745190862
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -15165,7 +15770,7 @@ GameObject:
   - component: {fileID: 760690246}
   m_Layer: 5
   m_Name: PlaceHolder (9)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -15255,6 +15860,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &760690248
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -15277,7 +15887,7 @@ GameObject:
   - component: {fileID: 761259462}
   m_Layer: 5
   m_Name: PlaceHolder (55)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -15367,6 +15977,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &761259464
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -15389,7 +16004,7 @@ GameObject:
   - component: {fileID: 770194992}
   m_Layer: 5
   m_Name: PlaceHolder (18)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -15479,6 +16094,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &770194994
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -15501,7 +16121,7 @@ GameObject:
   - component: {fileID: 780801913}
   m_Layer: 5
   m_Name: PlaceHolder (19)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -15591,6 +16211,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &780801915
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -15613,7 +16238,7 @@ GameObject:
   - component: {fileID: 782444398}
   m_Layer: 5
   m_Name: PlaceHolder (15)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -15703,6 +16328,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &782444400
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -15725,7 +16355,7 @@ GameObject:
   - component: {fileID: 788918213}
   m_Layer: 5
   m_Name: PlaceHolder (45)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -15815,6 +16445,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &788918215
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -15837,7 +16472,7 @@ GameObject:
   - component: {fileID: 790520250}
   m_Layer: 5
   m_Name: PlaceHolder (30)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -15927,6 +16562,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &790520252
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -15949,7 +16589,7 @@ GameObject:
   - component: {fileID: 790869805}
   m_Layer: 5
   m_Name: PlaceHolder (7)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -16039,6 +16679,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &790869807
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -16138,7 +16783,7 @@ GameObject:
   - component: {fileID: 797594445}
   m_Layer: 5
   m_Name: PlaceHolder (4)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -16228,6 +16873,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &797594447
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -16250,7 +16900,7 @@ GameObject:
   - component: {fileID: 807105744}
   m_Layer: 5
   m_Name: PlaceHolder (14)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -16340,6 +16990,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &807105746
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -16362,7 +17017,7 @@ GameObject:
   - component: {fileID: 812191249}
   m_Layer: 5
   m_Name: PlaceHolder (14)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -16452,6 +17107,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &812191251
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -16474,7 +17134,7 @@ GameObject:
   - component: {fileID: 815587818}
   m_Layer: 5
   m_Name: PlaceHolder (11)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -16564,6 +17224,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &815587820
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -16586,7 +17251,7 @@ GameObject:
   - component: {fileID: 822257505}
   m_Layer: 5
   m_Name: PlaceHolder (32)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -16676,6 +17341,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &822257507
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -16698,7 +17368,7 @@ GameObject:
   - component: {fileID: 827547890}
   m_Layer: 5
   m_Name: PlaceHolder (17)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -16788,6 +17458,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &827547892
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -16944,7 +17619,7 @@ GameObject:
   - component: {fileID: 828771521}
   m_Layer: 5
   m_Name: PlaceHolder (2)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -17034,6 +17709,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &828771523
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -17056,7 +17736,7 @@ GameObject:
   - component: {fileID: 830039455}
   m_Layer: 5
   m_Name: PlaceHolder (15)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -17146,6 +17826,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &830039457
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -17168,7 +17853,7 @@ GameObject:
   - component: {fileID: 833329900}
   m_Layer: 5
   m_Name: PlaceHolder (17)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -17258,6 +17943,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &833329902
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -17490,7 +18180,7 @@ GameObject:
   - component: {fileID: 859884626}
   m_Layer: 5
   m_Name: PlaceHolder (14)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -17580,6 +18270,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &859884628
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -17602,7 +18297,7 @@ GameObject:
   - component: {fileID: 864806735}
   m_Layer: 5
   m_Name: PlaceHolder (8)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -17692,6 +18387,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &864806737
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -17765,7 +18465,7 @@ GameObject:
   - component: {fileID: 888405504}
   m_Layer: 5
   m_Name: PlaceHolder (37)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -17855,6 +18555,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &888405506
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -17877,7 +18582,7 @@ GameObject:
   - component: {fileID: 888653514}
   m_Layer: 5
   m_Name: PlaceHolder (8)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -17967,6 +18672,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &888653516
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -17989,7 +18699,7 @@ GameObject:
   - component: {fileID: 899691590}
   m_Layer: 5
   m_Name: PlaceHolder (25)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -18079,6 +18789,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &899691592
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -18101,7 +18816,7 @@ GameObject:
   - component: {fileID: 901432429}
   m_Layer: 5
   m_Name: PlaceHolder (10)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -18191,6 +18906,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &901432431
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -18213,7 +18933,7 @@ GameObject:
   - component: {fileID: 904198609}
   m_Layer: 5
   m_Name: PlaceHolder (3)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -18303,6 +19023,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &904198611
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -18325,7 +19050,7 @@ GameObject:
   - component: {fileID: 908831909}
   m_Layer: 5
   m_Name: PlaceHolder (6)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -18415,6 +19140,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &908831911
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -18437,7 +19167,7 @@ GameObject:
   - component: {fileID: 909615573}
   m_Layer: 5
   m_Name: PlaceHolder (1)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -18527,6 +19257,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &909615575
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -18549,7 +19284,7 @@ GameObject:
   - component: {fileID: 930380873}
   m_Layer: 5
   m_Name: PlaceHolder (12)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -18639,6 +19374,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &930380875
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -18661,7 +19401,7 @@ GameObject:
   - component: {fileID: 931725739}
   m_Layer: 5
   m_Name: PlaceHolder (7)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -18751,6 +19491,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &931725741
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -18773,7 +19518,7 @@ GameObject:
   - component: {fileID: 946288435}
   m_Layer: 5
   m_Name: PlaceHolder (51)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -18863,6 +19608,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &946288437
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -18929,7 +19679,7 @@ GameObject:
   - component: {fileID: 967838331}
   m_Layer: 5
   m_Name: PlaceHolder (3)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -19019,6 +19769,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &967838333
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -19041,7 +19796,7 @@ GameObject:
   - component: {fileID: 977274207}
   m_Layer: 5
   m_Name: PlaceHolder (8)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -19131,6 +19886,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &977274209
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -19153,7 +19913,7 @@ GameObject:
   - component: {fileID: 978658722}
   m_Layer: 5
   m_Name: PlaceHolder (48)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -19243,6 +20003,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &978658724
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -19316,7 +20081,7 @@ GameObject:
   - component: {fileID: 990263791}
   m_Layer: 5
   m_Name: PlaceHolder (4)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -19406,6 +20171,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &990263793
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -19428,7 +20198,7 @@ GameObject:
   - component: {fileID: 998916966}
   m_Layer: 5
   m_Name: PlaceHolder (47)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -19518,6 +20288,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &998916968
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -19540,7 +20315,7 @@ GameObject:
   - component: {fileID: 999659359}
   m_Layer: 5
   m_Name: PlaceHolder (24)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -19630,6 +20405,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &999659361
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -19774,7 +20554,7 @@ GameObject:
   - component: {fileID: 1010353750}
   m_Layer: 5
   m_Name: PlaceHolder (7)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -19864,6 +20644,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1010353752
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -19925,7 +20710,7 @@ GameObject:
   - component: {fileID: 1022772483}
   m_Layer: 5
   m_Name: PlaceHolder (36)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -20015,6 +20800,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1022772485
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -20037,7 +20827,7 @@ GameObject:
   - component: {fileID: 1024146222}
   m_Layer: 5
   m_Name: PlaceHolder
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -20127,6 +20917,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1024146224
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -20149,7 +20944,7 @@ GameObject:
   - component: {fileID: 1031954405}
   m_Layer: 5
   m_Name: PlaceHolder (39)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -20239,6 +21034,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1031954407
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -20261,7 +21061,7 @@ GameObject:
   - component: {fileID: 1035075344}
   m_Layer: 5
   m_Name: PlaceHolder (5)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -20351,6 +21151,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1035075346
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -20373,7 +21178,7 @@ GameObject:
   - component: {fileID: 1035244939}
   m_Layer: 5
   m_Name: PlaceHolder (31)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -20463,6 +21268,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1035244941
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -20485,7 +21295,7 @@ GameObject:
   - component: {fileID: 1043151406}
   m_Layer: 5
   m_Name: PlaceHolder (33)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -20575,6 +21385,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1043151408
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -20597,7 +21412,7 @@ GameObject:
   - component: {fileID: 1043850451}
   m_Layer: 5
   m_Name: PlaceHolder
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -20687,6 +21502,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1043850453
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -20709,7 +21529,7 @@ GameObject:
   - component: {fileID: 1046019319}
   m_Layer: 5
   m_Name: PlaceHolder (53)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -20799,6 +21619,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1046019321
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -20911,6 +21736,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 1
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1049210038
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -20984,7 +21814,7 @@ GameObject:
   - component: {fileID: 1055490003}
   m_Layer: 5
   m_Name: PlaceHolder (27)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -21074,6 +21904,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1055490005
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -21096,7 +21931,7 @@ GameObject:
   - component: {fileID: 1058981788}
   m_Layer: 5
   m_Name: PlaceHolder (40)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -21186,6 +22021,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1058981790
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -21208,7 +22048,7 @@ GameObject:
   - component: {fileID: 1059702466}
   m_Layer: 5
   m_Name: PlaceHolder (2)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -21298,6 +22138,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1059702468
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -21320,7 +22165,7 @@ GameObject:
   - component: {fileID: 1072492861}
   m_Layer: 5
   m_Name: PlaceHolder (3)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -21410,6 +22255,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1072492863
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -21432,7 +22282,7 @@ GameObject:
   - component: {fileID: 1078597568}
   m_Layer: 5
   m_Name: PlaceHolder (39)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -21522,6 +22372,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1078597570
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -21659,7 +22514,7 @@ GameObject:
   - component: {fileID: 1082030818}
   m_Layer: 5
   m_Name: PlaceHolder (20)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -21749,6 +22604,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1082030820
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -21771,7 +22631,7 @@ GameObject:
   - component: {fileID: 1083789424}
   m_Layer: 5
   m_Name: PlaceHolder (33)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -21861,6 +22721,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1083789426
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -21883,7 +22748,7 @@ GameObject:
   - component: {fileID: 1088829554}
   m_Layer: 5
   m_Name: PlaceHolder (1)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -21973,6 +22838,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1088829556
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -21995,7 +22865,7 @@ GameObject:
   - component: {fileID: 1099586224}
   m_Layer: 5
   m_Name: PlaceHolder (55)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -22085,6 +22955,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1099586226
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -22107,7 +22982,7 @@ GameObject:
   - component: {fileID: 1103359828}
   m_Layer: 5
   m_Name: PlaceHolder (22)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -22197,6 +23072,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1103359830
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -22219,7 +23099,7 @@ GameObject:
   - component: {fileID: 1107582627}
   m_Layer: 5
   m_Name: PlaceHolder (22)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -22309,6 +23189,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1107582629
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -22331,7 +23216,7 @@ GameObject:
   - component: {fileID: 1108552137}
   m_Layer: 5
   m_Name: PlaceHolder
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -22421,6 +23306,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1108552139
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -22443,7 +23333,7 @@ GameObject:
   - component: {fileID: 1113164026}
   m_Layer: 5
   m_Name: PlaceHolder (12)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -22533,6 +23423,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1113164028
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -22555,7 +23450,7 @@ GameObject:
   - component: {fileID: 1127049686}
   m_Layer: 5
   m_Name: PlaceHolder (12)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -22645,6 +23540,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1127049688
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -22667,7 +23567,7 @@ GameObject:
   - component: {fileID: 1131717249}
   m_Layer: 5
   m_Name: PlaceHolder (13)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -22757,6 +23657,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1131717251
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -22779,7 +23684,7 @@ GameObject:
   - component: {fileID: 1137120492}
   m_Layer: 5
   m_Name: PlaceHolder (24)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -22869,6 +23774,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1137120494
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -22891,7 +23801,7 @@ GameObject:
   - component: {fileID: 1137683535}
   m_Layer: 5
   m_Name: PlaceHolder (28)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -22981,6 +23891,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1137683537
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -23003,7 +23918,7 @@ GameObject:
   - component: {fileID: 1138474116}
   m_Layer: 5
   m_Name: PlaceHolder (34)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -23093,6 +24008,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1138474118
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -23249,7 +24169,7 @@ GameObject:
   - component: {fileID: 1143773733}
   m_Layer: 5
   m_Name: PlaceHolder (50)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -23339,6 +24259,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1143773735
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -23361,7 +24286,7 @@ GameObject:
   - component: {fileID: 1150086413}
   m_Layer: 5
   m_Name: PlaceHolder (5)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -23451,6 +24376,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1150086415
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -23473,7 +24403,7 @@ GameObject:
   - component: {fileID: 1150468263}
   m_Layer: 5
   m_Name: PlaceHolder (52)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -23563,6 +24493,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1150468265
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -23585,7 +24520,7 @@ GameObject:
   - component: {fileID: 1154674264}
   m_Layer: 5
   m_Name: PlaceHolder (12)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -23675,6 +24610,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1154674266
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -23697,7 +24637,7 @@ GameObject:
   - component: {fileID: 1156688512}
   m_Layer: 5
   m_Name: PlaceHolder (23)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -23787,6 +24727,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1156688514
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -23809,7 +24754,7 @@ GameObject:
   - component: {fileID: 1179713092}
   m_Layer: 5
   m_Name: PlaceHolder (48)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -23899,6 +24844,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1179713094
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -23921,7 +24871,7 @@ GameObject:
   - component: {fileID: 1185039802}
   m_Layer: 5
   m_Name: PlaceHolder (3)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -24011,6 +24961,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1185039804
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -24033,7 +24988,7 @@ GameObject:
   - component: {fileID: 1186611962}
   m_Layer: 5
   m_Name: PlaceHolder (2)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -24123,6 +25078,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1186611964
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -24145,7 +25105,7 @@ GameObject:
   - component: {fileID: 1188211453}
   m_Layer: 5
   m_Name: PlaceHolder (10)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -24235,6 +25195,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1188211455
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -24257,7 +25222,7 @@ GameObject:
   - component: {fileID: 1189000119}
   m_Layer: 5
   m_Name: PlaceHolder (15)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -24347,6 +25312,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1189000121
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -24554,7 +25524,7 @@ GameObject:
   - component: {fileID: 1202710581}
   m_Layer: 5
   m_Name: PlaceHolder (27)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -24644,6 +25614,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1202710583
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -24666,7 +25641,7 @@ GameObject:
   - component: {fileID: 1203202222}
   m_Layer: 5
   m_Name: PlaceHolder
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -24756,6 +25731,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1203202224
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -24853,7 +25833,7 @@ GameObject:
   - component: {fileID: 1216903428}
   m_Layer: 5
   m_Name: PlaceHolder (13)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -24943,6 +25923,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1216903430
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -24965,7 +25950,7 @@ GameObject:
   - component: {fileID: 1236524800}
   m_Layer: 5
   m_Name: PlaceHolder (9)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -25055,6 +26040,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1236524802
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -25211,7 +26201,7 @@ GameObject:
   - component: {fileID: 1240037795}
   m_Layer: 5
   m_Name: PlaceHolder (3)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -25301,6 +26291,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1240037797
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -25398,7 +26393,7 @@ GameObject:
   - component: {fileID: 1245768615}
   m_Layer: 5
   m_Name: PlaceHolder (7)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -25488,6 +26483,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1245768617
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -25600,6 +26600,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 1
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1249080355
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -25622,7 +26627,7 @@ GameObject:
   - component: {fileID: 1256867504}
   m_Layer: 5
   m_Name: PlaceHolder (34)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -25712,6 +26717,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1256867506
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -25734,7 +26744,7 @@ GameObject:
   - component: {fileID: 1272320541}
   m_Layer: 5
   m_Name: PlaceHolder (10)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -25824,6 +26834,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1272320543
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -25846,7 +26861,7 @@ GameObject:
   - component: {fileID: 1293936663}
   m_Layer: 5
   m_Name: PlaceHolder (34)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -25936,6 +26951,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1293936665
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -25958,7 +26978,7 @@ GameObject:
   - component: {fileID: 1296277151}
   m_Layer: 5
   m_Name: PlaceHolder (41)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -26048,6 +27068,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1296277153
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -26070,7 +27095,7 @@ GameObject:
   - component: {fileID: 1297284072}
   m_Layer: 5
   m_Name: PlaceHolder (20)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -26160,6 +27185,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1297284074
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -26182,7 +27212,7 @@ GameObject:
   - component: {fileID: 1297851067}
   m_Layer: 5
   m_Name: PlaceHolder (11)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -26272,6 +27302,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1297851069
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -26332,7 +27367,7 @@ GameObject:
   - component: {fileID: 1320065534}
   m_Layer: 5
   m_Name: PlaceHolder (41)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -26422,6 +27457,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1320065536
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -26444,7 +27484,7 @@ GameObject:
   - component: {fileID: 1325798784}
   m_Layer: 5
   m_Name: PlaceHolder (44)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -26534,6 +27574,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1325798786
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -26556,7 +27601,7 @@ GameObject:
   - component: {fileID: 1329710170}
   m_Layer: 5
   m_Name: PlaceHolder (54)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -26646,6 +27691,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1329710172
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -26668,7 +27718,7 @@ GameObject:
   - component: {fileID: 1332280429}
   m_Layer: 5
   m_Name: PlaceHolder (28)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -26758,6 +27808,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1332280431
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -26780,7 +27835,7 @@ GameObject:
   - component: {fileID: 1340683060}
   m_Layer: 5
   m_Name: PlaceHolder (42)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -26870,6 +27925,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1340683062
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -26892,7 +27952,7 @@ GameObject:
   - component: {fileID: 1353733020}
   m_Layer: 5
   m_Name: PlaceHolder (10)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -26982,6 +28042,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1353733022
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -27004,7 +28069,7 @@ GameObject:
   - component: {fileID: 1360505891}
   m_Layer: 5
   m_Name: PlaceHolder (46)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -27094,6 +28159,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1360505893
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -27203,7 +28273,7 @@ GameObject:
   - component: {fileID: 1372019179}
   m_Layer: 5
   m_Name: PlaceHolder (2)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -27293,6 +28363,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1372019181
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -27448,7 +28523,7 @@ GameObject:
   - component: {fileID: 1385982904}
   m_Layer: 5
   m_Name: PlaceHolder (14)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -27538,6 +28613,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1385982906
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -27560,7 +28640,7 @@ GameObject:
   - component: {fileID: 1407074068}
   m_Layer: 5
   m_Name: PlaceHolder (6)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -27650,6 +28730,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1407074070
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -27672,7 +28757,7 @@ GameObject:
   - component: {fileID: 1408849595}
   m_Layer: 5
   m_Name: PlaceHolder (32)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -27762,6 +28847,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1408849597
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -27784,7 +28874,7 @@ GameObject:
   - component: {fileID: 1410611994}
   m_Layer: 5
   m_Name: PlaceHolder (9)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -27874,6 +28964,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1410611996
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -27896,7 +28991,7 @@ GameObject:
   - component: {fileID: 1415975545}
   m_Layer: 5
   m_Name: PlaceHolder
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -27986,6 +29081,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1415975547
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -28008,7 +29108,7 @@ GameObject:
   - component: {fileID: 1416214742}
   m_Layer: 5
   m_Name: PlaceHolder (43)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -28098,6 +29198,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1416214744
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -28120,7 +29225,7 @@ GameObject:
   - component: {fileID: 1422462163}
   m_Layer: 5
   m_Name: PlaceHolder (2)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -28210,6 +29315,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1422462165
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -28232,7 +29342,7 @@ GameObject:
   - component: {fileID: 1436734244}
   m_Layer: 5
   m_Name: PlaceHolder (4)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -28322,6 +29432,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1436734246
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -28344,7 +29459,7 @@ GameObject:
   - component: {fileID: 1440635380}
   m_Layer: 5
   m_Name: PlaceHolder
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -28434,6 +29549,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1440635382
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -28456,7 +29576,7 @@ GameObject:
   - component: {fileID: 1440684474}
   m_Layer: 5
   m_Name: PlaceHolder (13)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -28546,6 +29666,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1440684476
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -28568,7 +29693,7 @@ GameObject:
   - component: {fileID: 1441293246}
   m_Layer: 5
   m_Name: PlaceHolder (9)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -28658,6 +29783,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1441293248
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -28814,7 +29944,7 @@ GameObject:
   - component: {fileID: 1462599067}
   m_Layer: 5
   m_Name: PlaceHolder (6)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -28904,6 +30034,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1462599069
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -28926,7 +30061,7 @@ GameObject:
   - component: {fileID: 1470972732}
   m_Layer: 5
   m_Name: PlaceHolder (52)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -29016,6 +30151,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1470972734
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -29038,7 +30178,7 @@ GameObject:
   - component: {fileID: 1475501510}
   m_Layer: 5
   m_Name: PlaceHolder (18)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -29128,6 +30268,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1475501512
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -29150,7 +30295,7 @@ GameObject:
   - component: {fileID: 1478748806}
   m_Layer: 5
   m_Name: PlaceHolder (10)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -29240,6 +30385,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1478748808
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -29262,7 +30412,7 @@ GameObject:
   - component: {fileID: 1495420051}
   m_Layer: 5
   m_Name: PlaceHolder (3)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -29352,6 +30502,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1495420053
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -29374,7 +30529,7 @@ GameObject:
   - component: {fileID: 1502972627}
   m_Layer: 5
   m_Name: PlaceHolder (7)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -29464,6 +30619,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1502972629
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -29486,7 +30646,7 @@ GameObject:
   - component: {fileID: 1517987265}
   m_Layer: 5
   m_Name: PlaceHolder (13)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -29576,6 +30736,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1517987267
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -29598,7 +30763,7 @@ GameObject:
   - component: {fileID: 1519209896}
   m_Layer: 5
   m_Name: PlaceHolder (36)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -29688,6 +30853,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1519209898
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -29710,7 +30880,7 @@ GameObject:
   - component: {fileID: 1525579489}
   m_Layer: 5
   m_Name: PlaceHolder (54)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -29800,6 +30970,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1525579491
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -29822,7 +30997,7 @@ GameObject:
   - component: {fileID: 1526248161}
   m_Layer: 5
   m_Name: PlaceHolder (6)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -29912,6 +31087,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1526248163
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -29934,7 +31114,7 @@ GameObject:
   - component: {fileID: 1527398013}
   m_Layer: 5
   m_Name: PlaceHolder (38)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -30024,6 +31204,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1527398015
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -30046,7 +31231,7 @@ GameObject:
   - component: {fileID: 1528641563}
   m_Layer: 5
   m_Name: PlaceHolder (42)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -30136,6 +31321,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1528641565
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -30158,7 +31348,7 @@ GameObject:
   - component: {fileID: 1538522377}
   m_Layer: 5
   m_Name: PlaceHolder (13)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -30248,6 +31438,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1538522379
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -30270,7 +31465,7 @@ GameObject:
   - component: {fileID: 1541844816}
   m_Layer: 5
   m_Name: PlaceHolder (41)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -30360,6 +31555,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1541844818
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -30420,7 +31620,7 @@ GameObject:
   - component: {fileID: 1554744640}
   m_Layer: 5
   m_Name: PlaceHolder (53)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -30510,6 +31710,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1554744642
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -30532,7 +31737,7 @@ GameObject:
   - component: {fileID: 1556866375}
   m_Layer: 5
   m_Name: PlaceHolder (22)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -30622,6 +31827,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1556866377
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -30644,7 +31854,7 @@ GameObject:
   - component: {fileID: 1563020882}
   m_Layer: 5
   m_Name: PlaceHolder (33)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -30734,6 +31944,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1563020884
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -30756,7 +31971,7 @@ GameObject:
   - component: {fileID: 1567726904}
   m_Layer: 5
   m_Name: PlaceHolder (11)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -30846,6 +32061,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1567726906
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -30868,7 +32088,7 @@ GameObject:
   - component: {fileID: 1568771600}
   m_Layer: 5
   m_Name: PlaceHolder (15)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -30958,6 +32178,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1568771602
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -30980,7 +32205,7 @@ GameObject:
   - component: {fileID: 1571886541}
   m_Layer: 5
   m_Name: PlaceHolder (8)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -31070,6 +32295,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1571886543
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -31092,7 +32322,7 @@ GameObject:
   - component: {fileID: 1572324109}
   m_Layer: 5
   m_Name: PlaceHolder (6)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -31182,6 +32412,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1572324111
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -31204,7 +32439,7 @@ GameObject:
   - component: {fileID: 1582870079}
   m_Layer: 5
   m_Name: PlaceHolder (15)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -31294,6 +32529,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1582870081
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -31316,7 +32556,7 @@ GameObject:
   - component: {fileID: 1587904801}
   m_Layer: 5
   m_Name: PlaceHolder (1)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -31406,6 +32646,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1587904803
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -31428,7 +32673,7 @@ GameObject:
   - component: {fileID: 1588475572}
   m_Layer: 5
   m_Name: PlaceHolder (28)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -31518,6 +32763,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1588475574
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -31615,7 +32865,7 @@ GameObject:
   - component: {fileID: 1609361782}
   m_Layer: 5
   m_Name: PlaceHolder (10)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -31705,6 +32955,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1609361784
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -31727,7 +32982,7 @@ GameObject:
   - component: {fileID: 1615484368}
   m_Layer: 5
   m_Name: PlaceHolder (8)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -31817,6 +33072,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1615484370
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -31972,7 +33232,7 @@ GameObject:
   - component: {fileID: 1624155414}
   m_Layer: 5
   m_Name: PlaceHolder (11)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -32062,6 +33322,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1624155416
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -32084,7 +33349,7 @@ GameObject:
   - component: {fileID: 1632714145}
   m_Layer: 5
   m_Name: PlaceHolder (37)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -32174,6 +33439,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1632714147
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -32196,7 +33466,7 @@ GameObject:
   - component: {fileID: 1632824690}
   m_Layer: 5
   m_Name: PlaceHolder (45)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -32286,6 +33556,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1632824692
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -32308,7 +33583,7 @@ GameObject:
   - component: {fileID: 1637824456}
   m_Layer: 5
   m_Name: PlaceHolder (37)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -32398,6 +33673,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1637824458
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -32420,7 +33700,7 @@ GameObject:
   - component: {fileID: 1639664538}
   m_Layer: 5
   m_Name: PlaceHolder (40)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -32510,6 +33790,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1639664540
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -32532,7 +33817,7 @@ GameObject:
   - component: {fileID: 1642934417}
   m_Layer: 5
   m_Name: PlaceHolder (8)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -32622,6 +33907,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1642934419
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -32644,7 +33934,7 @@ GameObject:
   - component: {fileID: 1649266426}
   m_Layer: 5
   m_Name: PlaceHolder (36)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -32734,6 +34024,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1649266428
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -32756,7 +34051,7 @@ GameObject:
   - component: {fileID: 1651949918}
   m_Layer: 5
   m_Name: PlaceHolder (14)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -32846,6 +34141,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1651949920
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -32868,7 +34168,7 @@ GameObject:
   - component: {fileID: 1654069869}
   m_Layer: 5
   m_Name: PlaceHolder (14)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -32958,6 +34258,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1654069871
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -33070,6 +34375,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 1
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1658037689
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -33092,7 +34402,7 @@ GameObject:
   - component: {fileID: 1675886428}
   m_Layer: 5
   m_Name: PlaceHolder (39)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -33182,6 +34492,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1675886430
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -33255,7 +34570,7 @@ GameObject:
   - component: {fileID: 1682948983}
   m_Layer: 5
   m_Name: PlaceHolder (6)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -33345,6 +34660,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1682948985
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -33367,7 +34687,7 @@ GameObject:
   - component: {fileID: 1685787202}
   m_Layer: 5
   m_Name: PlaceHolder (26)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -33457,6 +34777,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1685787204
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -33479,7 +34804,7 @@ GameObject:
   - component: {fileID: 1688358583}
   m_Layer: 5
   m_Name: PlaceHolder (42)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -33569,6 +34894,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1688358585
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -33591,7 +34921,7 @@ GameObject:
   - component: {fileID: 1691533379}
   m_Layer: 5
   m_Name: PlaceHolder (2)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -33681,6 +35011,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1691533381
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -33703,7 +35038,7 @@ GameObject:
   - component: {fileID: 1695887545}
   m_Layer: 5
   m_Name: PlaceHolder (38)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -33793,6 +35128,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1695887547
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -33815,7 +35155,7 @@ GameObject:
   - component: {fileID: 1705455924}
   m_Layer: 5
   m_Name: PlaceHolder (11)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -33905,6 +35245,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1705455926
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -33927,7 +35272,7 @@ GameObject:
   - component: {fileID: 1709842131}
   m_Layer: 5
   m_Name: PlaceHolder (5)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -34017,6 +35362,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1709842133
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -34039,7 +35389,7 @@ GameObject:
   - component: {fileID: 1722134500}
   m_Layer: 5
   m_Name: PlaceHolder (44)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -34129,6 +35479,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1722134502
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -34151,7 +35506,7 @@ GameObject:
   - component: {fileID: 1728043720}
   m_Layer: 5
   m_Name: PlaceHolder
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -34241,6 +35596,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1728043722
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -34263,7 +35623,7 @@ GameObject:
   - component: {fileID: 1734249525}
   m_Layer: 5
   m_Name: PlaceHolder (3)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -34353,6 +35713,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1734249527
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -34375,7 +35740,7 @@ GameObject:
   - component: {fileID: 1741370783}
   m_Layer: 5
   m_Name: PlaceHolder (19)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -34465,6 +35830,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1741370785
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -34525,7 +35895,7 @@ GameObject:
   - component: {fileID: 1746206923}
   m_Layer: 5
   m_Name: PlaceHolder (52)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -34615,6 +35985,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1746206925
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -34672,7 +36047,7 @@ GameObject:
   - component: {fileID: 1770937000}
   m_Layer: 5
   m_Name: PlaceHolder (42)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -34762,6 +36137,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1770937002
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -34784,7 +36164,7 @@ GameObject:
   - component: {fileID: 1771407327}
   m_Layer: 5
   m_Name: PlaceHolder
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -34874,6 +36254,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1771407329
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -34964,7 +36349,7 @@ GameObject:
   - component: {fileID: 1795912942}
   m_Layer: 5
   m_Name: PlaceHolder (31)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -35054,6 +36439,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1795912944
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -35163,7 +36553,7 @@ GameObject:
   - component: {fileID: 1802214755}
   m_Layer: 5
   m_Name: PlaceHolder (50)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -35253,6 +36643,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1802214757
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -35275,7 +36670,7 @@ GameObject:
   - component: {fileID: 1811733236}
   m_Layer: 5
   m_Name: PlaceHolder (16)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -35365,6 +36760,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1811733238
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -35387,7 +36787,7 @@ GameObject:
   - component: {fileID: 1812268249}
   m_Layer: 5
   m_Name: PlaceHolder (13)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -35477,6 +36877,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1812268251
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -35499,7 +36904,7 @@ GameObject:
   - component: {fileID: 1819522162}
   m_Layer: 5
   m_Name: PlaceHolder (25)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -35589,6 +36994,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1819522164
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -35611,7 +37021,7 @@ GameObject:
   - component: {fileID: 1824621651}
   m_Layer: 5
   m_Name: PlaceHolder (48)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -35701,6 +37111,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1824621653
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -35723,7 +37138,7 @@ GameObject:
   - component: {fileID: 1824648956}
   m_Layer: 5
   m_Name: PlaceHolder (11)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -35813,6 +37228,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1824648958
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -35972,7 +37392,7 @@ GameObject:
   - component: {fileID: 1838127494}
   m_Layer: 5
   m_Name: PlaceHolder (2)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -36062,6 +37482,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1838127496
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -36084,7 +37509,7 @@ GameObject:
   - component: {fileID: 1858502348}
   m_Layer: 5
   m_Name: PlaceHolder (6)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -36174,6 +37599,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1858502350
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -36196,7 +37626,7 @@ GameObject:
   - component: {fileID: 1863911841}
   m_Layer: 5
   m_Name: PlaceHolder (13)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -36286,6 +37716,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1863911843
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -36308,7 +37743,7 @@ GameObject:
   - component: {fileID: 1881991963}
   m_Layer: 5
   m_Name: PlaceHolder (5)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -36398,6 +37833,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1881991965
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -36420,7 +37860,7 @@ GameObject:
   - component: {fileID: 1886810212}
   m_Layer: 5
   m_Name: PlaceHolder (1)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -36510,6 +37950,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1886810214
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -36532,7 +37977,7 @@ GameObject:
   - component: {fileID: 1889910364}
   m_Layer: 5
   m_Name: PlaceHolder (1)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -36622,6 +38067,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1889910366
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -36644,7 +38094,7 @@ GameObject:
   - component: {fileID: 1893305352}
   m_Layer: 5
   m_Name: PlaceHolder (4)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -36734,6 +38184,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1893305354
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -36756,7 +38211,7 @@ GameObject:
   - component: {fileID: 1897815024}
   m_Layer: 5
   m_Name: PlaceHolder (51)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -36846,6 +38301,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1897815026
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -36868,7 +38328,7 @@ GameObject:
   - component: {fileID: 1909119396}
   m_Layer: 5
   m_Name: PlaceHolder (45)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -36958,6 +38418,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1909119398
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -36980,7 +38445,7 @@ GameObject:
   - component: {fileID: 1912607345}
   m_Layer: 5
   m_Name: PlaceHolder (1)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -37070,6 +38535,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1912607347
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -37092,7 +38562,7 @@ GameObject:
   - component: {fileID: 1913285761}
   m_Layer: 5
   m_Name: PlaceHolder (18)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -37182,6 +38652,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1913285763
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -37204,7 +38679,7 @@ GameObject:
   - component: {fileID: 1929290576}
   m_Layer: 5
   m_Name: PlaceHolder (3)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -37294,6 +38769,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1929290578
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -37316,7 +38796,7 @@ GameObject:
   - component: {fileID: 1948905169}
   m_Layer: 5
   m_Name: PlaceHolder (17)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -37406,6 +38886,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1948905171
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -37428,7 +38913,7 @@ GameObject:
   - component: {fileID: 1966104798}
   m_Layer: 5
   m_Name: PlaceHolder (6)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -37518,6 +39003,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1966104800
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -37540,7 +39030,7 @@ GameObject:
   - component: {fileID: 1966744499}
   m_Layer: 5
   m_Name: PlaceHolder (12)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -37630,6 +39120,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1966744501
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -37652,7 +39147,7 @@ GameObject:
   - component: {fileID: 1967749755}
   m_Layer: 5
   m_Name: PlaceHolder (25)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -37742,6 +39237,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1967749757
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -37764,7 +39264,7 @@ GameObject:
   - component: {fileID: 1968106704}
   m_Layer: 5
   m_Name: PlaceHolder (45)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -37854,6 +39354,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1968106706
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -37876,7 +39381,7 @@ GameObject:
   - component: {fileID: 1973251649}
   m_Layer: 5
   m_Name: PlaceHolder (37)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -37966,6 +39471,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1973251651
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -38075,7 +39585,7 @@ GameObject:
   - component: {fileID: 1983800577}
   m_Layer: 5
   m_Name: PlaceHolder (9)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -38165,6 +39675,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1983800579
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -38187,7 +39702,7 @@ GameObject:
   - component: {fileID: 1987804617}
   m_Layer: 5
   m_Name: PlaceHolder (47)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -38277,6 +39792,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1987804619
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -38299,7 +39819,7 @@ GameObject:
   - component: {fileID: 1991393459}
   m_Layer: 5
   m_Name: PlaceHolder (20)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -38389,6 +39909,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1991393461
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -38411,7 +39936,7 @@ GameObject:
   - component: {fileID: 1994007667}
   m_Layer: 5
   m_Name: PlaceHolder (4)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -38501,6 +40026,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &1994007669
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -38558,7 +40088,7 @@ GameObject:
   - component: {fileID: 2003557144}
   m_Layer: 5
   m_Name: PlaceHolder (12)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -38648,6 +40178,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2003557146
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -38670,7 +40205,7 @@ GameObject:
   - component: {fileID: 2007154276}
   m_Layer: 5
   m_Name: PlaceHolder (11)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -38760,6 +40295,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2007154278
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -38782,7 +40322,7 @@ GameObject:
   - component: {fileID: 2015790274}
   m_Layer: 5
   m_Name: PlaceHolder (15)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -38872,6 +40412,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2015790276
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -38894,7 +40439,7 @@ GameObject:
   - component: {fileID: 2018362589}
   m_Layer: 5
   m_Name: PlaceHolder (4)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -38984,6 +40529,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2018362591
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -39006,7 +40556,7 @@ GameObject:
   - component: {fileID: 2021620232}
   m_Layer: 5
   m_Name: PlaceHolder
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -39096,6 +40646,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2021620234
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -39118,7 +40673,7 @@ GameObject:
   - component: {fileID: 2022732854}
   m_Layer: 5
   m_Name: PlaceHolder (14)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -39208,6 +40763,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2022732856
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -39230,7 +40790,7 @@ GameObject:
   - component: {fileID: 2025181743}
   m_Layer: 5
   m_Name: PlaceHolder (29)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -39320,6 +40880,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2025181745
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -39393,7 +40958,7 @@ GameObject:
   - component: {fileID: 2027399113}
   m_Layer: 5
   m_Name: PlaceHolder (10)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -39483,6 +41048,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2027399115
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -39505,7 +41075,7 @@ GameObject:
   - component: {fileID: 2034637957}
   m_Layer: 5
   m_Name: PlaceHolder (14)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -39595,6 +41165,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2034637959
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -39617,7 +41192,7 @@ GameObject:
   - component: {fileID: 2039514860}
   m_Layer: 5
   m_Name: PlaceHolder (14)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -39707,6 +41282,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2039514862
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -39729,7 +41309,7 @@ GameObject:
   - component: {fileID: 2040200052}
   m_Layer: 5
   m_Name: PlaceHolder (39)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -39819,6 +41399,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2040200054
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -39841,7 +41426,7 @@ GameObject:
   - component: {fileID: 2047910258}
   m_Layer: 5
   m_Name: PlaceHolder (27)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -39931,6 +41516,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2047910260
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -39953,7 +41543,7 @@ GameObject:
   - component: {fileID: 2048975038}
   m_Layer: 5
   m_Name: PlaceHolder (54)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -40043,6 +41633,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2048975040
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -40065,7 +41660,7 @@ GameObject:
   - component: {fileID: 2052005422}
   m_Layer: 5
   m_Name: PlaceHolder (1)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -40155,6 +41750,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2052005424
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -40177,7 +41777,7 @@ GameObject:
   - component: {fileID: 2053060930}
   m_Layer: 5
   m_Name: PlaceHolder (2)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -40267,6 +41867,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2053060932
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -40289,7 +41894,7 @@ GameObject:
   - component: {fileID: 2058505958}
   m_Layer: 5
   m_Name: PlaceHolder (29)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -40379,6 +41984,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2058505960
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -40401,7 +42011,7 @@ GameObject:
   - component: {fileID: 2061661188}
   m_Layer: 5
   m_Name: PlaceHolder (46)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -40491,6 +42101,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2061661190
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -40513,7 +42128,7 @@ GameObject:
   - component: {fileID: 2063659025}
   m_Layer: 5
   m_Name: PlaceHolder (9)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -40603,6 +42218,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2063659027
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -40625,7 +42245,7 @@ GameObject:
   - component: {fileID: 2068781962}
   m_Layer: 5
   m_Name: PlaceHolder (15)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -40715,6 +42335,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2068781964
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -40737,7 +42362,7 @@ GameObject:
   - component: {fileID: 2069461073}
   m_Layer: 5
   m_Name: PlaceHolder (51)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -40827,6 +42452,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2069461075
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -40849,7 +42479,7 @@ GameObject:
   - component: {fileID: 2073133779}
   m_Layer: 5
   m_Name: PlaceHolder (23)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -40939,6 +42569,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2073133781
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -40961,7 +42596,7 @@ GameObject:
   - component: {fileID: 2074888655}
   m_Layer: 5
   m_Name: PlaceHolder (15)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -41051,6 +42686,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2074888657
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -41073,7 +42713,7 @@ GameObject:
   - component: {fileID: 2082799104}
   m_Layer: 5
   m_Name: PlaceHolder (1)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -41163,6 +42803,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2082799106
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -41185,7 +42830,7 @@ GameObject:
   - component: {fileID: 2084232174}
   m_Layer: 5
   m_Name: PlaceHolder (17)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -41275,6 +42920,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2084232176
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -41297,7 +42947,7 @@ GameObject:
   - component: {fileID: 2094389501}
   m_Layer: 5
   m_Name: PlaceHolder (10)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -41387,6 +43037,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2094389503
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -41409,7 +43064,7 @@ GameObject:
   - component: {fileID: 2094838201}
   m_Layer: 5
   m_Name: PlaceHolder (6)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -41499,6 +43154,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2094838203
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -41521,7 +43181,7 @@ GameObject:
   - component: {fileID: 2102024993}
   m_Layer: 5
   m_Name: PlaceHolder (24)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -41611,6 +43271,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2102024995
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -41633,7 +43298,7 @@ GameObject:
   - component: {fileID: 2106522089}
   m_Layer: 5
   m_Name: PlaceHolder (8)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -41723,6 +43388,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2106522091
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -41745,7 +43415,7 @@ GameObject:
   - component: {fileID: 2106634184}
   m_Layer: 5
   m_Name: PlaceHolder (2)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -41835,6 +43505,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2106634186
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -41857,7 +43532,7 @@ GameObject:
   - component: {fileID: 2123487191}
   m_Layer: 5
   m_Name: PlaceHolder
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -41947,6 +43622,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2123487193
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -41969,7 +43649,7 @@ GameObject:
   - component: {fileID: 2127669803}
   m_Layer: 5
   m_Name: PlaceHolder (23)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -42059,6 +43739,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2127669805
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -42081,7 +43766,7 @@ GameObject:
   - component: {fileID: 2128726635}
   m_Layer: 5
   m_Name: PlaceHolder (20)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -42171,6 +43856,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2128726637
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -42193,7 +43883,7 @@ GameObject:
   - component: {fileID: 2135349590}
   m_Layer: 5
   m_Name: PlaceHolder (5)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -42283,6 +43973,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2135349592
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -42305,7 +44000,7 @@ GameObject:
   - component: {fileID: 2136494913}
   m_Layer: 5
   m_Name: PlaceHolder (6)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -42395,6 +44090,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2136494915
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -42417,7 +44117,7 @@ GameObject:
   - component: {fileID: 2138332544}
   m_Layer: 5
   m_Name: PlaceHolder (27)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -42507,6 +44207,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2138332546
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -42529,7 +44234,7 @@ GameObject:
   - component: {fileID: 2138350039}
   m_Layer: 5
   m_Name: PlaceHolder (53)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -42619,6 +44324,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2138350041
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -42641,7 +44351,7 @@ GameObject:
   - component: {fileID: 2140162079}
   m_Layer: 5
   m_Name: PlaceHolder (14)
-  m_TagString: Placeholder
+  m_TagString: MeldPlaceHolder
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -42731,6 +44441,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!222 &2140162081
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -42830,6 +44545,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188767059649716
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42844,6 +44564,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188767239731335
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42858,6 +44583,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188767284217824
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42872,6 +44602,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188767292308686
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42886,6 +44621,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188767332642701
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42900,6 +44640,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188767336895268
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42914,6 +44659,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188767342897872
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42928,6 +44678,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188767427105095
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42942,6 +44697,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188767533258589
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42956,6 +44716,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188767619330524
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42970,6 +44735,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188767897056890
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42984,6 +44754,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188767943357930
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42998,6 +44773,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188768058577974
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -43012,6 +44792,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188768088961871
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -43026,6 +44811,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188768126846572
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -43040,6 +44830,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188768160166503
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -43054,6 +44849,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188768179921810
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -43068,6 +44868,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188768185234863
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -43082,6 +44887,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188768240709620
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -43096,6 +44906,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188768258282890
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -43110,6 +44925,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188768312376616
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -43124,6 +44944,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188768327916414
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -43138,6 +44963,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188768463206874
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -43152,6 +44982,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188768506947995
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -43166,6 +45001,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188768597198584
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -43180,6 +45020,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188768716483064
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -43194,6 +45039,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188768826762820
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -43208,6 +45058,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188769025120639
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -43222,6 +45077,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!114 &3117188769047260906
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -43236,6 +45096,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isRight: 0
   isDrop: 0
+  available: 0
+  AvailableTileInfo:
+    color: 0
+    number: 0
+    type: 0
 --- !u!212 &3687944780528153410
 SpriteRenderer:
   m_ObjectHideFlags: 0

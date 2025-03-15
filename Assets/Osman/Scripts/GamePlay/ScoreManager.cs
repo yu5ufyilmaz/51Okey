@@ -15,7 +15,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     Transform numberPerPlaceHolder;
     private Transform[] numberPerPlaceHolders; // Player tile placeholders
     Transform colorPerPlaceHolder;
-    private Transform[] colorPerPlaceHolders;
+    [SerializeField] private Transform[] colorPerPlaceHolders;
     private TileDistrubite tileDistrubite; // Taşları yöneten sınıf
     [SerializeField] private TurnManager turnManager;
     public Transform playerTileContainer; // Oyuncu taşı bölmesi
@@ -229,7 +229,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 // Eğer bu per daha önce sayılmadıysa
                 if (!countedPers.Contains(per))
                 {
-                    UpdateAvailableForPlaceholders(per);
+
 
                     countedPers.Add(per); // Bu peri sayılanlar listesine ekle
                     validPerss.Add(per);
@@ -271,28 +271,16 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
             if (IsSingleColor(per) && SingleColorCheck(per))
             {
-                foreach (var tile in per)
-                {
-                    tile.perType = TilePerType.Color;
-                }
                 Debug.Log("SingleColor per bulundu.");
                 return true; // Per bulundu
             }
             else if (MultiColorCheck(per))
             {
-                foreach (var tile in per)
-                {
-                    tile.perType = TilePerType.Number;
-                }
                 Debug.Log("MultiColor per bulundu.");
                 return true; // Per bulundu
             }
             else if (CheckForDoublePer(per) && IsSingleColor(per))
             {
-                foreach (var tile in per)
-                {
-                    tile.perType = TilePerType.Pair;
-                }
                 Debug.Log("Double per bulundu.");
                 return true;
             }
@@ -576,6 +564,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             if (totalScore >= 3) // Örneğin, 50 puan
             {
                 PlaceValidPers(validPerss);
+
             }
             else
             {
@@ -695,7 +684,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                         Debug.LogError("Valid melted tiles and positions count mismatch!");
                         return; // İşlemi durdur
                     }
-
+                    UpdateAvailableForPlaceholders(per, rowIndex);
                     tileDistrubite.photonView.RPC("MergeValidpers", RpcTarget.AllBuffered, per, GetPlayerQue(), positions);
                     positions.Clear(); // Her per için pozisyonları temizle
                 }
@@ -703,7 +692,9 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 {
                     Debug.Log("Tüm renkli sütunlar dolu.");
                 }
+
             }
+
             else
             {
                 Debug.Log("Renkli per bulunamadı");
@@ -769,7 +760,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                         }
                     }
                     occupiedRowsNumber[rowIndex] = true;
-
+                    UpdateAvailableForPlaceholders(per, rowIndex);
                     // Burada boyut kontrolü yapıyoruz
                     if (per.Count != positions.Count)
                     {
@@ -853,6 +844,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                         }
                     }
                     occupiedRowsPair[rowIndex] = true;
+                    UpdateAvailableForPlaceholders(per, rowIndex);
                     // Burada boyut kontrolü yapıyoruz
                     if (per.Count != positions.Count)
                     {
@@ -943,66 +935,303 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
     #region Taş işleme
     private bool[] availableColumns;
-    private void UpdateAvailableForPlaceholders(List<Tiles> per)
+    private void UpdateAvailableForPlaceholders(List<Tiles> per, int rowIndex)
     {
-        if (per.Count == 0) return;
+        if (per.Count == 0)
+        {
+            Debug.Log("per.Count == 0, method will return.");
+            return;
+        }
+
+        List<Tiles> availableTiles = tileDistrubite.GetAvailableTiles(per, rowIndex); // Available taşları al
+
         if (IsSingleColor(per) && SingleColorCheck(per))
         {
             // En büyük ve en küçük taşları bul
-            int maxTileNumber = per.Max(tile => tile.number);
-            int minTileNumber = per.Min(tile => tile.number);
+            var numbers = per.Select(tile => tile.number).ToList();
+            var colors = per.Select(tile => tile.color).Distinct().ToList();
+            bool hasJoker = per.Any(tile => tile.type == TileType.Joker); // Joker taşı var mı?
 
-            // En büyük taşın bulunduğu yer tutucunun indeksini bul
-            int maxTileIndex = Array.IndexOf(per.ToArray(), per.First(tile => tile.number == maxTileNumber));
-            int minTileIndex = Array.IndexOf(per.ToArray(), per.First(tile => tile.number == minTileNumber));
+            // En küçük ve en büyük sayıyı bul
+            int minNumber = numbers.Min();
+            int maxNumber = numbers.Max();
 
             // Eğer en büyük taş 13 değilse, en büyük taşın bulunduğu yer tutucunun sağındaki yer tutucunun available durumunu güncelle
-            if (maxTileNumber != 13)
+            if (maxNumber != 13)
             {
-                int rightPlaceholderIndex = maxTileIndex + 1;
+                int rightPlaceholderIndex = maxNumber + 13 * rowIndex;
+                Debug.Log("rightPlaceholderIndex: " + rightPlaceholderIndex);
                 if (rightPlaceholderIndex < colorPerPlaceHolders.Length) // colorPerPlaceHolders dizisini kullanarak kontrol edin
                 {
                     Placeholder rightPlaceholder = colorPerPlaceHolders[rightPlaceholderIndex].GetComponent<Placeholder>();
                     if (rightPlaceholder != null)
                     {
                         rightPlaceholder.available = true; // PlaceHolder'daki available'ı true yap
+                                                           // Available taş bilgilerini yerleştir
+                        rightPlaceholder.AvailableTileInfo = availableTiles.FirstOrDefault(tile => tile.number == maxNumber + 1);
+                    }
+                    else
+                    {
+                        Debug.Log("rightPlaceholder == null, right placeholder will not be updated.");
                     }
                 }
+                else
+                {
+                    Debug.Log("rightPlaceholderIndex >= colorPerPlaceHolders.Length, right placeholder will not be updated.");
+                }
+            }
+            else
+            {
+                Debug.Log("maxTileNumber == 13, right placeholder will not be updated.");
             }
 
             // Eğer en küçük taş 1'den büyükse, en küçük taşın bulunduğu yer tutucunun solundaki yer tutucunun available durumunu güncelle
-            if (minTileNumber > 1)
+            if (minNumber > 1)
             {
-                int leftPlaceholderIndex = minTileIndex - 1;
+                int leftPlaceholderIndex = (minNumber - 2) + 13 * rowIndex;
+                Debug.Log("leftPlaceholderIndex: " + leftPlaceholderIndex);
                 if (leftPlaceholderIndex >= 0)
                 {
                     Placeholder leftPlaceholder = colorPerPlaceHolders[leftPlaceholderIndex].GetComponent<Placeholder>();
                     if (leftPlaceholder != null)
                     {
                         leftPlaceholder.available = true; // PlaceHolder'daki available'ı true yap
+                                                          // Available taş bilgilerini yerleştir
+                        leftPlaceholder.AvailableTileInfo = availableTiles.FirstOrDefault(tile => tile.number == minNumber - 1);
+                    }
+                    else
+                    {
+                        Debug.Log("leftPlaceholder == null, left placeholder will not be updated.");
                     }
                 }
+                else
+                {
+                    Debug.Log("leftPlaceholderIndex < 0, left placeholder will not be updated.");
+                }
+            }
+            else
+            {
+                Debug.Log("minTileNumber <= 1, left placeholder will not be updated.");
             }
 
             // Eğer perde joker içeriyorsa, jokerin bulunduğu yer tutucunun available durumunu güncelle
-            foreach (var tile in per)
+            if (hasJoker)
             {
-                if (tile.type == TileType.Joker)
+                var jokerTile = per.First(tile => tile.type == TileType.Joker);
+                int jokerPlaceholderIndex = jokerTile.number - 1 + 13 * rowIndex;
+                if (jokerPlaceholderIndex >= 0 && jokerPlaceholderIndex < colorPerPlaceHolders.Length)
                 {
-                    int jokerPlaceholderIndex = Array.IndexOf(per.ToArray(), tile);
-                    if (jokerPlaceholderIndex >= 0 && jokerPlaceholderIndex < colorPerPlaceHolders.Length)
+                    Placeholder jokerPlaceholder = colorPerPlaceHolders[jokerPlaceholderIndex].GetComponent<Placeholder>();
+                    if (jokerPlaceholder != null)
                     {
-                        Placeholder jokerPlaceholder = colorPerPlaceHolders[jokerPlaceholderIndex].GetComponent<Placeholder>();
-                        if (jokerPlaceholder != null)
-                        {
-                            jokerPlaceholder.available = true; // PlaceHolder'daki available'ı true yap
-                        }
+                        jokerPlaceholder.available = true; // PlaceHolder'daki available'ı true yap
+                                                           // Available taş bilgilerini yerleştir
+                        jokerPlaceholder.AvailableTileInfo = availableTiles.FirstOrDefault(tile => tile.number == jokerTile.number);
+                    }
+                    else
+                    {
+                        Debug.Log("jokerPlaceholder == null, joker placeholder will not be updated.");
                     }
                 }
             }
         }
-    }
+        else if (MultiColorCheck(per))
+        {
+            // MultiColor perleri için
+            if (per.Count >= 3)
+            {
+                var numberGroups = per.GroupBy(tile => tile.number).ToList();
+                bool hasJoker = per.Any(tile => tile.type == TileType.Joker); // Joker taşı var mı?
 
+                // Eğer joker yoksa ve 3 taşlı ise, 4. sıradaki placeholder'ı true yap
+                if (!hasJoker && per.Count == 3)
+                {
+                    int fourthPlaceholderIndex = 3 + (4 * rowIndex); // 4. placeholder'ın indeksi
+                    if (fourthPlaceholderIndex < numberPerPlaceHolders.Length)
+                    {
+                        Placeholder fourthPlaceholder = numberPerPlaceHolders[fourthPlaceholderIndex].GetComponent<Placeholder>();
+                        if (fourthPlaceholder != null)
+                        {
+                            fourthPlaceholder.available = true; // PlaceHolder'daki available'ı true yap
+                                                                // Available taş bilgilerini yerleştir
+                            fourthPlaceholder.AvailableTileInfo = availableTiles.FirstOrDefault(tile => tile.number == numberGroups[0].First().number); // Örnek olarak 4. taş
+                        }
+                        else
+                        {
+                            Debug.Log("fourthPlaceholder == null, fourth placeholder will not be updated.");
+                        }
+                    }
+                    else
+                    {
+                        Debug.Log("fourthPlaceholderIndex >= numberPerPlaceHolders.Length, fourth placeholder will not be updated.");
+                    }
+                }
+
+                // Eğer joker varsa ve 3 taşlı ise, hem 4. placeholder'ı hem de joker taşının bulunduğu placeholder'ı true yap
+                if (hasJoker && per.Count == 3)
+                {
+                    int fourthPlaceholderIndex = 3 + (4 * rowIndex); // 4. placeholder'ın indeksi
+                    if (fourthPlaceholderIndex < numberPerPlaceHolders.Length)
+                    {
+                        Placeholder fourthPlaceholder = numberPerPlaceHolders[fourthPlaceholderIndex].GetComponent<Placeholder>();
+                        if (fourthPlaceholder != null)
+                        {
+                            fourthPlaceholder.available = true; // PlaceHolder'daki available'ı true yap
+                                                                // Available taş bilgilerini yerleştir
+                            fourthPlaceholder.AvailableTileInfo = availableTiles.FirstOrDefault(tile => tile.number == numberGroups[0].First().number); // Örnek olarak 4. taş
+                        }
+                        else
+                        {
+                            Debug.Log("fourthPlaceholder == null, fourth placeholder will not be updated.");
+                        }
+                    }
+                    else
+                    {
+                        Debug.Log("fourthPlaceholderIndex >= numberPerPlaceHolders.Length, fourth placeholder will not be updated.");
+                    }
+
+                    // Joker taşının bulunduğu yer tutucunun available durumunu güncelle
+                    int jokerPlaceholderIndex = -1; // Joker taşının bulunduğu placeholder'ın indeksi
+                    for (int i = 0; i < numberPerPlaceHolders.Length; i++)
+                    {
+                        Placeholder currentPlaceholder = numberPerPlaceHolders[i].GetComponent<Placeholder>();
+                        if (currentPlaceholder != null && currentPlaceholder.transform.childCount > 0)
+                        {
+                            foreach (Transform child in currentPlaceholder.transform)
+                            {
+                                TileUI tile = child.GetComponent<TileUI>();
+                                if (tile != null && tile.tileDataInfo.type == TileType.Joker)
+                                {
+                                    jokerPlaceholderIndex = i; // Joker taşının bulunduğu placeholder'ın indeksi
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (jokerPlaceholderIndex != -1)
+                        {
+                            break; // Joker taşını bulduysak döngüden çık
+                        }
+                    }
+
+                    // Eğer jokerPlaceholderIndex bulunduysa, available durumunu güncelle
+                    if (jokerPlaceholderIndex != -1)
+                    {
+                        Placeholder jokerPlaceholder = numberPerPlaceHolders[jokerPlaceholderIndex].GetComponent<Placeholder>();
+                        if (jokerPlaceholder != null)
+                        {
+                            jokerPlaceholder.available = true; // PlaceHolder'daki available'ı true yap
+                                                               // Available taş bilgilerini yerleştir
+                            jokerPlaceholder.AvailableTileInfo = availableTiles.FirstOrDefault(tile => tile.number == numberGroups[0].First().number);
+                        }
+                        else
+                        {
+                            Debug.Log("jokerPlaceholder == null, joker placeholder will not be updated.");
+                        }
+                    }
+                    else
+                    {
+                        Debug.Log("Joker placeholder not found.");
+                    }
+                }
+
+                // Eğer per 4 taşlı ve içerisinde joker taşı varsa, joker taşının bulunduğu placeholder'ı true yap
+                if (per.Count == 4 && hasJoker)
+                {
+                    int jokerPlaceholderIndex = -1; // Joker taşının bulunduğu placeholder'ın indeksi
+                    for (int i = 0; i < numberPerPlaceHolders.Length; i++)
+                    {
+                        Placeholder currentPlaceholder = numberPerPlaceHolders[i].GetComponent<Placeholder>();
+                        if (currentPlaceholder != null && currentPlaceholder.transform.childCount > 0)
+                        {
+                            foreach (Transform child in currentPlaceholder.transform)
+                            {
+                                TileUI tile = child.GetComponent<TileUI>();
+                                if (tile != null && tile.tileDataInfo.type == TileType.Joker)
+                                {
+                                    jokerPlaceholderIndex = i; // Joker taşının bulunduğu placeholder'ın indeksi
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (jokerPlaceholderIndex != -1)
+                        {
+                            break; // Joker taşını bulduysak döngüden çık
+                        }
+                    }
+
+                    // Eğer jokerPlaceholderIndex bulunduysa, available durumunu güncelle
+                    if (jokerPlaceholderIndex != -1)
+                    {
+                        Placeholder jokerPlaceholder = numberPerPlaceHolders[jokerPlaceholderIndex].GetComponent<Placeholder>();
+                        if (jokerPlaceholder != null)
+                        {
+                            jokerPlaceholder.available = true; // PlaceHolder'daki available'ı true yap
+                                                               // Available taş bilgilerini yerleştir
+                            jokerPlaceholder.AvailableTileInfo = availableTiles.FirstOrDefault(tile => tile.number == numberGroups[0].First().number);
+                        }
+                        else
+                        {
+                            Debug.Log("jokerPlaceholder == null, joker placeholder will not be updated.");
+                        }
+                    }
+                    else
+                    {
+                        Debug.Log("Joker placeholder not found.");
+                    }
+                }
+            }
+        }
+        else if (CheckForDoublePer(per) && IsSingleColor(per))
+        {
+            if (per.Any(tile => tile.type == TileType.Joker))
+            {
+                int jokerPlaceholderIndex = -1; // Joker taşının bulunduğu placeholder'ın indeksi
+                for (int i = 0; i < pairPerPlaceHolders.Length; i++)
+                {
+                    Placeholder currentPlaceholder = pairPerPlaceHolders[i].GetComponent<Placeholder>();
+                    if (currentPlaceholder != null && currentPlaceholder.transform.childCount > 0)
+                    {
+                        foreach (Transform child in currentPlaceholder.transform)
+                        {
+                            TileUI tile = child.GetComponent<TileUI>();
+                            if (tile != null && tile.tileDataInfo.type == TileType.Joker)
+                            {
+                                jokerPlaceholderIndex = i; // Joker taşının bulunduğu placeholder'ın indeksi
+                                break;
+                            }
+                        }
+                    }
+
+                    if (jokerPlaceholderIndex != -1)
+                    {
+                        break; // Joker taşını bulduysak döngüden çık
+                    }
+                }
+
+                // Eğer jokerPlaceholderIndex bulunduysa, available durumunu güncelle
+                if (jokerPlaceholderIndex != -1)
+                {
+                    Placeholder jokerPlaceholder = pairPerPlaceHolders[jokerPlaceholderIndex].GetComponent<Placeholder>();
+                    if (jokerPlaceholder != null)
+                    {
+                        jokerPlaceholder.available = true; // PlaceHolder'daki available'ı true yap
+                                                           // Available taş bilgilerini yerleştir
+                        jokerPlaceholder.AvailableTileInfo = availableTiles.FirstOrDefault(tile => tile.number == per.First().number);
+                    }
+                    else
+                    {
+                        Debug.Log("jokerPlaceholder == null, joker placeholder will not be updated.");
+                    }
+                }
+                else
+                {
+                    Debug.Log("Joker placeholder not found.");
+                }
+            }
+        }
+    }
     #endregion
     #region Hide and remove tiles from the Board
     public void RemoveMeldedTiles()
