@@ -58,7 +58,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         rightTileContainer = GameObject.Find("RightTileContainer").transform;
         leftTileContainer = GameObject.FindWithTag("LeftTileContainer").transform;
         playerTileContainer = GameObject.Find("PlayerTileContainer").transform;
-        playerMeldContainer = GameObject.Find("PlayerMeldContainer").transform;
+        playerMeldContainer = GameObject.Find("TileMeldPlace").transform;
         CheckPlace();
         if (gameObject.transform.parent == middleTileContainer)
         {
@@ -319,7 +319,6 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                             if (closestPlaceholder.gameObject.GetComponent<Placeholder>().AvailableTileInfo == tileDataInfo)
                             {
                                 StartCoroutine(SmoothMove(transform, closestPlaceholder));
-                                ActiveStoneEvents();
 
                             }
                             else
@@ -401,15 +400,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         turnManager.photonView.RPC("NextTurn", RpcTarget.AllBuffered);
 
     }
-    void ActiveStoneEvents()
-    {
-        PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object queueValue);
-        int tileIndex = playerTiles.IndexOf(tileDataInfo);
-        tileDistrubite.photonView.RPC("RemoveActiveTileFromPlayerList", RpcTarget.AllBuffered, queueValue, tileIndex);
-        Debug.Log("Taşı aktif edildi");
-        Destroy(gameObject);
 
-    }
     #endregion
 
     #region Shift_Tiles

@@ -874,7 +874,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         }
     }
     #region Taş İşleme
-    [SerializeField] List<Tiles> availableTiles = new List<Tiles>();
+    public List<Tiles> availableTiles = new List<Tiles>();
 
 
     [PunRPC]

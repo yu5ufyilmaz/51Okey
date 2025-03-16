@@ -605,6 +605,18 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             Debug.Log("Oyuncunun sırası degil.");
         }
     }
+
+    public void OnActiveButtonClick()
+    {
+        if (turnManager.canDrop == true)
+        {
+            ActivePers();
+        }
+        else
+        {
+            Debug.Log("Oyuncunun sırası degil.");
+        }
+    }
     #endregion
     #region Place pers on locale
     public bool[] occupiedRowsNumber = new bool[4];
@@ -1232,6 +1244,71 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             }
         }
     }
+
+    public void ActivePers()
+    {
+        List<Tiles> playerTiles = tileDistrubite.GetPlayerTiles();
+        // Tüm oyuncuların taşlarını al
+        foreach (var player in PhotonNetwork.PlayerList)
+        {
+            // Oyuncunun meld container'ını bul
+            Transform meldContainer = GameObject.Find(player.NickName + " meld").transform;
+
+            // Meld container altındaki tüm yer tutucuları kontrol et
+            foreach (Transform placeholder in meldContainer)
+            {
+                foreach (Transform child in placeholder)
+                {
+                    Placeholder currentPlaceholder = child.GetComponent<Placeholder>();
+                    if (currentPlaceholder != null && currentPlaceholder.available)
+                    {
+                        // Her bir taş için kontrol yap
+                        foreach (var tile in playerTiles)
+                        {
+                            // Eğer taş işlekse
+                            if (tileDistrubite.availableTiles.Any(t => t.color == tile.color && t.number == tile.number && t.type == tile.type))
+                            {
+                                // Eğer yer tutucunun availableTileInfo'su mevcut taşla eşleşiyorsa
+                                if (currentPlaceholder.AvailableTileInfo != null &&
+                                    currentPlaceholder.AvailableTileInfo.color == tile.color &&
+                                    currentPlaceholder.AvailableTileInfo.number == tile.number)
+                                {
+                                    // Taşı instantiate et
+                                    GameObject tileInstance = Instantiate(tilePrefab, child);
+                                    TileUI tileUI = tileInstance.GetComponent<TileUI>();
+                                    if (tileUI != null)
+                                    {
+                                        tileUI.SetTileData(tile);
+                                    }
+                                    else
+                                    {
+                                        Debug.LogError("TileUI component missing on tilePrefab.");
+                                    }
+
+                                    // Taşın referansını bul ve görünürlüğünü kapat
+                                    int tileIndex = playerTiles.IndexOf(tile);
+                                    if (tileIndex != -1)
+                                    {
+                                        tileDistrubite.availableTiles.Remove(tile);
+                                        currentPlaceholder.available = false;
+                                        currentPlaceholder.AvailableTileInfo = null;
+                                    }
+                                    int playerTileIndex = tileDistrubite.GetPlayerTiles().IndexOf(tile);
+                                    int playerQue = GetPlayerQue();
+
+                                    tileDistrubite.photonView.RPC("DeactivatePlayerTile", RpcTarget.AllBuffered, playerQue, playerTileIndex);
+
+                                    break; // Uygun bir yer tutucu bulundu, döngüden çık
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
     #endregion
     #region Hide and remove tiles from the Board
     public void RemoveMeldedTiles()
