@@ -122,171 +122,121 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     public List<List<Tiles>> validPerss = new List<List<Tiles>>();
     public List<List<Tiles>> GetSplittedGroups()
     {
-        List<List<Tiles>> perGroups = new List<List<Tiles>>(); // Per gruplarını bul ve sakla
-        bool newSplittedGroup = true;
-
-        // İlk 15 yer tutucular (0-14)
-        for (int i = 0; i < 15; i++)
+        List<List<Tiles>> perGroups = new List<List<Tiles>>();
+    
+        // Process both sections of player tile containers (0-14 and 15-29)
+        for (int startIndex = 0; startIndex < 30; startIndex += 15)
         {
-            if (playerTileContainer.GetChild(i).childCount != 0)
+            bool newSplittedGroup = true;
+        
+            for (int i = startIndex; i < startIndex + 15; i++)
             {
-                if (playerTileContainer.GetChild(i).transform.GetChild(0).gameObject.activeSelf == true)
+                Transform container = playerTileContainer.GetChild(i);
+                bool hasActiveTile = container.childCount > 0 && container.GetChild(0).gameObject.activeSelf;
+            
+                if (hasActiveTile)
                 {
                     if (newSplittedGroup)
                     {
-
                         perGroups.Add(new List<Tiles>());
-                        perGroups.Last().Add(playerTileContainer.GetChild(i).transform.GetChild(0).GetComponent<TileUI>().tileDataInfo);
                         newSplittedGroup = false;
-
                     }
-                    else
-                    {
-                        var lastTiles = perGroups.LastOrDefault();
-                        if (lastTiles != null)
-                        {
-                            perGroups.Last().Add(playerTileContainer.GetChild(i).transform.GetChild(0).GetComponent<TileUI>().tileDataInfo);
-                        }
-                    }
+                
+                    perGroups.Last().Add(container.GetChild(0).GetComponent<TileUI>().tileDataInfo);
                 }
                 else
                 {
                     newSplittedGroup = true;
                 }
             }
-            else
-            {
-                newSplittedGroup = true;
-            }
         }
-
-        // İkinci 15 yer tutucular (15-29)
-        newSplittedGroup = true; // Yeni grup başlangıcını sıfırla
-        for (int i = 15; i < 30; i++)
-        {
-            if (playerTileContainer.GetChild(i).childCount != 0)
-            {
-                if (playerTileContainer.GetChild(i).transform.GetChild(0).gameObject.activeSelf == true)
-                {
-                    if (newSplittedGroup)
-                    {
-
-
-                        perGroups.Add(new List<Tiles>());
-                        perGroups.Last().Add(playerTileContainer.GetChild(i).transform.GetChild(0).GetComponent<TileUI>().tileDataInfo);
-                        newSplittedGroup = false;
-
-                    }
-                    else
-                    {
-                        var lastTiles = perGroups.LastOrDefault();
-                        if (lastTiles != null)
-                        {
-
-                            perGroups.Last().Add(playerTileContainer.GetChild(i).transform.GetChild(0).GetComponent<TileUI>().tileDataInfo);
-                        }
-                    }
-                }
-                else
-                {
-                    newSplittedGroup = true;
-                }
-            }
-            else
-            {
-                newSplittedGroup = true;
-            }
-        }
-
+    
         return perGroups;
     }
     public void CheckForPer()
     {
-        Photon.Realtime.Player player = PhotonNetwork.LocalPlayer;
+        // Get player ID
+        Player player = PhotonNetwork.LocalPlayer;
         player.CustomProperties.TryGetValue("PlayerQue", out object playerId);
-        int playerIdInt = (int)playerId; // Per gruplarını başlat
-
-        // Per gruplarını güncelle
+        int playerIdInt = (int)playerId;
+    
+        // Get per groups
         var groups = GetSplittedGroups();
-        Debug.Log("Per gruplarını kontrol ediyor..." + groups.Count + " grup var.");
-
-        int perCount = 0; // Geçerli per sayısını sıfırla
-        int pairPerCount = 0;
-        int score = 0; // Geçerli puanı sıfırla
+        Debug.Log($"Checking per groups... {groups.Count} groups found.");
+    
+        // Reset counters
+        int score = 0;
         int pairScore = 0;
-
-        // Geçerli perleri kontrol et
-        HashSet<List<Tiles>> countedPers = new HashSet<List<Tiles>>(); // Daha önce sayılan perleri tutmak için
+        int perCount = 0;
+        int pairPerCount = 0;
+    
+        // Track counted pers to avoid duplicates
+        HashSet<List<Tiles>> countedPers = new HashSet<List<Tiles>>();
         validPerss.Clear();
-
+    
         foreach (var per in groups)
         {
-
-            // Her grup için kontrol et
-            if (ControlPer(new List<List<Tiles>> { per })) // Geçerli per kontrolü
+            if (!ControlPer(new List<List<Tiles>> { per })) continue;
+            if (countedPers.Contains(per)) continue;
+        
+            // Add valid per to counted list
+            countedPers.Add(per);
+            validPerss.Add(per);
+        
+            // Calculate score based on per type
+            if (CheckForDoublePer(per))
             {
-
-                // Eğer bu per daha önce sayılmadıysa
-                if (!countedPers.Contains(per))
-                {
-
-
-                    countedPers.Add(per); // Bu peri sayılanlar listesine ekle
-                    validPerss.Add(per);
-                    if (CheckForDoublePer(per))
-                    {
-                        pairPerCount++;
-                        pairScore += CalculateDoublePerScore(per); // Çift per puanını ekle
-                    }
-                    else
-                    {
-                        perCount++; // Geçerli per sayısını artır
-                        score += CalculateGroupScore(per); // Geçerli puanı ekle
-                    }
-                    UpdatePlayerScore(playerIdInt, score);
-                }
-                else
-                {
-                    Debug.Log("Bu per daha önce sayılmış.");
-                }
+                pairPerCount++;
+                pairScore += CalculateDoublePerScore(per);
             }
             else
             {
-                Debug.Log("Geçerli Per bulunamadı.");
+                perCount++;
+                score += CalculateGroupScore(per);
             }
+        
+            UpdatePlayerScore(playerIdInt, score);
         }
+    
+        // Update total scores
         totalScore = score;
         pairTotalScore = pairScore;
         totalPerCount = countedPers.Count;
         pairTotalPerCount = pairPerCount;
-        Debug.Log($"Toplam Geçerli Per Sayısı: {totalPerCount}, Toplam Puan: {totalScore}");
+    
+        Debug.Log($"Total Valid Per Count: {totalPerCount}, Total Score: {totalScore}");
     }
     #endregion
     #region Is pers valid or not
     public bool ControlPer(List<List<Tiles>> perGroups)
+{
+    foreach (var per in perGroups)
     {
-        foreach (var per in perGroups)
+        Debug.Log($"This per has {per.Count} tiles.");
+        
+        if (IsSingleColor(per))
         {
-            Debug.Log("Bu perde " + per.Count + " taş var.");
-
-            if (IsSingleColor(per) && SingleColorCheck(per))
+            if (SingleColorCheck(per))
             {
-                Debug.Log("SingleColor per bulundu.");
-                return true; // Per bulundu
+                Debug.Log("SingleColor per found.");
+                return true;
             }
-            else if (MultiColorCheck(per))
+            
+            if (CheckForDoublePer(per))
             {
-                Debug.Log("MultiColor per bulundu.");
-                return true; // Per bulundu
-            }
-            else if (CheckForDoublePer(per) && IsSingleColor(per))
-            {
-                Debug.Log("Double per bulundu.");
+                Debug.Log("Double per found.");
                 return true;
             }
         }
-        return false; // Hiçbir per bulunamadı
+        else if (MultiColorCheck(per))
+        {
+            Debug.Log("MultiColor per found.");
+            return true;
+        }
     }
+    
+    return false;
+}
 
 
     public bool IsSingleColor(List<Tiles> tiles)
@@ -385,130 +335,114 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     {
         for (int i = 0; i < pattern.Length; i++)
         {
-            bool valid = true; // Geçerli bir desen kontrolü için
+            bool valid = true;
+        
             for (int j = 0; j < tiles.Count; j++)
             {
-                int expectedNumber = pattern[(i + j > pattern.Length - 1 ? pattern.Length - 1 : i + j)];
-                if (tiles[j].type == TileType.Joker)
+                // Get expected number based on pattern
+                int expectedNumber = pattern[Math.Min(i + j, pattern.Length - 1)];
+                Tiles currentTile = tiles[j];
+            
+                if (currentTile.type == TileType.Joker)
                 {
-                    // Joker taşının puanını, mevcut desenin numarasına eşit yap
-                    bool isValidJoker = false;
-
-                    // Joker taşının solundaki taş yoksa
-                    if (j == 0)
-                    {
-                        // Joker taşının sağındaki taşın beklenen numaraya eşit olup olmadığını kontrol et
-                        if (tiles.Count > 1 && tiles[j + 1].number == expectedNumber + 1 || tiles.Count > 1 && tiles[j + 1].number == expectedNumber - 1)
-                        {
-                            tiles[j].number = expectedNumber; // Joker taşının numarasını ayarla
-                            tiles[j].color = tiles[j + 1].color;
-                            isValidJoker = true; // Joker geçerli
-                        }
-                    }
-                    // Joker taşının sağındaki taş yoksa
-                    else if (j == tiles.Count - 1)
-                    {
-                        // Joker taşının solundaki taşın beklenen numaraya eşit olup olmadığını kontrol et
-                        if (tiles[j - 1].number == expectedNumber - 1 || tiles[j - 1].number == expectedNumber + 1)
-                        {
-                            tiles[j].number = expectedNumber; // Joker taşının numarasını ayarla
-                            tiles[j].color = tiles[j - 1].color;
-                            isValidJoker = true; // Joker geçerli
-                        }
-                    }
-                    else
-                    {
-                        // Joker taşının hem solundaki hem de sağındaki taşları kontrol et
-                        if (tiles[j - 1].number == expectedNumber - 1 || tiles[j - 1].number == expectedNumber + 1)
-                        {
-                            tiles[j].number = expectedNumber; // Joker taşının numarasını ayarla
-                            tiles[j].color = tiles[j - 1].color;
-                            isValidJoker = true; // Joker geçerli
-                        }
-                        else if (tiles[j + 1].number == expectedNumber + 1 || tiles[j + 1].number == expectedNumber - 1)
-                        {
-                            tiles[j].number = expectedNumber; // Joker taşının numarasını ayarla
-                            tiles[j].color = tiles[j + 1].color;
-                            isValidJoker = true; // Joker gezocht
-                        }
-                    }
-
+                    // Handle joker logic
+                    bool isValidJoker = HandleJokerInPattern(currentTile, tiles, j, expectedNumber);
                     if (!isValidJoker)
                     {
-                        valid = false; // Joker geçerli değil
+                        valid = false;
                         break;
                     }
-                    else continue;
                 }
-                else if (tiles[j].number == expectedNumber)
+                else if (currentTile.number != expectedNumber)
                 {
-                    continue; // Geçerli taş
-                }
-                else
-                {
-                    valid = false; // Geçersiz
+                    valid = false;
                     break;
                 }
             }
-            if (valid) return true; // Eğer geçerli bir desen bulduysak
+        
+            if (valid) return true;
         }
-        return false; // Hiçbir geçerli desen bulamadık
+    
+        return false;
+    }
+    
+    private bool HandleJokerInPattern(Tiles jokerTile, List<Tiles> tiles, int jokerIndex, int expectedNumber)
+    {
+        // Joker is first tile
+        if (jokerIndex == 0)
+        {
+            if (tiles.Count > 1 && (tiles[1].number == expectedNumber + 1 || tiles[1].number == expectedNumber - 1))
+            {
+                jokerTile.number = expectedNumber;
+                jokerTile.color = tiles[1].color;
+                return true;
+            }
+        }
+        // Joker is last tile
+        else if (jokerIndex == tiles.Count - 1)
+        {
+            if (tiles[jokerIndex - 1].number == expectedNumber - 1 || tiles[jokerIndex - 1].number == expectedNumber + 1)
+            {
+                jokerTile.number = expectedNumber;
+                jokerTile.color = tiles[jokerIndex - 1].color;
+                return true;
+            }
+        }
+        // Joker is in the middle
+        else
+        {
+            bool validWithPrev = tiles[jokerIndex - 1].number == expectedNumber - 1 || tiles[jokerIndex - 1].number == expectedNumber + 1;
+            bool validWithNext = tiles[jokerIndex + 1].number == expectedNumber + 1 || tiles[jokerIndex + 1].number == expectedNumber - 1;
+        
+            if (validWithPrev)
+            {
+                jokerTile.number = expectedNumber;
+                jokerTile.color = tiles[jokerIndex - 1].color;
+                return true;
+            }
+        
+            if (validWithNext)
+            {
+                jokerTile.number = expectedNumber;
+                jokerTile.color = tiles[jokerIndex + 1].color;
+                return true;
+            }
+        }
+    
+        return false;
     }
     public bool MultiColorCheck(List<Tiles> tiles)
     {
-        if (tiles.Count < 3)
-        {
+        if (tiles.Count < 3 || tiles.Count > 4)
             return false;
-        }
-        if (tiles.Count > 4)
-        {
+    
+        // Find a non-joker tile to use as reference
+        Tiles notJokerStone = tiles.FirstOrDefault(t => t.type != TileType.Joker);
+        List<Tiles> jokerStones = tiles.Where(t => t.type == TileType.Joker).ToList();
+    
+        if (notJokerStone == null && jokerStones.Count < 2)
             return false;
-        }
-        Tiles notJokerStones = null;
-        List<Tiles> jokerStones = new List<Tiles>();
-        foreach (var tile in tiles)
-        {
-            if (tile.type != TileType.Joker)
-            {
-                notJokerStones = tile;
-
-            }
-            else
-            {
-                jokerStones.Add(tile);
-            }
-
-        }
-        foreach (var tile in tiles)
-        {
-            if (tile.type == TileType.Joker)
-            {
-                continue;
-            }
-            else if (tile.number == notJokerStones.number)
-            {
-                continue;
-            }
-            else
-            {
-                return false;
-            }
-        }
-        IEnumerable<Tiles> filteredList = tiles
-        .Where(x => x.type != TileType.Joker)
-        .GroupBy(a => a.color)
-        .Select(group => group.First());
-        if (filteredList.Count() + (jokerStones.Count) != tiles.Count)
-        {
+    
+        // Check that all non-joker tiles have same number
+        bool allSameNumber = tiles.All(t => t.type == TileType.Joker || t.number == notJokerStone.number);
+        if (!allSameNumber)
             return false;
-        }
-
+    
+        // Check that all colors are unique
+        var uniqueColors = tiles.Where(t => t.type != TileType.Joker)
+            .GroupBy(t => t.color)
+            .Select(g => g.First());
+                          
+        if (uniqueColors.Count() + jokerStones.Count != tiles.Count)
+            return false;
+    
+        // Assign number to jokers
         foreach (var joker in jokerStones)
         {
-            joker.number = notJokerStones.number;
+            joker.number = notJokerStone.number;
         }
+    
         return true;
-
     }
     #endregion
     #region Calulate functions

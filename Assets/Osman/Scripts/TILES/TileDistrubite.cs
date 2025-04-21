@@ -91,17 +91,23 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     // Generate player tiles
     public void GeneratePlayerTiles()
     {
-        allTiles.Clear(); // Clear existing tiles
+        allTiles.Clear();
+    
+        // Create two copies of each tile for each color and number
         foreach (TileColor color in Enum.GetValues(typeof(TileColor)))
         {
             for (int i = 1; i <= 13; i++)
             {
-                // Add two copies of each tile
                 allTiles.Add(new Tiles(color, i, TileType.Number));
                 allTiles.Add(new Tiles(color, i, TileType.Number));
             }
         }
-        AddFakeJokerTiles(); // Add fake joker tiles
+    
+        // Add joker tiles
+        allTiles.Add(new Tiles(TileColor.black, 1, TileType.FakeJoker));
+        allTiles.Add(new Tiles(TileColor.black, 2, TileType.FakeJoker));
+    
+        Debug.Log("Tiles generated: " + allTiles.Count);
     }
 
     private void AddFakeJokerTiles()
@@ -118,17 +124,18 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
     public void ShuffleTiles()
     {
-
         Debug.Log("Shuffling tiles...");
-        for (int i = 0; i < allTiles.Count; i++)
+    
+        // Fisher-Yates shuffle algorithm
+        for (int i = allTiles.Count - 1; i > 0; i--)
         {
+            int j = Random.Range(0, i + 1);
             Tiles temp = allTiles[i];
-            int randomIndex = Random.Range(i, allTiles.Count);
-            allTiles[i] = allTiles[randomIndex];
-            allTiles[randomIndex] = temp;
+            allTiles[i] = allTiles[j];
+            allTiles[j] = temp;
         }
-
-        // Set the indicator tile
+    
+        // Set indicator tile after shuffling
         SetIndicatorTile();
     }
     [PunRPC]
@@ -144,25 +151,19 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     #region Find Joker Tile
     private void SetIndicatorTile()
     {
-        if (allTiles.Count == 0)
-            return;
-
-        // Select the first tile as the indicator tile
+        if (allTiles.Count == 0) return;
+    
+        // Take first tile as indicator
         Tiles indicatorTile = allTiles[0];
         allTiles.RemoveAt(0);
-        Debug.Log("Indicator tile is: " + indicatorTile.color + " " + indicatorTile.number);
-
-        // Find the upper number for the joker tile
-        int upperNumber = indicatorTile.number + 1;
-        if (upperNumber > 13)
-        {
-            upperNumber = 1; // Wrap around to 1 if it exceeds 13
-        }
-
-        // Update fake joker tiles
-        UpdateFakeJokerTiles(upperNumber, indicatorTile.color);
-
-        // Sync the indicator tile across all clients
+    
+        // Calculate joker number
+        int jokerNumber = (indicatorTile.number % 13) + 1;
+    
+        // Update joker tiles
+        UpdateJokerTiles(jokerNumber, indicatorTile.color);
+    
+        // Sync across all clients
         photonView.RPC("SyncIndicatorTile", RpcTarget.All, indicatorTile);
     }
 
@@ -184,23 +185,24 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         }
     }
 
-    private void UpdateFakeJokerTiles(int upperNumber, TileColor color)
+    private void UpdateJokerTiles(int jokerNumber, TileColor jokerColor)
     {
         foreach (var tile in allTiles)
         {
-            // Update the tile type to Joker if it matches the upper number and color
-            if (tile.type == TileType.Number && tile.number == upperNumber && tile.color == color)
+            // Convert matching tiles to jokers
+            if (tile.type == TileType.Number && tile.number == jokerNumber && tile.color == jokerColor)
             {
-                tile.type = TileType.Joker; // Set as joker tile
-                tile.color = color;
-                Debug.Log("Fake joker tile updated: " + tile.color + " " + tile.number + " -> converted to joker tile.");
+                tile.type = TileType.Joker;
             }
             else if (tile.type == TileType.FakeJoker)
             {
-                tile.color = color;
-                tile.number = upperNumber;
+                // Update fake joker properties
+                tile.color = jokerColor;
+                tile.number = jokerNumber;
             }
         }
+    
+        // Assign player queue and sync shuffled tiles
         photonView.RPC("AssignPlayerQueue", RpcTarget.All);
         photonView.RPC("SyncShuffledTiles", RpcTarget.All, allTiles.ToArray());
     }
@@ -210,47 +212,47 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void AssignPlayerQueue()
     {
-        // Only the MasterClient will assign the queue
+        // Only master client assigns queue
         if (!PhotonNetwork.IsMasterClient) return;
-
-        // Get the list of players in the room
+    
         var players = PhotonNetwork.CurrentRoom.Players.Values.ToList();
-
-        // Randomly select a player
+    
+        // Randomly select first player
         int randomIndex = Random.Range(0, players.Count);
-        Player selectedPlayer = players[randomIndex];
-
-        // Get the seat number of the selected player
-        selectedPlayer.CustomProperties.TryGetValue("SeatNumber", out object seatNumberValue);
-        int selectedPlayerSeat = (int)seatNumberValue;
-
-        // Assign PlayerQue value of 1 to the selected player
-        photonView.RPC("AssignQueueToPlayer", RpcTarget.AllBuffered, selectedPlayer.ActorNumber, 1);
-
-        // Assign queue values to other players in a circular manner
-        int queueValue = 2; // Start from 2
-        int playerCount = players.Count; // Total number of players
-
-        // Loop through players to assign queue values
+        Player firstPlayer = players[randomIndex];
+    
+        // Get first player's seat number
+        firstPlayer.CustomProperties.TryGetValue("SeatNumber", out object seatNumberValue);
+        int firstPlayerSeat = (int)seatNumberValue;
+    
+        // Assign player queue 1 to first player
+        photonView.RPC("AssignQueueToPlayer", RpcTarget.AllBuffered, firstPlayer.ActorNumber, 1);
+    
+        // Assign queue values to other players in order
+        int queueValue = 2;
+        int playerCount = players.Count;
+    
         for (int i = 1; i < playerCount; i++)
         {
-            // Calculate the next seat number in a circular manner
-            int nextSeat = (selectedPlayerSeat - 1 + i) % playerCount + 1;
-
-            // Find the player with the next seat number
-            Player player = players.FirstOrDefault(p =>
+            // Calculate next seat in order
+            int nextSeat = (firstPlayerSeat - 1 + i) % playerCount + 1;
+        
+            // Find player with that seat
+            Player nextPlayer = players.FirstOrDefault(p => 
             {
-                p.CustomProperties.TryGetValue("SeatNumber", out object otherSeatNumberValue);
-                return (int)otherSeatNumberValue == nextSeat;
+                p.CustomProperties.TryGetValue("SeatNumber", out object seat);
+                return (int)seat == nextSeat;
             });
-
-            // If the player is found and is not the selected player, assign the queue value
-            if (player != null && player != selectedPlayer)
+        
+            // Assign queue if player found
+            if (nextPlayer != null && nextPlayer != firstPlayer)
             {
-                photonView.RPC("AssignQueueToPlayer", RpcTarget.AllBuffered, player.ActorNumber, queueValue);
+                photonView.RPC("AssignQueueToPlayer", RpcTarget.AllBuffered, nextPlayer.ActorNumber, queueValue);
                 queueValue++;
             }
         }
+    
+        // Notify completion
         photonView.RPC("AssignQueueComplete", RpcTarget.AllBuffered);
     }
 
@@ -312,78 +314,44 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     {
         Debug.Log("Player queue assignment completed.");
     }
-    public void DistributeTilesToAllPlayers()
+   public void DistributeTilesToAllPlayers()
+{
+    Player localPlayer = PhotonNetwork.LocalPlayer;
+    int playerQue = GetQueueNumberOfPlayer(localPlayer);
+    
+    // First player gets 15 tiles, others get 14
+    int firstPlayerTiles = 15;
+    int otherPlayerTiles = 14;
+    
+    // Distribute tiles to all players
+    for (int playerIndex = 0; playerIndex < 4; playerIndex++)
     {
-
-
-        int tilesForFirstPlayer = 15; // Number of tiles for the first player
-        int tilesForOtherPlayers = 14; // Number of tiles for other players
-
-        for (int i = 0; i < 4; i++)
+        int tilesToDistribute = (playerIndex == 0) ? firstPlayerTiles : otherPlayerTiles;
+        List<Tiles> targetList = GetPlayerTileList(playerIndex + 1);
+        
+        for (int tileIndex = 0; tileIndex < tilesToDistribute; tileIndex++)
         {
-            Player player = PhotonNetwork.LocalPlayer;
-
-            if (i == 0)
+            if (allTiles.Count == 0)
             {
-                for (int j = 0; j < tilesForFirstPlayer; j++)
-                {
-                    if (allTiles.Count == 0)
-                    {
-                        Debug.LogWarning("No more tiles left to distribute!");
-                        return;
-                    }
-
-                    Tiles tile = allTiles[0];
-                    allTiles.RemoveAt(0);
-                    playerTiles1.Add(tile);
-                    if (GetQueueNumberOfPlayer(player) == 1)
-                    {
-                        InstantiateTiles(j, tile);
-                    }
-                }
+                Debug.LogWarning("No more tiles left to distribute!");
+                return;
             }
-            else
+            
+            Tiles tile = allTiles[0];
+            allTiles.RemoveAt(0);
+            targetList.Add(tile);
+            
+            // Instantiate tile for local player
+            if (playerIndex + 1 == playerQue)
             {
-                for (int j = 0; j < tilesForOtherPlayers; j++)
-                {
-                    if (allTiles.Count == 0)
-                    {
-                        Debug.LogWarning("No more tiles left to distribute!");
-                        return;
-                    }
-
-                    Tiles tile = allTiles[0];
-                    allTiles.RemoveAt(0);
-
-                    switch (i)
-                    {
-                        case 1:
-                            playerTiles2.Add(tile);
-                            if (GetQueueNumberOfPlayer(player) == 2)
-                            {
-                                InstantiateTiles(j, tile);
-                            }
-                            break;
-                        case 2:
-                            playerTiles3.Add(tile);
-                            if (GetQueueNumberOfPlayer(player) == 3)
-                            {
-                                InstantiateTiles(j, tile);
-                            }
-                            break;
-                        case 3:
-                            playerTiles4.Add(tile);
-                            if (GetQueueNumberOfPlayer(player) == 4)
-                            {
-                                InstantiateTiles(j, tile);
-                            }
-                            break;
-                    }
-                }
+                InstantiateTiles(tileIndex, tile);
             }
         }
-        PlaceRemainingTilesInMiddleContainer(); // Place remaining tiles in the middle container
     }
+    
+    // Place remaining tiles in middle container
+    PlaceRemainingTilesInMiddleContainer();
+}
 
     void InstantiateTiles(int tileCount, Tiles tile)
     {
@@ -407,6 +375,75 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             GameObject tileInstance = Instantiate(tilePrefab, middleTileContainer);
         }
     }
+    
+    private List<Tiles> GetPlayerTileList(int playerNumber)
+    {
+        switch (playerNumber)
+        {
+            case 1: return playerTiles1;
+            case 2: return playerTiles2;
+            case 3: return playerTiles3;
+            case 4: return playerTiles4;
+            default: return new List<Tiles>();
+        }
+    }
+    
+    [PunRPC]
+    public void HandleTileAction(string action, int playerNumber, int tileIndex = -1, Tiles tile = null)
+    {
+        List<Tiles> playerTiles = GetPlayerTileList(playerNumber);
+    
+        switch (action)
+        {
+            case "RemoveTile":
+                if (tileIndex >= 0 && tileIndex < playerTiles.Count)
+                {
+                    InstatiateSideTiles(playerNumber, playerTiles[tileIndex]);
+                    playerTiles.RemoveAt(tileIndex);
+                }
+                break;
+            
+            case "AddFromMiddle":
+                if (allTiles.Count > 0)
+                {
+                    playerTiles.Add(allTiles[0]);
+                    allTiles.RemoveAt(0);
+                }
+                break;
+            
+            case "AddFromDrop":
+                if (dropTile != null)
+                {
+                    playerTiles.Add(dropTile);
+                    DestroySideTiles(playerNumber);
+                }
+                break;
+            
+            case "DeactivateTile":
+                if (tileIndex >= 0 && tileIndex < playerTiles.Count)
+                {
+                    DeactivatePlayerTileUI(playerTiles[tileIndex]);
+                }
+                break;
+        }
+    }
+    private void DeactivatePlayerTileUI(Tiles tile)
+    {
+        foreach (Transform placeholder in playerTileContainer)
+        {
+            if (placeholder.childCount > 0)
+            {
+                TileUI tileUI = placeholder.GetChild(0).GetComponent<TileUI>();
+                if (tileUI != null && tileUI.tileDataInfo == tile)
+                {
+                    scoreManager.meldedTiles.Add(tile);
+                    placeholder.GetChild(0).gameObject.SetActive(false);
+                    return;
+                }
+            }
+        }
+    }
+
     #endregion
 
     #region GamePlay
@@ -917,132 +954,63 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         }
     }
 
-    public List<Tiles> GetAvailableTiles(List<Tiles> meld, int playerQue)
+    public List<Tiles> GetAvailableTiles(List<Tiles> meld, int rowIndex)
+{
+    List<Tiles> availableTiles = new List<Tiles>();
+    
+    // Handle single color straight melds
+    if (scoreManager.IsSingleColor(meld) && scoreManager.SingleColorCheck(meld))
     {
-        List<Tiles> availableTiles = new List<Tiles>();
-
-        if (scoreManager.IsSingleColor(meld) && scoreManager.SingleColorCheck(meld))
+        // Get min/max numbers
+        int minNumber = meld.Min(t => t.number);
+        int maxNumber = meld.Max(t => t.number);
+        TileColor meldColor = meld.First(t => t.type != TileType.Joker).color;
+        
+        // Add lower number if possible
+        if (minNumber > 1)
         {
-            // Perin taşlarını analiz et
-            if (meld.Count > 0)
-            {
-                // Melded taşların numaralarını al
-                var numbers = meld.Select(tile => tile.number).ToList();
-                var colors = meld.Select(tile => tile.color).Distinct().ToList();
-                bool hasJoker = meld.Any(tile => tile.type == TileType.Joker); // Joker taşı var mı?
-
-                // En küçük ve en büyük sayıyı bul
-                int minNumber = numbers.Min();
-                int maxNumber = numbers.Max();
-
-                // En küçük sayının bir eksiğini ekle
-                if (minNumber > 1) // 1'den küçük olamaz
-                {
-
-                    var newTile = new Tiles(meld[0].color, minNumber - 1, TileType.Number);
-                    availableTiles.Add(newTile); // Renk olarak ilk taşın rengini kullan
-                }
-
-                // En büyük sayının bir fazlasını ekle
-                if (maxNumber < 13) // 13'ten büyük olamaz
-                {
-
-                    var newTile = new Tiles(meld[0].color, maxNumber + 1, TileType.Number);
-                    availableTiles.Add(newTile); // Renk olarak ilk taşın rengini kullan
-                }
-
-                // Eğer joker varsa, jokerin yerini aldığı taşın rengini ve numarasını kullan
-                if (hasJoker)
-                {
-                    // Joker taşını bul
-                    var jokerTile = meld.First(tile => tile.type == TileType.Joker);
-
-                    // Jokerin yerini aldığı taşın rengini ve numarasını bul
-                    availableTiles.Add(new Tiles(meld[0].color, jokerTile.number, TileType.Number));
-                }
-            }
+            availableTiles.Add(new Tiles(meldColor, minNumber - 1, TileType.Number));
         }
-        else if (scoreManager.MultiColorCheck(meld))
+        
+        // Add higher number if possible
+        if (maxNumber < 13)
         {
-            // MultiColor perleri için
-            if (meld.Count >= 3)
-            {
-                var numberGroups = meld.GroupBy(tile => tile.number).ToList();
-                var missingColors = new List<TileColor>(); // TileColor türünde bir liste
-                bool hasJoker = meld.Any(tile => tile.type == TileType.Joker); // Joker taşı var mı?
-
-                // Hangi renklerin eksik olduğunu bul
-                foreach (var numberGroup in numberGroups)
-                {
-                    if (numberGroup.Count() < 4) // 4 renk eksikse
-                    {
-
-
-                        missingColors.AddRange(GetMissingColors(numberGroup.Select(tile => tile.color).ToList()));
-
-
-                    }
-                }
-
-                // Eksik renkleri availableTiles listesine ekle
-                foreach (var color in missingColors)
-                {
-                    foreach (var number in numberGroups.Select(g => g.Key).Distinct())
-                    {
-                        var newTile = new Tiles(color, number, TileType.Number);
-                        availableTiles.Add(newTile);
-                    }
-                }
-
-                // Eğer joker varsa, jokerin yerini aldığı taşın rengini ve numarasını kullan
-                if (meld.Count == 3 && hasJoker)
-                {
-                    var nonJokerTiles = meld.Where(tile => tile.type != TileType.Joker).ToList();
-                    if (nonJokerTiles.Count == 2)
-                    {
-                        // Jokerin yerini aldığı taşın numarasını kullanarak eksik renklerdeki taşları ekle
-                        foreach (var missingColor in GetMissingColors(nonJokerTiles.Select(tile => tile.color).ToList()))
-                        {
-                            foreach (var number in nonJokerTiles.Select(t => t.number).Distinct())
-                            {
-                                var newTile = new Tiles(missingColor, number, TileType.Number);
-                                availableTiles.Add(newTile);
-                            }
-                        }
-                    }
-                }
-
-                // Eğer 4 taş varsa ve bir tanesi joker ise eksik olan renklerdeki taşları ekle
-                if (meld.Count == 4 && hasJoker)
-                {
-                    var nonJokerTiles = meld.Where(tile => tile.type != TileType.Joker).ToList();
-                    if (nonJokerTiles.Count == 3)
-                    {
-                        // Jokerin yerini aldığı taşın numarasını kullanarak eksik renklerdeki taşları ekle
-                        foreach (var missingColor in GetMissingColors(nonJokerTiles.Select(tile => tile.color).ToList()))
-                        {
-                            foreach (var number in nonJokerTiles.Select(t => t.number).Distinct())
-                            {
-                                var newTile = new Tiles(missingColor, number, TileType.Number);
-                                availableTiles.Add(newTile);
-                            }
-                        }
-                    }
-                }
-            }
+            availableTiles.Add(new Tiles(meldColor, maxNumber + 1, TileType.Number));
         }
-        else if (scoreManager.CheckForDoublePer(meld) && scoreManager.IsSingleColor(meld))
+        
+        // Add replacements for jokers
+        foreach (var joker in meld.Where(t => t.type == TileType.Joker))
         {
-            // Çift perler için
-            if (meld.Any(tile => tile.type == TileType.Joker))
-            {
-                // Jokerin yerine geçtiği taş işlek olmalı
-                var jokerTile = meld.First(tile => tile.type == TileType.Joker);
-                availableTiles.Add(new Tiles(jokerTile.color, jokerTile.number, TileType.Number)); // Jokerin temsil ettiği taş
-            }
+            availableTiles.Add(new Tiles(meldColor, joker.number, TileType.Number));
         }
-        return availableTiles.Distinct().ToList(); // Tekrar eden taşları kaldır
     }
+    // Handle multi-color sets
+    else if (scoreManager.MultiColorCheck(meld))
+    {
+        // Get the number and find missing colors
+        int setNumber = meld.First(t => t.type != TileType.Joker).number;
+        var existingColors = meld.Where(t => t.type != TileType.Joker).Select(t => t.color).ToList();
+        var missingColors = GetMissingColors(existingColors);
+        
+        // Add missing color tiles
+        foreach (var color in missingColors)
+        {
+            availableTiles.Add(new Tiles(color, setNumber, TileType.Number));
+        }
+    }
+    // Handle double pairs
+    else if (scoreManager.CheckForDoublePer(meld) && scoreManager.IsSingleColor(meld))
+    {
+        // Add replacement for joker if present
+        var joker = meld.FirstOrDefault(t => t.type == TileType.Joker);
+        if (joker != null)
+        {
+            availableTiles.Add(new Tiles(joker.color, joker.number, TileType.Number));
+        }
+    }
+    
+    return availableTiles.Distinct().ToList();
+}
     private void UpdateAvailableForPlaceholders(List<Tiles> per, int rowIndex, int playerCount)
     {
         Player[] player = PhotonNetwork.PlayerList;
