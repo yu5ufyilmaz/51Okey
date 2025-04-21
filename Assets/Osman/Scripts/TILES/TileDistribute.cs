@@ -12,7 +12,7 @@ using UnityEngine.SocialPlatforms;
 using UnityEngine.Tilemaps;
 using Random = UnityEngine.Random;
 
-public class TileDistrubite : MonoBehaviourPunCallbacks
+public class TileDistribute : MonoBehaviourPunCallbacks
 {
     [SerializeField] GameObject tilePrefab; // Tile prefab
     [SerializeField] GameObject meldTilePrefab; // Meld tile prefab
@@ -398,7 +398,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             case "RemoveTile":
                 if (tileIndex >= 0 && tileIndex < playerTiles.Count)
                 {
-                    InstatiateSideTiles(playerNumber, playerTiles[tileIndex]);
+                    InstantiateSideTiles(playerNumber, playerTiles[tileIndex]);
                     playerTiles.RemoveAt(tileIndex);
                 }
                 break;
@@ -475,23 +475,23 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         switch (playerNumber)
         {
             case 1:
-                InstatiateSideTiles(playerNumber, playerTiles1[tileIndex]);
+                InstantiateSideTiles(playerNumber, playerTiles1[tileIndex]);
                 playerTiles1.RemoveAt(tileIndex);
 
 
                 break;
             case 2:
-                InstatiateSideTiles(playerNumber, playerTiles2[tileIndex]);
+                InstantiateSideTiles(playerNumber, playerTiles2[tileIndex]);
                 playerTiles2.RemoveAt(tileIndex);
 
                 break;
             case 3:
-                InstatiateSideTiles(playerNumber, playerTiles3[tileIndex]);
+                InstantiateSideTiles(playerNumber, playerTiles3[tileIndex]);
                 playerTiles3.RemoveAt(tileIndex);
 
                 break;
             case 4:
-                InstatiateSideTiles(playerNumber, playerTiles4[tileIndex]);
+                InstantiateSideTiles(playerNumber, playerTiles4[tileIndex]);
                 playerTiles4.RemoveAt(tileIndex);
 
                 break;
@@ -584,7 +584,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
     }
 
-    void InstatiateSideTiles(int playerCount, Tiles tile)
+    void InstantiateSideTiles(int playerCount, Tiles tile)
     {
         Player[] player = PhotonNetwork.PlayerList;
         for (int i = 0; i < player.Length; i++)

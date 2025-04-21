@@ -24,7 +24,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     private Transform originalParent;
     private CanvasGroup canvasGroup;
     private TurnManager turnManager;
-    private TileDistrubite tileDistrubite;
+    private TileDistribute _tileDistribute;
 
     // Container Transformları
     public Transform middleTileContainer; // Orta taş havuzu
@@ -65,11 +65,11 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             inMiddle = true;
         }
         turnManager = GameObject.Find("TurnManager").GetComponent<TurnManager>();
-        tileDistrubite = GameObject.Find("TileManager(Clone)").GetComponent<TileDistrubite>();
+        _tileDistribute = GameObject.Find("TileManager(Clone)").GetComponent<TileDistribute>();
         scoreManager = GameObject.Find("ScoreManager(Clone)").GetComponent<ScoreManager>();
         playerTiles = null;
-        playerTiles = tileDistrubite.GetPlayerTiles();
-        tileDistrubite.RegisterTileUI(this);
+        playerTiles = _tileDistribute.GetPlayerTiles();
+        _tileDistribute.RegisterTileUI(this);
         scoreManager.CheckForPer();
     }
     void CheckPlace()
@@ -268,8 +268,8 @@ private void HandleTilePlacementDuringTurn(Transform closestPlaceholder)
         if (inMiddle)
         {
             // Draw from middle
-            SetTileData(tileDistrubite.allTiles[0]);
-            tileDistrubite.photonView.RPC("AddTileFromMiddlePlayerList", RpcTarget.AllBuffered, queueValue);
+            SetTileData(_tileDistribute.allTiles[0]);
+            _tileDistribute.photonView.RPC("AddTileFromMiddlePlayerList", RpcTarget.AllBuffered, queueValue);
             turnManager.canDrop = true;
             StartCoroutine(SmoothMove(transform, closestPlaceholder));
             inMiddle = false;
@@ -278,9 +278,9 @@ private void HandleTilePlacementDuringTurn(Transform closestPlaceholder)
         {
             // Draw from left container
             StartCoroutine(SmoothMove(transform, closestPlaceholder));
-            tileDistrubite.photonView.RPC("AddTileFromDropPlayerList", RpcTarget.AllBuffered, queueValue);
+            _tileDistribute.photonView.RPC("AddTileFromDropPlayerList", RpcTarget.AllBuffered, queueValue);
             turnManager.canDrop = true;
-            tileDistrubite.dropTile = this.tileDataInfo;
+            _tileDistribute.dropTile = this.tileDataInfo;
             fromLeftContainer = false;
         }
         else if (isPlaceholderRight)
@@ -386,13 +386,13 @@ private void HandleTileDisplacement(Transform closestPlaceholder)
         int tileIndex = playerTiles.IndexOf(tileDataInfo);
     
         // First remove the tile from player list (this will also instantiate it for others)
-        tileDistrubite.photonView.RPC("RemoveTileFromPlayerList", RpcTarget.AllBuffered, playerQue, tileIndex);
+        _tileDistribute.photonView.RPC("RemoveTileFromPlayerList", RpcTarget.AllBuffered, playerQue, tileIndex);
     
         // Clean up melded tiles
         scoreManager.RemoveMeldedTiles();
     
         // Check for available tiles
-        tileDistrubite.photonView.RPC("CheckForAvailableTiles", RpcTarget.AllBuffered, playerQue);
+        _tileDistribute.photonView.RPC("CheckForAvailableTiles", RpcTarget.AllBuffered, playerQue);
     
         // Destroy the local GameObject (it's already shown for others via the network)
         Destroy(gameObject);

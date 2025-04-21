@@ -16,7 +16,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     private Transform[] numberPerPlaceHolders; // Player tile placeholders
     Transform colorPerPlaceHolder;
     [SerializeField] private Transform[] colorPerPlaceHolders;
-    private TileDistrubite tileDistrubite; // Taşları yöneten sınıf
+    private TileDistribute _tileDistribute; // Taşları yöneten sınıf
     [SerializeField] private TurnManager turnManager;
     public Transform playerTileContainer; // Oyuncu taşı bölmesi
     public GameObject tilePrefab;
@@ -33,7 +33,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         Player player = PhotonNetwork.LocalPlayer;
 
         turnManager = GameObject.Find("TurnManager").GetComponent<TurnManager>();
-        tileDistrubite = GameObject.Find("TileManager(Clone)").GetComponent<TileDistrubite>();
+        _tileDistribute = GameObject.Find("TileManager(Clone)").GetComponent<TileDistribute>();
         playerTileContainer = GameObject.Find("PlayerTileContainer").transform;
         playerMeldContainers = GameObject.Find(player.NickName + " meld").transform;
         if (playerMeldContainers != null)
@@ -616,9 +616,9 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                             {
                                 Debug.LogError("TileUI component missing on tilePrefab.");
                             }
-                            int playerTileIndex = tileDistrubite.GetPlayerTiles().IndexOf(tile);
+                            int playerTileIndex = _tileDistribute.GetPlayerTiles().IndexOf(tile);
                             int playerQue = GetPlayerQue();
-                            tileDistrubite.photonView.RPC("DeactivatePlayerTile", RpcTarget.AllBuffered, playerQue, playerTileIndex);
+                            _tileDistribute.photonView.RPC("DeactivatePlayerTile", RpcTarget.AllBuffered, playerQue, playerTileIndex);
 
                         }
                     }
@@ -631,7 +631,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                         return; // İşlemi durdur
                     }
                     UpdateAvailableForPlaceholders(per, rowIndex);
-                    tileDistrubite.photonView.RPC("MergeValidpers", RpcTarget.AllBuffered, per, GetPlayerQue(), positions);
+                    _tileDistribute.photonView.RPC("MergeValidpers", RpcTarget.AllBuffered, per, GetPlayerQue(), positions);
                     positions.Clear(); // Her per için pozisyonları temizle
                 }
                 else
@@ -700,9 +700,9 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                             {
                                 Debug.LogError("TileUI component missing on tilePrefab.");
                             }
-                            int playerTileIndex = tileDistrubite.GetPlayerTiles().IndexOf(tile);
+                            int playerTileIndex = _tileDistribute.GetPlayerTiles().IndexOf(tile);
                             int playerQue = GetPlayerQue();
-                            tileDistrubite.photonView.RPC("DeactivatePlayerTile", RpcTarget.AllBuffered, playerQue, playerTileIndex);
+                            _tileDistribute.photonView.RPC("DeactivatePlayerTile", RpcTarget.AllBuffered, playerQue, playerTileIndex);
                         }
                     }
                     occupiedRowsNumber[rowIndex] = true;
@@ -714,7 +714,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                         return; // İşlemi durdur
                     }
 
-                    tileDistrubite.photonView.RPC("MergeValidpers", RpcTarget.AllBuffered, per, GetPlayerQue(), positions);
+                    _tileDistribute.photonView.RPC("MergeValidpers", RpcTarget.AllBuffered, per, GetPlayerQue(), positions);
                     positions.Clear(); // Her per için pozisyonları temizle
                 }
                 else
@@ -784,9 +784,9 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                             {
                                 Debug.LogError("TileUI component missing on tilePrefab.");
                             }
-                            int playerTileIndex = tileDistrubite.GetPlayerTiles().IndexOf(tile);
+                            int playerTileIndex = _tileDistribute.GetPlayerTiles().IndexOf(tile);
                             int playerQue = GetPlayerQue();
-                            tileDistrubite.photonView.RPC("DeactivatePlayerTile", RpcTarget.AllBuffered, playerQue, playerTileIndex);
+                            _tileDistribute.photonView.RPC("DeactivatePlayerTile", RpcTarget.AllBuffered, playerQue, playerTileIndex);
                         }
                     }
                     occupiedRowsPair[rowIndex] = true;
@@ -798,7 +798,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                         return; // İşlemi durdur
                     }
 
-                    tileDistrubite.photonView.RPC("MergeValidpers", RpcTarget.AllBuffered, per, GetPlayerQue(), positions);
+                    _tileDistribute.photonView.RPC("MergeValidpers", RpcTarget.AllBuffered, per, GetPlayerQue(), positions);
                     positions.Clear(); // Her per için pozisyonları temizle
                 }
             }
@@ -810,7 +810,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     {
         // Eğer geri alınacak taş yoksa, işlemi durdur
         if (meldedTiles.Count == 0) return;
-        List<Tiles> playerTiles = tileDistrubite.GetPlayerTiles();
+        List<Tiles> playerTiles = _tileDistribute.GetPlayerTiles();
         Tiles tiles = meldedTiles[0];
         int playerQue = GetPlayerQue();
         // Oyuncunun taş listesini al
@@ -868,7 +868,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 Destroy(meldTile); // Taşı yok et
             }
         }
-        tileDistrubite.photonView.RPC("UnMergeValidPers", RpcTarget.AllBuffered, playerQue);
+        _tileDistribute.photonView.RPC("UnMergeValidPers", RpcTarget.AllBuffered, playerQue);
         meldedTiles.RemoveAll(x => x != null);
         meldedTiles.Clear();
         // Geri alınan taşları temizle
@@ -889,7 +889,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             return;
         }
 
-        List<Tiles> availableTiles = tileDistrubite.GetAvailableTiles(per, rowIndex); // Available taşları al
+        List<Tiles> availableTiles = _tileDistribute.GetAvailableTiles(per, rowIndex); // Available taşları al
 
         if (IsSingleColor(per) && SingleColorCheck(per))
         {
@@ -1181,7 +1181,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
     public void ActivePers()
     {
-        List<Tiles> playerTiles = tileDistrubite.GetPlayerTiles();
+        List<Tiles> playerTiles = _tileDistribute.GetPlayerTiles();
         // Tüm oyuncuların taşlarını al
         foreach (var player in PhotonNetwork.PlayerList)
         {
@@ -1200,7 +1200,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                         foreach (var tile in playerTiles)
                         {
                             // Eğer taş işlekse
-                            if (tileDistrubite.availableTiles.Any(t => t.color == tile.color && t.number == tile.number && t.type == tile.type))
+                            if (_tileDistribute.availableTiles.Any(t => t.color == tile.color && t.number == tile.number && t.type == tile.type))
                             {
                                 // Eğer yer tutucunun availableTileInfo'su mevcut taşla eşleşiyorsa
                                 if (currentPlaceholder.AvailableTileInfo != null &&
@@ -1223,14 +1223,14 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                                     int tileIndex = playerTiles.IndexOf(tile);
                                     if (tileIndex != -1)
                                     {
-                                        tileDistrubite.availableTiles.Remove(tile);
+                                        _tileDistribute.availableTiles.Remove(tile);
                                         currentPlaceholder.available = false;
                                         currentPlaceholder.AvailableTileInfo = null;
                                     }
-                                    int playerTileIndex = tileDistrubite.GetPlayerTiles().IndexOf(tile);
+                                    int playerTileIndex = _tileDistribute.GetPlayerTiles().IndexOf(tile);
                                     int playerQue = GetPlayerQue();
 
-                                    tileDistrubite.photonView.RPC("DeactivatePlayerTile", RpcTarget.AllBuffered, playerQue, playerTileIndex);
+                                    _tileDistribute.photonView.RPC("DeactivatePlayerTile", RpcTarget.AllBuffered, playerQue, playerTileIndex);
 
                                     break; // Uygun bir yer tutucu bulundu, döngüden çık
                                 }
@@ -1250,14 +1250,14 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
         if (meldedTiles.Count == 0) return;
 
-        List<Tiles> playerTiles = tileDistrubite.GetPlayerTiles();
+        List<Tiles> playerTiles = _tileDistribute.GetPlayerTiles();
         int playerQue = GetPlayerQue();
 
         meldTileGO.Clear();
         foreach (var tile in meldedTiles)
         {
             int tileIndex = playerTiles.IndexOf(tile);
-            tileDistrubite.photonView.RPC("MeldTiles", RpcTarget.AllBuffered, playerQue, tileIndex);
+            _tileDistribute.photonView.RPC("MeldTiles", RpcTarget.AllBuffered, playerQue, tileIndex);
             DestroyTileGameObject(tile);
         }
 

@@ -4,6 +4,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using TMPro;
 using System.Collections;
+using UnityEngine.Serialization;
 using UnityEngine.UIElements;
 
 public class SeatManager : MonoBehaviourPunCallbacks
@@ -14,7 +15,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
     public TMP_Text[] seatTextFields; // Array of Text components to display player names
     public GameObject[] tiledropOffset;
     public GameObject[] meldTileOffsets;
-    public TileDistrubite tileDistrubite;
+    [FormerlySerializedAs("tileDistrubite")] public TileDistribute tileDistribute;
     public ScoreManager sManager;
     private TurnManager turnManager;
 
@@ -48,7 +49,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
             GameObject tileManager = PhotonNetwork.Instantiate(tileManagerPrefab.name, Vector3.zero, Quaternion.identity, 0);
 
             turnManager = GameObject.Find("TurnManager").GetComponent<TurnManager>();
-            tileDistrubite = tileManager.GetComponent<TileDistrubite>();
+            tileDistribute = tileManager.GetComponent<TileDistribute>();
 
             photonView.RPC("AssignSeatToPlayer", RpcTarget.AllBuffered, PhotonNetwork.LocalPlayer.ActorNumber, seatNumber);
 
@@ -240,7 +241,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
             if (PhotonNetwork.PlayerList.Length == 4)
             {
                 // Check if all players are assigned a seat
-                if (tileDistrubite != null && PhotonNetwork.IsMasterClient)
+                if (tileDistribute != null && PhotonNetwork.IsMasterClient)
                 {
 
                     Debug.Log(PhotonNetwork.LocalPlayer.NickName + " is the master client.");
@@ -266,7 +267,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
         scoreManager.SetActive(true);
         sManager = scoreManager.GetComponent<ScoreManager>();
 
-        tileDistrubite.ShuffleTiles();
+        tileDistribute.ShuffleTiles();
 
         gameIsStart = true; // Set the game as started
 
