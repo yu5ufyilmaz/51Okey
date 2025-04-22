@@ -1179,70 +1179,125 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         }
     }
 
-    public void ActivePers()
+ public void ActivePers()
+{
+    if (!turnManager.canDrop)
     {
-        List<Tiles> playerTiles = _tileDistribute.GetPlayerTiles();
-        // Tüm oyuncuların taşlarını al
-        foreach (var player in PhotonNetwork.PlayerList)
+        Debug.Log("[ActivePers] Not player's turn, cannot place tiles");
+        return;
+    }
+
+    Debug.Log("[ActivePers] Starting tile activation process");
+    List<Tiles> playerTiles = _tileDistribute.GetPlayerTiles();
+    int playerQue = GetPlayerQue();
+    
+    // Track placements with explicit identifiers
+    List<int> placedTileIndices = new List<int>();
+    List<string> containerPaths = new List<string>();
+    
+    // Process each player's meld containers
+    foreach (var player in PhotonNetwork.PlayerList)
+    {
+        string containerName = player.NickName + " meld";
+        Transform meldContainer = GameObject.Find(containerName).transform;
+        
+        if (meldContainer == null)
         {
-            // Oyuncunun meld container'ını bul
-            Transform meldContainer = GameObject.Find(player.NickName + " meld").transform;
-
-            // Meld container altındaki tüm yer tutucuları kontrol et
-            foreach (Transform placeholder in meldContainer)
+            Debug.LogWarning($"[ActivePers] Container {containerName} not found");
+            continue;
+        }
+        
+        // Check each type of container (color, number, pair)
+        for (int containerIdx = 0; containerIdx < meldContainer.childCount; containerIdx++)
+        {
+            Transform typeContainer = meldContainer.GetChild(containerIdx);
+            
+            // Check each placeholder
+            for (int placeholderIdx = 0; placeholderIdx < typeContainer.childCount; placeholderIdx++)
             {
-                foreach (Transform child in placeholder)
+                Transform placeholder = typeContainer.GetChild(placeholderIdx);
+                Placeholder ph = placeholder.GetComponent<Placeholder>();
+                
+                // Skip if not available or has no expected tile
+                if (ph == null || !ph.available || ph.AvailableTileInfo == null)
+                    continue;
+                
+                // Look for matching tile in player's hand
+                for (int tileIdx = 0; tileIdx < playerTiles.Count; tileIdx++)
                 {
-                    Placeholder currentPlaceholder = child.GetComponent<Placeholder>();
-                    if (currentPlaceholder != null && currentPlaceholder.available)
+                    // Skip tiles already used in other placements
+                    if (placedTileIndices.Contains(tileIdx))
+                        continue;
+                    
+                    Tiles tile = playerTiles[tileIdx];
+                    
+                    // Check if tile matches what placeholder expects
+                    if (ph.AvailableTileInfo.color == tile.color && 
+                        ph.AvailableTileInfo.number == tile.number)
                     {
-                        // Her bir taş için kontrol yap
-                        foreach (var tile in playerTiles)
+                        // Create local tile instance
+                        GameObject tileInstance = Instantiate(tilePrefab, placeholder);
+                        TileUI tileUI = tileInstance.GetComponent<TileUI>();
+                        meldTileGO.Add(tileInstance);
+                        
+                        if (tileUI != null)
                         {
-                            // Eğer taş işlekse
-                            if (_tileDistribute.availableTiles.Any(t => t.color == tile.color && t.number == tile.number && t.type == tile.type))
-                            {
-                                // Eğer yer tutucunun availableTileInfo'su mevcut taşla eşleşiyorsa
-                                if (currentPlaceholder.AvailableTileInfo != null &&
-                                    currentPlaceholder.AvailableTileInfo.color == tile.color &&
-                                    currentPlaceholder.AvailableTileInfo.number == tile.number)
-                                {
-                                    // Taşı instantiate et
-                                    GameObject tileInstance = Instantiate(tilePrefab, child);
-                                    TileUI tileUI = tileInstance.GetComponent<TileUI>();
-                                    if (tileUI != null)
-                                    {
-                                        tileUI.SetTileData(tile);
-                                    }
-                                    else
-                                    {
-                                        Debug.LogError("TileUI component missing on tilePrefab.");
-                                    }
-
-                                    // Taşın referansını bul ve görünürlüğünü kapat
-                                    int tileIndex = playerTiles.IndexOf(tile);
-                                    if (tileIndex != -1)
-                                    {
-                                        _tileDistribute.availableTiles.Remove(tile);
-                                        currentPlaceholder.available = false;
-                                        currentPlaceholder.AvailableTileInfo = null;
-                                    }
-                                    int playerTileIndex = _tileDistribute.GetPlayerTiles().IndexOf(tile);
-                                    int playerQue = GetPlayerQue();
-
-                                    _tileDistribute.photonView.RPC("DeactivatePlayerTile", RpcTarget.AllBuffered, playerQue, playerTileIndex);
-
-                                    break; // Uygun bir yer tutucu bulundu, döngüden çık
-                                }
-                            }
+                            tileUI.SetTileData(tile);
                         }
+                        
+                        // Get full path to placeholder for precise identification
+                        string path = GetFullPath(placeholder);
+                        Debug.Log($"[ActivePers] Placed tile {tile.color} {tile.number} at path: {path}");
+                        
+                        // Track this placement
+                        placedTileIndices.Add(tileIdx);
+                        containerPaths.Add(path);
+                        
+                        // Mark placeholder as used
+                        ph.available = false;
+                        ph.AvailableTileInfo = null;
+                        
+                        // Deactivate tile in player's hand
+                        _tileDistribute.photonView.RPC("DeactivatePlayerTile", RpcTarget.AllBuffered, 
+                                                     playerQue, tileIdx);
+                        
+                        break; // Move to next placeholder
                     }
                 }
             }
         }
     }
+    
+    // Synchronize placements to other clients
+    if (placedTileIndices.Count > 0)
+    {
+        Debug.Log($"[ActivePers] Synchronizing {placedTileIndices.Count} placements");
+        
+        // Convert paths to string array
+        string[] pathsArray = containerPaths.ToArray();
+        
+        // Send synchronization data
+        _tileDistribute.photonView.RPC("SyncActiveTilesExact", RpcTarget.AllBuffered,
+                                     playerQue,
+                                     placedTileIndices.ToArray(),
+                                     pathsArray);
+    }
+}
 
-
+// Helper method to get the full path of a transform
+private string GetFullPath(Transform transform)
+{
+    string path = transform.name;
+    Transform parent = transform.parent;
+    
+    while (parent != null)
+    {
+        path = parent.name + "/" + path;
+        parent = parent.parent;
+    }
+    
+    return path;
+}
     #endregion
     #region Hide and remove tiles from the Board
     public void RemoveMeldedTiles()

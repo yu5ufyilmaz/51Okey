@@ -445,7 +445,115 @@ public class TileDistribute : MonoBehaviourPunCallbacks
     }
 
     #endregion
+[PunRPC]
+public void SyncActiveTilesExact(int playerQue, int[] tileIndices, string[] placeholderPaths)
+{
+    // Skip for originating client
+    if (GetQueueNumberOfPlayer(PhotonNetwork.LocalPlayer) == playerQue)
+    {
+        Debug.Log("[SyncActiveTilesExact] This is the originating client, skipping");
+        return;
+    }
+    
+    Debug.Log($"[SyncActiveTilesExact] Received sync for player {playerQue} with {tileIndices.Length} tiles");
+    
+    List<Tiles> playerTiles = GetPlayerTileList(playerQue);
+    
+    // Process each placement
+    for (int i = 0; i < tileIndices.Length; i++)
+    {
+        int tileIdx = tileIndices[i];
+        string path = placeholderPaths[i];
+        
+        // Validate tile index
+        if (tileIdx >= playerTiles.Count)
+        {
+            Debug.LogError($"[SyncActiveTilesExact] Invalid tile index {tileIdx}");
+            continue;
+        }
+        
+        Tiles tile = playerTiles[tileIdx];
+        Debug.Log($"[SyncActiveTilesExact] Processing tile {tile.color} {tile.number} at path: {path}");
+        
+        // Find the placeholder using its path
+        GameObject placeholderObj = FindObjectByPath(path);
+        if (placeholderObj == null)
+        {
+            Debug.LogError($"[SyncActiveTilesExact] Could not find placeholder at path: {path}");
+            continue;
+        }
+        
+        Transform placeholder = placeholderObj.transform;
+        
+        // Create the tile
+        GameObject tileInstance = Instantiate(meldTilePrefab, placeholder);
+        TileUI tileUI = tileInstance.GetComponent<TileUI>();
+        
+        if (tileUI != null)
+        {
+            tileUI.SetTileData(tile);
+            Debug.Log($"[SyncActiveTilesExact] Tile placed successfully");
+        }
+        
+        // Mark placeholder as used
+        Placeholder ph = placeholder.GetComponent<Placeholder>();
+        if (ph != null)
+        {
+            ph.available = false;
+            ph.AvailableTileInfo = null;
+        }
+    }
+    
+    Debug.Log("[SyncActiveTilesExact] Synchronization complete");
+}
 
+// Helper method to find an object by its full path
+private GameObject FindObjectByPath(string path)
+{
+    string[] parts = path.Split('/');
+    Transform current = null;
+    
+    // First, find the root object
+    foreach (var root in UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects())
+    {
+        if (root.name == parts[0])
+        {
+            current = root.transform;
+            break;
+        }
+    }
+    
+    if (current == null)
+    {
+        Debug.LogError($"[FindObjectByPath] Could not find root object: {parts[0]}");
+        return null;
+    }
+    
+    // Navigate down the hierarchy
+    for (int i = 1; i < parts.Length; i++)
+    {
+        bool found = false;
+        
+        for (int j = 0; j < current.childCount; j++)
+        {
+            if (current.GetChild(j).name == parts[i])
+            {
+                current = current.GetChild(j);
+                found = true;
+                break;
+            }
+        }
+        
+        if (!found)
+        {
+            Debug.LogError($"[FindObjectByPath] Could not find child {parts[i]} in {current.name}");
+            return null;
+        }
+    }
+    
+    return current.gameObject;
+}
+    
     #region GamePlay
 
     #region Tile Pick or Drop Actiions

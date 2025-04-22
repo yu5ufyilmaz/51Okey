@@ -98,6 +98,25 @@ MonoBehaviour:
   - CreateVisualTileForAll
   - CleanupVisualTiles
   - DestroySideTiles
+  - HandleTileAction
+  - SyncActiveTileRemoval
+  - SyncAddTileFromDrop
+  - SyncAddTileFromMiddle
+  - SyncDeactivatePlayerTile
+  - SyncMeldTiles
+  - SyncMergeValidpers
+  - SyncMiddleTiles
+  - SyncPlayerTiles
+  - SyncTileMove
+  - SyncTilePosition
+  - SyncTileRemoval
+  - SyncTileShiftLeft
+  - SyncTileShiftRight
+  - SyncUnMergeValidPers
+  - SyncAvailableTiles
+  - SyncActivatedTiles
+  - SyncActiveTiles
+  - SyncActiveTilesExact
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1
