@@ -385,7 +385,10 @@ private void HandleTileDisplacement(Transform closestPlaceholder)
         // Get the tile index
         int tileIndex = playerTiles.IndexOf(tileDataInfo);
     
-        // First remove the tile from player list (this will also instantiate it for others)
+        // First, sync any pending active tile placements
+        _tileDistribute.SyncPendingActiveTiles();
+    
+        // Then remove the tile from player list (this will also instantiate it for others)
         _tileDistribute.photonView.RPC("RemoveTileFromPlayerList", RpcTarget.AllBuffered, playerQue, tileIndex);
     
         // Clean up melded tiles

@@ -445,7 +445,7 @@ public class TileDistribute : MonoBehaviourPunCallbacks
     }
 
     #endregion
-// 1. Replace the SyncActiveTilesExact method in TileDistribute.cs
+
 
 [PunRPC]
 public void SyncActiveTilesExact(int playerQue, int[] tileIndices, string[] placeholderPaths)
@@ -719,6 +719,53 @@ private int DetermineColumn(Transform container, int placeholderIndex)
     }
     
     return 0; // Default
+}
+
+// Add these properties and methods to TileDistribute.cs
+
+// Add these variables to the class
+private int[] storedTileIndices;
+private string[] storedContainerPaths;
+private int storedPlayerQue;
+private bool hasPendingActiveTileSync = false;
+
+// Add this method to store active tile sync data
+public void StoreActiveTileSyncData(int playerQue, int[] tileIndices, string[] containerPaths)
+{
+    storedTileIndices = tileIndices;
+    storedContainerPaths = containerPaths;
+    storedPlayerQue = playerQue;
+    hasPendingActiveTileSync = true;
+    
+    Debug.Log($"[TileDistribute] Stored sync data for {tileIndices.Length} active tiles from player {playerQue}");
+}
+
+// Modify the NextTurnEvents method in TileUI.cs to call this
+// This method should be called AFTER a tile is dropped
+public void SyncPendingActiveTiles()
+{
+    if (hasPendingActiveTileSync)
+    {
+        Debug.Log($"[TileDistribute] Syncing pending active tiles: {storedTileIndices.Length} tiles");
+        
+        // First deactivate all the stored tiles in player hand for all clients
+        for (int i = 0; i < storedTileIndices.Length; i++)
+        {
+            photonView.RPC("DeactivatePlayerTile", RpcTarget.AllBuffered, 
+                storedPlayerQue, storedTileIndices[i]);
+        }
+        
+        // Then send the sync data to place them on the board for others
+        photonView.RPC("SyncActiveTilesExact", RpcTarget.AllBuffered,
+            storedPlayerQue, 
+            storedTileIndices,
+            storedContainerPaths);
+        
+        // Clear pending data
+        hasPendingActiveTileSync = false;
+        storedTileIndices = null;
+        storedContainerPaths = null;
+    }
 }
 
 

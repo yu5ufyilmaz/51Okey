@@ -972,6 +972,9 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
 // 3. Replace the ActivePers method in ScoreManager.cs
 
+// Modified ActivePers method in ScoreManager.cs
+// This should replace the existing ActivePers method
+
 public void ActivePers()
 {
     if (!turnManager.canDrop)
@@ -987,6 +990,9 @@ public void ActivePers()
     // Track placements with explicit identifiers
     List<int> placedTileIndices = new List<int>();
     List<string> containerPaths = new List<string>();
+    
+    // Store placed tiles for local display but don't sync immediately
+    List<GameObject> locallyPlacedTiles = new List<GameObject>();
     
     // Get all meld containers directly using FindObjectsOfType
     Transform[] allMeldContainers = GameObject.FindObjectsOfType<Transform>(true)
@@ -1048,6 +1054,7 @@ public void ActivePers()
                     GameObject tileInstance = Instantiate(tilePrefab, placeholder);
                     TileUI tileUI = tileInstance.GetComponent<TileUI>();
                     meldTileGO.Add(tileInstance);
+                    locallyPlacedTiles.Add(tileInstance);
                     
                     if (tileUI != null)
                     {
@@ -1077,24 +1084,40 @@ public void ActivePers()
                     ph.available = false;
                     ph.AvailableTileInfo = null;
                     
-                    // Deactivate tile in player's hand
-                    _tileDistribute.photonView.RPC("DeactivatePlayerTile", RpcTarget.AllBuffered, 
-                                                 playerQue, matchingTileIdx);
+                    // Deactivate tile in player's hand (locally only)
+                    foreach (Transform tileContainer in playerTileContainer)
+                    {
+                        if (tileContainer.childCount > 0)
+                        {
+                            TileUI containerTileUI = tileContainer.GetChild(0).GetComponent<TileUI>();
+                            if (containerTileUI != null && containerTileUI.tileDataInfo == matchingTile)
+                            {
+                                containerTileUI.gameObject.SetActive(false);
+                                break;
+                            }
+                        }
+                    }
                 }
             }
         }
     }
     
-    // Synchronize placements to other clients
+    // Store the synchronization data for future use when the player drops a tile
     if (placedTileIndices.Count > 0)
     {
-        Debug.Log($"[ActivePers] Synchronizing {placedTileIndices.Count} placements");
+        Debug.Log($"[ActivePers] Storing {placedTileIndices.Count} placements for future synchronization");
         
-        // Send synchronization data
-        _tileDistribute.photonView.RPC("SyncActiveTilesExact", RpcTarget.AllBuffered,
-                                    playerQue,
-                                    placedTileIndices.ToArray(),
-                                    containerPaths.ToArray());
+        // Store the synchronization data on the TileDistribute object
+        _tileDistribute.StoreActiveTileSyncData(playerQue, placedTileIndices.ToArray(), containerPaths.ToArray());
+        
+        // Add the placed tiles to meldedTiles list
+        foreach (int tileIdx in placedTileIndices)
+        {
+            if (tileIdx < playerTiles.Count)
+            {
+                meldedTiles.Add(playerTiles[tileIdx]);
+            }
+        }
     }
     else
     {
