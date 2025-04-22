@@ -445,6 +445,8 @@ public class TileDistribute : MonoBehaviourPunCallbacks
     }
 
     #endregion
+// 1. Replace the SyncActiveTilesExact method in TileDistribute.cs
+
 [PunRPC]
 public void SyncActiveTilesExact(int playerQue, int[] tileIndices, string[] placeholderPaths)
 {
@@ -459,8 +461,15 @@ public void SyncActiveTilesExact(int playerQue, int[] tileIndices, string[] plac
     
     List<Tiles> playerTiles = GetPlayerTileList(playerQue);
     
+    // Find all meld containers by name
+    Transform[] allContainers = GameObject.FindObjectsOfType<Transform>(true)
+        .Where(t => t.name.EndsWith(" meld"))
+        .ToArray();
+        
+    Debug.Log($"[SyncActiveTilesExact] Found {allContainers.Length} meld containers");
+    
     // Process each placement
-    for (int i = 0; i < tileIndices.Length; i++)
+    for (int i = 0; i < tileIndices.Length && i < placeholderPaths.Length; i++)
     {
         int tileIdx = tileIndices[i];
         string path = placeholderPaths[i];
@@ -475,15 +484,111 @@ public void SyncActiveTilesExact(int playerQue, int[] tileIndices, string[] plac
         Tiles tile = playerTiles[tileIdx];
         Debug.Log($"[SyncActiveTilesExact] Processing tile {tile.color} {tile.number} at path: {path}");
         
-        // Find the placeholder using its path
-        GameObject placeholderObj = FindObjectByPath(path);
-        if (placeholderObj == null)
+        // Parse path components
+        string[] pathParts = path.Split('/');
+        if (pathParts.Length < 3)
         {
-            Debug.LogError($"[SyncActiveTilesExact] Could not find placeholder at path: {path}");
+            Debug.LogError($"[SyncActiveTilesExact] Invalid path format: {path}");
             continue;
         }
         
-        Transform placeholder = placeholderObj.transform;
+        string containerName = pathParts[0];
+        string containerType = pathParts[1];
+        string placeholderName = pathParts[2];
+        
+        // Find the matching container
+        Transform meldContainer = null;
+        foreach (Transform container in allContainers)
+        {
+            if (container.name == containerName)
+            {
+                meldContainer = container;
+                break;
+            }
+        }
+        
+        if (meldContainer == null)
+        {
+            Debug.LogError($"[SyncActiveTilesExact] Could not find container: {containerName}");
+            continue;
+        }
+        
+        // Get the correct container type index
+        int containerIndex = -1;
+        if (containerType.Contains("Color"))
+            containerIndex = 0;
+        else if (containerType.Contains("Number"))
+            containerIndex = 1;
+        else if (containerType.Contains("Pair"))
+            containerIndex = 2;
+            
+        if (containerIndex == -1 || containerIndex >= meldContainer.childCount)
+        {
+            Debug.LogError($"[SyncActiveTilesExact] Invalid container type: {containerType}");
+            continue;
+        }
+        
+        Transform typeContainer = meldContainer.GetChild(containerIndex);
+        
+        // Determine the placeholder index - this is the critical part for fixing right-side placement
+        int placeholderIndex = -1;
+        
+        // For color containers, use the tile number to determine exact position
+        Transform placeholder;
+        if (containerIndex == 0) // ColorPer container
+        {
+            // Try to find the placeholder based on the tile's number and row
+            // The formula is: row * 13 + (number - 1)
+            for (int row = 0; row < 4; row++) // Check up to 4 rows
+            {
+                int calculatedIndex = row * 13 + (tile.number - 1);
+                if (calculatedIndex < typeContainer.childCount)
+                {
+                    placeholder = typeContainer.GetChild(calculatedIndex);
+                    if (placeholder.childCount == 0) // It's empty
+                    {
+                        placeholderIndex = calculatedIndex;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // If we couldn't determine by tile number or for other container types
+        if (placeholderIndex == -1)
+        {
+            // Extract from path if possible
+            if (placeholderName.Contains("(") && placeholderName.Contains(")"))
+            {
+                string indexStr = placeholderName.Substring(
+                    placeholderName.IndexOf('(') + 1,
+                    placeholderName.IndexOf(')') - placeholderName.IndexOf('(') - 1
+                );
+                
+                int.TryParse(indexStr, out placeholderIndex);
+            }
+            
+            // If still not found, find first empty placeholder
+            if (placeholderIndex == -1 || placeholderIndex >= typeContainer.childCount)
+            {
+                for (int j = 0; j < typeContainer.childCount; j++)
+                {
+                    if (typeContainer.GetChild(j).childCount == 0)
+                    {
+                        placeholderIndex = j;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        if (placeholderIndex == -1 || placeholderIndex >= typeContainer.childCount)
+        {
+            Debug.LogError($"[SyncActiveTilesExact] Could not find valid placeholder");
+            continue;
+        }
+        
+        placeholder = typeContainer.GetChild(placeholderIndex);
         
         // Create the tile
         GameObject tileInstance = Instantiate(meldTilePrefab, placeholder);
@@ -492,7 +597,29 @@ public void SyncActiveTilesExact(int playerQue, int[] tileIndices, string[] plac
         if (tileUI != null)
         {
             tileUI.SetTileData(tile);
-            Debug.Log($"[SyncActiveTilesExact] Tile placed successfully");
+            
+            // Calculate row and column for organizations
+            int row = 0;
+            int col = placeholderIndex;
+            
+            if (containerIndex == 0) // ColorPer
+            {
+                row = placeholderIndex / 13;
+                col = placeholderIndex % 13; 
+            }
+            else if (containerIndex == 1) // NumberPer
+            {
+                row = placeholderIndex / 4;
+                col = placeholderIndex % 4;
+            }
+            else if (containerIndex == 2) // PairPer
+            {
+                row = placeholderIndex / 2;
+                col = placeholderIndex % 2;
+            }
+            
+            tileUI.CheckRowColoumn(row, col);
+            Debug.Log($"[SyncActiveTilesExact] Successfully placed tile at {containerType}/{placeholderIndex}");
         }
         
         // Mark placeholder as used
@@ -503,57 +630,98 @@ public void SyncActiveTilesExact(int playerQue, int[] tileIndices, string[] plac
             ph.AvailableTileInfo = null;
         }
     }
-    
-    Debug.Log("[SyncActiveTilesExact] Synchronization complete");
 }
 
-// Helper method to find an object by its full path
-private GameObject FindObjectByPath(string path)
+
+private int FindPlaceholderIndex(string placeholderName, Transform container)
 {
-    string[] parts = path.Split('/');
-    Transform current = null;
-    
-    // First, find the root object
-    foreach (var root in UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects())
+    // First try to find by exact name
+    for (int i = 0; i < container.childCount; i++)
     {
-        if (root.name == parts[0])
+        if (container.GetChild(i).name == placeholderName)
         {
-            current = root.transform;
-            break;
+            return i;
         }
     }
     
-    if (current == null)
+    // If that fails, try to extract index from name (e.g., "PlaceHolder (10)" -> 10)
+    if (placeholderName.Contains("(") && placeholderName.Contains(")"))
     {
-        Debug.LogError($"[FindObjectByPath] Could not find root object: {parts[0]}");
-        return null;
-    }
-    
-    // Navigate down the hierarchy
-    for (int i = 1; i < parts.Length; i++)
-    {
-        bool found = false;
-        
-        for (int j = 0; j < current.childCount; j++)
+        int startIdx = placeholderName.IndexOf('(') + 1;
+        int endIdx = placeholderName.IndexOf(')');
+        if (startIdx < endIdx)
         {
-            if (current.GetChild(j).name == parts[i])
+            string indexStr = placeholderName.Substring(startIdx, endIdx - startIdx);
+            if (int.TryParse(indexStr, out int result))
             {
-                current = current.GetChild(j);
-                found = true;
-                break;
+                // Validate the index is in bounds
+                if (result >= 0 && result < container.childCount)
+                {
+                    return result;
+                }
             }
         }
-        
-        if (!found)
+    }
+    
+    // If all else fails, try numbered pattern (PlaceHolder_10)
+    if (placeholderName.Contains("_"))
+    {
+        string[] parts = placeholderName.Split('_');
+        if (parts.Length > 1 && int.TryParse(parts[1], out int result))
         {
-            Debug.LogError($"[FindObjectByPath] Could not find child {parts[i]} in {current.name}");
-            return null;
+            if (result >= 0 && result < container.childCount)
+            {
+                return result;
+            }
         }
     }
     
-    return current.gameObject;
+    return -1; // Could not determine index
 }
+
+private int DetermineRow(Transform container, int placeholderIndex)
+{
+    // Calculate row based on container type
+    string containerName = container.name.ToLower();
     
+    if (containerName.Contains("color"))
+    {
+        return placeholderIndex / 13; // Each row has 13 tiles (1-13)
+    }
+    else if (containerName.Contains("number"))
+    {
+        return placeholderIndex / 4; // Each row has 4 tiles (for different colors)
+    }
+    else if (containerName.Contains("pair"))
+    {
+        return placeholderIndex / 2; // Each row has 2 tiles
+    }
+    
+    return 0; // Default
+}
+
+private int DetermineColumn(Transform container, int placeholderIndex)
+{
+    // Calculate column based on container type
+    string containerName = container.name.ToLower();
+    
+    if (containerName.Contains("color"))
+    {
+        return placeholderIndex % 13; // Each row has 13 tiles (1-13)
+    }
+    else if (containerName.Contains("number"))
+    {
+        return placeholderIndex % 4; // Each row has 4 tiles (for different colors)
+    }
+    else if (containerName.Contains("pair"))
+    {
+        return placeholderIndex % 2; // Each row has 2 tiles
+    }
+    
+    return 0; // Default
+}
+
+
     #region GamePlay
 
     #region Tile Pick or Drop Actiions
