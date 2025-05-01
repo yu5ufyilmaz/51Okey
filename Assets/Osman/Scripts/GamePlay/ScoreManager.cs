@@ -970,6 +970,11 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         }
     }
 
+// 3. Replace the ActivePers method in ScoreManager.cs
+
+// Modified ActivePers method in ScoreManager.cs
+// This should replace the existing ActivePers method
+
 public void ActivePers()
 {
     if (!turnManager.canDrop)
@@ -1038,38 +1043,12 @@ public void ActivePers()
                         matchingTileIdx = tileIdx;
                         break;
                     }
-                    
-                    // Handle joker case - if the player has a tile with matching number but the available tile is a joker
-                    if (containerIdx == 1 && ph.transform.childCount > 0) // NumberPer container with existing tile
-                    {
-                        Transform existingTile = ph.transform.GetChild(0);
-                        TileUI existingTileUI = existingTile.GetComponent<TileUI>();
-                        
-                        if (existingTileUI != null && existingTileUI.tileDataInfo.type == TileType.Joker && 
-                            tile.number == existingTileUI.tileDataInfo.number)
-                        {
-                            matchingTileIdx = tileIdx;
-                            break;
-                        }
-                    }
                 }
                 
                 if (matchingTileIdx != -1)
                 {
                     // Place the matching tile
                     Tiles matchingTile = playerTiles[matchingTileIdx];
-                    
-                    // For joker replacement, clear the existing joker tile
-                    bool isJokerReplacement = false;
-                    if (placeholder.childCount > 0)
-                    {
-                        TileUI existingTileUI = placeholder.GetChild(0).GetComponent<TileUI>();
-                        if (existingTileUI != null && existingTileUI.tileDataInfo.type == TileType.Joker)
-                        {
-                            Destroy(placeholder.GetChild(0).gameObject);
-                            isJokerReplacement = true;
-                        }
-                    }
                     
                     // Create local tile
                     GameObject tileInstance = Instantiate(tilePrefab, placeholder);
@@ -1101,12 +1080,9 @@ public void ActivePers()
                     placedTileIndices.Add(matchingTileIdx);
                     containerPaths.Add(path);
                     
-                    // If this was a joker replacement, mark placeholder as no longer available
-                    if (isJokerReplacement)
-                    {
-                        ph.available = false;
-                        ph.AvailableTileInfo = null;
-                    }
+                    // Mark placeholder as used
+                    ph.available = false;
+                    ph.AvailableTileInfo = null;
                     
                     // Deactivate tile in player's hand (locally only)
                     foreach (Transform tileContainer in playerTileContainer)
@@ -1148,6 +1124,7 @@ public void ActivePers()
         Debug.Log("[ActivePers] No tiles placed");
     }
 }
+// Helper method to get the full path of a transform
 private string GetFullPath(Transform transform)
 {
     string path = transform.name;
