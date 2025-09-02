@@ -92,6 +92,11 @@ MonoBehaviour:
   - CheckPlayerTilesForAvailable
   - CheckMeldedTiles
   - RemoveActiveTileFromPlayerList
+  - SyncActiveTiles
+  - RPC_SyncNewMeldedTiles
+  - InstantiateTileAtLocation
+  - RPC_AddTileToMeldAndUpdate
+  - RPC_UpdateAllAvailableSlots_Globally
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

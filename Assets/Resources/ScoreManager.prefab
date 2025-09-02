@@ -59,8 +59,11 @@ MonoBehaviour:
   occupiedRowsNumber: 00000000
   occupiedRows: 00000000
   occupiedRowsPair: 0000000000000000
+  committedMelds: []
+  pendingMeldedTiles: []
   meldTileGO: []
-  meldedTiles: []
+  activeTiles: []
+  activeTilesGO: []
 --- !u!114 &-7472011219972581762
 MonoBehaviour:
   m_ObjectHideFlags: 0

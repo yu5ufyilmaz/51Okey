@@ -13,11 +13,17 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 {
     #region Serialized Fields
 
-    [SerializeField] private ScoreManager scoreManager;
-    [SerializeField] private List<Tiles> playerTiles;
-    [SerializeField] private Image tileImage;
+    [SerializeField]
+    private ScoreManager scoreManager;
 
-    [SerializeField] private float moveSpeed = 5f; // Hareket hızı ayarı
+    [SerializeField]
+    private List<Tiles> playerTiles;
+
+    [SerializeField]
+    private Image tileImage;
+
+    [SerializeField]
+    private float moveSpeed = 5f; // Hareket hızı ayarı
     #endregion
 
     #region Private Fields
@@ -72,6 +78,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         tileDistrubite.RegisterTileUI(this);
         scoreManager.CheckForPer();
     }
+
     void CheckPlace()
     {
         if (transform.parent.parent == playerTileContainer)
@@ -80,7 +87,6 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         }
         else
         {
-
             Debug.LogWarning("Current transform is not a child of playerTileContainer");
         }
     }
@@ -148,7 +154,10 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         }
         else
         {
-            if (gameObject.transform.parent == middleTileContainer || gameObject.transform.parent == leftTileContainer)
+            if (
+                gameObject.transform.parent == middleTileContainer
+                || gameObject.transform.parent == leftTileContainer
+            )
             {
                 if (playerTiles.Count >= 15)
                 {
@@ -162,6 +171,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                 return (true, true); // Taş atılabilir, taş çekilebilir
         }
     }
+
     #region On Begin Drag
     public void OnBeginDrag(PointerEventData eventData)
     {
@@ -179,7 +189,6 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         }
         if (isIndicatorTile || gameObject.transform.parent == rightTileContainer)
         {
-
             Debug.LogWarning("Buradaki taşı hareket ettiremezsiniz!"); // Hata ayıklama logu
             return;
         }
@@ -221,7 +230,6 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         }
 
         transform.position = Input.mousePosition;
-
     }
     #endregion
     #region On End Drag
@@ -244,7 +252,6 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         {
             if (placeholder.CompareTag("Placeholder"))
             {
-
                 float distance = Vector3.Distance(placeholder.position, transform.position);
                 if (distance < closestDistance)
                 {
@@ -263,7 +270,11 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                     if (inMiddle == true)
                     {
                         SetTileData(tileDistrubite.allTiles[0]);
-                        tileDistrubite.photonView.RPC("AddTileFromMiddlePlayerList", RpcTarget.AllBuffered, queueValue);
+                        tileDistrubite.photonView.RPC(
+                            "AddTileFromMiddlePlayerList",
+                            RpcTarget.AllBuffered,
+                            queueValue
+                        );
                         turnManager.canDrop = true;
                         StartCoroutine(SmoothMove(transform, closestPlaceholder));
 
@@ -277,14 +288,21 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                         StartCoroutine(SmoothMove(transform, closestPlaceholder));
 
                         Debug.Log("Soldan taş çekme işlemi gerçekleştirildi");
-                        tileDistrubite.photonView.RPC("AddTileFromDropPlayerList", RpcTarget.AllBuffered, queueValue);
+                        tileDistrubite.photonView.RPC(
+                            "AddTileFromDropPlayerList",
+                            RpcTarget.AllBuffered,
+                            queueValue
+                        );
                         turnManager.canDrop = true;
                         tileDistrubite.dropTile = this.tileDataInfo;
                         fromLeftContainer = false;
                     }
                     else
                     {
-                        if (closestPlaceholder.gameObject.GetComponent<Placeholder>().isRight == true)
+                        if (
+                            closestPlaceholder.gameObject.GetComponent<Placeholder>().isRight
+                            == true
+                        )
                         {
                             Debug.LogWarning("Şu an taş atamazsın 14 taşın var");
                             StartCoroutine(SmoothMove(transform, originalParent));
@@ -294,13 +312,15 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                         else
                         {
                             StartCoroutine(SmoothMove(transform, closestPlaceholder));
-
                         }
                     }
                 }
                 else
                 {
-                    if (gameObject.transform.parent == middleTileContainer || fromLeftContainer == true)
+                    if (
+                        gameObject.transform.parent == middleTileContainer
+                        || fromLeftContainer == true
+                    )
                     {
                         Debug.LogWarning("Şu an taş çekemezsin 15 taşın var");
                         StartCoroutine(SmoothMove(transform, originalParent));
@@ -308,18 +328,26 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                     }
                     else
                     {
-
-                        if (closestPlaceholder.gameObject.GetComponent<Placeholder>().isRight == true)
+                        if (
+                            closestPlaceholder.gameObject.GetComponent<Placeholder>().isRight
+                            == true
+                        )
                         {
                             Debug.Log("Taşı attın sıra diğer oyuncuda");
                             NextTurnEvents();
                         }
-                        else if (closestPlaceholder.gameObject.GetComponent<Placeholder>().available == true)
+                        else if (
+                            closestPlaceholder.gameObject.GetComponent<Placeholder>().available
+                            == true
+                        )
                         {
-                            if (closestPlaceholder.gameObject.GetComponent<Placeholder>().AvailableTileInfo == tileDataInfo)
+                            if (
+                                closestPlaceholder
+                                    .gameObject.GetComponent<Placeholder>()
+                                    .AvailableTileInfo == tileDataInfo
+                            )
                             {
                                 StartCoroutine(SmoothMove(transform, closestPlaceholder));
-
                             }
                             else
                             {
@@ -335,7 +363,10 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             }
             else
             {
-                if (gameObject.transform.parent == middleTileContainer || gameObject.transform.parent == leftTileContainer)
+                if (
+                    gameObject.transform.parent == middleTileContainer
+                    || gameObject.transform.parent == leftTileContainer
+                )
                 {
                     StartCoroutine(SmoothMove(transform, originalParent));
                     Debug.LogWarning("Sıra Sende değil taş çekemezsin");
@@ -351,7 +382,6 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                     {
                         StartCoroutine(SmoothMove(transform, originalParent));
                         Debug.Log("Sıra sende değil Taş atamazsın");
-
 
                         return;
                     }
@@ -382,23 +412,37 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         }
     }
     #endregion
+    // TileUI.cs -> NextTurnEvents() metodunun güncel hali
+
     void NextTurnEvents()
     {
         PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object queueValue);
-        StartCoroutine(SmoothMove(transform, rightTileContainer)); // Taşı en yakın boş placeholder'a yerleştir
+        StartCoroutine(SmoothMove(transform, rightTileContainer));
         int tileIndex = playerTiles.IndexOf(tileDataInfo);
 
-        tileDistrubite.photonView.RPC("RemoveTileFromPlayerList", RpcTarget.AllBuffered, queueValue, tileIndex);
+        tileDistrubite.photonView.RPC(
+            "RemoveTileFromPlayerList",
+            RpcTarget.AllBuffered,
+            queueValue,
+            tileIndex
+        );
 
-        scoreManager.RemoveMeldedTiles();
-        tileDistrubite.photonView.RPC("CheckForAvailableTiles", RpcTarget.AllBuffered, queueValue);
+        scoreManager.CommitAndStoreMelds();
+
+        // ESKİ ÇAĞRIYI YORUMA AL:
+        // tileDistribute.photonView.RPC("CheckForAvailableTiles", RpcTarget.AllBuffered, queueValue);
+
+        // YENİ, DAHA GÜÇLÜ ÇAĞRI:
+        // Sadece MasterClient tetiklese yeterli, çünkü RPC zaten herkese gidecek.
+        if (PhotonNetwork.IsMasterClient)
+        {
+            tileDistrubite.photonView.RPC("RPC_UpdateAllAvailableSlots_Globally", RpcTarget.All);
+        }
+
         Destroy(gameObject);
 
         turnManager.canDrop = false;
-        // Sıra diğer oyuncuya geçsin
-
         turnManager.photonView.RPC("NextTurn", RpcTarget.AllBuffered);
-
     }
 
     #endregion
@@ -406,8 +450,10 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     #region Shift_Tiles
     private void ShiftTilesRight(Transform parentContainer, Transform tileToShift, int startIndex)
     {
-        if (gameObject.transform.parent == middleTileContainer) return;
-        if (gameObject.transform.parent.tag == "MeldPlaceholder") return;
+        if (gameObject.transform.parent == middleTileContainer)
+            return;
+        if (gameObject.transform.parent.tag == "MeldPlaceholder")
+            return;
         for (int i = startIndex; i < parentContainer.childCount; i++)
         {
             Transform currentPlaceholder = parentContainer.GetChild(i);
@@ -438,8 +484,10 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
     private void ShiftTilesLeft(Transform parentContainer, Transform tileToShift, int startIndex)
     {
-        if (gameObject.transform.parent == middleTileContainer) return;
-        if (gameObject.transform.parent.tag == "MeldPlaceholder") return;
+        if (gameObject.transform.parent == middleTileContainer)
+            return;
+        if (gameObject.transform.parent.tag == "MeldPlaceholder")
+            return;
         for (int i = startIndex; i >= 0; i--)
         {
             Transform currentPlaceholder = parentContainer.GetChild(i);

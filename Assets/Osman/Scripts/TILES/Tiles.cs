@@ -1,7 +1,19 @@
 using UnityEngine;
 
-public enum TileColor { red, blue, black, yellow }
-public enum TileType { Number, Joker, FakeJoker }
+public enum TileColor
+{
+    red,
+    blue,
+    black,
+    yellow,
+}
+
+public enum TileType
+{
+    Number,
+    Joker,
+    FakeJoker,
+}
 
 [System.Serializable]
 public class Tiles
@@ -16,6 +28,4 @@ public class Tiles
         this.number = number;
         this.type = type;
     }
-
 }
-
