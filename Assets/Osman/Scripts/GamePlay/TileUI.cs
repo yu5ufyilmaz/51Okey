@@ -175,27 +175,60 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     #region On Begin Drag
     public void OnBeginDrag(PointerEventData eventData)
     {
+        // 1. Hareket İzni Kontrolü (TurnManager vb.)
         var (canDrop, canDraw) = CanMoveTile();
 
         if (!canDraw)
         {
-            Debug.LogWarning("Taş çekilemez!"); // Hata ayıklama logu
-            return; // Taş atılamıyorsa çık
-        }
-        if (gameObject.transform.parent.tag == "OtherSideTileContainer")
-        {
-            Debug.LogWarning("Buradaki taşı hareket ettiremezsiniz!"); // Hata ayıklama logu
+            Debug.LogWarning("Bu taşı şu an hareket ettiremezsiniz!");
+            eventData.pointerDrag = null;
             return;
         }
-        if (isIndicatorTile || gameObject.transform.parent == rightTileContainer)
+
+        // 2. Rakip Alan ve Gösterge Kontrolü
+        if (
+            gameObject.transform.parent.tag == "OtherSideTileContainer"
+            || isIndicatorTile
+            || gameObject.transform.parent == rightTileContainer
+        )
         {
-            Debug.LogWarning("Buradaki taşı hareket ettiremezsiniz!"); // Hata ayıklama logu
+            Debug.LogWarning("Buradaki taşı hareket ettiremezsiniz!");
+            eventData.pointerDrag = null;
             return;
         }
+
+        // --- 3. KRİTİK DÜZELTME: MASADAKİ (MELD) TAŞLARI KİLİTLEME ---
+
+        Transform currentParent = transform.parent; // Taşın içinde olduğu Placeholder
+        Transform grandParent = currentParent.parent; // Placeholder'ın bağlı olduğu Container
+
+        // Eğer taşın "Büyük Babası" (GrandParent) Istaka (PlayerTileContainer) DEĞİLSE...
+        // (Yani taş ıstakada durmuyorsa)
+        if (grandParent != playerTileContainer)
+        {
+            // Ve taş Orta, Sol veya Sağ atma alanında da değilse...
+            // (Yani çekilebilir bir taş da değilse)
+            if (
+                currentParent != middleTileContainer
+                && currentParent != leftTileContainer
+                && currentParent != rightTileContainer
+            )
+            {
+                // O ZAMAN BU TAŞ MASAYA AÇILMIŞ BİR TAŞTIR! DOKUNMA!
+                Debug.LogWarning("Masaya işlenmiş taşları hareket ettiremezsiniz!");
+                eventData.pointerDrag = null; // Sürüklemeyi anında iptal et
+                return;
+            }
+        }
+        // --------------------------------------------------------------
+
+        // 4. Sol Konteyner Kontrolü
         if (gameObject.transform.parent == leftTileContainer)
         {
             fromLeftContainer = true;
         }
+
+        // --- SÜRÜKLEME BAŞLATILIYOR ---
         originalParent = transform.parent;
         canvasGroup.blocksRaycasts = false;
         transform.SetParent(transform.root, true);
@@ -389,26 +422,53 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             }
             int targetIndex = closestPlaceholder.GetSiblingIndex();
 
-            if (closestPlaceholder.childCount > 1)
-            {
-                if (closestPlaceholder.gameObject.GetComponent<Placeholder>().isRight == false)
-                {
-                    Transform displacedTile = closestPlaceholder.GetChild(0);
+            // ... (Buradaki sıra kontrolü, taş atma, taş çekme kodların AYNI KALSIN) ...
 
-                    if (targetIndex < originalParent.GetSiblingIndex())
+            // ---------------------------------------------------------------
+            // --- KAYDIRMA (SHIFT) MANTIĞI - DÜZELTME BURADA ---
+            // ---------------------------------------------------------------
+
+            // KRİTİK KONTROL: Kaydırma işlemi SADECE hedef yer "Oyuncunun Istakası" ise yapılmalı.
+            // Eğer hedef yer masadaki meld alanı, orta veya çöp ise KAYDIRMA YAPMA.
+            if (closestPlaceholder.parent == playerTileContainer)
+            {
+                // Eğer o kutuda zaten bir taş varsa (yani childCount > 1 olduysa, çünkü biz de oraya gittik)
+                // Not: Drop işlemi gerçekleştiyse childCount 2 olabilir (eski taş + yeni taş)
+                if (closestPlaceholder.childCount > 1)
+                {
+                    if (closestPlaceholder.parent != playerTileContainer)
                     {
-                        ShiftTilesLeft(playerTileContainer, displacedTile, targetIndex - 1);
+                        Debug.LogWarning(
+                            "Masadaki taşların üzerine taş koyamazsın veya kaydıramazsın!"
+                        );
+                        StartCoroutine(SmoothMove(transform, originalParent)); // Taşı eski yerine yolla
+                        return; // Çıkış
                     }
-                    else
+                    if (closestPlaceholder.gameObject.GetComponent<Placeholder>().isRight == false)
                     {
-                        ShiftTilesRight(playerTileContainer, displacedTile, targetIndex + 1);
+                        // Kaydırılacak olan "eski" taş (ilk çocuk)
+                        Transform displacedTile = closestPlaceholder.GetChild(0);
+
+                        // Eğer yeni gelen taş (transform), eskisinden sonraysa (sağdan geldiyse) -> Sola kaydır
+                        // Eğer yeni gelen taş, eskisinden önceyse (soldan geldiyse) -> Sağa kaydır
+                        // (Not: originalParent mantığına göre yönü belirliyoruz)
+
+                        if (targetIndex < originalParent.GetSiblingIndex())
+                        {
+                            ShiftTilesRight(playerTileContainer, displacedTile, targetIndex + 1);
+                        }
+                        else
+                        {
+                            ShiftTilesLeft(playerTileContainer, displacedTile, targetIndex - 1);
+                        }
                     }
                 }
             }
+            // ---------------------------------------------------------------
         }
         else
         {
-            StartCoroutine(SmoothMove(transform, originalParent)); // Taşı orijinal konumuna geri döndür
+            StartCoroutine(SmoothMove(transform, originalParent));
         }
     }
     #endregion
@@ -427,22 +487,43 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             tileIndex
         );
 
-        scoreManager.CommitAndStoreMelds();
-
         // ESKİ ÇAĞRIYI YORUMA AL:
-        // tileDistribute.photonView.RPC("CheckForAvailableTiles", RpcTarget.AllBuffered, queueValue);
-
+        tileDistrubite.photonView.RPC("CheckForAvailableTiles", RpcTarget.AllBuffered, queueValue);
+        scoreManager.CommitAndStoreMelds();
+        scoreManager.CommitJokerTransactions();
         // YENİ, DAHA GÜÇLÜ ÇAĞRI:
-        // Sadece MasterClient tetiklese yeterli, çünkü RPC zaten herkese gidecek.
-        if (PhotonNetwork.IsMasterClient)
+        List<ActiveTilePlacementInfo> placements =
+            scoreManager.GetAndClearPendingActivePlacements();
+        if (placements != null && placements.Count > 0)
         {
-            tileDistrubite.photonView.RPC("RPC_UpdateAllAvailableSlots_Globally", RpcTarget.All);
-        }
+            // --- YENİ EKLENEN KOD BAŞLANGICI ---
+            // İşlenen her bir taşı, işleyen oyuncunun (yani mevcut oyuncunun)
+            // veri listesinden silmek için RPC çağır.
+            int playerQue = (int)queueValue;
+            foreach (var placement in placements)
+            {
+                // Bu RPC, TileDistrubite.cs içinde zaten mevcut ve doğru çalışıyor.
+                // Onu burada çağırmamız yeterli.
+                tileDistrubite.photonView.RPC(
+                    "RemoveActiveTileFromPlayerList",
+                    RpcTarget.AllBuffered,
+                    playerQue,
+                    placement.tileData
+                );
+            }
+            // --- YENİ EKLENEN KOD SONU ---
 
-        Destroy(gameObject);
+            // TileDistrubite'a bu yerleşimleri tüm client'larda oluşturması için RPC gönder
+            tileDistrubite.photonView.RPC(
+                "InstantiateActiveTiles",
+                RpcTarget.AllBuffered,
+                placements.ToArray()
+            );
+        }
 
         turnManager.canDrop = false;
         turnManager.photonView.RPC("NextTurn", RpcTarget.AllBuffered);
+        Destroy(gameObject);
     }
 
     #endregion
@@ -450,10 +531,19 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     #region Shift_Tiles
     private void ShiftTilesRight(Transform parentContainer, Transform tileToShift, int startIndex)
     {
+        if (parentContainer != playerTileContainer)
+            return;
         if (gameObject.transform.parent == middleTileContainer)
             return;
         if (gameObject.transform.parent.tag == "MeldPlaceholder")
             return;
+
+        TileUI tileUI = tileToShift.GetComponent<TileUI>();
+        if (tileUI != null && tileUI.isIndicatorTile)
+        {
+            Debug.LogWarning("Gösterge taşını kaydıramazsın!");
+            return; // Metottan çık, kaydırma yapma.
+        }
         for (int i = startIndex; i < parentContainer.childCount; i++)
         {
             Transform currentPlaceholder = parentContainer.GetChild(i);
@@ -484,10 +574,20 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
     private void ShiftTilesLeft(Transform parentContainer, Transform tileToShift, int startIndex)
     {
+        if (parentContainer != playerTileContainer)
+        {
+            return;
+        }
         if (gameObject.transform.parent == middleTileContainer)
             return;
         if (gameObject.transform.parent.tag == "MeldPlaceholder")
             return;
+        TileUI tileUI = tileToShift.GetComponent<TileUI>();
+        if (tileUI != null && tileUI.isIndicatorTile)
+        {
+            Debug.LogWarning("Gösterge taşını kaydıramazsın!");
+            return; // Metottan çık, kaydırma yapma.
+        }
         for (int i = startIndex; i >= 0; i--)
         {
             Transform currentPlaceholder = parentContainer.GetChild(i);

@@ -8,12 +8,78 @@ public static class TileSerialization
     public static void RegisterCustomTypes()
     {
         PhotonPeer.RegisterType(typeof(Tiles), 100, SerializeTiles, DeserializeTiles);
-        PhotonPeer.RegisterType(typeof(List<Tiles>), 101, SerializeListOfTiles, DeserializeListOfTiles);
-        PhotonPeer.RegisterType(typeof(Vector2Int), 102, SerializeVector2Int, DeserializeVector2Int);
-        PhotonPeer.RegisterType(typeof(List<Vector2Int>), 103, SerializeListOfVector2Int, DeserializeListOfVector2Int);
-        PhotonPeer.RegisterType(typeof(List<List<Tiles>>), 104, SerializeListOfListsOfTiles, DeserializeListOfListsOfTiles);
-        PhotonPeer.RegisterType(typeof(List<List<Vector2Int>>), 105, SerializeListOfListsOfVector2Int, DeserializeListOfListsOfVector2Int);
+        PhotonPeer.RegisterType(
+            typeof(List<Tiles>),
+            101,
+            SerializeListOfTiles,
+            DeserializeListOfTiles
+        );
+        PhotonPeer.RegisterType(
+            typeof(Vector2Int),
+            102,
+            SerializeVector2Int,
+            DeserializeVector2Int
+        );
+        PhotonPeer.RegisterType(
+            typeof(List<Vector2Int>),
+            103,
+            SerializeListOfVector2Int,
+            DeserializeListOfVector2Int
+        );
+        PhotonPeer.RegisterType(
+            typeof(List<List<Tiles>>),
+            104,
+            SerializeListOfListsOfTiles,
+            DeserializeListOfListsOfTiles
+        );
+        PhotonPeer.RegisterType(
+            typeof(List<List<Vector2Int>>),
+            105,
+            SerializeListOfListsOfVector2Int,
+            DeserializeListOfListsOfVector2Int
+        );
+        PhotonPeer.RegisterType(
+            typeof(ActiveTilePlacementInfo),
+            106,
+            SerializePlacementInfo,
+            DeserializePlacementInfo
+        );
     }
+
+    private static short SerializePlacementInfo(StreamBuffer outStream, object customObject)
+    {
+        ActiveTilePlacementInfo info = (ActiveTilePlacementInfo)customObject;
+
+        // Tile verisini yaz (3 byte)
+        outStream.WriteByte((byte)info.tileData.color);
+        outStream.WriteByte((byte)info.tileData.number);
+        outStream.WriteByte((byte)info.tileData.type);
+
+        // Diğer verileri de basitçe byte olarak yaz (3 byte daha)
+        outStream.WriteByte((byte)info.ownerPlayerQue);
+        outStream.WriteByte((byte)info.meldType);
+        outStream.WriteByte((byte)info.placeholderIndex);
+
+        // TOPLAM YAZILAN BYTE SAYISI: 3 (tile) + 1 + 1 + 1 = 6
+        return 6;
+    }
+
+    private static object DeserializePlacementInfo(StreamBuffer inStream, short length)
+    {
+        // Tile verisini oku (3 byte)
+        TileColor color = (TileColor)inStream.ReadByte();
+        int number = inStream.ReadByte();
+        TileType type = (TileType)inStream.ReadByte();
+        Tiles tile = new Tiles(color, number, type);
+
+        // Diğer verileri byte olarak oku (3 byte daha)
+        int ownerQue = inStream.ReadByte();
+        ScoreManager.MeldType meldType = (ScoreManager.MeldType)inStream.ReadByte();
+        int placeholderIndex = inStream.ReadByte();
+
+        return new ActiveTilePlacementInfo(tile, ownerQue, meldType, placeholderIndex);
+    }
+
     private static short SerializeTiles(StreamBuffer outStream, object customObject)
     {
         Tiles tile = (Tiles)customObject;
@@ -57,6 +123,7 @@ public static class TileSerialization
 
         return list;
     }
+
     private static short SerializeVector2Int(StreamBuffer outStream, object customObject)
     {
         Vector2Int vector = (Vector2Int)customObject;
@@ -103,6 +170,7 @@ public static class TileSerialization
 
         return list; // Listeyi döndür
     }
+
     private static short SerializeListOfListsOfTiles(StreamBuffer outStream, object customObject)
     {
         List<List<Tiles>> listOfLists = (List<List<Tiles>>)customObject;
@@ -129,7 +197,11 @@ public static class TileSerialization
 
         return listOfLists; // Return the outer list
     }
-    private static short SerializeListOfListsOfVector2Int(StreamBuffer outStream, object customObject)
+
+    private static short SerializeListOfListsOfVector2Int(
+        StreamBuffer outStream,
+        object customObject
+    )
     {
         List<List<Vector2Int>> listOfLists = (List<List<Vector2Int>>)customObject;
         outStream.WriteByte((byte)listOfLists.Count); // Write outer list count
@@ -155,6 +227,7 @@ public static class TileSerialization
 
         return listOfLists; // Return the outer list
     }
+
     private static byte[] ReadBytes(StreamBuffer inStream, int count)
     {
         byte[] buffer = new byte[count];

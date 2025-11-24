@@ -54,16 +54,12 @@ MonoBehaviour:
   totalScore: 0
   pairTotalScore: 0
   pairTotalPerCount: 0
-  isMeldPair: 0
-  isMeldStraight: 0
   occupiedRowsNumber: 00000000
   occupiedRows: 00000000
   occupiedRowsPair: 0000000000000000
   committedMelds: []
   pendingMeldedTiles: []
   meldTileGO: []
-  activeTiles: []
-  activeTilesGO: []
 --- !u!114 &-7472011219972581762
 MonoBehaviour:
   m_ObjectHideFlags: 0
