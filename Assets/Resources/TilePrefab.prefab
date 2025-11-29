@@ -62,7 +62,6 @@ MonoBehaviour:
   tileColumn: 0
   tileDataInfo:
     color: 0
-    perType: 0
     number: 0
     type: 0
   tilePlaceInt: 0
