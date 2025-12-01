@@ -166,7 +166,15 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         scoreManager = GameObject.Find("ScoreManager(Clone)").GetComponent<ScoreManager>();
         allTiles.Clear();
         allTiles.AddRange(shuffledTiles);
-        DistributeTilesToAllPlayers(); // Distribute shuffled tiles to players
+
+        DistributeTilesToAllPlayers(); // Taşları dağıt
+
+        // --- BU SATIRI EKLE ---
+        // Taşlar dağıtıldı, her şey hazır. Artık oyun başlayabilir.
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.SetGameReady();
+        }
     }
     #endregion
     #region Find Joker Tile
@@ -658,7 +666,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
     [PunRPC]
     public void DeactivatePlayerTile(int playerQue, int tileIndex)
-    { // Oyuncunun taş listesini al
+    {
         List<Tiles> playerTiless = new List<Tiles>();
         switch (playerQue)
         {
@@ -687,17 +695,45 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 if (placeholder.childCount > 0)
                 {
                     TileUI tileUI = placeholder.GetChild(0).GetComponent<TileUI>();
-                    if (tileUI != null && tileUI.tileDataInfo == tileToDeactivate)
-                    {
-                        scoreManager.pendingMeldedTiles.Add(tileToDeactivate);
-                        placeholder.GetChild(0).gameObject.SetActive(false); // GameObject'i devre dışı bırak
 
-                        return; // İlk eşleşmeyi bulduktan sonra döngüden çık
+                    if (tileUI != null)
+                    {
+                        bool isMatch = false;
+
+                        // --- [DÜZELTME 2] JOKER İÇİN ESNEK KONTROL ---
+                        if (tileToDeactivate.type == TileType.Joker)
+                        {
+                            // Eğer silinecek taş Joker ise, görseldeki taşın da TİPİ Joker ise eşleşmiş say.
+                            // Rengi veya Numarası (CheckPattern yüzünden) değişmiş olabilir, önemseme.
+                            if (tileUI.tileDataInfo.type == TileType.Joker)
+                            {
+                                isMatch = true;
+                            }
+                        }
+                        else
+                        {
+                            // Normal taşlar için tam referans kontrolü
+                            if (tileUI.tileDataInfo == tileToDeactivate)
+                            {
+                                isMatch = true;
+                            }
+                        }
+                        // ----------------------------------------------
+
+                        if (isMatch)
+                        {
+                            scoreManager.pendingMeldedTiles.Add(tileToDeactivate);
+                            placeholder.GetChild(0).gameObject.SetActive(false); // GameObject'i devre dışı bırak
+                            return; // İlk eşleşmeyi bulduktan sonra döngüden çık
+                        }
                     }
                 }
             }
         }
-        else { }
+        else
+        {
+            Debug.LogWarning("DeactivatePlayerTile: Geçersiz Index!");
+        }
     }
 
     [PunRPC]

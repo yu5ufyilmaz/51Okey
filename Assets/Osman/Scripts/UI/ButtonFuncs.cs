@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
+using UnityEngine;
+
 public class ButtonFuncs : MonoBehaviourPunCallbacks
 {
     [Tooltip("The prefab for instantiating room items")]
@@ -13,37 +14,39 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
 
     List<RoomInfo> list = new List<RoomInfo>();
     private List<RoomItem> roomItemsList = new List<RoomItem>();
+
     //Odaları yenileme süresi
     private float timeBetweenUpdates = 1.5f;
     private float nextUpdateTime = 0.0f;
+
     //Oda sayısı
     private int roomCount;
-
 
     ///
     /// <summary>
     /// ////////////////////////////////////////////////////////////////////////////////////////
     /// </summary>
-    /// 
+    ///
 
 
-    //Lobi Manager Scripti 
+    //Lobi Manager Scripti
     void Start()
     {
         PhotonNetwork.JoinLobby();
     }
-
 
     public void CreateGame()
     {
         if (PhotonNetwork.InLobby)
             EventDispatcher.SummonEvent("CreateRoom");
     }
+
     public void JoinRoom(string _roomName)
     {
         if (PhotonNetwork.InLobby)
             EventDispatcher.SummonEvent("JoinRoom", _roomName);
     }
+
     public void JoinRandomRoom()
     {
         if (PhotonNetwork.InLobby)
@@ -55,7 +58,6 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
         if (PhotonNetwork.InLobby)
             UpdateRoomList(list);
     }
-
 
     //Burası Oda Listesini yenileme kısmı Oda bulmayla alakalı sorunları Buradan çözüceğiz.
     public override void OnRoomListUpdate(List<RoomInfo> roomList)
@@ -70,9 +72,9 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
             }
         }
     }
+
     void UpdateRoomList(List<RoomInfo> list)
     {
-
         foreach (RoomItem item in roomItemsList)
         {
             Destroy(item.gameObject);
@@ -81,18 +83,14 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
 
         foreach (RoomInfo room in list)
         {
-
             RoomItem newRoom = Instantiate(roomItemPrefab, _content);
             newRoom.SetRoomName(room.Name, room.PlayerCount);
             roomItemsList.Add(newRoom);
         }
     }
 
-
     public override void OnJoinedLobby()
     {
         Debug.Log("Joined Lobby");
     }
-
-
 }

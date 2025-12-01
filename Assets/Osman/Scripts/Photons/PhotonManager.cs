@@ -18,10 +18,20 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         {
             Destroy(this.gameObject);
         }
-        // Bağlantı kopma süresini uzat (Milisaniye cinsinden)
-        // Varsayılan genelde düşüktür, bunu artırarak kopmaları engellersin.
-        PhotonNetwork.NetworkingClient.LoadBalancingPeer.DisconnectTimeout = 30000; // 30 Saniye (Normali 10000)
-        PhotonNetwork.KeepAliveInBackground = 60000; // Arka planda 60 saniye tut
+        // Arka planda çalışmayı zorla
+        // 1. Oyun arka planda (alt-tab yapınca) çalışmaya devam etsin, kopmasın.
+        Application.runInBackground = true;
+
+        // 2. Bağlantı kopma süresini uzat (Zaten yapmışsın, kalsın)
+        PhotonNetwork.NetworkingClient.LoadBalancingPeer.DisconnectTimeout = 30000;
+        PhotonNetwork.KeepAliveInBackground = 60000;
+
+        // 3. [YENİ] Veri gönderim sıklığını ayarla (RPC trafiğini rahatlatır)
+        // Varsayılan değerler bazen çok sık veri yollar (saniyede 20-30 kez).
+        // Bunu biraz düşürmek bant genişliğini rahatlatır.
+        PhotonNetwork.SendRate = 20; // Saniyede 20 paket (Varsayılan 30 olabilir)
+        PhotonNetwork.SerializationRate = 10; // OnPhotonSerializeView hızı
+
         PhotonNetwork.ConnectUsingSettings();
     }
 

@@ -65,15 +65,4 @@ public class RoomManager : MonoBehaviourPunCallbacks
             CreateRoom();
         }
     }
-
-    // RoomManager.cs içine ekle:
-
-    public override void OnLeftRoom()
-    {
-        Debug.Log("Odadan çıkıldı, Lobiye dönülüyor...");
-
-        // Odadan çıkma işlemi tamamlanınca Ana Menü sahnesini yükle.
-        // BURAYA DİKKAT: "Lobby" yerine senin ana menü sahnennin adı neyse onu yaz!
-        SceneChangeManager.Instance.ChangeScene("Lobby");
-    }
 }

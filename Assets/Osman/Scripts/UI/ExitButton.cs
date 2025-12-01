@@ -9,13 +9,17 @@ public class ExitButton : MonoBehaviourPunCallbacks
     //Oyuncunun bulunduğu odadan çıktıktan sonra tekrardan Lobbye bağlanmasını sağlayan Fonksiyonlar
     ScoreManager scoreManager;
 
-    private void Start() { }
-
     public void ExitGame()
     {
-        PhotonNetwork.CurrentRoom.SetMasterClient(PhotonNetwork.LocalPlayer);
-        Debug.Log(PhotonNetwork.MasterClient.NickName);
+        Debug.Log("Çıkış butonuna basıldı, odadan ayrılınıyor...");
+        // Sadece odadan çık emri veriyoruz. SAHNE DEĞİŞTİRMİYORUZ.
         PhotonNetwork.LeaveRoom();
+    }
+
+    // Photon "Tamam, odadan çıktın" dediği an burası çalışır.
+    public override void OnLeftRoom()
+    {
+        Debug.Log("Odadan çıkış onaylandı. Lobiye dönülüyor...");
         SceneChangeManager.Instance.ChangeScene("LobbyMenu");
     }
 

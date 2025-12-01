@@ -665,8 +665,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         return (int)queueValue;
     }
 
-  
-
     public void OnButtonClick()
     {
         if (hasOpenedPairs)
@@ -677,25 +675,19 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
         if (turnManager.canDrop == true)
         {
-            // --- YENİ EKLENEN: Bitiş Taşı Güvenlik Kontrolü ---
-            // Açılacak (validPerss içindeki) toplam taş sayısını bul
+            // Bitiş Taşı Güvenlik Kontrolü
             int tilesToMeldCount = 0;
             foreach (var group in validPerss)
                 tilesToMeldCount += group.Count;
-
-            // Oyuncunun şu an elindeki toplam taş sayısı
             int currentHandCount = tileDistrubite.GetPlayerHandCount(GetPlayerQue());
 
-            // KURAL: Açtıktan sonra elde EN AZ 1 taş kalmalı (Atmak için)
             if (currentHandCount - tilesToMeldCount < 1)
             {
                 Debug.LogWarning(
                     "HATA: Tüm taşları açamazsınız! Oyunu bitirmek için elinizde en az 1 taş kalmalı."
                 );
-                // İstersen buraya bir UI uyarısı ("Atacak taşınız kalmıyor!") ekleyebilirsin.
                 return;
             }
-            // --------------------------------------------------
 
             int limit = GameManager.Instance.currentTableLimit;
             bool limitPass = hasOpenedSeries
@@ -705,6 +697,9 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             if (limitPass)
             {
                 PlaceValidPers(validPerss);
+                // [GÜNCELLEME] Masa anlık güncellensin
+                tileDistrubite.RecalculateAllAvailableSlots();
+
                 if (!hasOpenedSeries && totalScore > limit)
                 {
                     GameManager.Instance.photonView.RPC(
@@ -725,27 +720,21 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         }
     }
 
-    // ScoreManager.cs -> OnPairButtonClick (Çift Açma) GÜNCELLEMESİ
-
     public void OnPairButtonClick()
     {
         if (turnManager.canDrop == true)
         {
-            // --- YENİ EKLENEN: Bitiş Taşı Güvenlik Kontrolü ---
+            // Bitiş Taşı Güvenlik Kontrolü
             int tilesToMeldCount = 0;
             foreach (var group in validPerss)
                 tilesToMeldCount += group.Count;
-
             int currentHandCount = tileDistrubite.GetPlayerHandCount(GetPlayerQue());
 
-            // KURAL: Açtıktan sonra elde EN AZ 1 taş kalmalı
-            // (Örn: Elde 2 taş var, Çift açarsan 0 kalır -> YASAK)
             if (currentHandCount - tilesToMeldCount < 1)
             {
                 Debug.LogWarning("HATA: Çift açarsanız atacak taşınız kalmaz!");
                 return;
             }
-            // --------------------------------------------------
 
             if (hasOpenedSeries)
             {
@@ -756,15 +745,24 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                     return;
                 }
                 PlacePairPers(validPerss);
+                tileDistrubite.RecalculateAllAvailableSlots(); // [GÜNCELLEME]
             }
             else
             {
                 if (pairTotalPerCount >= 5)
+                {
                     PlacePairPers(validPerss);
+                    tileDistrubite.RecalculateAllAvailableSlots(); // [GÜNCELLEME]
+                }
                 else if (hasOpenedPairs)
+                {
                     PlacePairPers(validPerss);
+                    tileDistrubite.RecalculateAllAvailableSlots(); // [GÜNCELLEME]
+                }
                 else
+                {
                     Debug.LogWarning("En az 5 çift gerekli.");
+                }
             }
         }
         else
@@ -1405,11 +1403,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     {
         if (per.Count == 0)
             return;
-
-        // ------------------------------------------------------------------------
-        // 1. ADIM: BU PER HANGİ KUTUDA (CONTAINER) DURUYOR? ONU BULALIM.
-        // (Böylece Ahmet'in taşı Mehmet'in masasına gitmez)
-        // ------------------------------------------------------------------------
         Transform targetContainer = null;
         Tiles firstTileData = per[0];
 
@@ -1418,9 +1411,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             if (ui.tileDataInfo == firstTileData)
             {
                 if (ui.transform.parent != null && ui.transform.parent.parent != null)
-                {
                     targetContainer = ui.transform.parent.parent;
-                }
                 break;
             }
         }
@@ -1429,23 +1420,19 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
         List<Tiles> availableTiles = tileDistrubite.GetAvailableTiles(per);
 
-        // -------------------------------------------------------
-        // 1. SINGLE COLOR (Renkli Sıralı Per) - [DÜZELTME BURADA]
-        // -------------------------------------------------------
+        // 1. SINGLE COLOR + JOKER
         if (IsSingleColor(per) && SingleColorCheck(per))
         {
             var refTile = per.FirstOrDefault(t => t.type != TileType.Joker);
             if (refTile == null)
                 return;
             TileColor perColor = refTile.color;
-
             var numbers = per.Select(tile => tile.number).ToList();
             bool hasJoker = per.Any(tile => tile.type == TileType.Joker);
-
             int minNumber = numbers.Min();
             int maxNumber = numbers.Max();
 
-            // SAĞ TARAFI AÇ
+            // Sağ ve Sol açma kodları (Standart)...
             if (maxNumber != 13)
             {
                 int rightIndex = maxNumber + 13 * rowIndex;
@@ -1453,7 +1440,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 {
                     Transform phTransform = targetContainer.GetChild(rightIndex);
                     Placeholder rightPlaceholder = phTransform.GetComponent<Placeholder>();
-
                     if (rightPlaceholder != null && phTransform.childCount == 0)
                     {
                         rightPlaceholder.available = true;
@@ -1464,7 +1450,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 }
             }
 
-            // SOL TARAFI AÇ
             if (minNumber > 1)
             {
                 int leftIndex = (minNumber - 2) + 13 * rowIndex;
@@ -1472,7 +1457,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 {
                     Transform phTransform = targetContainer.GetChild(leftIndex);
                     Placeholder leftPlaceholder = phTransform.GetComponent<Placeholder>();
-
                     if (leftPlaceholder != null && phTransform.childCount == 0)
                     {
                         leftPlaceholder.available = true;
@@ -1483,22 +1467,18 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 }
             }
 
-            // --- [KRİTİK DÜZELTME] JOKER YERİNİ AÇMA ---
+            // --- [GÜNCELLEME] JOKER YERİNİ AÇMA ---
             if (hasJoker)
             {
-                // Jokerin per içindeki konumunu (indexini) bulmak için matematik değil,
-                // sahnedeki konumunu taramak daha güvenlidir.
-
-                // Sadece bu satırı (rowIndex) tara
                 int start = rowIndex * 13;
                 int end = start + 13;
                 int jokerPlaceholderIndex = -1;
 
+                // Jokerin fiziksel yerini bul
                 for (int i = start; i < end; i++)
                 {
                     if (i >= targetContainer.childCount)
                         break;
-
                     Transform phTransform = targetContainer.GetChild(i);
                     if (phTransform.childCount > 0)
                     {
@@ -1506,7 +1486,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                         if (tUI != null && tUI.tileDataInfo.type == TileType.Joker)
                         {
                             jokerPlaceholderIndex = i;
-                            break; // Jokeri bulduk
+                            break;
                         }
                     }
                 }
@@ -1516,33 +1496,24 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                     Placeholder jokerPlaceholder = targetContainer
                         .GetChild(jokerPlaceholderIndex)
                         .GetComponent<Placeholder>();
-
                     if (jokerPlaceholder != null)
                     {
                         jokerPlaceholder.available = true;
-
-                        // Jokerin yerine geçecek taşı belirle
-                        // Formül: (Index % 13) + 1 = Sayı
                         int requiredNumber = (jokerPlaceholderIndex % 13) + 1;
-
-                        // Listeden veya yeni oluşturarak
                         var requiredTile = availableTiles.FirstOrDefault(tile =>
                             tile.number == requiredNumber && tile.color == perColor
                         );
 
+                        // Eğer listede yoksa manuel oluştur (Önemli!)
                         if (requiredTile == null)
-                        {
                             requiredTile = new Tiles(perColor, requiredNumber, TileType.Number);
-                        }
 
                         jokerPlaceholder.AvailableTileInfo = requiredTile;
                     }
                 }
             }
         }
-        // -------------------------------------------------------
-        // 2. MULTI COLOR (Sayı Grubu)
-        // -------------------------------------------------------
+        // 2. MULTI COLOR (Eski mantık aynı kalacak, sadece Joker kontrolü ekli)
         else if (MultiColorCheck(per))
         {
             if (per.Count >= 3)
@@ -1551,12 +1522,10 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 if (refTile == null)
                     return;
                 int targetNumber = refTile.number;
-
                 bool hasJoker = per.Any(tile => tile.type == TileType.Joker);
                 var realColorsOnBoard = per.Where(t => t.type != TileType.Joker)
                     .Select(t => t.color)
                     .ToList();
-
                 Tiles tileToPlace = null;
 
                 if (per.Count == 3)
@@ -1580,7 +1549,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
                 if (tileToPlace != null)
                 {
-                    // 3 TAŞ DURUMU
                     if (per.Count == 3)
                     {
                         int fourthIndex = 3 + (4 * rowIndex);
@@ -1595,7 +1563,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                             }
                         }
                     }
-                    // 4 TAŞ + JOKER DURUMU
                     else if (per.Count == 4 && hasJoker)
                     {
                         int start = rowIndex * 4;
@@ -1606,7 +1573,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                                 break;
                             Transform phTransform = targetContainer.GetChild(i);
                             Placeholder ph = phTransform.GetComponent<Placeholder>();
-
                             if (ph != null && phTransform.childCount > 0)
                             {
                                 TileUI tUI = phTransform.GetChild(0).GetComponent<TileUI>();
@@ -1622,68 +1588,46 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 }
             }
         }
-        // -------------------------------------------------------
-        // 3. ÇİFT PER (Pair) KONTROLÜ - TAM DÜZELTME
-        // -------------------------------------------------------
+        // 3. PAIR (Çift Per - Joker Takası)
         else if (CheckForDoublePer(per) && IsSingleColor(per))
         {
-            // Eğer per içinde Joker varsa (Demek ki takas yapılabilir)
             if (per.Any(tile => tile.type == TileType.Joker))
             {
-                // 1. Referans Taşı Bul (Joker olmayan gerçek taş)
-                // Örnek: Masa [Joker] - [Kırmızı 5] ise, referans [Kırmızı 5]tir.
                 var refTile = per.FirstOrDefault(t => t.type != TileType.Joker);
-
                 if (refTile != null)
                 {
                     int jokerIndex = -1;
-
-                    // 2. Sadece O Satırı Tara (Çiftler 2'li olduğu için *2 yapıyoruz)
                     int start = rowIndex * 2;
                     int end = start + 2;
-
                     for (int i = start; i < end; i++)
                     {
-                        // Hedef Container sınır kontrolü
                         if (i >= targetContainer.childCount)
                             break;
-
                         Transform phTransform = targetContainer.GetChild(i);
-
-                        // Kutu DOLU olmalı (Çünkü içinde Joker var)
                         if (phTransform.childCount > 0)
                         {
                             TileUI tile = phTransform.GetChild(0).GetComponent<TileUI>();
-
-                            // İçindeki taş Joker mi?
                             if (tile != null && tile.tileDataInfo.type == TileType.Joker)
                             {
                                 jokerIndex = i;
-                                break; // Jokeri bulduk
+                                break;
                             }
                         }
                     }
-
-                    // 3. Joker Bulunduysa O Kutuyu "Müsait" Yap
                     if (jokerIndex != -1)
                     {
                         Placeholder jokerPlaceholder = targetContainer
                             .GetChild(jokerIndex)
                             .GetComponent<Placeholder>();
-
                         if (jokerPlaceholder != null)
                         {
                             jokerPlaceholder.available = true;
-
-                            // KRİTİK NOKTA: Jokerin kendi numarasını (örn 1) değil,
-                            // yanındaki REFERANS TAŞIN (Kırmızı 5) verisini istiyoruz.
+                            // Çift per takasında refTile verisini istiyoruz
                             jokerPlaceholder.AvailableTileInfo = new Tiles(
                                 refTile.color,
                                 refTile.number,
                                 TileType.Number
                             );
-
-                            // Debug.Log($"Çift Per Joker Takası Açıldı! Yer: {jokerIndex}, İstenen: {refTile.color} {refTile.number}");
                         }
                     }
                 }
@@ -1692,11 +1636,11 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     }
 
     #region ActivePers
+    // ScoreManager.cs içindeki ActivePers metodunu bununla değiştir:
+
     public void ActivePers()
     {
         HashSet<Tiles> usedTilesInThisSession = new HashSet<Tiles>();
-
-        // Rezerve Kontrolü (Önceki düzeltmelerden)
         HashSet<Tiles> reservedTiles = new HashSet<Tiles>();
         if (pendingMeldedTiles != null)
             foreach (var t in pendingMeldedTiles)
@@ -1710,15 +1654,24 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         int playerQue = GetPlayerQue();
         bool actionTaken;
 
+        // [GÜVENLİK] Sonsuz döngü koruması
+        int loopSafety = 0;
+        int maxLoopCount = 50;
+
         do
         {
-            actionTaken = false;
+            loopSafety++;
+            if (loopSafety > maxLoopCount)
+            {
+                Debug.LogError("ActivePers döngü sınırına ulaştı, zorla çıkılıyor.");
+                break;
+            }
 
+            actionTaken = false;
             foreach (var player in PhotonNetwork.PlayerList)
             {
                 player.CustomProperties.TryGetValue("PlayerQue", out object ownerQueValue);
                 int ownerQue = (int)ownerQueValue;
-
                 Transform meldContainer = GameObject.Find(player.NickName + " meld")?.transform;
                 if (meldContainer == null)
                     continue;
@@ -1733,6 +1686,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                         Placeholder currentPlaceholder =
                             placeholderTransform.GetComponent<Placeholder>();
 
+                        // Sadece BOŞ ve AVAILABLE olanlara bakıyoruz ki işlemci yorulmasın
                         if (
                             currentPlaceholder != null
                             && currentPlaceholder.available
@@ -1744,27 +1698,34 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                                 if (usedTilesInThisSession.Contains(tileInHand))
                                     continue;
                                 if (reservedTiles.Contains(tileInHand))
-                                    continue; // Rezerve kontrolü
+                                    continue;
                                 if (currentPlayerTiles.IndexOf(tileInHand) == -1)
                                     continue;
 
                                 Tiles req = currentPlaceholder.AvailableTileInfo;
                                 bool isMatch = false;
 
-                                // EŞLEŞME KONTROLLERİ
+                                // 1. Tam Eşleşme
                                 if (
                                     tileInHand.color == req.color
                                     && tileInHand.number == req.number
+                                    && tileInHand.type == TileType.Number
                                 )
                                 {
                                     isMatch = true;
                                 }
+                                // 2. Joker İşleme
+                                else if (tileInHand.type == TileType.Joker)
+                                {
+                                    isMatch = true;
+                                }
+                                // 3. MultiColor Esnek
                                 else if (
                                     currentMeldType == MeldType.MultiColor
                                     && tileInHand.number == req.number
+                                    && tileInHand.type == TileType.Number
                                 )
                                 {
-                                    // MultiColor Esnek Eşleşme (Aynı kod bloğu)
                                     List<TileColor> usedColorsInRow = new List<TileColor>();
                                     Transform parentRow = placeholderTransform.parent;
                                     int myIndex = placeholderTransform.GetSiblingIndex();
@@ -1791,64 +1752,53 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
                                 if (isMatch)
                                 {
-                                    Debug.Log(
-                                        $"İşlek bulundu: {tileInHand.color} {tileInHand.number}"
+                                    Tiles tileToSend = new Tiles(
+                                        tileInHand.color,
+                                        tileInHand.number,
+                                        tileInHand.type
                                     );
+                                    if (tileInHand.type == TileType.Joker)
+                                    {
+                                        tileToSend.color = req.color;
+                                        tileToSend.number = req.number;
+                                        tileToSend.type = TileType.Joker;
+                                    }
 
-                                    // ===================================================================
-                                    // [KRİTİK DÜZELTME] JOKER TAKAS VE TEMİZLİK
-                                    // ===================================================================
                                     if (placeholderTransform.childCount > 0)
                                     {
                                         TileUI existingTileUI = placeholderTransform
                                             .GetChild(0)
                                             .GetComponent<TileUI>();
-
                                         if (existingTileUI != null)
                                         {
-                                            // Eğer taş JOKER ise: Oyuncuya ver ve YOK ET
                                             if (existingTileUI.tileDataInfo.type == TileType.Joker)
                                             {
-                                                Debug.LogWarning(
-                                                    "JOKER ALINDI, OYUNCUYA YOLLANIYOR VE SAHNEDEN SİLİNİYOR."
-                                                );
-
-                                                // 1. Veriyi oyuncuya yolla
                                                 tileDistrubite.photonView.RPC(
                                                     "AddTileToPlayerHand",
                                                     RpcTarget.AllBuffered,
                                                     playerQue,
                                                     existingTileUI.tileDataInfo
                                                 );
-
-                                                // 2. [DÜZELTME] Objeyi HİYERARŞİDEN SÖK ve YOK ET
-                                                // SetParent(null) yaparak kutunun içini anında boşaltıyoruz.
-                                                // Böylece Recalculate metodu "Kutu boş" veya "Yeni taş var" diyecek.
                                                 existingTileUI.transform.SetParent(null);
                                                 Destroy(existingTileUI.gameObject);
                                             }
-                                            // Eğer taş Joker değilse (Hata durumu): Gizle ve yok et
                                             else
                                             {
-                                                Debug.LogWarning("Çakışan taş temizleniyor.");
                                                 existingTileUI.transform.SetParent(null);
                                                 Destroy(existingTileUI.gameObject);
                                             }
                                         }
                                     }
-                                    // ===================================================================
 
-                                    // Kaydet
                                     pendingActivePlacements.Add(
                                         new ActiveTilePlacementInfo(
-                                            tileInHand,
+                                            tileToSend,
                                             ownerQue,
                                             currentMeldType,
                                             placeholderTransform.GetSiblingIndex()
                                         )
                                     );
 
-                                    // Görsel (Yeni taşı oluştur)
                                     GameObject tempGO = Instantiate(
                                         tilePrefab,
                                         placeholderTransform
@@ -1857,7 +1807,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                                     tempGO.transform.localPosition = Vector3.zero;
                                     meldTileGO.Add(tempGO);
                                     tempGO.GetComponent<TileUI>().FitToParent();
-                                    // Deaktif Et
+
                                     int idx = currentPlayerTiles.IndexOf(tileInHand);
                                     tileDistrubite.photonView.RPC(
                                         "DeactivatePlayerTile",
@@ -1869,50 +1819,9 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                                     usedTilesInThisSession.Add(tileInHand);
                                     currentPlaceholder.available = false;
 
-                                    // Zincirleme Reaksiyon (SingleColor için)
-                                    if (currentMeldType == MeldType.SingleColor)
-                                    {
-                                        int currentIndex = placeholderTransform.GetSiblingIndex();
-                                        if (currentIndex > 0)
-                                        {
-                                            Transform ln = typeContainer.GetChild(currentIndex - 1);
-                                            Placeholder lp = ln.GetComponent<Placeholder>();
-                                            if (
-                                                lp != null
-                                                && ln.childCount == 0
-                                                && tileInHand.number > 1
-                                            )
-                                            {
-                                                lp.available = true;
-                                                lp.AvailableTileInfo = new Tiles(
-                                                    tileInHand.color,
-                                                    tileInHand.number - 1,
-                                                    TileType.Number
-                                                );
-                                            }
-                                        }
-                                        if (currentIndex < typeContainer.childCount - 1)
-                                        {
-                                            Transform rn = typeContainer.GetChild(currentIndex + 1);
-                                            Placeholder rp = rn.GetComponent<Placeholder>();
-                                            if (
-                                                rp != null
-                                                && rn.childCount == 0
-                                                && tileInHand.number < 13
-                                            )
-                                            {
-                                                rp.available = true;
-                                                rp.AvailableTileInfo = new Tiles(
-                                                    tileInHand.color,
-                                                    tileInHand.number + 1,
-                                                    TileType.Number
-                                                );
-                                            }
-                                        }
-                                    }
-
-                                    // Sahneyi güncelle
-                                    tileDistrubite.RecalculateAllAvailableSlots();
+                                    // --- CRITICAL FIX: BU SATIRI DÖNGÜDEN ÇIKARDIK ---
+                                    // tileDistrubite.RecalculateAllAvailableSlots();
+                                    // Buradan sildik, en sona koyduk.
 
                                     actionTaken = true;
                                     goto nextPlaceholder;
@@ -1925,6 +1834,11 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 }
             }
         } while (actionTaken);
+
+        // --- DOĞRU YER BURASI ---
+        // Tüm taşlar yerleştikten sonra sadece 1 KERE hesapla.
+        // Bu sayede oyun donmaz ve sunucudan düşmezsin.
+        tileDistrubite.RecalculateAllAvailableSlots();
     }
     #endregion
     public List<ActiveTilePlacementInfo> GetAndClearPendingActivePlacements()
@@ -1993,16 +1907,33 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
     private void DestroyTileGameObject(Tiles tile)
     {
-        // Taşın GameObject'ini bul ve yok et
         foreach (Transform placeholder in playerTileContainer)
         {
             if (placeholder.childCount > 0)
             {
                 TileUI tileUI = placeholder.GetChild(0).GetComponent<TileUI>();
-                if (tileUI != null && tileUI.tileDataInfo == tile)
+                if (tileUI != null)
                 {
-                    Destroy(placeholder.GetChild(0).gameObject);
-                    return; // İlk eşleşmeyi bulduktan sonra döngüden çık
+                    bool isMatch = false;
+                    // [GÜNCELLEME] JOKER GÖRSEL SİLME (Esnek Kontrol)
+                    if (tile.type == TileType.Joker)
+                    {
+                        // Veri değişmiş olsa bile Tipi Joker ise sil
+                        if (tileUI.tileDataInfo.type == TileType.Joker)
+                            isMatch = true;
+                    }
+                    else
+                    {
+                        // Normal taş ise tam eşleşme
+                        if (tileUI.tileDataInfo == tile)
+                            isMatch = true;
+                    }
+
+                    if (isMatch)
+                    {
+                        Destroy(placeholder.GetChild(0).gameObject);
+                        return; // İlk bulduğunu sil ve çık
+                    }
                 }
             }
         }
@@ -2024,6 +1955,25 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         return playersWhoOpened.Contains(playerQue);
     }
 
+    public List<Tiles> GetAllTilesPendingCommit()
+    {
+        List<Tiles> allPending = new List<Tiles>();
+
+        // 1. Yeni Açılan Perler
+        if (pendingMeldedTiles != null)
+            allPending.AddRange(pendingMeldedTiles);
+
+        // 2. İşlenen Taşlar (Active Placements)
+        if (pendingActivePlacements != null)
+        {
+            foreach (var placement in pendingActivePlacements)
+            {
+                allPending.Add(placement.tileData);
+            }
+        }
+
+        return allPending;
+    }
     // Oyuncunun elinde kalan taşların sayısal toplamını hesaplar
 
     #endregion
