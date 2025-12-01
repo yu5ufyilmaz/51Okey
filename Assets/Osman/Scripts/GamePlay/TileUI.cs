@@ -439,7 +439,6 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                             == true
                         )
                         {
-                            // Yandan aldıysa açmış veya işlemiş olmalı kuralı
                             if (!turnManager.CanFinishTurn())
                             {
                                 Debug.LogError("KURAL İHLALİ: Yandan taş aldınız ama açmadınız!");
@@ -449,12 +448,27 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                             }
 
                             Debug.Log("Taş atılıyor, sıra değişecek.");
-                            EventDispatcher.SummonEvent("OnTileThrown", this.tileDataInfo);
 
-                            // --- [KRİTİK] OYUNCUNUN ELİ BİTTİ Mİ KONTROLÜ ---
-                            // Bu fonksiyonun içinde (önceki adımda verdiğim NextTurnRoutine)
-                            // "Elimde taş kaldı mı?" kontrolü yapılıyor.
-                            // Kalmadıysa oyunu orada bitiriyor.
+                            // --- [YENİ] CEZA KONTROLÜ İÇİN RPC GÖNDER ---
+                            // EventDispatcher yerine direkt Master Client'a "Ben (queueValue) bu taşı attım, kontrol et" diyoruz.
+                            if (GameManager.Instance != null)
+                            {
+                                int myQue = 0;
+                                if (
+                                    PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue(
+                                        "PlayerQue",
+                                        out object q
+                                    )
+                                )
+                                    myQue = (int)q;
+
+                                GameManager.Instance.photonView.RPC(
+                                    "CheckPenaltyRPC",
+                                    RpcTarget.MasterClient, // Sadece Master hesaplasın
+                                    myQue, // BENİM ID'M (Yanlış kişiye yazılmasın diye)
+                                    this.tileDataInfo // Attığım Taş
+                                );
+                            }
                             ExecuteNextTurn();
                         }
                         // F) MASAYA İŞLEME (Available Yerlere)
@@ -563,7 +577,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object queueValue);
         int playerQueInt = (int)queueValue;
 
-        // --- 1. OYUN BİTİŞ KONTROLÜ ---
+        // --- 1. OYUN BİTİŞ KONTROLÜ (ELİM BİTTİ Mİ?) ---
         List<Tiles> realTimePlayerTiles = tileDistrubite.GetPlayerTiles();
         List<Tiles> currentHandForCheck = new List<Tiles>(realTimePlayerTiles);
 
@@ -592,14 +606,12 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         }
 
         bool isGameReallyOver = (currentHandForCheck.Count == 0);
-        Debug.Log($"Oyun Bitti mi: {isGameReallyOver}");
 
-        // --- 2. GameManager'a Bildir ---
+        // GameManager'a Bildir
         if (tileDistrubite != null)
         {
             HandData data = new HandData();
             data.actorNumber = PhotonNetwork.LocalPlayer.ActorNumber;
-            // Eğer bittiyse BOŞ, bitmediyse DOLU yolla
             data.handTiles = isGameReallyOver
                 ? new List<Tiles>()
                 : new List<Tiles> { new Tiles(TileColor.black, 1, TileType.Number) };
@@ -607,26 +619,26 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             EventDispatcher.SummonEvent("OnPlayerMoveFinished", data);
         }
 
-        // --- [CRITICAL FIX] OYUN BİTTİYSE BURADA DUR! ---
+        // --- ELİM BİTTİYSE ÇIK ---
         if (isGameReallyOver)
         {
-            Debug.Log("Oyun bittiği için sıra devretme işlemi iptal ediliyor.");
             Destroy(gameObject);
-            yield break; // <--- BU SATIR HAYAT KURTARIR. Fonksiyonu burada keser.
+            yield break;
         }
 
-        // --- 3. OYUN BİTMEDİYSE DEVAM ET ---
+        // --- 2. İŞLEMLER ---
         StartCoroutine(SmoothMove(transform, rightTileContainer));
         yield return new WaitForSeconds(0.05f);
 
         // Taşı Sil
         int indexToRemove = -1;
-        for (int i = 0; i < realTimePlayerTiles.Count; i++)
+        List<Tiles> actualPlayerTiles = tileDistrubite.GetPlayerTiles();
+        for (int i = 0; i < actualPlayerTiles.Count; i++)
         {
             if (
-                realTimePlayerTiles[i].color == tileDataInfo.color
-                && realTimePlayerTiles[i].number == tileDataInfo.number
-                && realTimePlayerTiles[i].type == tileDataInfo.type
+                actualPlayerTiles[i].color == tileDataInfo.color
+                && actualPlayerTiles[i].number == tileDataInfo.number
+                && actualPlayerTiles[i].type == tileDataInfo.type
             )
             {
                 indexToRemove = i;
@@ -644,6 +656,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
         yield return new WaitForSeconds(0.05f);
 
+        // Masa Güncellemeleri
         tileDistrubite.photonView.RPC("CheckForAvailableTiles", RpcTarget.All, playerQueInt);
         scoreManager.CommitAndStoreMelds();
         scoreManager.CommitJokerTransactions();
@@ -672,7 +685,30 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
         yield return new WaitForSeconds(0.05f);
 
-        // Sıra Geçişi
+        // --- [YENİ EKLENEN KISIM] ORTADA TAŞ KALDI MI? ---
+        // Eğer ortada taş sayısı 0 ise, sırayı devretme, OYUNU BİTİR (Beraberlik).
+        if (tileDistrubite.allTiles.Count == 0)
+        {
+            Debug.LogWarning("Hamle yapıldı ve ortada taş kalmadı. Oyun BERABERE bitiyor.");
+
+            if (GameManager.Instance != null && !GameManager.Instance.isGameEnded)
+            {
+                // -1 Kazanan Yok (Berabere) demektir.
+                GameManager.Instance.photonView.RPC(
+                    "FinishGameRPC",
+                    RpcTarget.All,
+                    -1,
+                    false,
+                    false
+                );
+            }
+
+            Destroy(gameObject);
+            yield break; // Fonksiyonu burada kes, NextTurn çalışmasın.
+        }
+        // ------------------------------------------------
+
+        // Eğer taş varsa sırayı devret
         turnManager.canDrop = false;
         turnManager.photonView.RPC("NextTurn", RpcTarget.AllBuffered);
 

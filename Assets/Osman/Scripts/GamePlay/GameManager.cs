@@ -3,14 +3,36 @@ using System.Collections.Generic;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
+using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class GameManager : MonoBehaviourPunCallbacks
 {
     public static GameManager Instance;
 
-    // --- ÖNEMLİ: Bu değişken oyunun erken bitmesini engelleyecek ---
+    [Header("Game States")]
     public bool isGameReady = false;
+    public bool isGameEnded = false;
 
+    // --- ORTAK LİMİT (HEM SERİ HEM ÇİFT İÇİN) ---
+    public int CurrentTableLimit
+    {
+        get
+        {
+            if (
+                PhotonNetwork.CurrentRoom != null
+                && PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(
+                    "TableLimit",
+                    out object limit
+                )
+            )
+            {
+                return (int)limit;
+            }
+            return 51; // Varsayılan Başlangıç Limiti
+        }
+    }
+
+    // --- REFERANSLAR ---
     private ScoreManager _scoreManager;
     public ScoreManager scoreManager
     {
@@ -44,17 +66,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
     }
 
-    public bool isGameEnded = false;
-    public Tiles currentSidePickTile;
-    public int currentTableLimit = 51;
-
-    private Dictionary<TileColor, int> colorMultipliers = new Dictionary<TileColor, int>()
-    {
-        { TileColor.blue, 3 },
-        { TileColor.black, 4 },
-        { TileColor.red, 5 },
-        { TileColor.yellow, 6 },
-    };
+    private Tiles currentSidePickTile;
 
     private void Awake()
     {
@@ -64,46 +76,64 @@ public class GameManager : MonoBehaviourPunCallbacks
             Destroy(gameObject);
 
         TileSerialization.RegisterCustomTypes();
-
-        // Başlangıçta oyun hazır DEĞİL.
         isGameReady = false;
     }
 
     private void Start()
     {
         EventDispatcher.RegisterFunction<HandData>("OnPlayerMoveFinished", CheckGameStatus);
-        EventDispatcher.RegisterFunction<Tiles>("OnTileThrown", CalculateThrowPenalty);
         EventDispatcher.RegisterFunction<Tiles>("OnSideTilePicked", RecordSidePick);
+
+        if (PhotonNetwork.IsMasterClient)
+        {
+            SetTableLimit(51);
+        }
     }
 
     private void OnDestroy()
     {
         EventDispatcher.UnregisterListener<HandData>("OnPlayerMoveFinished", CheckGameStatus);
-        EventDispatcher.UnregisterListener<Tiles>("OnTileThrown", CalculateThrowPenalty);
         EventDispatcher.UnregisterListener<Tiles>("OnSideTilePicked", RecordSidePick);
     }
 
-    // --- TileDistrubite TARAFINDAN ÇAĞRILACAK ---
+    // --- OYUN AKIŞI ---
     public void SetGameReady()
     {
         isGameReady = true;
-        Debug.Log("Oyun Hazır! Artık kurallar ve bitiş kontrolü aktif.");
+        Debug.Log("GameManager: Oyun Hazır.");
     }
 
-    [PunRPC]
-    public void UpdateTableLimit(int newScore)
+    // --- LİMİT GÜNCELLEME (KATLAMALI SİSTEM) ---
+    public void TryUpdateTableLimit(int openedScore)
     {
-        if (newScore > currentTableLimit)
+        // Eğer açılan puan mevcut limitten büyükse güncelle
+        if (openedScore > CurrentTableLimit)
         {
-            currentTableLimit = newScore;
+            SetTableLimit(openedScore);
+            Debug.Log($"<color=green>MASA LİMİTİ YÜKSELDİ: Yeni Limit {openedScore}</color>");
         }
     }
 
+    private void SetTableLimit(int limit)
+    {
+        Hashtable props = new Hashtable { { "TableLimit", limit } };
+        PhotonNetwork.CurrentRoom.SetCustomProperties(props);
+    }
+
+    // --- CEZA YÖNETİMİ ---
     public void RecordSidePick(Tiles tile)
     {
-        if (tile == null)
-            return;
-        currentSidePickTile = new Tiles(tile.color, tile.number, tile.type);
+        if (tile != null)
+            currentSidePickTile = new Tiles(tile.color, tile.number, tile.type);
+    }
+
+    public void HandleFailedSidePick(Tiles tileToThrow)
+    {
+        int currentPlayerQue = tileDistrubite.GetQueueNumberOfPlayer(PhotonNetwork.LocalPlayer);
+        scoreManager.UpdatePlayerScore(currentPlayerQue, 100);
+
+        Tiles tileToReturn = (currentSidePickTile != null) ? currentSidePickTile : tileToThrow;
+        StartCoroutine(RollbackSidePickProcess(currentPlayerQue, tileToReturn));
     }
 
     public void ApplySidePickSuccessPenalty()
@@ -119,14 +149,6 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         scoreManager.UpdatePlayerScore(previousPlayerQue, penalty);
         currentSidePickTile = null;
-    }
-
-    public void HandleFailedSidePick(Tiles tileToThrow)
-    {
-        int currentPlayerQue = tileDistrubite.GetQueueNumberOfPlayer(PhotonNetwork.LocalPlayer);
-        scoreManager.UpdatePlayerScore(currentPlayerQue, 100);
-        Tiles tileToReturn = (currentSidePickTile != null) ? currentSidePickTile : tileToThrow;
-        StartCoroutine(RollbackSidePickProcess(currentPlayerQue, tileToReturn));
     }
 
     public void CancelSidePickAction()
@@ -150,6 +172,7 @@ public class GameManager : MonoBehaviourPunCallbacks
             playerQue,
             tileToReturn
         );
+
         yield return new WaitForSeconds(0.2f);
 
         if (giveNewTile)
@@ -172,83 +195,314 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         if (!PhotonNetwork.IsMasterClient)
             return;
-        // Okey hesaplama ve ceza kodların burada... (Kısaltıldı, senin kodun aynısı kalabilir)
-        // ...
+
+        Tiles indicator = tileDistrubite.GetIndicatorTile();
+        int penaltyAmount = 0;
+        string reason = "";
+
+        // --- DETAYLI LOG (Hata varsa sebebini görmek için) ---
+        Debug.Log(
+            $"[CEZA KONTROLÜ] Atılan: {thrownTile.color} {thrownTile.number} ({thrownTile.type})"
+        );
+
+        // 1. OKEYİ HESAPLA (Matematiksel)
+        int okeyNumber = -1;
+        TileColor okeyColor = TileColor.black;
+
+        if (indicator != null)
+        {
+            okeyColor = indicator.color;
+            okeyNumber = indicator.number + 1;
+            if (okeyNumber > 13)
+                okeyNumber = 1;
+
+            Debug.Log($"[CEZA KONTROLÜ] Bu elin Okeyi: {okeyColor} {okeyNumber} olmalı.");
+        }
+
+        // 2. KONTROLLERİ YAP
+
+        // --- A) OKEY ATMA CEZASI ---
+        // Kural: Atılan taşın rengi ve numarası Okey ile aynıysa...
+        // VE bu taş "Sahte Okey" (Resimli taş) değilse...
+        // O zaman bu taş %100 Gerçek Okeydir (Jokerdir).
+
+        if (thrownTile.color == okeyColor && thrownTile.number == okeyNumber)
+        {
+            if (thrownTile.type != TileType.FakeJoker)
+            {
+                // FakeJoker değilse ve numarası tutuyorsa, bu Jokerdir.
+                penaltyAmount = 101;
+                reason = "Okey Atıldı";
+                Debug.Log("<color=red>OKEY TESPİT EDİLDİ!</color>");
+            }
+            else
+            {
+                Debug.Log(
+                    "Atılan taş Okey sayılarına sahip ama 'Sahte Okey' olduğu için ceza yok."
+                );
+            }
+        }
+        // Eğer tipi direkt Joker olarak geliyorsa (ekstra güvenlik)
+        else if (thrownTile.type == TileType.Joker)
+        {
+            penaltyAmount = 101;
+            reason = "Okey (Type=Joker) Atıldı";
+        }
+        // --- B) GÖSTERGE ATMA CEZASI ---
+        else if (
+            indicator != null
+            && thrownTile.color == indicator.color
+            && thrownTile.number == indicator.number
+        )
+        {
+            penaltyAmount = 101;
+            reason = "Gösterge Atıldı";
+        }
+        // --- C) İŞLEK TAŞ ATMA CEZASI ---
+        else
+        {
+            bool isProcessable = false;
+            if (tileDistrubite.availableTiles != null && thrownTile.type != TileType.FakeJoker)
+            {
+                foreach (var t in tileDistrubite.availableTiles)
+                {
+                    // Tipine bakmaksızın renk ve numara tutuyor mu?
+                    if (t.color == thrownTile.color && t.number == thrownTile.number)
+                    {
+                        // Ama o yer Joker için ayrılmışsa (Type=Joker) ve biz normal sayı atıyorsak yine de işlektir
+                        // Sadece Jokerin kendisini (available listesindeki Joker tipi) hariç tutmaya gerek yok
+                        // Çünkü available listesindeki her şey "Buraya taş konabilir" demektir.
+
+                        isProcessable = true;
+                        Debug.Log($"İşlek Bulundu: {t.color} {t.number} masada boş.");
+                        break;
+                    }
+                }
+            }
+            if (isProcessable)
+            {
+                penaltyAmount = 101;
+                reason = "İşlek Atıldı";
+            }
+        }
+
+        // CEZAYI UYGULA
+        if (penaltyAmount > 0)
+        {
+            int targetPlayer = turnManager.currentTurnPlayer;
+            scoreManager.UpdatePlayerScore(targetPlayer, penaltyAmount);
+            Debug.Log(
+                $"<color=red>CEZA KESİLDİ!</color> Sebep: {reason} -> Oyuncu {targetPlayer} -{penaltyAmount} Puan"
+            );
+        }
     }
 
-    // --- BURASI KRİTİK: OYUN BİTİŞ KONTROLÜ ---
+    // --- OYUN BİTİŞ KONTROLÜ ---
     public void CheckGameStatus(HandData data)
     {
-        // 1. Oyun daha başlamadıysa veya zaten bittiyse KONTROL ETME.
         if (!isGameReady || isGameEnded)
             return;
 
+        // 1. El Bitti (KAZANAN VAR)
         if (data.handTiles.Count == 0)
         {
             Debug.Log($"OYUN BİTTİ! Kazanan ActorNumber: {data.actorNumber}");
+
+            // BURADA FinishGameRPC çağrılıyor. Parametre olarak Kazananın ID'si gidiyor.
             photonView.RPC("FinishGameRPC", RpcTarget.All, data.actorNumber, false, false);
             return;
         }
 
+        // 2. Taş Bitti (BERABERE)
         if (PhotonNetwork.IsMasterClient)
         {
             if (tileDistrubite.allTiles.Count == 0)
             {
-                Debug.Log("OYUN BİTTİ! Ortada taş kalmadı.");
+                Debug.Log("OYUN BİTTİ! Ortada taş kalmadı. (Berabere)");
+
+                // BURADA FinishGameRPC çağrılıyor. Parametre olarak -1 gidiyor.
                 photonView.RPC("FinishGameRPC", RpcTarget.All, -1, false, false);
             }
         }
     }
 
-    // --- BURASI KRİTİK: FİNAL OPERASYONU ---
+    // GameManager.cs içine (Eski CalculateThrowPenalty yerine bunu kullanıyoruz):
+
+    [PunRPC]
+    public void CheckPenaltyRPC(int playerQue, Tiles thrownTile)
+    {
+        if (!PhotonNetwork.IsMasterClient)
+            return;
+
+        Tiles indicator = tileDistrubite.GetIndicatorTile();
+        int penaltyAmount = 0;
+        string reason = "";
+
+        // Okey Hesabı
+        int okeyNumber = -1;
+        TileColor okeyColor = TileColor.black;
+        if (indicator != null)
+        {
+            okeyColor = indicator.color;
+            okeyNumber = indicator.number + 1;
+            if (okeyNumber > 13)
+                okeyNumber = 1;
+        }
+
+        // --- 1. OKEY ATMA (Kesin Kontrol) ---
+        // Tip Joker ise VEYA Renk/Numara tutuyorsa (ve sahte değilse)
+        if (
+            thrownTile.type == TileType.Joker
+            || (
+                thrownTile.color == okeyColor
+                && thrownTile.number == okeyNumber
+                && thrownTile.type != TileType.FakeJoker
+            )
+        )
+        {
+            penaltyAmount = 101;
+            reason = "Okey Atıldı";
+        }
+        // --- 2. GÖSTERGE ATMA ---
+        else if (
+            indicator != null
+            && thrownTile.color == indicator.color
+            && thrownTile.number == indicator.number
+        )
+        {
+            penaltyAmount = 101;
+            reason = "Gösterge Atıldı";
+        }
+        // --- 3. İŞLEK TAŞ ATMA ---
+        else
+        {
+            // Atılan taş, masada işlenebilir (available) listesinde var mı?
+            if (tileDistrubite.availableTiles != null && thrownTile.type != TileType.FakeJoker)
+            {
+                foreach (var t in tileDistrubite.availableTiles)
+                {
+                    // Rengi ve numarası tutuyor mu? (Joker tipi hariç, normal sayı olarak)
+                    if (
+                        t.color == thrownTile.color
+                        && t.number == thrownTile.number
+                        && t.type != TileType.Joker
+                    )
+                    {
+                        penaltyAmount = 101;
+                        reason = "İşlek Atıldı";
+                        break;
+                    }
+                }
+            }
+        }
+
+        // --- CEZAYI UYGULA ---
+        if (penaltyAmount > 0)
+        {
+            // KRİTİK NOKTA: Cezayı 'playerQue' (Taşı atan kişi) yer.
+            // Asla TurnManager.currentTurnPlayer kullanmıyoruz.
+            scoreManager.UpdatePlayerScore(playerQue, penaltyAmount);
+
+            Debug.Log(
+                $"<color=red>CEZA KESİLDİ!</color> Sebep: {reason} -> Oyuncu {playerQue} -{penaltyAmount} Puan"
+            );
+        }
+    }
+
+    // --- HERKESTE ÇALIŞAN FİNAL OPERASYONU ---
     [PunRPC]
     public void FinishGameRPC(int winnerActorNumber, bool isOkeyShot, bool isDoubleFinish)
     {
-        // 2. Oyun hazır değilse bitirme.
         if (!isGameReady)
             return;
-
-        Debug.Log($"Oyun Bitti Sinyali Alındı! Kazanan: {winnerActorNumber}");
         isGameEnded = true;
 
+        Debug.Log("FinishGameRPC Tetiklendi. Puanlar hesaplanacak.");
+
+        // Puan hesaplamayı SADECE Master Client yapar ve sonucu herkese dağıtır.
         if (PhotonNetwork.IsMasterClient)
         {
+            // !!! İŞTE SORDUĞUN FONKSİYON BURADA ÇAĞIRILIYOR !!!
             CalculateAndDistributeScores(winnerActorNumber, isOkeyShot, isDoubleFinish);
         }
     }
 
+    // --- PUAN HESAPLAMA (MASTER ONLY) ---
     private void CalculateAndDistributeScores(
         int winnerActorNumber,
         bool isOkeyShot,
         bool isDoubleFinish
     )
     {
-        // Skor hesaplama kodların aynı kalsın...
-        // ...
-        // Sonunda şunu çağırıyor:
-        // photonView.RPC("OnGameEndedRPC", ...);
-
-        // Şimdilik test için direkt RPC'yi çağırıyorum (Senin kodunda içi doluydu)
         List<int> actors = new List<int>();
-        List<int> scores = new List<int>();
-        foreach (var p in PhotonNetwork.PlayerList)
-        {
-            actors.Add(p.ActorNumber);
-            scores.Add(0);
-        } // Dummy data
+        List<int> finalScores = new List<int>();
 
-        photonView.RPC("OnGameEndedRPC", RpcTarget.All, actors.ToArray(), scores.ToArray());
+        // 1. Çarpanları Belirle
+        int finishMultiplier = 1;
+        if (isDoubleFinish)
+            finishMultiplier *= 2;
+        if (isOkeyShot)
+            finishMultiplier *= 2;
+
+        Debug.Log(
+            $"Puan Hesaplanıyor... Kazanan Actor: {winnerActorNumber}, Çarpan: {finishMultiplier}"
+        );
+
+        // 2. Odadaki tüm oyuncuları gez
+        foreach (var player in PhotonNetwork.PlayerList)
+        {
+            actors.Add(player.ActorNumber);
+
+            // A) Oyuncunun mevcut ceza puanını ScoreManager'dan al
+            int currentPenalty = 0;
+            int pQue = tileDistrubite.GetQueueNumberOfPlayer(player);
+
+            if (scoreManager.playerScores.ContainsKey(pQue))
+            {
+                currentPenalty = scoreManager.playerScores[pQue];
+            }
+
+            // B) Eğer bu oyuncu KAZANAN ise puan düş (Ödül)
+            // Eğer winnerActorNumber -1 ise (Berabere), kimse ödül almaz.
+            if (winnerActorNumber != -1 && player.ActorNumber == winnerActorNumber)
+            {
+                currentPenalty -= (101 * finishMultiplier);
+            }
+
+            finalScores.Add(currentPenalty);
+        }
+
+        // 3. Sonuçları herkese gönder (UI açılsın)
+        photonView.RPC("OnGameEndedRPC", RpcTarget.All, actors.ToArray(), finalScores.ToArray());
     }
 
+    // --- SONUÇLARI AL VE UI AÇ ---
     [PunRPC]
     public void OnGameEndedRPC(int[] actors, int[] scores)
     {
         isGameEnded = true;
-        // ... Skor tablosu UI işlemleri ... (Senin kodun aynı kalsın)
+
+        Dictionary<int, int> scoreboardData = new Dictionary<int, int>();
+        for (int i = 0; i < actors.Length; i++)
+        {
+            Player p = PhotonNetwork.CurrentRoom.GetPlayer(actors[i]);
+            if (p != null && p.CustomProperties.TryGetValue("PlayerQue", out object q))
+            {
+                int pQue = (int)q;
+                if (!scoreboardData.ContainsKey(pQue))
+                    scoreboardData.Add(pQue, scores[i]);
+                else
+                    scoreboardData[pQue] = scores[i];
+            }
+        }
 
         if (UIManager.Instance != null)
         {
-            // UIManager.Instance.ShowGameOver(...);
+            UIManager.Instance.ShowGameOver(scoreboardData);
+        }
+        else
+        {
+            Debug.LogError("UIManager bulunamadı, tablo açılamıyor!");
         }
 
         StartCoroutine(RestartSequence());
@@ -256,7 +510,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     private IEnumerator RestartSequence()
     {
-        Debug.Log("Oyun bitti! 10 saniye sonra lobiye dönülüyor...");
+        Debug.Log("10 saniye sonra lobiye dönülüyor...");
         yield return new WaitForSeconds(10f);
         PhotonNetwork.LeaveRoom();
     }

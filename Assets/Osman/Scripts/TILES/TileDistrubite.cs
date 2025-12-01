@@ -414,6 +414,10 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             }
         }
         PlaceRemainingTilesInMiddleContainer(); // Place remaining tiles in the middle container
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.UpdateTileCount(allTiles.Count);
+        }
     }
 
     void InstantiateTiles(int tileCount, Tiles tile)
@@ -510,6 +514,10 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 break;
         }
         allTiles.RemoveAt(0);
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.UpdateTileCount(allTiles.Count);
+        }
     }
 
     List<GameObject> droppedTiles = new List<GameObject>();
@@ -664,75 +672,77 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         }
     }
 
+    // TileDistrubite.cs içine:
+
     [PunRPC]
-    public void DeactivatePlayerTile(int playerQue, int tileIndex)
+    public void DeactivatePlayerTile(int playerQue, Tiles tileToDeactivate)
     {
-        List<Tiles> playerTiless = new List<Tiles>();
-        switch (playerQue)
+        // 1. Yetki Kontrolü (Sadece kendi ıstakamda görsel kapatırım)
+        object localQue;
+        if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out localQue))
         {
-            case 1:
-                playerTiless = playerTiles1;
-                break;
-            case 2:
-                playerTiless = playerTiles2;
-                break;
-            case 3:
-                playerTiless = playerTiles3;
-                break;
-            case 4:
-                playerTiless = playerTiles4;
-                break;
+            if ((int)localQue != playerQue)
+                return;
         }
 
-        // Eğer indeks geçerli ise
-        if (tileIndex >= 0 && tileIndex < playerTiless.Count)
+        Transform targetContainer = playerTileContainer;
+        bool found = false;
+
+        foreach (Transform placeholder in targetContainer)
         {
-            Tiles tileToDeactivate = playerTiless[tileIndex];
-
-            // TileUI bileşenini bulmak için tüm TileUI nesnelerini kontrol et
-            foreach (Transform placeholder in playerTileContainer)
+            if (placeholder.childCount > 0)
             {
-                if (placeholder.childCount > 0)
+                GameObject tileObj = placeholder.GetChild(0).gameObject;
+
+                // --- [KRİTİK DÜZELTME BURASI] ---
+                // Eğer bu taş zaten kapalıysa, bunu geç! (Çift perlerde aynı taştan 2 tane olunca hata vermemesi için)
+                if (!tileObj.activeSelf)
+                    continue;
+                // --------------------------------
+
+                TileUI tileUI = tileObj.GetComponent<TileUI>();
+
+                if (tileUI != null)
                 {
-                    TileUI tileUI = placeholder.GetChild(0).GetComponent<TileUI>();
+                    bool isMatch = false;
 
-                    if (tileUI != null)
+                    // Joker Esnekliği
+                    if (tileToDeactivate.type == TileType.Joker)
                     {
-                        bool isMatch = false;
-
-                        // --- [DÜZELTME 2] JOKER İÇİN ESNEK KONTROL ---
-                        if (tileToDeactivate.type == TileType.Joker)
+                        if (tileUI.tileDataInfo.type == TileType.Joker)
+                            isMatch = true;
+                    }
+                    else
+                    {
+                        // Normal taş kontrolü
+                        if (
+                            tileUI.tileDataInfo.color == tileToDeactivate.color
+                            && tileUI.tileDataInfo.number == tileToDeactivate.number
+                            && tileUI.tileDataInfo.type == tileToDeactivate.type
+                        )
                         {
-                            // Eğer silinecek taş Joker ise, görseldeki taşın da TİPİ Joker ise eşleşmiş say.
-                            // Rengi veya Numarası (CheckPattern yüzünden) değişmiş olabilir, önemseme.
-                            if (tileUI.tileDataInfo.type == TileType.Joker)
-                            {
-                                isMatch = true;
-                            }
+                            isMatch = true;
                         }
-                        else
-                        {
-                            // Normal taşlar için tam referans kontrolü
-                            if (tileUI.tileDataInfo == tileToDeactivate)
-                            {
-                                isMatch = true;
-                            }
-                        }
-                        // ----------------------------------------------
+                    }
 
-                        if (isMatch)
-                        {
+                    if (isMatch)
+                    {
+                        if (scoreManager != null)
                             scoreManager.pendingMeldedTiles.Add(tileToDeactivate);
-                            placeholder.GetChild(0).gameObject.SetActive(false); // GameObject'i devre dışı bırak
-                            return; // İlk eşleşmeyi bulduktan sonra döngüden çık
-                        }
+
+                        tileObj.SetActive(false); // Görseli kapat
+                        found = true;
+                        return; // İlk bulduğumuz *AKTİF* taşı kapattık, çıkıyoruz.
                     }
                 }
             }
         }
-        else
+
+        if (!found)
         {
-            Debug.LogWarning("DeactivatePlayerTile: Geçersiz Index!");
+            Debug.LogWarning(
+                $"DeactivatePlayerTile: Kapatılacak AKTİF taş bulunamadı! ({tileToDeactivate.color} {tileToDeactivate.number})"
+            );
         }
     }
 

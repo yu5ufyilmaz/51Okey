@@ -25,6 +25,10 @@ public class TurnManager : MonoBehaviourPunCallbacks
         {
             canDrop = true;
         }
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.UpdateTurnIndicators(currentTurnPlayer);
+        }
     }
 
     public bool IsPlayerTurn()
@@ -86,11 +90,16 @@ public class TurnManager : MonoBehaviourPunCallbacks
     {
         localPlayerTurn = false;
         currentTurnPlayer++;
-
+        if (UIManager.Instance != null)
+        {
+            // Yeni sıra kimdeyse onun ışığını yak
+            UIManager.Instance.UpdateTurnIndicators(currentTurnPlayer);
+        }
         if (currentTurnPlayer > PhotonNetwork.PlayerList.Length)
         {
             currentTurnPlayer = 1; // Döngü başa döner
         }
+
         Debug.Log($"Player {currentTurnPlayer}'s turn.");
     }
 }

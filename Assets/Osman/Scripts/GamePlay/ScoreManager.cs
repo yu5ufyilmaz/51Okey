@@ -305,59 +305,53 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
     public void CheckForPer()
     {
-        Photon.Realtime.Player player = PhotonNetwork.LocalPlayer;
-        player.CustomProperties.TryGetValue("PlayerQue", out object playerId);
-        int playerIdInt = (int)playerId; // Per gruplarını başlat
-
-        // Per gruplarını güncelle
         var groups = GetSplittedGroups();
-        Debug.Log("Per gruplarını kontrol ediyor..." + groups.Count + " grup var.");
 
-        int perCount = 0; // Geçerli per sayısını sıfırla
-        int pairPerCount = 0;
-        int score = 0; // Geçerli puanı sıfırla
+        int perCount = 0;
+        int pairPerCountLocal = 0;
+        int score = 0;
         int pairScore = 0;
 
-        // Geçerli perleri kontrol et
-        HashSet<List<Tiles>> countedPers = new HashSet<List<Tiles>>(); // Daha önce sayılan perleri tutmak için
+        HashSet<List<Tiles>> countedPers = new HashSet<List<Tiles>>();
         validPerss.Clear();
 
         foreach (var per in groups)
         {
-            // Her grup için kontrol et
-            if (ControlPer(new List<List<Tiles>> { per })) // Geçerli per kontrolü
+            if (ControlPer(new List<List<Tiles>> { per }))
             {
-                // Eğer bu per daha önce sayılmadıysa
                 if (!countedPers.Contains(per))
                 {
-                    countedPers.Add(per); // Bu peri sayılanlar listesine ekle
+                    countedPers.Add(per);
                     validPerss.Add(per);
+
                     if (CheckForDoublePer(per))
                     {
-                        pairPerCount++;
-                        pairScore += CalculateDoublePerScore(per); // Çift per puanını ekle
+                        pairPerCountLocal++;
+                        pairScore += CalculateDoublePerScore(per);
                     }
                     else
                     {
-                        perCount++; // Geçerli per sayısını artır
-                        score += CalculateGroupScore(per); // Geçerli puanı ekle
+                        perCount++;
+                        score += CalculateGroupScore(per);
                     }
                 }
-                else
-                {
-                    Debug.Log("Bu per daha önce sayılmış.");
-                }
-            }
-            else
-            {
-                Debug.Log("Geçerli Per bulunamadı.");
             }
         }
+
         totalScore = score;
         pairTotalScore = pairScore;
         totalPerCount = countedPers.Count;
-        pairTotalPerCount = pairPerCount;
-        Debug.Log($"Toplam Geçerli Per Sayısı: {totalPerCount}, Toplam Puan: {totalScore}");
+        pairTotalPerCount = pairPerCountLocal;
+
+        // --- UI GÜNCELLEME ---
+        if (UIManager.Instance != null && GameManager.Instance != null)
+        {
+            UIManager.Instance.UpdatePlayerStats(
+                totalScore,
+                pairTotalScore, // Sayı değil, PUAN gönderiyoruz
+                GameManager.Instance.CurrentTableLimit
+            );
+        }
     }
     #endregion
     #region Is pers valid or not
@@ -689,29 +683,29 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 return;
             }
 
-            int limit = GameManager.Instance.currentTableLimit;
-            bool limitPass = hasOpenedSeries
-                ? true
-                : (limit == 51 ? totalScore >= 51 : totalScore > limit);
+            // --- ORTAK LİMİT KONTROLÜ ---
+            int currentLimit = GameManager.Instance.CurrentTableLimit;
+            int myCurrentScore = totalScore;
+
+            // Daha önce açtıysam limit beni bağlamaz
+            bool limitPass = hasOpenedSeries ? true : (myCurrentScore > currentLimit);
 
             if (limitPass)
             {
-                PlaceValidPers(validPerss);
-                // [GÜNCELLEME] Masa anlık güncellensin
-                tileDistrubite.RecalculateAllAvailableSlots();
-
-                if (!hasOpenedSeries && totalScore > limit)
+                // [DEĞİŞİKLİK] Limiti Yükseltme (Açmadan Önce)
+                if (!hasOpenedSeries && myCurrentScore > currentLimit)
                 {
-                    GameManager.Instance.photonView.RPC(
-                        "UpdateTableLimit",
-                        RpcTarget.All,
-                        totalScore
-                    );
+                    GameManager.Instance.TryUpdateTableLimit(myCurrentScore);
                 }
+
+                PlaceValidPers(validPerss);
+                tileDistrubite.RecalculateAllAvailableSlots();
             }
             else
             {
-                Debug.LogWarning($"Yetersiz Puan! Eliniz: {totalScore}, Gereken: {limit} üzeri.");
+                Debug.LogWarning(
+                    $"Yetersiz Puan! Eliniz: {myCurrentScore}, Gereken: {currentLimit} üzeri."
+                );
             }
         }
         else
@@ -720,6 +714,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         }
     }
 
+    // 2. ÇİFT AÇMA BUTONU
     public void OnPairButtonClick()
     {
         if (turnManager.canDrop == true)
@@ -736,33 +731,33 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 return;
             }
 
-            if (hasOpenedSeries)
+            // --- [DEĞİŞİKLİK] ORTAK LİMİTİ KULLANIYORUZ ---
+            int currentLimit = GameManager.Instance.CurrentTableLimit;
+            int myPairScore = pairTotalScore; // Çiftlerin PUAN toplamı
+
+            // Eğer daha önce açtıysam limit beni bağlamaz
+            bool limitPass = hasOpenedPairs ? true : (myPairScore > currentLimit);
+
+            if (limitPass)
             {
-                bool isAnyPairOnTable = CheckIfAnyPairOnTable();
-                if (!isAnyPairOnTable)
+                if (pairTotalPerCount < 1)
+                    return; // En az 1 çift olmalı
+
+                // [DEĞİŞİKLİK] Çift Puanı ile Ortak Limiti Yükseltme
+                if (!hasOpenedPairs && myPairScore > currentLimit)
                 {
-                    Debug.LogWarning("Masada çift yok, açamazsınız.");
-                    return;
+                    Debug.Log($"Çift ile Limit Yükseldi! Yeni Baraj: {myPairScore}");
+                    GameManager.Instance.TryUpdateTableLimit(myPairScore);
                 }
+
                 PlacePairPers(validPerss);
-                tileDistrubite.RecalculateAllAvailableSlots(); // [GÜNCELLEME]
+                tileDistrubite.RecalculateAllAvailableSlots();
             }
             else
             {
-                if (pairTotalPerCount >= 5)
-                {
-                    PlacePairPers(validPerss);
-                    tileDistrubite.RecalculateAllAvailableSlots(); // [GÜNCELLEME]
-                }
-                else if (hasOpenedPairs)
-                {
-                    PlacePairPers(validPerss);
-                    tileDistrubite.RecalculateAllAvailableSlots(); // [GÜNCELLEME]
-                }
-                else
-                {
-                    Debug.LogWarning("En az 5 çift gerekli.");
-                }
+                Debug.LogWarning(
+                    $"Yetersiz Çift Puanı! Eliniz: {myPairScore}, Gereken: {currentLimit} üzeri."
+                );
             }
         }
         else
@@ -929,14 +924,11 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                             pendingMeldedTiles.Add(tile);
 
                             // Oyuncunun elindeki taşı deaktif et (Gizle)
-                            int playerTileIndex = tileDistrubite.GetPlayerTiles().IndexOf(tile);
-                            int playerQue = GetPlayerQue();
-
                             tileDistrubite.photonView.RPC(
                                 "DeactivatePlayerTile",
-                                RpcTarget.AllBuffered,
-                                playerQue,
-                                playerTileIndex
+                                RpcTarget.All,
+                                GetPlayerQue(),
+                                tile
                             );
                         }
                     }
@@ -1041,14 +1033,11 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                             pendingMeldInfos.Add(newMeldInfo);
                             pendingMeldedTiles.Add(tile);
 
-                            int playerTileIndex = tileDistrubite.GetPlayerTiles().IndexOf(tile);
-                            int playerQue = GetPlayerQue();
-
                             tileDistrubite.photonView.RPC(
                                 "DeactivatePlayerTile",
-                                RpcTarget.AllBuffered,
-                                playerQue,
-                                playerTileIndex
+                                RpcTarget.All,
+                                GetPlayerQue(),
+                                tile
                             );
                         }
                     }
@@ -1187,14 +1176,11 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                             pendingMeldedTiles.Add(tile);
 
                             // Oyuncunun elinden taşı gizle/deaktif et
-                            int playerTileIndex = tileDistrubite.GetPlayerTiles().IndexOf(tile);
-                            int playerQue = GetPlayerQue();
-
                             tileDistrubite.photonView.RPC(
                                 "DeactivatePlayerTile",
-                                RpcTarget.AllBuffered,
-                                playerQue,
-                                playerTileIndex
+                                RpcTarget.All,
+                                GetPlayerQue(),
+                                tile
                             );
                         }
                     }
@@ -1808,12 +1794,11 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                                     meldTileGO.Add(tempGO);
                                     tempGO.GetComponent<TileUI>().FitToParent();
 
-                                    int idx = currentPlayerTiles.IndexOf(tileInHand);
                                     tileDistrubite.photonView.RPC(
                                         "DeactivatePlayerTile",
-                                        RpcTarget.AllBuffered,
+                                        RpcTarget.All,
                                         playerQue,
-                                        idx
+                                        tileInHand
                                     );
 
                                     usedTilesInThisSession.Add(tileInHand);
