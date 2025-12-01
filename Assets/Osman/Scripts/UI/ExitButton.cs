@@ -8,10 +8,9 @@ public class ExitButton : MonoBehaviourPunCallbacks
 {
     //Oyuncunun bulunduğu odadan çıktıktan sonra tekrardan Lobbye bağlanmasını sağlayan Fonksiyonlar
     ScoreManager scoreManager;
-    private void Start()
-    {
 
-    }
+    private void Start() { }
+
     public void ExitGame()
     {
         PhotonNetwork.CurrentRoom.SetMasterClient(PhotonNetwork.LocalPlayer);
@@ -38,6 +37,7 @@ public class ExitButton : MonoBehaviourPunCallbacks
         else
             scoreManager.OnButtonClick();
     }
+
     public void MeldPairTileButton()
     {
         if (scoreManager == null)
@@ -65,6 +65,7 @@ public class ExitButton : MonoBehaviourPunCallbacks
         else
             scoreManager.OnTakeBackButtonClick();
     }
+
     public void ActiveTilesButton()
     {
         if (scoreManager == null)

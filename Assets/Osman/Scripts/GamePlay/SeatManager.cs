@@ -1,9 +1,9 @@
+using System.Collections;
+using System.Collections.Generic;
 using Photon.Pun;
 using Photon.Realtime;
-using UnityEngine;
-using System.Collections.Generic;
 using TMPro;
-using System.Collections;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 public class SeatManager : MonoBehaviourPunCallbacks
@@ -27,14 +27,24 @@ public class SeatManager : MonoBehaviourPunCallbacks
     public RectTransform[] spawnPositions;
     bool gameIsStart = false;
 
-
-
-
-
     private void Awake()
     {
         TileSerialization.RegisterCustomTypes(); // Custom serialization for TileDataInfo
     }
+
+    // SeatManager.cs İÇİNE EKLE (Awake'den sonra, diğer metotlardan önce bir yere):
+
+    private void Start()
+    {
+        // Eğer sahne açıldığında zaten bir odadaysak (Yani oyun yeniden başladıysa)
+        // OnJoinedRoom otomatik çalışmaz, biz manuel tetiklemeliyiz.
+        if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
+        {
+            Debug.Log("Sahne yenilendi (Restart), oyun tekrar kuruluyor...");
+            OnJoinedRoom();
+        }
+    }
+
     #region Player Join and Left Functions
     public override void OnJoinedRoom()
     {
@@ -45,13 +55,22 @@ public class SeatManager : MonoBehaviourPunCallbacks
             int seatNumber = availableSeats[0];
             availableSeats.RemoveAt(0); // Remove the assigned seat
             // Use RPC to assign the seat to the player on all clients
-            GameObject tileManager = PhotonNetwork.Instantiate(tileManagerPrefab.name, Vector3.zero, Quaternion.identity, 0);
+            GameObject tileManager = PhotonNetwork.Instantiate(
+                tileManagerPrefab.name,
+                Vector3.zero,
+                Quaternion.identity,
+                0
+            );
 
             turnManager = GameObject.Find("TurnManager").GetComponent<TurnManager>();
             tileDistrubite = tileManager.GetComponent<TileDistrubite>();
 
-            photonView.RPC("AssignSeatToPlayer", RpcTarget.AllBuffered, PhotonNetwork.LocalPlayer.ActorNumber, seatNumber);
-
+            photonView.RPC(
+                "AssignSeatToPlayer",
+                RpcTarget.AllBuffered,
+                PhotonNetwork.LocalPlayer.ActorNumber,
+                seatNumber
+            );
         }
         UpdateSeatDisplay(); // Update the seat display for the local player
     }
@@ -74,7 +93,12 @@ public class SeatManager : MonoBehaviourPunCallbacks
             }
             // Remove the assigned seat
             // Use RPC to assign the seat to the player on all clients
-            photonView.RPC("AssignSeatToPlayer", RpcTarget.AllBuffered, newPlayer.ActorNumber, seatNumber);
+            photonView.RPC(
+                "AssignSeatToPlayer",
+                RpcTarget.AllBuffered,
+                newPlayer.ActorNumber,
+                seatNumber
+            );
         }
         StartGame();
         UpdateSeatDisplay(); // Update the seat display for the local player
@@ -97,15 +121,17 @@ public class SeatManager : MonoBehaviourPunCallbacks
     #region  Spawn and Instantiate Players
     private void AssignPositionAndInstantiate()
     {
-
         if (playerPrefab != null)
         {
-
             Quaternion spawnRotation = Quaternion.identity;
 
             // Oyuncuyu belirlenen pozisyona yerleştir
-            GameObject player = PhotonNetwork.Instantiate(playerPrefab.name, Vector3.zero, spawnRotation, 0);
-
+            GameObject player = PhotonNetwork.Instantiate(
+                playerPrefab.name,
+                Vector3.zero,
+                spawnRotation,
+                0
+            );
 
             Vector3 spawnPosition = spawnPositions[spawnIndex].position;
 
@@ -115,7 +141,6 @@ public class SeatManager : MonoBehaviourPunCallbacks
 
             playerPhotonView.RPC("SetPlayerName", RpcTarget.AllBuffered, PhotonNetwork.NickName);
             playerPhotonView.RPC("SetPlayerSeat", RpcTarget.AllBuffered, spawnPosition);
-
         }
         else
         {
@@ -131,14 +156,32 @@ public class SeatManager : MonoBehaviourPunCallbacks
         Player player = PhotonNetwork.CurrentRoom.GetPlayer(actorNumber);
         if (player != null)
         {
-            // Store seat assignment in player's custom properties
-            player.SetCustomProperties(new ExitGames.Client.Photon.Hashtable { { "SeatNumber", seatNumber } });
-
-            playerSeatMap[actorNumber] = seatNumber; // Update the player-seat map
-
-            Debug.Log($"Player {player.NickName} is assigned to seat {seatNumber}");
+            // Koltuk bilgisini kaydet
+            player.SetCustomProperties(
+                new ExitGames.Client.Photon.Hashtable { { "SeatNumber", seatNumber } }
+            );
+            playerSeatMap[actorNumber] = seatNumber;
         }
-        UpdateSeatDisplay(); // Update the seat display for the local player
+
+        // EKRANI GÜNCELLE
+        UpdateSeatDisplay();
+    }
+
+    // SeatManager.cs içine ekle:
+
+    public override void OnPlayerPropertiesUpdate(
+        Player targetPlayer,
+        ExitGames.Client.Photon.Hashtable changedProps
+    )
+    {
+        // Eğer değişen özellik "SeatNumber" (Koltuk Numarası) ise ekranı güncelle
+        if (changedProps.ContainsKey("SeatNumber"))
+        {
+            Debug.Log(
+                $"{targetPlayer.NickName} oyuncusunun koltuk verisi güncellendi. Ekran yenileniyor."
+            );
+            UpdateSeatDisplay();
+        }
     }
 
     [PunRPC]
@@ -162,58 +205,108 @@ public class SeatManager : MonoBehaviourPunCallbacks
         Debug.Log($"Seat {seatNumber} is now available.");
         UpdateSeatDisplay(); // Update the seat display for the local player
     }
+
+    // SeatManager.cs -> GetSeatNumberOfPlayer (GÜNCELLENMİŞ HIZLI VERSİYON)
+
     private int GetSeatNumberOfPlayer(Player player)
     {
-        player.CustomProperties.TryGetValue("SeatNumber", out object seatNumber);
-        if (seatNumber != null)
+        // YÖNTEM 1: Önce yerel hafızaya (Dictionary) bak (En Hızlısı)
+        if (playerSeatMap.ContainsKey(player.ActorNumber))
         {
-            Debug.Log("Seat Number: " + (int)seatNumber);
+            return playerSeatMap[player.ActorNumber];
+        }
+
+        // YÖNTEM 2: Yoksa Photon özelliklerine bak (Yedek)
+        if (player.CustomProperties.TryGetValue("SeatNumber", out object seatNumber))
+        {
             return (int)seatNumber;
         }
-        else
-            return -1; // Seat number not found
+
+        return -1; // Henüz veri yok
     }
     #endregion
     #region Relative Player Order
     //Seat Text changes from there.
+    // SeatManager.cs -> UpdateSeatDisplay (DÜZELTİLMİŞ)
+
     private void UpdateSeatDisplay()
     {
-        Player[] players = PhotonNetwork.PlayerList;
-        int localPlayerIndex = System.Array.IndexOf(players, PhotonNetwork.LocalPlayer);
-        if (localPlayerIndex == -1)
+        // 1. ÖNCE TEMİZLİK (Hayalet/Clone sorunu burada çözülüyor)
+        // Her güncelleme öncesi masadaki isimleri siliyoruz ki eskiler orada kalmasın.
+        // Eğer bunu yapmazsak, B kişisi koltuk değiştirirse eski yerinde ismi kalır.
+        foreach (var textField in seatTextFields)
         {
-            Debug.LogError("Local player not found in the player list!");
+            if (textField != null)
+                textField.text = "";
+        }
+
+        // 2. YEREL OYUNCUNUN (SENİN) KOLTUK NUMARASINI BUL
+        int localSeatNumber = GetSeatNumberOfPlayer(PhotonNetwork.LocalPlayer);
+
+        // Eğer senin koltuk numaran henüz serverdan gelmediyse (-1 ise),
+        // En azından kendini en ortaya (0. Index) yaz ki ekran boş kalmasın.
+        if (localSeatNumber == -1)
+        {
+            if (seatTextFields.Length > 0 && seatTextFields[0] != null)
+                seatTextFields[0].text = PhotonNetwork.LocalPlayer.NickName;
+
+            // Diğerlerinin yerini sen oturmadan hesaplayamayız, o yüzden çıkıyoruz.
             return;
         }
-        // Clear seat text fields first
-        for (int i = 0; i < players.Length; i++)
-        {
-            // Her oyuncu için relativeIndex, kendisini sıfırıncı indexte görmeli ve diğerlerini göreceli olarak sıralamalıdır
-            int relativeIndex = (i - localPlayerIndex + players.Length) % players.Length;
 
-            if (relativeIndex < seatTextFields.Length)
+        // 3. TÜM OYUNCULARI GEZ VE KOLTUK NUMARASINA GÖRE YERLEŞTİR
+        Player[] players = PhotonNetwork.PlayerList;
+
+        foreach (Player p in players)
+        {
+            // Oyuncunun koltuk numarasını al (Custom Property'den)
+            int playerSeatNumber = GetSeatNumberOfPlayer(p);
+
+            // Eğer oyuncunun koltuğu henüz atanmadıysa atla (Hata olmasın)
+            if (playerSeatNumber == -1)
+                continue;
+
+            // --- KRİTİK MATEMATİKSEL HESAP ---
+            // Bu formül, senin koltuğuna göre diğerlerinin nereye oturacağını hesaplar.
+            // Sen (Local) her zaman 0 (Aşağıda) olursun. Diğerleri sana göre döner.
+            // Formül: (HedefKoltuk - SeninKoltugun + ToplamKoltuk) % ToplamKoltuk
+
+            int relativeIndex = (playerSeatNumber - localSeatNumber + 4) % 4;
+
+            if (relativeIndex < seatTextFields.Length && relativeIndex >= 0)
             {
-                meldTileOffsets[relativeIndex].name = players[i].NickName + " meld";
-                tiledropOffset[relativeIndex].name = players[i].NickName;
-                seatTextFields[relativeIndex].text = players[i].NickName;
+                // İSMİ YAZ (Üzerine yazma işlemi yapar, temizlediğimiz için sorun olmaz)
+                if (seatTextFields[relativeIndex] != null)
+                {
+                    seatTextFields[relativeIndex].text = p.NickName;
+                }
+
+                // OBJELERİN İSMİNİ DÜZELT (Debug ve sistemin çalışması için)
+                if (
+                    meldTileOffsets.Length > relativeIndex
+                    && meldTileOffsets[relativeIndex] != null
+                )
+                    meldTileOffsets[relativeIndex].name = p.NickName + " meld";
+
+                if (tiledropOffset.Length > relativeIndex && tiledropOffset[relativeIndex] != null)
+                    tiledropOffset[relativeIndex].name = p.NickName;
             }
         }
-
     }
-
-
 
     private List<Player> GetRelativePlayerOrder(Player localPlayer)
     {
         List<Player> orderedPlayers = new List<Player>(PhotonNetwork.PlayerList);
 
         // Sort players by seat number, excluding the local player initially
-        orderedPlayers.Sort((a, b) =>
-        {
-            int seatA = GetSeatNumberOfPlayer(a);
-            int seatB = GetSeatNumberOfPlayer(b);
-            return seatA.CompareTo(seatB);
-        });
+        orderedPlayers.Sort(
+            (a, b) =>
+            {
+                int seatA = GetSeatNumberOfPlayer(a);
+                int seatB = GetSeatNumberOfPlayer(b);
+                return seatA.CompareTo(seatB);
+            }
+        );
 
         // Create a new list to maintain the order
         List<Player> relativeOrder = new List<Player>();
@@ -233,6 +326,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
     #endregion
     #region Starting Game
     public GameObject[] imageGameObjects;
+
     private void StartGame()
     {
         if (!gameIsStart)
@@ -242,7 +336,6 @@ public class SeatManager : MonoBehaviourPunCallbacks
                 // Check if all players are assigned a seat
                 if (tileDistrubite != null && PhotonNetwork.IsMasterClient)
                 {
-
                     Debug.Log(PhotonNetwork.LocalPlayer.NickName + " is the master client.");
                     StartCoroutine(CountdownAndShuffle());
                 }
@@ -252,7 +345,6 @@ public class SeatManager : MonoBehaviourPunCallbacks
 
     private IEnumerator CountdownAndShuffle()
     {
-
         // Countdown from 3 to 0
         for (int i = 3; i > 0; i--)
         {
@@ -262,14 +354,18 @@ public class SeatManager : MonoBehaviourPunCallbacks
         }
 
         // After countdown, shuffle the tiles
-        GameObject scoreManager = PhotonNetwork.Instantiate(scoreManagerPrefab.name, Vector3.zero, Quaternion.identity, 0);
+        GameObject scoreManager = PhotonNetwork.Instantiate(
+            scoreManagerPrefab.name,
+            Vector3.zero,
+            Quaternion.identity,
+            0
+        );
         scoreManager.SetActive(true);
         sManager = scoreManager.GetComponent<ScoreManager>();
 
         tileDistrubite.ShuffleTiles();
 
         gameIsStart = true; // Set the game as started
-
     }
 
     private void UpdateImageStates(int countdownValue)

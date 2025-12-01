@@ -103,6 +103,11 @@ MonoBehaviour:
   - RPC_UpdateAndDrawEntireBoardState
   - InstantiateActiveTiles
   - AddTileToPlayerHand
+  - FinishGameRPC
+  - RemoveTileFromPlayerListByValue
+  - ReturnTileToSide
+  - UpdateTableLimit
+  - OnGameEndedRPC
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

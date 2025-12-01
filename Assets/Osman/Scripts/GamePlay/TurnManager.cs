@@ -8,10 +8,13 @@ public class TurnManager : MonoBehaviourPunCallbacks
 {
     // Singleton Instance
 
-    private int currentTurnPlayer = 1; // İlk sıradaki oyuncu
-    [SerializeField] private bool localPlayerTurn;
-    public bool canDrop = false;
+    public int currentTurnPlayer = 1; // İlk sıradaki oyuncu
 
+    [SerializeField]
+    private bool localPlayerTurn;
+    public bool canDrop = false;
+    public bool hasPickedFromSide = false; // Yandan mı çekti?
+    public bool hasOpenedThisTurn = false; // Bu el per açtı mı?
 
     public void StartGame()
     {
@@ -22,18 +25,60 @@ public class TurnManager : MonoBehaviourPunCallbacks
         {
             canDrop = true;
         }
-
-
     }
+
     public bool IsPlayerTurn()
     {
-        if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object queueValue))
+        if (
+            PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue(
+                "PlayerQue",
+                out object queueValue
+            )
+        )
         {
             localPlayerTurn = true;
             return (int)queueValue == currentTurnPlayer;
         }
         return false;
+    }
 
+    // TurnManager.cs içine:
+
+    public int GetPreviousPlayerQue(int currentPlayerQue)
+    {
+        // Eğer sıra 1 ise, önceki 4'tür. Değilse 1 eksiğidir.
+        // (Toplam 4 oyuncu olduğunu varsayıyoruz)
+        if (currentPlayerQue == 1)
+            return 4;
+        return currentPlayerQue - 1;
+    }
+
+    // TurnManager.cs
+
+    public bool hasProcessedThisTurn = false; // Oyuncu bu tur yere taş işledi mi?
+
+    public void ResetTurnFlags()
+    {
+        hasPickedFromSide = false;
+        hasOpenedThisTurn = false;
+        hasProcessedThisTurn = false; // Sıfırla
+        canDrop = false;
+    }
+
+    // Turu bitirme kontrolü (GÜNCELLENDİ)
+    public bool CanFinishTurn()
+    {
+        // Eğer yandan aldıysa...
+        if (hasPickedFromSide)
+        {
+            // Eğer ne açtıysa NE DE işlediyse -> HATA (Ceza yer)
+            // Yani: Açtıysa GEÇER, İşlediyse GEÇER.
+            if (!hasOpenedThisTurn && !hasProcessedThisTurn)
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     [PunRPC]
@@ -48,5 +93,4 @@ public class TurnManager : MonoBehaviourPunCallbacks
         }
         Debug.Log($"Player {currentTurnPlayer}'s turn.");
     }
-
 }

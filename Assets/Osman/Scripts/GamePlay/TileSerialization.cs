@@ -44,6 +44,30 @@ public static class TileSerialization
             SerializePlacementInfo,
             DeserializePlacementInfo
         );
+        PhotonPeer.RegisterType(typeof(HandData), 107, SerializeHandData, DeserializeHandData);
+    }
+
+    private static short SerializeHandData(StreamBuffer outStream, object customObject)
+    {
+        HandData data = (HandData)customObject;
+        outStream.WriteByte((byte)data.actorNumber);
+        // Bool değeri byte'a çevir
+        outStream.WriteByte((byte)(data.isFinishMove ? 1 : 0));
+        // Listeyi serialize etmek için zaten yazdığın metodu kullanabilirsin
+        SerializeListOfTiles(outStream, data.handTiles);
+
+        // Not: Uzunluk hesabı dinamik olduğu için tam sayı veremeyiz ama
+        // stream'e yazdığımız için Photon halleder.
+        return 0;
+    }
+
+    private static object DeserializeHandData(StreamBuffer inStream, short length)
+    {
+        HandData data = new HandData();
+        data.actorNumber = inStream.ReadByte();
+        data.isFinishMove = inStream.ReadByte() == 1;
+        data.handTiles = (List<Tiles>)DeserializeListOfTiles(inStream, 0);
+        return data;
     }
 
     private static short SerializePlacementInfo(StreamBuffer outStream, object customObject)

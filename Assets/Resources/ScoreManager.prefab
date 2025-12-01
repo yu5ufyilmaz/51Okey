@@ -54,6 +54,8 @@ MonoBehaviour:
   totalScore: 0
   pairTotalScore: 0
   pairTotalPerCount: 0
+  hasOpenedSeries: 0
+  hasOpenedPairs: 0
   occupiedRowsNumber: 00000000
   occupiedRows: 00000000
   occupiedRowsPair: 0000000000000000

@@ -93,7 +93,8 @@ public class EventDispatcher : MonoBehaviour
     // Parametresiz olay dinleyiciyi kaldırma
     public static void UnregisterListener(string eventName, UnityAction callback)
     {
-        if (dispatcherInstance == null) return;
+        if (dispatcherInstance == null)
+            return;
 
         if (Instance.eventRegistry.TryGetValue(eventName, out UnityEventBase baseEvent))
         {
@@ -104,7 +105,8 @@ public class EventDispatcher : MonoBehaviour
     // Parametreli olay dinleyiciyi kaldırma
     public static void UnregisterListener<T>(string eventName, UnityAction<T> callback)
     {
-        if (dispatcherInstance == null) return;
+        if (dispatcherInstance == null)
+            return;
 
         if (Instance.eventRegistry.TryGetValue(eventName, out UnityEventBase baseEvent))
         {

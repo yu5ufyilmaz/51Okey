@@ -57,6 +57,9 @@ public class Placeholder : MonoBehaviour, IDropHandler
             {
                 droppedTile.transform.SetParent(transform, false);
                 droppedTile.transform.localPosition = Vector3.zero;
+
+                if (droppedTile.GetComponent<TileUI>())
+                    droppedTile.GetComponent<TileUI>().FitToParent();
             }
             // 2. DURUM: Placeholder DOLUYSA -> Kaydırma (Shift) yapmaya çalış
             else if (transform.childCount == 1)
@@ -87,9 +90,15 @@ public class Placeholder : MonoBehaviour, IDropHandler
                     existingTileTransform.SetParent(newPlaceholder, false);
                     existingTileTransform.localPosition = Vector3.zero;
 
+                    if (droppedTile.GetComponent<TileUI>())
+                        droppedTile.GetComponent<TileUI>().FitToParent();
+
                     // Yeni gelen taşı buraya oturt
                     droppedTile.transform.SetParent(transform, false);
                     droppedTile.transform.localPosition = Vector3.zero;
+
+                    if (droppedTile.GetComponent<TileUI>())
+                        droppedTile.GetComponent<TileUI>().FitToParent();
                 }
             }
         }
@@ -98,6 +107,9 @@ public class Placeholder : MonoBehaviour, IDropHandler
         {
             droppedTile.transform.SetParent(transform, false);
             droppedTile.transform.localPosition = Vector3.zero;
+            // BURAYA EKLE:
+            if (droppedTile.GetComponent<TileUI>())
+                droppedTile.GetComponent<TileUI>().FitToParent();
         }
     }
 
