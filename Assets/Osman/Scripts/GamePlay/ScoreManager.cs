@@ -659,6 +659,28 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         return (int)queueValue;
     }
 
+    // ScoreManager.cs içine, class seviyesine ekle:
+
+    // Yapılan hamlenin türü
+    public enum ActionType
+    {
+        NormalPlace,
+        JokerSwap,
+    }
+
+    // Hamlenin detaylarını tutan yapı
+    public struct ProcessAction
+    {
+        public ActionType type;
+        public Tiles tilePlayed; // Senin koyduğun taş (Örn: Kırmızı 12)
+        public Tiles tileTaken; // Aldığın Joker (Swap ise)
+        public Transform targetSlot; // İşlemin yapıldığı kutucuk
+        public GameObject visualObject; // Masada oluşturulan görsel obje
+    }
+
+    // Hamleleri sırasıyla tutacak yığın (En son yapılanı ilk geri almak için Stack kullanıyoruz)
+    private Stack<ProcessAction> actionHistory = new Stack<ProcessAction>();
+
     public void OnButtonClick()
     {
         if (hasOpenedPairs)
@@ -1243,67 +1265,89 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
     void TakeBackPers()
     {
-        // Eğer geri alınacak taş yoksa, işlemi durdur
+        // Eğer geri alınacak taş yoksa işlem yapma
         if (pendingMeldedTiles.Count == 0)
             return;
-        List<Tiles> playerTiles = tileDistrubite.GetPlayerTiles();
-        Tiles tiles = pendingMeldedTiles[0];
+
         int playerQue = GetPlayerQue();
-        // Oyuncunun taş listesini al
-        // Geri alınan taşları tahtadan sil
+
+        // --- 1. ISTAKADAKİ GÖRSELLERİ GERİ AÇ ---
         foreach (var tile in pendingMeldedTiles)
         {
-            tiles = tile;
-            // Taşın mevcut indeksini bul
-            int tileIndex = playerTiles.IndexOf(tile);
-            if (tileIndex != -1)
+            bool found = false;
+
+            // Istakadaki tüm slotları gez
+            foreach (Transform placeholder in playerTileContainer)
             {
-                // Taşın GameObject'ini bul ve yok et
-                foreach (Transform placeholder in playerTileContainer)
+                if (placeholder.childCount > 0)
                 {
-                    if (placeholder.childCount > 0)
+                    GameObject tileObj = placeholder.GetChild(0).gameObject;
+
+                    // Sadece KAPALI (ActiveSelf == false) olanlara bakıyoruz
+                    if (!tileObj.activeSelf)
                     {
-                        TileUI tileUI = placeholder.GetChild(0).GetComponent<TileUI>();
-                        if (tileUI != null && tileUI.tileDataInfo == tile)
+                        TileUI tileUI = tileObj.GetComponent<TileUI>();
+                        if (tileUI != null)
                         {
-                            // Taşı görünür yap
-                            placeholder.GetChild(0).gameObject.SetActive(true); // Taşı görünür yap
+                            // --- JOKER KONTROLÜ (KRİTİK KISIM) ---
+                            // Eğer geri almaya çalıştığımız taş Joker ise, numarasına/rengine bakma!
+                            // Çünkü CheckPattern onu değiştirmiş olabilir. Sadece TİP kontrolü yap.
+                            if (
+                                tile.type == TileType.Joker
+                                && tileUI.tileDataInfo.type == TileType.Joker
+                            )
+                            {
+                                tileObj.SetActive(true);
+                                // Joker'i fabrika ayarlarına döndür (Eğer per içindeyken Rengi/Numarası değiştiyse düzelt)
+                                ResetJokerData(tile);
+                                ResetJokerData(tileUI.tileDataInfo);
 
-                            Debug.Log($"Tile {tile.color} {tile.number} geri alındı.");
-
-                            break; // İlk eşleşmeyi bulduktan sonra döngüden çık
+                                Debug.Log("Gizlenen Joker geri alındı ve sıfırlandı.");
+                                found = true;
+                                break;
+                            }
+                            // --- NORMAL TAŞ KONTROLÜ ---
+                            else if (tileUI.tileDataInfo == tile) // Referans eşitliği veya değer eşitliği
+                            {
+                                tileObj.SetActive(true);
+                                Debug.Log($"Tile {tile.color} {tile.number} geri alındı.");
+                                found = true;
+                                break;
+                            }
                         }
                     }
                 }
             }
+            if (!found)
+                Debug.LogWarning(
+                    $"Geri alınacak taş ıstakada bulunamadı: {tile.color} {tile.number} type:{tile.type}"
+                );
         }
 
+        // --- 2. MASADAKİ GÖRSELLERİ SİL ---
         foreach (GameObject meldTile in meldTileGO)
         {
-            if (meldTileGO.Count > 0)
+            if (meldTile != null)
             {
                 TileUI tileUI = meldTile.GetComponent<TileUI>();
-                if (meldTile.transform.parent.parent == colorPerPlaceHolder)
+                if (tileUI != null)
                 {
-                    occupiedRows[tileUI.tileRow] = false;
-                    //tileDistrubite.photonView.RPC("UnMergeValidPers", RpcTarget.AllBuffered, tiles, GetPlayerQue());
-                }
-                else if (meldTile.transform.parent.parent == numberPerPlaceHolder)
-                {
-                    //tileDistrubite.photonView.RPC("UnMergeValidPers", RpcTarget.AllBuffered, tiles, GetPlayerQue());
+                    Transform grandParent = meldTile.transform.parent.parent;
 
-                    occupiedRowsNumber[tileUI.tileRow] = false;
+                    if (grandParent == colorPerPlaceHolder)
+                        occupiedRows[tileUI.tileRow] = false;
+                    else if (grandParent == numberPerPlaceHolder)
+                        occupiedRowsNumber[tileUI.tileRow] = false;
+                    else if (grandParent == pairPerPlaceHolder)
+                        occupiedRowsPair[tileUI.tileRow] = false;
                 }
-                else if (meldTile.transform.parent.parent == pairPerPlaceHolder)
-                {
-                    //tileDistrubite.photonView.RPC("UnMergeValidPers", RpcTarget.AllBuffered, tiles, GetPlayerQue());
-                    occupiedRowsPair[tileUI.tileRow] = false;
-                }
-                Destroy(meldTile); // Taşı yok et
+                Destroy(meldTile);
             }
         }
-
         meldTileGO.Clear();
+
+        // --- 3. JOKER TAKASLARINI GERİ AL ---
+        // (ActivePers sırasında yerden alınan jokerler varsa)
         foreach (var pendingJoker in pendingJokersToTake)
         {
             if (
@@ -1315,17 +1359,39 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 if (jokerTransform != null)
                 {
                     jokerTransform.gameObject.SetActive(true);
-                    Debug.Log("Gizlenmiş bir joker geri alındı.");
+
+                    // Masadaki jokeri de sıfırla ki temiz kalsın
+                    TileUI jUI = jokerTransform.GetComponent<TileUI>();
+                    if (jUI != null)
+                        ResetJokerData(jUI.tileDataInfo);
+
+                    Debug.Log("Gizlenmiş bir joker (Swap) geri alındı.");
                 }
             }
         }
         pendingJokersToTake.Clear();
+
+        // --- 4. SENKRONİZASYON VE TEMİZLİK ---
         tileDistrubite.photonView.RPC("UnMergeValidPers", RpcTarget.AllBuffered, playerQue);
-        pendingMeldedTiles.RemoveAll(x => x != null);
-        // Geri alınan taşları temizle
-        pendingMeldedTiles.Clear(); // meldedTiles.Clear() yerine
-        pendingMeldInfos.Clear(); // YENİ EKLENDİ
-        // Tahtadaki satırları sıfırla
+
+        pendingMeldedTiles.Clear();
+        pendingMeldInfos.Clear();
+
+        // Puan hesaplamalarını sıfırla ki tekrar açmaya çalışırsa yanlış hesaplamasın
+        // (Bu kısım senin CheckForPer fonksiyonunda her update'de yapılıyor olabilir ama garanti olsun)
+    }
+
+    // --- YARDIMCI METOD (Joker Verisini Düzeltmek İçin) ---
+    private void ResetJokerData(Tiles tile)
+    {
+        if (tile != null && tile.type == TileType.Joker)
+        {
+            // Jokerin orijinal değerleri neyse ona döndür.
+            // Genelde Number 0 veya 13 üzeridir ve rengi yoktur.
+            // ScriptableObject'indeki orijinal haline bakarak burayı düzenleyebilirsin.
+            tile.number = 0;
+            // Rengi değiştirmemize gerek olmayabilir ama TileData'da boşsa boş yap.
+        }
     }
 
     public void CommitJokerTransactions()
@@ -1624,10 +1690,15 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     #region ActivePers
     // ScoreManager.cs içindeki ActivePers metodunu bununla değiştir:
 
+    // ScoreManager.cs -> ActivePers Metodu
+
     public void ActivePers()
     {
+        // --- HAZIRLIK ---
         HashSet<Tiles> usedTilesInThisSession = new HashSet<Tiles>();
         HashSet<Tiles> reservedTiles = new HashSet<Tiles>();
+
+        // Bekleyen (Henüz onaylanmamış) taşları rezerve et
         if (pendingMeldedTiles != null)
             foreach (var t in pendingMeldedTiles)
                 reservedTiles.Add(t);
@@ -1644,6 +1715,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         int loopSafety = 0;
         int maxLoopCount = 50;
 
+        // --- GREEDY (AÇGÖZLÜ) DÖNGÜ: Seri işlemeye izin ver ---
         do
         {
             loopSafety++;
@@ -1654,6 +1726,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             }
 
             actionTaken = false;
+
             foreach (var player in PhotonNetwork.PlayerList)
             {
                 player.CustomProperties.TryGetValue("PlayerQue", out object ownerQueValue);
@@ -1672,15 +1745,18 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                         Placeholder currentPlaceholder =
                             placeholderTransform.GetComponent<Placeholder>();
 
-                        // Sadece BOŞ ve AVAILABLE olanlara bakıyoruz ki işlemci yorulmasın
+                        // Sadece BOŞ ve AVAILABLE olanlara bak
                         if (
                             currentPlaceholder != null
                             && currentPlaceholder.available
                             && currentPlaceholder.AvailableTileInfo != null
                         )
                         {
-                            foreach (var tileInHand in currentPlayerTiles)
+                            for (int tIndex = 0; tIndex < currentPlayerTiles.Count; tIndex++)
                             {
+                                Tiles tileInHand = currentPlayerTiles[tIndex];
+
+                                // Daha önce kullanılanları atla
                                 if (usedTilesInThisSession.Contains(tileInHand))
                                     continue;
                                 if (reservedTiles.Contains(tileInHand))
@@ -1700,12 +1776,12 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                                 {
                                     isMatch = true;
                                 }
-                                // 2. Joker İşleme
+                                // 2. Joker İşleme (Elimde Joker varsa kullanabilsin)
                                 else if (tileInHand.type == TileType.Joker)
                                 {
                                     isMatch = true;
                                 }
-                                // 3. MultiColor Esnek
+                                // 3. MultiColor Esnek (Aynı sayı farklı renk)
                                 else if (
                                     currentMeldType == MeldType.MultiColor
                                     && tileInHand.number == req.number
@@ -1738,6 +1814,24 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
                                 if (isMatch)
                                 {
+                                    // --- JOKER TAKASI KONTROLÜ ---
+                                    // Eğer koyacağımız yerde şu an bir Joker taşı varsa, bu bir TAKAS işlemidir.
+                                    bool isJokerSwap = false;
+                                    if (placeholderTransform.childCount > 0)
+                                    {
+                                        TileUI existing = placeholderTransform
+                                            .GetChild(0)
+                                            .GetComponent<TileUI>();
+                                        if (
+                                            existing != null
+                                            && existing.tileDataInfo.type == TileType.Joker
+                                        )
+                                        {
+                                            isJokerSwap = true;
+                                        }
+                                    }
+
+                                    // Veri Hazırlığı
                                     Tiles tileToSend = new Tiles(
                                         tileInHand.color,
                                         tileInHand.number,
@@ -1750,6 +1844,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                                         tileToSend.type = TileType.Joker;
                                     }
 
+                                    // Joker veya Normal Taş Temizliği (Yerdekini Kaldır)
                                     if (placeholderTransform.childCount > 0)
                                     {
                                         TileUI existingTileUI = placeholderTransform
@@ -1759,23 +1854,20 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                                         {
                                             if (existingTileUI.tileDataInfo.type == TileType.Joker)
                                             {
+                                                // Jokeri oyuncunun eline ver
                                                 tileDistrubite.photonView.RPC(
                                                     "AddTileToPlayerHand",
                                                     RpcTarget.AllBuffered,
                                                     playerQue,
                                                     existingTileUI.tileDataInfo
                                                 );
-                                                existingTileUI.transform.SetParent(null);
-                                                Destroy(existingTileUI.gameObject);
                                             }
-                                            else
-                                            {
-                                                existingTileUI.transform.SetParent(null);
-                                                Destroy(existingTileUI.gameObject);
-                                            }
+                                            existingTileUI.transform.SetParent(null);
+                                            Destroy(existingTileUI.gameObject);
                                         }
                                     }
 
+                                    // Yeni Taşı İşle (Listeye Ekle)
                                     pendingActivePlacements.Add(
                                         new ActiveTilePlacementInfo(
                                             tileToSend,
@@ -1785,6 +1877,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                                         )
                                     );
 
+                                    // Görsel Oluştur (Geçici)
                                     GameObject tempGO = Instantiate(
                                         tilePrefab,
                                         placeholderTransform
@@ -1794,6 +1887,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                                     meldTileGO.Add(tempGO);
                                     tempGO.GetComponent<TileUI>().FitToParent();
 
+                                    // Oyuncunun elinden o taşı sil
                                     tileDistrubite.photonView.RPC(
                                         "DeactivatePlayerTile",
                                         RpcTarget.All,
@@ -1804,10 +1898,24 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                                     usedTilesInThisSession.Add(tileInHand);
                                     currentPlaceholder.available = false;
 
-                                    // --- CRITICAL FIX: BU SATIRI DÖNGÜDEN ÇIKARDIK ---
-                                    // tileDistrubite.RecalculateAllAvailableSlots();
-                                    // Buradan sildik, en sona koyduk.
+                                    // --- YANDAN ALINAN TAŞ SORUNU İÇİN FİKS ---
+                                    if (turnManager != null)
+                                        turnManager.hasProcessedThisTurn = true;
 
+                                    // --- KRİTİK NOKTA: JOKER ALDIYSAK DUR ---
+                                    if (isJokerSwap)
+                                    {
+                                        // Eğer yaptığımız hamle bir JOKER TAKASI ise:
+                                        // Sistemi anında durdur, hesapla ve çık.
+                                        // Böylece kazanılan Joker o tur hemen kullanılmaz.
+                                        tileDistrubite.RecalculateAllAvailableSlots();
+                                        Debug.Log(
+                                            "Joker takası yapıldı. Seri işleme durduruluyor."
+                                        );
+                                        return;
+                                    }
+
+                                    // Normal bir taş işlediysek, döngüye (sıradaki taşa) devam et.
                                     actionTaken = true;
                                     goto nextPlaceholder;
                                 }
@@ -1820,9 +1928,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             }
         } while (actionTaken);
 
-        // --- DOĞRU YER BURASI ---
-        // Tüm taşlar yerleştikten sonra sadece 1 KERE hesapla.
-        // Bu sayede oyun donmaz ve sunucudan düşmezsin.
+        // Döngü bittiğinde son durumu hesapla
         tileDistrubite.RecalculateAllAvailableSlots();
     }
     #endregion
@@ -1842,6 +1948,162 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
     #endregion
     #region Hide and remove tiles from the Board
+    // ScoreManager.cs içine ekle:
+
+    public void UndoLastProcess()
+    {
+        if (actionHistory.Count == 0)
+        {
+            Debug.Log("Geri alınacak işlem yok.");
+            return;
+        }
+
+        // En son yapılan işlemi al
+        ProcessAction lastAction = actionHistory.Pop();
+        int playerQue = GetPlayerQue();
+
+        // 1. Oynadığın taşı tahtadan kaldır
+        if (lastAction.visualObject != null)
+        {
+            meldTileGO.Remove(lastAction.visualObject); // Listeden sil
+            Destroy(lastAction.visualObject); // Sahneden sil
+        }
+
+        // 2. Oynadığın taşı eline geri ver (Görseli aç)
+        // DeactivatePlayerTile yapmıştık, şimdi geri açmamız lazım.
+        // Ancak DeactivatePlayerTile görseli sildiği için AddTileToPlayerHand yapmamız gerekebilir
+        // VEYA sadece kapalı olanı açabiliriz.
+        // En güvenlisi: Oyuncuya veri olarak geri verelim, TileDistrubite onu oluşturur.
+
+        // NOT: DeactivatePlayerTile görseli sadece disable ettiyse (SetActive false), onu bulup true yapabiliriz.
+        // Ama TileDistrubite kodunda Destroy etme ihtimalimiz de var.
+        // Eğer sadece SetActive(false) ise şunu kullan:
+        ReactivatePlayerTile(lastAction.tilePlayed);
+
+        // 3. EĞER JOKER TAKASIYSA (Kritik Kısım)
+        if (lastAction.type == ActionType.JokerSwap)
+        {
+            // A) Jokeri oyuncunun elinden SİL (Veri olarak)
+            // Çünkü ActivePers'te "AddTileToPlayerHand" ile vermiştik.
+            tileDistrubite.photonView.RPC(
+                "RemoveActiveTileFromPlayerList",
+                RpcTarget.AllBuffered,
+                playerQue,
+                lastAction.tileTaken
+            );
+
+            // B) Jokeri oyuncunun elinden görsel olarak SİL
+            // (TileDistrubite içinde RemoveTileFromPlayerListByValue görseli de siliyor olmalı)
+            tileDistrubite.photonView.RPC(
+                "RemoveTileFromPlayerListByValue",
+                RpcTarget.AllBuffered,
+                playerQue,
+                lastAction.tileTaken
+            );
+
+            // C) Jokeri MASAYA geri koy
+            GameObject jokerGO = Instantiate(tilePrefab, lastAction.targetSlot);
+            TileUI jokerUI = jokerGO.GetComponent<TileUI>();
+            if (jokerUI != null)
+            {
+                jokerUI.SetTileData(lastAction.tileTaken); // Joker verisini geri yükle
+                jokerUI.FitToParent();
+            }
+        }
+
+        // Placeholder'ı tekrar müsait yap
+        Placeholder ph = lastAction.targetSlot.GetComponent<Placeholder>();
+        if (ph != null)
+        {
+            ph.available = true;
+            // AvailableTileInfo zaten değişmediği için aynı kalabilir
+        }
+
+        // Pending listesinden son ekleneni sil
+        if (pendingActivePlacements.Count > 0)
+        {
+            pendingActivePlacements.RemoveAt(pendingActivePlacements.Count - 1);
+        }
+
+        // Durumu güncelle
+        tileDistrubite.RecalculateAllAvailableSlots();
+    }
+
+    // Yardımcı Fonksiyon: Kapanan taşı geri açmak için
+    private void ReactivatePlayerTile(Tiles tileData)
+    {
+        // Oyuncunun ıstakasını tara, kapalı olan taşı bul ve aç
+        foreach (Transform t in playerTileContainer)
+        {
+            if (t.childCount > 0)
+            {
+                GameObject obj = t.GetChild(0).gameObject;
+
+                // Sadece kapalı olanlara bak
+                if (!obj.activeSelf)
+                {
+                    TileUI ui = obj.GetComponent<TileUI>();
+                    if (ui != null)
+                    {
+                        bool isMatch = false;
+
+                        // --- JOKER KONTROLÜ ---
+                        // Eğer aradığımız taş Joker ise, ıstakadaki kapalı herhangi bir Joker bizimdir.
+                        if (
+                            tileData.type == TileType.Joker
+                            && ui.tileDataInfo.type == TileType.Joker
+                        )
+                        {
+                            isMatch = true;
+                            ResetJokerData(ui.tileDataInfo); // Veriyi temizle
+                            ResetJokerData(tileData); // Referansı temizle
+                        }
+                        // --- NORMAL TAŞ ---
+                        else if (
+                            ui.tileDataInfo.color == tileData.color
+                            && ui.tileDataInfo.number == tileData.number
+                            && ui.tileDataInfo.type == tileData.type
+                        )
+                        {
+                            isMatch = true;
+                        }
+
+                        if (isMatch)
+                        {
+                            obj.SetActive(true);
+
+                            // pendingMeldedTiles listesinden silme işlemi
+                            // Joker ise referans veya değer tutmayabilir, tiple arayıp siliyoruz.
+                            if (tileData.type == TileType.Joker)
+                            {
+                                var jokerInList = pendingMeldedTiles.FirstOrDefault(x =>
+                                    x.type == TileType.Joker
+                                );
+                                if (jokerInList != null)
+                                    pendingMeldedTiles.Remove(jokerInList);
+                            }
+                            else
+                            {
+                                if (pendingMeldedTiles.Contains(tileData))
+                                    pendingMeldedTiles.Remove(tileData);
+                                else
+                                {
+                                    var toRemove = pendingMeldedTiles.FirstOrDefault(x =>
+                                        x.color == tileData.color && x.number == tileData.number
+                                    );
+                                    if (toRemove != null)
+                                        pendingMeldedTiles.Remove(toRemove);
+                                }
+                            }
+                            return; // Bulduk ve açtık, çıkabiliriz.
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ScoreManager.cs
 
     public void CommitAndStoreMelds()
     {
@@ -1851,43 +2113,40 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             return;
         }
 
-        // 1. Geçici bilgileri kalıcı listeye aktar
+        // 1. Kalıcı listeye aktar
         committedMelds.AddRange(pendingMeldInfos);
 
-        Debug.Log(
-            $"{pendingMeldInfos.Count} adet taş bilgisi kalıcı listeye eklendi. Toplam: {committedMelds.Count}"
-        );
-
-        // 2. Oyuncunun elinden taşları RPC ile kaldır (RemoveMeldedTiles'daki mantık)
         List<Tiles> playerTiles = tileDistrubite.GetPlayerTiles();
         int playerQue = GetPlayerQue();
 
         foreach (var tileInfo in pendingMeldInfos)
         {
+            // ESKİ KOD (Index ile çağırma - SİLİNECEK):
+            /*
             int tileIndex = playerTiles.IndexOf(tileInfo.tileData);
             if (tileIndex != -1)
             {
-                // Bu RPC, oyuncunun elindeki taş listesinden bu taşı silmeli veya deaktif etmeli
-                tileDistrubite.photonView.RPC(
-                    "MeldTiles",
-                    RpcTarget.AllBuffered,
-                    playerQue,
-                    tileIndex
-                );
-
-                // Oyuncunun ıstakasındaki GameObject'i yok et
+                tileDistrubite.photonView.RPC("MeldTiles", RpcTarget.AllBuffered, playerQue, tileIndex);
                 DestroyTileGameObject(tileInfo.tileData);
             }
+            */
+
+            // YENİ KOD (Direkt Nesne ile çağırma - Index kayması olmaz):
+            tileDistrubite.photonView.RPC(
+                "MeldTiles",
+                RpcTarget.AllBuffered,
+                playerQue,
+                tileInfo.tileData
+            );
+
+            // Görseli yerel oyuncuda yok et
+            DestroyTileGameObject(tileInfo.tileData);
         }
 
-        // 3. Geçici listeleri temizle
+        // Temizlik
         pendingMeldInfos.Clear();
         pendingMeldedTiles.Clear();
-        meldTileGO.Clear(); // Masadaki geçici GameObject referanslarını da temizle
-
-        // Tahtadaki satırların doluluk durumunu sıfırlamaya gerek YOK, çünkü bunlar kalıcı oldu.
-        // Eğer bu method sonrası yeni per açılabilecekse bu satırlar sıfırlanmamalı.
-        // Eğer oyun bitiyorsa veya yeni el başlıyorsa o zaman sıfırlanabilir.
+        meldTileGO.Clear();
     }
 
     private void DestroyTileGameObject(Tiles tile)

@@ -120,18 +120,26 @@ public class Placeholder : MonoBehaviour, IDropHandler
         GameObject droppedTile
     )
     {
-        // *Bu metodda değişiklik yapmana gerek yok, mantığı doğru*
-        // Sadece PlayerTileContainer içinde çalışacağı için masadaki taşları bozmaz.
-
         Transform newPlaceholder = null;
 
-        // Sağ tarafı tara
         int currentIndex = currentPlaceholder.GetSiblingIndex();
         int maxIndex = currentPlaceholder.parent.childCount - 1;
 
+        // --- 1. SAĞ TARAFI TARA ---
         for (int i = currentIndex + 1; i <= maxIndex; i++)
         {
             Transform placeholder = currentPlaceholder.parent.GetChild(i);
+            Placeholder phScript = placeholder.GetComponent<Placeholder>();
+
+            // --- [KRİTİK DÜZELTME] DUVAR KONTROLÜ ---
+            // Eğer baktığımız yer "Atma Yeri" (isRight) ise, oraya taş koyamayız.
+            // Ayrıca sağ taraf bitmiş demektir, döngüyü kır.
+            if (phScript != null && phScript.isRight)
+            {
+                // Debug.Log("Sağ tarafta boş yer ararken Duvara (isRight) çarpıldı. Arama durduruluyor.");
+                break;
+            }
+
             if (placeholder.childCount == 0)
             {
                 newPlaceholder = placeholder;
@@ -139,12 +147,18 @@ public class Placeholder : MonoBehaviour, IDropHandler
             }
         }
 
-        // Sağda yoksa solu tara
+        // --- 2. SOL TARAFI TARA (Eğer sağda yer yoksa) ---
         if (newPlaceholder == null)
         {
             for (int i = currentIndex - 1; i >= 0; i--)
             {
                 Transform placeholder = currentPlaceholder.parent.GetChild(i);
+                Placeholder phScript = placeholder.GetComponent<Placeholder>();
+
+                // Sol tarafta isRight olma ihtimali düşük ama yine de kontrol edelim
+                if (phScript != null && phScript.isRight)
+                    continue;
+
                 if (placeholder.childCount == 0)
                 {
                     newPlaceholder = placeholder;

@@ -31,6 +31,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     private CanvasGroup canvasGroup;
     private TurnManager turnManager;
     private TileDistrubite tileDistrubite;
+    private Coroutine currentMoveCoroutine;
 
     // Container Transformları
     public Transform middleTileContainer; // Orta taş havuzu
@@ -205,17 +206,50 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     #region On Begin Drag
     public void OnBeginDrag(PointerEventData eventData)
     {
-        // 1. Hareket İzni Kontrolü (TurnManager vb.)
+        if (currentMoveCoroutine != null)
+        {
+            StopCoroutine(currentMoveCoroutine);
+            currentMoveCoroutine = null;
+        }
+        // --- 1. SOL TARAFTAN ÇEKME KONTROLÜ (EN BAŞA KOYUYORUZ) ---
+        // Eğer taş Soldaki (Yandaki) kutudaysa...
+        if (transform.parent == leftTileContainer)
+        {
+            // A) SIRA SENDE Mİ?
+            if (!turnManager.IsPlayerTurn())
+            {
+                Debug.LogWarning("Sıra sende değil! Yandaki taşa dokunamazsın.");
+                eventData.pointerDrag = null; // Sürüklemeyi iptal et
+                return;
+            }
+
+            // B) ZATEN TAŞ ÇEKTİN Mİ? (Ortadan veya Yandan)
+            // canDrop == true ise, elinde atılacak taş var demektir, yani çekmişsindir.
+            if (turnManager.canDrop == true)
+            {
+                Debug.LogWarning("Zaten taş çektiniz! Yandan alamazsınız.");
+                eventData.pointerDrag = null; // Sürüklemeyi iptal et
+                return;
+            }
+
+            // Şartlar uygunsa işaretle
+            fromLeftContainer = true;
+        }
+        // -----------------------------------------------------------
+
+        // 2. Genel Hareket İzni (Istaka içi düzenleme vs. için)
         var (canDrop, canDraw) = CanMoveTile();
 
         if (!canDraw)
         {
+            // Eğer soldan çekmeye çalışıyorsak yukarıdaki blok zaten yakalardı.
+            // Burası daha çok ıstaka içi veya orta taş için genel kontrol.
             Debug.LogWarning("Bu taşı şu an hareket ettiremezsiniz!");
             eventData.pointerDrag = null;
             return;
         }
 
-        // 2. Rakip Alan ve Gösterge Kontrolü
+        // 3. Yasaklı Alanlar (Rakip, Gösterge, Atma Yeri)
         if (
             gameObject.transform.parent.tag == "OtherSideTileContainer"
             || isIndicatorTile
@@ -227,35 +261,25 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             return;
         }
 
-        // --- 3. KRİTİK DÜZELTME: MASADAKİ (MELD) TAŞLARI KİLİTLEME ---
+        // 4. Masadaki (Meld) Taşları Kilitleme
+        Transform currentParent = transform.parent;
+        Transform grandParent = currentParent.parent;
 
-        Transform currentParent = transform.parent; // Taşın içinde olduğu Placeholder
-        Transform grandParent = currentParent.parent; // Placeholder'ın bağlı olduğu Container
-
-        // Eğer taşın "Büyük Babası" (GrandParent) Istaka (PlayerTileContainer) DEĞİLSE...
-        // (Yani taş ıstakada durmuyorsa)
+        // Eğer taşın dedesi PlayerTileContainer değilse (yani ıstakada değilse)
         if (grandParent != playerTileContainer)
         {
-            // Ve taş Orta, Sol veya Sağ atma alanında da değilse...
-            // (Yani çekilebilir bir taş da değilse)
+            // Ve bu taş Çekilebilir Alanlarda da (Orta, Sol) değilse...
             if (
                 currentParent != middleTileContainer
                 && currentParent != leftTileContainer
                 && currentParent != rightTileContainer
             )
             {
-                // O ZAMAN BU TAŞ MASAYA AÇILMIŞ BİR TAŞTIR! DOKUNMA!
+                // Demek ki masaya açılmış bir taş. KİLİTLE.
                 Debug.LogWarning("Masaya işlenmiş taşları hareket ettiremezsiniz!");
-                eventData.pointerDrag = null; // Sürüklemeyi anında iptal et
+                eventData.pointerDrag = null;
                 return;
             }
-        }
-        // --------------------------------------------------------------
-
-        // 4. Sol Konteyner Kontrolü
-        if (gameObject.transform.parent == leftTileContainer)
-        {
-            fromLeftContainer = true;
         }
 
         // --- SÜRÜKLEME BAŞLATILIYOR ---
@@ -296,6 +320,10 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     }
     #endregion
     #region On End Drag
+    [Header("Drag Settings")]
+    [SerializeField]
+    private float dropDistanceThreshold = 100f;
+
     public void OnEndDrag(PointerEventData eventData)
     {
         // 1. YETKİSİZ ALAN KONTROLÜ
@@ -328,7 +356,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         }
 
         // GEÇERLİ BİR YER BULUNDUYSA VE MESAFE UYGUNSA
-        if (closestPlaceholder != null && closestDistance < 40f)
+        if (closestPlaceholder != null && closestDistance < dropDistanceThreshold)
         {
             if (turnManager.IsPlayerTurn() == true) // SIRA BİZDE Mİ?
             {
@@ -718,6 +746,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     #region Shift_Tiles
     private void ShiftTilesRight(Transform parentContainer, Transform tileToShift, int startIndex)
     {
+        // ... (İlk kontroller aynı) ...
         if (parentContainer != playerTileContainer)
             return;
         if (gameObject.transform.parent == middleTileContainer)
@@ -727,33 +756,80 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
         TileUI tileUI = tileToShift.GetComponent<TileUI>();
         if (tileUI != null && tileUI.isIndicatorTile)
-        {
-            Debug.LogWarning("Gösterge taşını kaydıramazsın!");
-            return; // Metottan çık, kaydırma yapma.
-        }
+            return;
+
+        // --- 1. DUVAR ANALİZİ (LOGLU) ---
+        int wallIndex = -1;
         for (int i = startIndex; i < parentContainer.childCount; i++)
+        {
+            Placeholder ph = parentContainer.GetChild(i).GetComponent<Placeholder>();
+            if (ph != null && ph.isRight)
+            {
+                wallIndex = i;
+                // LOG: Duvarın yerini tespit et
+                Debug.Log(
+                    $"[LOG] Duvar (isRight) tespit edildi. Index: {wallIndex}, Name: {ph.name}"
+                );
+                break;
+            }
+        }
+        if (wallIndex == -1)
+            wallIndex = parentContainer.childCount;
+
+        // --- 2. YER KONTROLÜ ---
+        bool hasSpace = false;
+        for (int i = startIndex; i < wallIndex; i++)
+        {
+            if (parentContainer.GetChild(i).childCount == 0)
+            {
+                hasSpace = true;
+                break;
+            }
+        }
+
+        // --- 3. KARAR ANI (LOGLU) ---
+        if (!hasSpace)
+        {
+            Debug.LogWarning(
+                $"[LOG] SAĞ TARAF DOLU! StartIndex: {startIndex}, DuvarIndex: {wallIndex}. İşlem İPTAL ediliyor."
+            );
+
+            if (tileToShift == transform)
+            {
+                StartCoroutine(SmoothMove(transform, originalParent));
+            }
+            return; // ÇIK, KİMSE KIPIRDAMASIN.
+        }
+
+        // -------------------------------------------------------------
+        // 4. KAYDIRMA (LOGLU)
+        // -------------------------------------------------------------
+        for (int i = startIndex; i < wallIndex; i++)
         {
             Transform currentPlaceholder = parentContainer.GetChild(i);
 
-            // Eğer sağ alan boşsa, taş buraya taşınabilir
-            if (currentPlaceholder == rightTileContainer && rightTileContainer.childCount == 0)
+            // LOG: Hangi kutuya işlem yapıyoruz?
+            Placeholder checkPh = currentPlaceholder.GetComponent<Placeholder>();
+            if (checkPh != null && checkPh.isRight)
             {
-                StartCoroutine(SmoothMove(tileToShift, rightTileContainer));
-
-                return;
+                Debug.LogError(
+                    $"[KRİTİK HATA] Kod 'isRight' olan yere girmeye çalıştı! Index: {i}, Name: {currentPlaceholder.name}"
+                );
+                return; // ACİL ÇIKIŞ
             }
 
+            // A) BOŞLUK
             if (currentPlaceholder.childCount == 0)
             {
                 StartCoroutine(SmoothMove(tileToShift, currentPlaceholder));
-
+                Debug.Log($"[LOG] Taş {i}. indekse yerleşti.");
                 return;
             }
+            // B) DOLU
             else
             {
                 Transform nextTileToShift = currentPlaceholder.GetChild(0);
                 StartCoroutine(SmoothMove(tileToShift, currentPlaceholder));
-
                 tileToShift = nextTileToShift;
             }
         }
@@ -761,40 +837,76 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
     private void ShiftTilesLeft(Transform parentContainer, Transform tileToShift, int startIndex)
     {
+        // 1. Temel Kontroller
         if (parentContainer != playerTileContainer)
-        {
             return;
-        }
         if (gameObject.transform.parent == middleTileContainer)
             return;
         if (gameObject.transform.parent.tag == "MeldPlaceholder")
             return;
+
         TileUI tileUI = tileToShift.GetComponent<TileUI>();
         if (tileUI != null && tileUI.isIndicatorTile)
+            return;
+
+        // --- [YENİ] SOL TARAFTA BOŞLUK VAR MI? ---
+        // StartIndex'ten 0'a kadar olan kısımda en az 1 tane BOŞLUK lazım.
+        // Eğer hiç boşluk yoksa, en soldaki (0. indeks) taş boşluğa düşer ve kaybolur.
+
+        bool hasSpace = false;
+
+        for (int i = startIndex; i >= 0; i--)
         {
-            Debug.LogWarning("Gösterge taşını kaydıramazsın!");
-            return; // Metottan çık, kaydırma yapma.
+            if (parentContainer.GetChild(i).childCount == 0)
+            {
+                hasSpace = true;
+                break; // Yer bulduk!
+            }
         }
+
+        // --- KARAR ANI ---
+        if (!hasSpace)
+        {
+            Debug.LogWarning(
+                "Sol taraf tamamen dolu! Kaydırma yapılırsa taş kaybolacak. İŞLEM İPTAL."
+            );
+
+            // Eğer bu fonksiyonu çağıran, elimizdeki sürüklenen taş ise onu eski yerine gönder.
+            if (tileToShift == transform)
+            {
+                StartCoroutine(SmoothMove(transform, originalParent));
+            }
+            return; // ÇIK, HİÇBİR TAŞI OYNATMA.
+        }
+
+        // -------------------------------------------------------------
+        // GÜVENLİ SOLA KAYDIRMA
+        // -------------------------------------------------------------
         for (int i = startIndex; i >= 0; i--)
         {
             Transform currentPlaceholder = parentContainer.GetChild(i);
-            if (currentPlaceholder == rightTileContainer && rightTileContainer.childCount == 0)
-            {
-                StartCoroutine(SmoothMove(tileToShift, rightTileContainer));
 
-                return;
-            }
+            // Yasaklı Alan Kontrolü (Atma Yeri vb.)
+            Placeholder ph = currentPlaceholder.GetComponent<Placeholder>();
+            if (ph != null && ph.isRight)
+                return; // Sol tarafta isRight olmaz ama güvenlik olsun.
+
+            // A) BOŞLUK BULUNDU
             if (currentPlaceholder.childCount == 0)
             {
                 StartCoroutine(SmoothMove(tileToShift, currentPlaceholder));
-
-                return;
+                return; // Taş yerleşti, zincir bitti.
             }
+            // B) DOLU İSE ZİNCİRLEME DEVAM
             else
             {
+                // Buradaki taşı eline al
                 Transform nextTileToShift = currentPlaceholder.GetChild(0);
+
+                // Elimdeki taşı buraya koy
                 StartCoroutine(SmoothMove(tileToShift, currentPlaceholder));
 
+                // Eline aldığın taşla bir sonraki (daha soldaki) kutuya git
                 tileToShift = nextTileToShift;
             }
         }
@@ -802,26 +914,52 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     #endregion
 
     #region SmoothMove
+    private void StartSmoothMove(Transform tile, Transform target)
+    {
+        // Eğer halihazırda çalışan bir hareket varsa, anında DURDUR.
+        if (currentMoveCoroutine != null)
+        {
+            StopCoroutine(currentMoveCoroutine);
+            currentMoveCoroutine = null;
+        }
+        // Yeni hareketi başlat ve referansını sakla
+        currentMoveCoroutine = StartCoroutine(SmoothMove(tile, target));
+    }
+
     private IEnumerator SmoothMove(Transform tile, Transform targetPlaceholder)
     {
         Vector3 startPos = tile.position;
         Vector3 targetPos = targetPlaceholder.position;
         float elapsedTime = 0f;
-        float journeyTime = 0.5f / moveSpeed;
+        // Hız 0 gelirse donmasın diye güvenlik
+        float speed = (moveSpeed > 0) ? moveSpeed : 5f;
+        float journeyTime = 0.5f / speed;
 
         while (elapsedTime < journeyTime)
         {
+            // Eğer taş yok olduysa döngüyü kır
+            if (tile == null)
+                yield break;
+
             tile.position = Vector3.Lerp(startPos, targetPos, (elapsedTime / journeyTime));
             elapsedTime += Time.deltaTime;
             yield return null;
         }
 
-        tile.SetParent(targetPlaceholder, false);
-        FitToParent();
-        CheckPlace();
-        scoreManager.CheckForPer();
-        tile.localPosition = Vector3.zero;
-        tile.localScale = Vector3.one;
+        if (tile != null)
+        {
+            tile.SetParent(targetPlaceholder, false);
+            FitToParent();
+            CheckPlace();
+            if (scoreManager != null)
+                scoreManager.CheckForPer();
+
+            tile.localPosition = Vector3.zero;
+            tile.localScale = Vector3.one;
+        }
+
+        // Hareket bitti, değişkeni temizle
+        currentMoveCoroutine = null;
     }
     #endregion
 }
