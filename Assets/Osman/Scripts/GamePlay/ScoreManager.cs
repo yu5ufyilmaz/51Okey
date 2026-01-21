@@ -2155,28 +2155,35 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         {
             if (placeholder.childCount > 0)
             {
-                TileUI tileUI = placeholder.GetChild(0).GetComponent<TileUI>();
+                GameObject tileObj = placeholder.GetChild(0).gameObject;
+
+                // --- DÜZELTME BAŞLANGICI ---
+                // Sadece KAPALI (Gizlenmiş) olan taşları hedef almalıyız.
+                // Çünkü açık olanlar ya elimizde kalanlardır ya da şu an yere atılmaktadır.
+                if (tileObj.activeSelf)
+                    continue;
+                // --- DÜZELTME BİTİŞİ ---
+
+                TileUI tileUI = tileObj.GetComponent<TileUI>();
                 if (tileUI != null)
                 {
                     bool isMatch = false;
-                    // [GÜNCELLEME] JOKER GÖRSEL SİLME (Esnek Kontrol)
+
                     if (tile.type == TileType.Joker)
                     {
-                        // Veri değişmiş olsa bile Tipi Joker ise sil
                         if (tileUI.tileDataInfo.type == TileType.Joker)
                             isMatch = true;
                     }
                     else
                     {
-                        // Normal taş ise tam eşleşme
                         if (tileUI.tileDataInfo == tile)
                             isMatch = true;
                     }
 
                     if (isMatch)
                     {
-                        Destroy(placeholder.GetChild(0).gameObject);
-                        return; // İlk bulduğunu sil ve çık
+                        Destroy(tileObj);
+                        return; // Doğru taşı sildik, döngüden çık.
                     }
                 }
             }
