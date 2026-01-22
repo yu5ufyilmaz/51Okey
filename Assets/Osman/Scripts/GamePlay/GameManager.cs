@@ -103,6 +103,33 @@ public class GameManager : MonoBehaviourPunCallbacks
         Debug.Log("GameManager: Oyun Hazır.");
     }
 
+    // --- RENK ÇARPANI HESAPLAMA ---
+    public int GetCurrentColorMultiplier()
+    {
+        Tiles indicator = tileDistrubite.GetIndicatorTile();
+        if (indicator == null)
+            return 1; // Hata önleyici varsayılan
+
+        // KURAL: Roket (Sahte Okey açıldıysa) -> 8 Katı
+        if (indicator.type == TileType.FakeJoker)
+            return 8;
+
+        // KURAL: Renk Çarpanları
+        switch (indicator.color)
+        {
+            case TileColor.yellow:
+                return 6; // Sarı
+            case TileColor.red:
+                return 5; // Kırmızı
+            case TileColor.black:
+                return 4; // Siyah
+            case TileColor.blue:
+                return 3; // Mavi
+            default:
+                return 1;
+        }
+    }
+
     // --- LİMİT GÜNCELLEME (KATLAMALI SİSTEM) ---
     public void TryUpdateTableLimit(int openedScore)
     {
@@ -130,25 +157,57 @@ public class GameManager : MonoBehaviourPunCallbacks
     public void HandleFailedSidePick(Tiles tileToThrow)
     {
         int currentPlayerQue = tileDistrubite.GetQueueNumberOfPlayer(PhotonNetwork.LocalPlayer);
-        scoreManager.UpdatePlayerScore(currentPlayerQue, 100);
+
+        // KURAL: Yandan alıp açamamanın cezası 250
+        photonView.RPC("AddGeneralPenaltyRPC", RpcTarget.MasterClient, currentPlayerQue, 250);
 
         Tiles tileToReturn = (currentSidePickTile != null) ? currentSidePickTile : tileToThrow;
         StartCoroutine(RollbackSidePickProcess(currentPlayerQue, tileToReturn));
     }
 
-    public void ApplySidePickSuccessPenalty()
+    [PunRPC]
+    public void AddGeneralPenaltyRPC(int playerQue, int penaltyScore)
+    {
+        // Sadece Master Client işlesin ve dağıtsın
+        if (PhotonNetwork.IsMasterClient)
+        {
+            scoreManager.UpdatePlayerScore(playerQue, penaltyScore);
+            Debug.Log($"[GENEL CEZA] Oyuncu {playerQue} için {penaltyScore} puan ceza işlendi.");
+        }
+    }
+
+    [PunRPC]
+    public void ApplySidePickSuccessPenaltyRPC(int currentPlayerQue)
     {
         if (!PhotonNetwork.IsMasterClient)
             return;
-        if (currentSidePickTile == null)
-            return;
 
-        int currentPlayerQue = tileDistrubite.GetQueueNumberOfPlayer(PhotonNetwork.LocalPlayer);
-        int previousPlayerQue = turnManager.GetPreviousPlayerQue(currentPlayerQue);
-        int penalty = currentSidePickTile.number * 10;
+        int penalty = 0;
 
-        scoreManager.UpdatePlayerScore(previousPlayerQue, penalty);
+        // KURAL: Taşın değerinin 10 katı.
+        if (currentSidePickTile != null)
+        {
+            penalty = currentSidePickTile.number * 10;
+        }
+        else
+        {
+            // Eğer taş null geldiyse varsayılan ceza 250
+            Debug.LogWarning("Yandan alınan taş verisi NULL! Varsayılan 250 ceza uygulanıyor.");
+            penalty = 250;
+        }
+
+        // HEDEF: Cezayı "Açan" değil, taşı "Atan" (Bir Önceki Oyuncu) yer.
+        int targetPlayerQue = (currentPlayerQue == 1) ? 4 : currentPlayerQue - 1;
+
+        // Cezayı Uygula
+        scoreManager.UpdatePlayerScore(targetPlayerQue, penalty);
+
+        // Taşı temizle
         currentSidePickTile = null;
+
+        Debug.Log(
+            $"[YANDAN CEZA] Alan/Açan: {currentPlayerQue}, Cezayı Yiyen: {targetPlayerQue}, Puan: {penalty}"
+        );
     }
 
     public void CancelSidePickAction()
@@ -191,143 +250,33 @@ public class GameManager : MonoBehaviourPunCallbacks
         currentSidePickTile = null;
     }
 
-    public void CalculateThrowPenalty(Tiles thrownTile)
+    [PunRPC]
+    public void ApplyProcessingPenaltyRPC(int victimQue, int penaltyAmount)
     {
-        if (!PhotonNetwork.IsMasterClient)
-            return;
-
-        Tiles indicator = tileDistrubite.GetIndicatorTile();
-        int penaltyAmount = 0;
-        string reason = "";
-
-        // --- DETAYLI LOG (Hata varsa sebebini görmek için) ---
-        Debug.Log(
-            $"[CEZA KONTROLÜ] Atılan: {thrownTile.color} {thrownTile.number} ({thrownTile.type})"
-        );
-
-        // 1. OKEYİ HESAPLA (Matematiksel)
-        int okeyNumber = -1;
-        TileColor okeyColor = TileColor.black;
-
-        if (indicator != null)
+        if (PhotonNetwork.IsMasterClient)
         {
-            okeyColor = indicator.color;
-            okeyNumber = indicator.number + 1;
-            if (okeyNumber > 13)
-                okeyNumber = 1;
-
-            Debug.Log($"[CEZA KONTROLÜ] Bu elin Okeyi: {okeyColor} {okeyNumber} olmalı.");
-        }
-
-        // 2. KONTROLLERİ YAP
-
-        // --- A) OKEY ATMA CEZASI ---
-        // Kural: Atılan taşın rengi ve numarası Okey ile aynıysa...
-        // VE bu taş "Sahte Okey" (Resimli taş) değilse...
-        // O zaman bu taş %100 Gerçek Okeydir (Jokerdir).
-
-        if (thrownTile.color == okeyColor && thrownTile.number == okeyNumber)
-        {
-            if (thrownTile.type != TileType.FakeJoker)
-            {
-                // FakeJoker değilse ve numarası tutuyorsa, bu Jokerdir.
-                penaltyAmount = 101;
-                reason = "Okey Atıldı";
-                Debug.Log("<color=red>OKEY TESPİT EDİLDİ!</color>");
-            }
-            else
-            {
-                Debug.Log(
-                    "Atılan taş Okey sayılarına sahip ama 'Sahte Okey' olduğu için ceza yok."
-                );
-            }
-        }
-        // Eğer tipi direkt Joker olarak geliyorsa (ekstra güvenlik)
-        else if (thrownTile.type == TileType.Joker)
-        {
-            penaltyAmount = 101;
-            reason = "Okey (Type=Joker) Atıldı";
-        }
-        // --- B) GÖSTERGE ATMA CEZASI ---
-        else if (
-            indicator != null
-            && thrownTile.color == indicator.color
-            && thrownTile.number == indicator.number
-        )
-        {
-            penaltyAmount = 101;
-            reason = "Gösterge Atıldı";
-        }
-        // --- C) İŞLEK TAŞ ATMA CEZASI ---
-        else
-        {
-            bool isProcessable = false;
-            if (tileDistrubite.availableTiles != null && thrownTile.type != TileType.FakeJoker)
-            {
-                foreach (var t in tileDistrubite.availableTiles)
-                {
-                    // Tipine bakmaksızın renk ve numara tutuyor mu?
-                    if (t.color == thrownTile.color && t.number == thrownTile.number)
-                    {
-                        // Ama o yer Joker için ayrılmışsa (Type=Joker) ve biz normal sayı atıyorsak yine de işlektir
-                        // Sadece Jokerin kendisini (available listesindeki Joker tipi) hariç tutmaya gerek yok
-                        // Çünkü available listesindeki her şey "Buraya taş konabilir" demektir.
-
-                        isProcessable = true;
-                        Debug.Log($"İşlek Bulundu: {t.color} {t.number} masada boş.");
-                        break;
-                    }
-                }
-            }
-            if (isProcessable)
-            {
-                penaltyAmount = 101;
-                reason = "İşlek Atıldı";
-            }
-        }
-
-        // CEZAYI UYGULA
-        if (penaltyAmount > 0)
-        {
-            int targetPlayer = turnManager.currentTurnPlayer;
-            scoreManager.UpdatePlayerScore(targetPlayer, penaltyAmount);
+            scoreManager.UpdatePlayerScore(victimQue, penaltyAmount);
             Debug.Log(
-                $"<color=red>CEZA KESİLDİ!</color> Sebep: {reason} -> Oyuncu {targetPlayer} -{penaltyAmount} Puan"
+                $"[İŞLEME CEZASI] Oyuncu {victimQue} üzerine taş işlendi. Ceza: +{penaltyAmount}"
             );
         }
     }
 
-    // --- OYUN BİTİŞ KONTROLÜ ---
-    public void CheckGameStatus(HandData data)
+    // Geri Al (Undo) yapıldığında çağrılır: Kesilen cezayı iade eder.
+    [PunRPC]
+    public void RevertProcessingPenaltyRPC(int victimQue, int penaltyAmount)
     {
-        if (!isGameReady || isGameEnded)
-            return;
-
-        // 1. El Bitti (KAZANAN VAR)
-        if (data.handTiles.Count == 0)
-        {
-            Debug.Log($"OYUN BİTTİ! Kazanan ActorNumber: {data.actorNumber}");
-
-            // BURADA FinishGameRPC çağrılıyor. Parametre olarak Kazananın ID'si gidiyor.
-            photonView.RPC("FinishGameRPC", RpcTarget.All, data.actorNumber, false, false);
-            return;
-        }
-
-        // 2. Taş Bitti (BERABERE)
         if (PhotonNetwork.IsMasterClient)
         {
-            if (tileDistrubite.allTiles.Count == 0)
-            {
-                Debug.Log("OYUN BİTTİ! Ortada taş kalmadı. (Berabere)");
-
-                // BURADA FinishGameRPC çağrılıyor. Parametre olarak -1 gidiyor.
-                photonView.RPC("FinishGameRPC", RpcTarget.All, -1, false, false);
-            }
+            // Cezayı geri almak için negatif puan gönderiyoruz (Puanı düşürür)
+            scoreManager.UpdatePlayerScore(victimQue, -penaltyAmount);
+            Debug.Log(
+                $"[İŞLEME CEZASI İPTAL] Oyuncu {victimQue} ceza iadesi yapıldı: -{penaltyAmount}"
+            );
         }
     }
 
-    // GameManager.cs içine (Eski CalculateThrowPenalty yerine bunu kullanıyoruz):
-
+    // --- CEZA KONTROLÜ (ATILAN TAŞ İÇİN) ---
     [PunRPC]
     public void CheckPenaltyRPC(int playerQue, Tiles thrownTile)
     {
@@ -349,8 +298,7 @@ public class GameManager : MonoBehaviourPunCallbacks
                 okeyNumber = 1;
         }
 
-        // --- 1. OKEY ATMA (Kesin Kontrol) ---
-        // Tip Joker ise VEYA Renk/Numara tutuyorsa (ve sahte değilse)
+        // --- 1. OKEY ATMA CEZASI (250 PUAN) ---
         if (
             thrownTile.type == TileType.Joker
             || (
@@ -360,35 +308,33 @@ public class GameManager : MonoBehaviourPunCallbacks
             )
         )
         {
-            penaltyAmount = 101;
+            penaltyAmount = 250;
             reason = "Okey Atıldı";
         }
-        // --- 2. GÖSTERGE ATMA ---
+        // --- 2. GÖSTERGE ATMA CEZASI (250 PUAN) ---
         else if (
             indicator != null
             && thrownTile.color == indicator.color
             && thrownTile.number == indicator.number
         )
         {
-            penaltyAmount = 101;
+            penaltyAmount = 250;
             reason = "Gösterge Atıldı";
         }
-        // --- 3. İŞLEK TAŞ ATMA ---
+        // --- 3. İŞLEK TAŞ ATMA CEZASI (250 PUAN) ---
         else
         {
-            // Atılan taş, masada işlenebilir (available) listesinde var mı?
             if (tileDistrubite.availableTiles != null && thrownTile.type != TileType.FakeJoker)
             {
                 foreach (var t in tileDistrubite.availableTiles)
                 {
-                    // Rengi ve numarası tutuyor mu? (Joker tipi hariç, normal sayı olarak)
                     if (
                         t.color == thrownTile.color
                         && t.number == thrownTile.number
                         && t.type != TileType.Joker
                     )
                     {
-                        penaltyAmount = 101;
+                        penaltyAmount = 250;
                         reason = "İşlek Atıldı";
                         break;
                     }
@@ -399,12 +345,67 @@ public class GameManager : MonoBehaviourPunCallbacks
         // --- CEZAYI UYGULA ---
         if (penaltyAmount > 0)
         {
-            // KRİTİK NOKTA: Cezayı 'playerQue' (Taşı atan kişi) yer.
-            // Asla TurnManager.currentTurnPlayer kullanmıyoruz.
             scoreManager.UpdatePlayerScore(playerQue, penaltyAmount);
-
             Debug.Log(
                 $"<color=red>CEZA KESİLDİ!</color> Sebep: {reason} -> Oyuncu {playerQue} -{penaltyAmount} Puan"
+            );
+        }
+    }
+
+    // --- OYUN BİTİŞ KONTROLÜ ---
+    public void CheckGameStatus(HandData data)
+    {
+        if (!isGameReady || isGameEnded)
+            return;
+
+        // 1. El Bitti (KAZANAN VAR)
+        if (data.handTiles.Count == 0)
+        {
+            Debug.Log($"OYUN BİTTİ! Kazanan ActorNumber: {data.actorNumber}");
+            photonView.RPC("FinishGameRPC", RpcTarget.All, data.actorNumber, false, false);
+            return;
+        }
+
+        // 2. Taş Bitti (BERABERE)
+        if (PhotonNetwork.IsMasterClient)
+        {
+            if (tileDistrubite.allTiles.Count == 0)
+            {
+                Debug.Log("OYUN BİTTİ! Ortada taş kalmadı. (Berabere)");
+                photonView.RPC("FinishGameRPC", RpcTarget.All, -1, false, false);
+            }
+        }
+    }
+
+    // --- [YENİ] MASADA ÇİFT AÇILDI MI KONTROLÜ ---
+    // Bu özellik, masada herhangi bir oyuncunun çift açıp açmadığını kontrol eder.
+    public bool IsDoubleOpenedOnTable
+    {
+        get
+        {
+            if (
+                PhotonNetwork.CurrentRoom != null
+                && PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(
+                    "IsDoubleOpened",
+                    out object val
+                )
+            )
+            {
+                return (bool)val;
+            }
+            return false;
+        }
+    }
+
+    // Biri çift açtığında bu fonksiyonu çağıracağız (Master Client olmasa bile herkes çağırabilir)
+    public void SetDoubleOpened()
+    {
+        if (!IsDoubleOpenedOnTable)
+        {
+            Hashtable props = new Hashtable { { "IsDoubleOpened", true } };
+            PhotonNetwork.CurrentRoom.SetCustomProperties(props);
+            Debug.Log(
+                "<color=green>MASADA ÇİFT AÇILDI! Artık herkes limite takılmadan çifte gidebilir.</color>"
             );
         }
     }
@@ -422,12 +423,11 @@ public class GameManager : MonoBehaviourPunCallbacks
         // Puan hesaplamayı SADECE Master Client yapar ve sonucu herkese dağıtır.
         if (PhotonNetwork.IsMasterClient)
         {
-            // !!! İŞTE SORDUĞUN FONKSİYON BURADA ÇAĞIRILIYOR !!!
             CalculateAndDistributeScores(winnerActorNumber, isOkeyShot, isDoubleFinish);
         }
     }
 
-    // --- PUAN HESAPLAMA (MASTER ONLY) ---
+    // --- DETAYLI PUAN HESAPLAMA (ÜÇLÜ TABLO) ---
     private void CalculateAndDistributeScores(
         int winnerActorNumber,
         bool isOkeyShot,
@@ -435,74 +435,139 @@ public class GameManager : MonoBehaviourPunCallbacks
     )
     {
         List<int> actors = new List<int>();
-        List<int> finalScores = new List<int>();
 
-        // 1. Çarpanları Belirle
-        int finishMultiplier = 1;
+        // GÖRSEL İÇİN AYRILMIŞ VERİLER
+        List<int> listRewards = new List<int>(); // Üst Kısım: Düşerler (Eksi Puanlar)
+        List<int> listPenalties = new List<int>(); // Orta Kısım: Cezalar (Artı Puanlar)
+        List<int> listNetScores = new List<int>(); // Alt Kısım: Toplam (Net Skor)
+
+        // 1. ÇARPANLARI HESAPLA
+        int colorMultiplier = GetCurrentColorMultiplier();
+        int finishTypeMultiplier = 1;
+
         if (isDoubleFinish)
-            finishMultiplier *= 2;
+            finishTypeMultiplier *= 2;
         if (isOkeyShot)
-            finishMultiplier *= 2;
+            finishTypeMultiplier *= 2;
+
+        int totalMultiplier = colorMultiplier * finishTypeMultiplier;
 
         Debug.Log(
-            $"Puan Hesaplanıyor... Kazanan Actor: {winnerActorNumber}, Çarpan: {finishMultiplier}"
+            $"[DETAYLI HESAP] Çarpanlar -> Renk: {colorMultiplier}, Bitiş: {finishTypeMultiplier}, Toplam: {totalMultiplier}"
         );
 
-        // 2. Odadaki tüm oyuncuları gez
         foreach (var player in PhotonNetwork.PlayerList)
         {
             actors.Add(player.ActorNumber);
-
-            // A) Oyuncunun mevcut ceza puanını ScoreManager'dan al
-            int currentPenalty = 0;
             int pQue = tileDistrubite.GetQueueNumberOfPlayer(player);
 
+            int myReward = 0; // Örn: -600
+            int myPenalty = 0; // Örn: +101, +250
+
+            // A) OYUN İÇİ MEVCUT CEZALAR
             if (scoreManager.playerScores.ContainsKey(pQue))
             {
-                currentPenalty = scoreManager.playerScores[pQue];
+                myPenalty += scoreManager.playerScores[pQue];
             }
 
-            // B) Eğer bu oyuncu KAZANAN ise puan düş (Ödül)
-            // Eğer winnerActorNumber -1 ise (Berabere), kimse ödül almaz.
+            // B) OYUN SONU DURUMLARI
+
+            // --- KAZANAN ---
             if (winnerActorNumber != -1 && player.ActorNumber == winnerActorNumber)
             {
-                currentPenalty -= (101 * finishMultiplier);
+                // PDF Kuralı: Baz Puan(100) x Toplam Çarpan (Düşülür)
+                myReward -= (100 * totalMultiplier);
+                Debug.Log($"Oyuncu {pQue} (KAZANAN): Düşer: {myReward}, Ceza: {myPenalty}");
+            }
+            // --- KAYBEDENLER ---
+            else if (winnerActorNumber != -1)
+            {
+                bool hasOpened = scoreManager.HasPlayerOpened(pQue);
+
+                if (!hasOpened)
+                {
+                    // DURUM 1: HİÇ AÇMAMIŞ
+                    // PDF Kuralı: "Açmayan kişi 600 ceza" -> Baz(100) x Toplam Çarpan
+                    int notOpenedPenalty = 100 * totalMultiplier;
+                    myPenalty += notOpenedPenalty;
+                }
+                else
+                {
+                    // DURUM 2: AÇMIŞ AMA BİTEMEMİŞ
+                    // PDF Kuralı: "Açıp bitmeyen oyuncu elindeki taş başına ceza yer"
+                    int handPenalty = scoreManager.GetHandPenaltyForOpenedPlayer(
+                        pQue,
+                        totalMultiplier
+                    );
+                    myPenalty += handPenalty;
+                }
             }
 
-            finalScores.Add(currentPenalty);
+            // --- C) LİSTELERE EKLE ---
+            listRewards.Add(myReward);
+            listPenalties.Add(myPenalty);
+            listNetScores.Add(myReward + myPenalty);
         }
 
-        // 3. Sonuçları herkese gönder (UI açılsın)
-        photonView.RPC("OnGameEndedRPC", RpcTarget.All, actors.ToArray(), finalScores.ToArray());
+        // 3. SONUÇLARI GÖNDER (3 ayrı dizi)
+        photonView.RPC(
+            "OnGameEndedDetailedRPC",
+            RpcTarget.All,
+            actors.ToArray(),
+            listRewards.ToArray(),
+            listPenalties.ToArray(),
+            listNetScores.ToArray()
+        );
     }
 
-    // --- SONUÇLARI AL VE UI AÇ ---
+    // --- [YENİ] AÇAN OYUNCUYU SENKRONİZE ETME ---
     [PunRPC]
-    public void OnGameEndedRPC(int[] actors, int[] scores)
+    public void SyncOpenedPlayerRPC(int playerQue)
+    {
+        // Gelen oyuncuyu "Açanlar" listesine ekle
+        if (!scoreManager.playersWhoOpened.Contains(playerQue))
+        {
+            scoreManager.playersWhoOpened.Add(playerQue);
+            Debug.Log($"[SYNC] Oyuncu {playerQue} açtı olarak sisteme işlendi.");
+        }
+    }
+
+    // --- DETAYLI SONUÇ ALMA VE UI AÇMA ---
+    [PunRPC]
+    public void OnGameEndedDetailedRPC(
+        int[] actors,
+        int[] rewards,
+        int[] penalties,
+        int[] netScores
+    )
     {
         isGameEnded = true;
 
-        Dictionary<int, int> scoreboardData = new Dictionary<int, int>();
+        // UI'a göndermek için veriyi paketle
+        Dictionary<int, int> dictRewards = new Dictionary<int, int>();
+        Dictionary<int, int> dictPenalties = new Dictionary<int, int>();
+        Dictionary<int, int> dictNetScores = new Dictionary<int, int>();
+
         for (int i = 0; i < actors.Length; i++)
         {
             Player p = PhotonNetwork.CurrentRoom.GetPlayer(actors[i]);
             if (p != null && p.CustomProperties.TryGetValue("PlayerQue", out object q))
             {
                 int pQue = (int)q;
-                if (!scoreboardData.ContainsKey(pQue))
-                    scoreboardData.Add(pQue, scores[i]);
-                else
-                    scoreboardData[pQue] = scores[i];
+                dictRewards[pQue] = rewards[i];
+                dictPenalties[pQue] = penalties[i];
+                dictNetScores[pQue] = netScores[i];
             }
         }
 
         if (UIManager.Instance != null)
         {
-            UIManager.Instance.ShowGameOver(scoreboardData);
+            // YENİ FONKSİYONU ÇAĞIRIYORUZ
+            UIManager.Instance.ShowDetailedGameOver(dictRewards, dictPenalties, dictNetScores);
         }
         else
         {
-            Debug.LogError("UIManager bulunamadı, tablo açılamıyor!");
+            Debug.LogError("UIManager bulunamadı!");
         }
 
         StartCoroutine(RestartSequence());

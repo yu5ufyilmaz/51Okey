@@ -2,15 +2,17 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Photon.Pun;
+using Photon.Realtime;
 using TMPro;
 using UnityEngine;
 
-public class UIManager : MonoBehaviour
+public class UIManager : MonoBehaviourPunCallbacks
 {
     public static UIManager Instance;
 
-    [Header("Panels")]
-    public GameObject gameOverPanel;
+    [Header("Game Over Screen References")]
+    public GameObject gameOverPanel; // Sahnedeki ana panel
+    public List<PlayerResultSlot> playerResultSlots; // 4 adet sütunu buraya sürükleyeceksin
 
     [Header("Texts - Game Info")]
     public TextMeshProUGUI tileCountText;
@@ -32,6 +34,16 @@ public class UIManager : MonoBehaviour
     public GameObject liveScorePanel; // Açılıp kapanacak panel
     public TextMeshProUGUI liveScoreContentText; // Puanların yazacağı text
     private bool isScoreboardOpen = false;
+
+    [System.Serializable]
+    public class PlayerResultSlot
+    {
+        public int seatNumber; // 1, 2, 3, 4 (Hangi koltuk olduğu)
+        public TMPro.TextMeshProUGUI playerNameText;
+        public TMPro.TextMeshProUGUI rewardText; // Düşerler (Üst)
+        public TMPro.TextMeshProUGUI penaltyText; // Cezalar (Orta)
+        public TMPro.TextMeshProUGUI netScoreText; // Toplam (Alt)
+    }
 
     private void Awake()
     {
@@ -82,6 +94,24 @@ public class UIManager : MonoBehaviour
         }
 
         liveScoreContentText.text = content;
+    }
+
+    public override void OnPlayerPropertiesUpdate(
+        Player targetPlayer,
+        ExitGames.Client.Photon.Hashtable changedProps
+    )
+    {
+        // Eğer değişen özellik "PlayerScore" ise (yani biri ceza yediyse)
+        if (changedProps.ContainsKey("PlayerScore"))
+        {
+            Debug.Log($"Puan Güncellemesi Algılandı: {targetPlayer.NickName}");
+
+            // Eğer tablo açıksa anında yazıyı güncelle
+            if (isScoreboardOpen)
+            {
+                UpdateLiveScoreboardText();
+            }
+        }
     }
 
     // Biri ceza yiyince anlık yenilemek için
@@ -141,63 +171,98 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void ShowGameOver(Dictionary<int, int> playerScores)
+    // GameManager'dan gelen 3 ayrı listeyi (Diziyi) alıyoruz
+    public void ShowDetailedGameOver(
+        Dictionary<int, int> rewards,
+        Dictionary<int, int> penalties,
+        Dictionary<int, int> netScores
+    )
     {
-        if (gameOverPanel == null)
-            return;
-
-        gameOverPanel.SetActive(true);
-        gameOverPanel.transform.SetAsLastSibling();
-
-        // Skorları puana göre sırala (Düşük puan (az ceza) en üstte)
-        var sortedScores = playerScores.OrderBy(x => x.Value).ToList();
-
-        string rankingString = "<size=120%>--- MAÇ SONUCU ---</size>\n\n";
-        int rank = 1;
-
-        foreach (var item in sortedScores)
+        if (gameOverPanel != null)
         {
-            // item.Key = PlayerQue (Sıra Numarası)
-            // item.Value = Puan
-
-            string displayName = $"Oyuncu {item.Key}"; // Varsayılan isim (Bulamazsa bunu kullanır)
-
-            // --- İSİM BULMA (GÜÇLENDİRİLMİŞ) ---
-            foreach (var p in PhotonNetwork.PlayerList)
-            {
-                // Custom Properties güvenli okuma
-                if (p.CustomProperties.ContainsKey("PlayerQue"))
-                {
-                    // object türünü güvenli bir şekilde int'e çeviriyoruz
-                    int pQue = System.Convert.ToInt32(p.CustomProperties["PlayerQue"]);
-
-                    if (pQue == item.Key)
-                    {
-                        // Eğer NickName boşsa (nadir olur), ID yazsın
-                        displayName = string.IsNullOrEmpty(p.NickName)
-                            ? $"User {p.ActorNumber}"
-                            : p.NickName;
-                        break;
-                    }
-                }
-            }
-            // -----------------------------------
-
-            // Renklendirme: 1. olan Altın Sarısı
-            if (rank == 1)
-                rankingString +=
-                    $"<color=yellow>{rank}. {displayName} : {item.Value} Puan (KAZANAN)</color>\n";
-            else
-                rankingString += $"{rank}. {displayName} : {item.Value} Puan\n";
-
-            rank++;
+            gameOverPanel.SetActive(true);
         }
 
-        if (rankingText != null)
-            rankingText.text = rankingString;
+        // Tüm slotları gez ve verileri doldur
+        foreach (var slot in playerResultSlots)
+        {
+            // O koltukta oturan oyuncuyu bul
+            Photon.Realtime.Player p = GetPlayerBySeat(slot.seatNumber);
 
-        StopAllCoroutines();
-        StartCoroutine(TimerRoutine());
+            if (p != null)
+            {
+                // 1. İsim
+                slot.playerNameText.text = p.NickName;
+
+                // 2. Düşer (Reward) - Eksi Puanlar
+                if (rewards.ContainsKey(slot.seatNumber))
+                {
+                    int val = rewards[slot.seatNumber];
+                    slot.rewardText.text = val.ToString();
+                    // İsteğe bağlı renk: Yeşil
+                    slot.rewardText.color = Color.green;
+                }
+                else
+                {
+                    slot.rewardText.text = "0";
+                }
+
+                // 3. Ceza (Penalty) - Artı Puanlar
+                if (penalties.ContainsKey(slot.seatNumber))
+                {
+                    int val = penalties[slot.seatNumber];
+                    slot.penaltyText.text = "+" + val.ToString(); // Önüne artı koyduk
+                    // İsteğe bağlı renk: Kırmızı
+                    slot.penaltyText.color = Color.red;
+                }
+                else
+                {
+                    slot.penaltyText.text = "0";
+                }
+
+                // 4. Toplam (Net Score)
+                if (netScores.ContainsKey(slot.seatNumber))
+                {
+                    int val = netScores[slot.seatNumber];
+                    slot.netScoreText.text = val.ToString();
+                    slot.netScoreText.fontStyle = TMPro.FontStyles.Bold; // Kalın yap
+
+                    // Pozitifse Kırmızı, Negatifse Yeşil yapabilirsin (İsteğe bağlı)
+                    if (val > 0)
+                        slot.netScoreText.color = Color.red;
+                    else if (val < 0)
+                        slot.netScoreText.color = Color.green;
+                    else
+                        slot.netScoreText.color = Color.white;
+                }
+                else
+                {
+                    slot.netScoreText.text = "0";
+                }
+            }
+            else
+            {
+                // O koltukta oyuncu yoksa boş göster veya gizle
+                slot.playerNameText.text = "-";
+                slot.rewardText.text = "";
+                slot.penaltyText.text = "";
+                slot.netScoreText.text = "";
+            }
+        }
+    }
+
+    // Yardımcı Fonksiyon: Koltuk Numarasına Göre Oyuncuyu Bulma
+    private Photon.Realtime.Player GetPlayerBySeat(int seatNum)
+    {
+        foreach (var p in Photon.Pun.PhotonNetwork.PlayerList)
+        {
+            if (p.CustomProperties.TryGetValue("PlayerQue", out object q))
+            {
+                if ((int)q == seatNum)
+                    return p;
+            }
+        }
+        return null;
     }
 
     private IEnumerator TimerRoutine()

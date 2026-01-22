@@ -678,54 +678,51 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void DeactivatePlayerTile(int playerQue, Tiles tileToDeactivate)
     {
-        // Sadece taşın sahibi olan oyuncunun ekranında çalışsın
+        // 1. Sadece bu oyuncunun (Local Player) kendi ekranında işlem yapıyoruz.
         object localQue;
         if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out localQue))
         {
             if ((int)localQue != playerQue)
                 return;
         }
+        else
+        {
+            return;
+        }
 
-        Transform targetContainer = playerTileContainer;
+        if (playerTileContainers == null)
+            return;
+
         bool found = false;
 
-        // Tüm kutucukları gez
-        foreach (Transform placeholder in targetContainer)
+        foreach (Transform placeholder in playerTileContainers)
         {
             if (placeholder.childCount > 0)
             {
                 GameObject tileObj = placeholder.GetChild(0).gameObject;
 
-                // Zaten kapalıysa boşver
+                // Zaten kapalı/gizli ise pas geç (KİLİT NOKTA BURASI)
                 if (!tileObj.activeSelf)
                     continue;
 
-                TileUI tileUI = tileObj.GetComponent<TileUI>();
-                if (tileUI != null)
+                TileUI ui = tileObj.GetComponent<TileUI>();
+                if (ui != null)
                 {
                     bool isMatch = false;
 
-                    // 1. Tam Eşleşme
+                    // A) JOKER KONTROLÜ
                     if (
-                        tileUI.tileDataInfo.color == tileToDeactivate.color
-                        && tileUI.tileDataInfo.number == tileToDeactivate.number
-                        && tileUI.tileDataInfo.type == tileToDeactivate.type
+                        tileToDeactivate.type == TileType.Joker
+                        && ui.tileDataInfo.type == TileType.Joker
                     )
                     {
                         isMatch = true;
                     }
-                    // 2. Joker Esnekliği (Ekranda Joker, Kodda Kırmızı 5 Joker olabilir)
+                    // B) NORMAL TAŞ KONTROLÜ
                     else if (
-                        tileUI.tileDataInfo.type == TileType.Joker
-                        && tileToDeactivate.type == TileType.Joker
-                    )
-                    {
-                        isMatch = true;
-                    }
-                    // 3. Renk/Numara tutuyor (Tip farklı olabilir)
-                    else if (
-                        tileUI.tileDataInfo.color == tileToDeactivate.color
-                        && tileUI.tileDataInfo.number == tileToDeactivate.number
+                        ui.tileDataInfo.color == tileToDeactivate.color
+                        && ui.tileDataInfo.number == tileToDeactivate.number
+                        && ui.tileDataInfo.type == tileToDeactivate.type
                     )
                     {
                         isMatch = true;
@@ -733,14 +730,14 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
                     if (isMatch)
                     {
-                        // Eğer ScoreManager'da bekleyen listesine eklemek gerekiyorsa
-                        if (scoreManager != null)
-                            scoreManager.pendingMeldedTiles.Add(tileToDeactivate);
+                        // --- DÜZELTME BURADA ---
+                        // Önce GİZLE (Anında çalışır), sonra YOK ET (Frame sonu çalışır)
+                        // Böylece bir sonraki döngüde bu taşı görüp tekrar işlem yapmaz.
+                        tileObj.SetActive(false);
+                        Destroy(tileObj);
 
-                        tileObj.SetActive(false); // Görseli kapat
                         found = true;
-                        // Debug.Log("Görsel taş kapatıldı.");
-                        return; // İlk bulduğunu kapat ve çık
+                        return; // İlk bulduğunu sil ve çık
                     }
                 }
             }
@@ -749,8 +746,43 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         if (!found)
         {
             Debug.LogWarning(
-                $"[GÖRSEL HATASI] Kapatılacak taş bulunamadı: {tileToDeactivate.color} {tileToDeactivate.number}"
+                $"[DeactivatePlayerTile] Silinecek taş görseli bulunamadı: {tileToDeactivate.color} {tileToDeactivate.number}"
             );
+        }
+    }
+
+    // --- [YENİ] KESİN ÇÖZÜM İÇİN EKLENEN RPC ---
+    // Taşı özelliklerine göre değil, bulunduğu kutu sırasına (Index) göre kapatır.
+    // Bu sayede veri değişse bile doğru kutu kapanır.
+    [PunRPC]
+    public void DeactivatePlayerTileByIndex(int playerQue, int tileIndex)
+    {
+        // 1. Bu işlem sadece ilgili oyuncunun ekranında çalışmalı
+        object localQue;
+        if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out localQue))
+        {
+            if ((int)localQue != playerQue)
+                return;
+        }
+
+        // 2. İndeks kontrolü (Hata vermemesi için)
+        if (
+            playerTileContainer == null
+            || tileIndex < 0
+            || tileIndex >= playerTileContainer.childCount
+        )
+        {
+            Debug.LogError($"[DeactivateByIndex] Geçersiz indeks: {tileIndex}");
+            return;
+        }
+
+        // 3. O kutucuktaki taşı bul ve kapat
+        Transform placeholder = playerTileContainer.GetChild(tileIndex);
+        if (placeholder.childCount > 0)
+        {
+            GameObject tileObj = placeholder.GetChild(0).gameObject;
+            tileObj.SetActive(false);
+            // Debug.Log($"Istaka {tileIndex}. sıradaki taş başarıyla gizlendi.");
         }
     }
 
@@ -1827,46 +1859,41 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void AddTileToPlayerHand(int playerQue, Tiles tileData)
     {
-        List<Tiles> playerHand = null;
-        switch (playerQue)
+        // 1. VERİ KISMI: Master Client, oyuncunun listesine (List<Tiles>) ekler
+        if (PhotonNetwork.IsMasterClient)
         {
-            case 1:
-                playerHand = playerTiles1;
-                break;
-            case 2:
-                playerHand = playerTiles2;
-                break;
-            case 3:
-                playerHand = playerTiles3;
-                break;
-            case 4:
-                playerHand = playerTiles4;
-                break;
+            List<Tiles> targetHand = null;
+            switch (playerQue)
+            {
+                case 1:
+                    targetHand = playerTiles1;
+                    break;
+                case 2:
+                    targetHand = playerTiles2;
+                    break;
+                case 3:
+                    targetHand = playerTiles3;
+                    break;
+                case 4:
+                    targetHand = playerTiles4;
+                    break;
+            }
+
+            if (targetHand != null)
+            {
+                targetHand.Add(tileData);
+            }
         }
 
-        if (playerHand != null)
+        // 2. GÖRSEL KISIM: Sadece o oyuncunun kendi ekranında (Local) görsel oluşturulur
+        object localQue;
+        if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out localQue))
         {
-            playerHand.Add(tileData);
-            Debug.Log(
-                $"Taş {tileData.color} {tileData.number} (Tip: {tileData.type}) Oyuncu {playerQue} el verisine eklendi."
-            );
-
-            // Eğer bu RPC, taşı alan oyuncunun istemcisinde çalışıyorsa,
-            // taşı görsel olarak da ıstakasına ekle.
-            if (
-                PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue(
-                    "PlayerQue",
-                    out object localPlayerQue
-                )
-                && (int)localPlayerQue == playerQue
-            )
+            // Eğer ben bu oyuncuysam, ıstakama görseli ekle
+            if ((int)localQue == playerQue)
             {
                 InstantiateTileInFirstEmptySlot(tileData);
             }
-        }
-        else
-        {
-            Debug.LogError($"Oyuncu sırası {playerQue} için el listesi bulunamadı.");
         }
     }
 
@@ -1874,28 +1901,33 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     {
         if (playerTileContainers == null)
         {
-            Debug.LogError("playerTileContainers başlatılmamış. Joker oluşturulamıyor.");
+            Debug.LogError("playerTileContainers başlatılmamış (Null). Taş oluşturulamıyor.");
             return;
         }
 
-        // Oyuncunun ıstakasında boş olan ilk yuvayı bul ve taşı oraya oluştur.
+        // Boş yuva ara
         for (int i = 0; i < playerTileContainers.Length; i++)
         {
-            if (playerTileContainers[i] != null && playerTileContainers[i].childCount == 0)
+            Transform slot = playerTileContainers[i];
+
+            // Eğer slot boşsa
+            if (slot.childCount == 0)
             {
-                GameObject tileInstance = Instantiate(tilePrefab, playerTileContainers[i]);
+                GameObject tileInstance = Instantiate(tilePrefab, slot);
                 TileUI tileUI = tileInstance.GetComponent<TileUI>();
                 if (tileUI != null)
                 {
                     tileUI.SetTileData(tile);
-                    Debug.Log(
-                        $"Alınan taş ({tile.type}) oyuncunun ıstakasında {i} numaralı yuvaya oluşturuldu."
-                    );
+                    tileUI.FitToParent();
+                    // Debug.Log($"Taş {i}. yuvaya eklendi: {tile.color} {tile.number}");
                 }
-                return; // Taşı yerleştirdikten sonra çık.
+                return; // Başarılı, çık
             }
         }
-        Debug.LogWarning("Oyuncunun ıstakasında alınan taşı oluşturmak için boş yer bulunamadı.");
+
+        Debug.LogWarning(
+            "Istakada boş yer bulunamadı! (Full olabilir veya Destroy işlemi henüz tamamlanmadı)"
+        );
     }
     #endregion
     #endregion
@@ -1980,90 +2012,69 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         }
     }
 
-    // 2. Taşı Oyuncunun Elinden (Listeden ve Ekrandan) Siler
     [PunRPC]
     public void RemoveTileFromPlayerListByValue(int playerQue, Tiles tileToRemove)
     {
-        List<Tiles> targetList = null;
-        Transform targetContainer = playerTileContainer; // Sadece Local Player için görsel silme yapacağız
+        // 1. Doğru oyuncunun listesini seç
+        List<Tiles> targetHand = null;
+        if (playerQue == 1)
+            targetHand = playerTiles1;
+        else if (playerQue == 2)
+            targetHand = playerTiles2;
+        else if (playerQue == 3)
+            targetHand = playerTiles3;
+        else if (playerQue == 4)
+            targetHand = playerTiles4;
 
-        // Hangi oyuncunun listesi?
-        switch (playerQue)
+        if (targetHand != null)
         {
-            case 1:
-                targetList = playerTiles1;
-                break;
-            case 2:
-                targetList = playerTiles2;
-                break;
-            case 3:
-                targetList = playerTiles3;
-                break;
-            case 4:
-                targetList = playerTiles4;
-                break;
-        }
+            // --- DÜZELTME: REFERANS DEĞİL, DEĞER KONTROLÜ ---
+            // Listeyi tara ve özellikleri (Renk, Numara, Tip) eşleşen İLK taşı bul
+            Tiles foundTile = null;
 
-        if (targetList != null)
-        {
-            // A) VERİDEN SİLME (Listeden Çıkar)
-            // Renk, Numara ve Tip eşleşmesi yapıyoruz
-            var item = targetList.FirstOrDefault(t =>
-                t.color == tileToRemove.color
-                && t.number == tileToRemove.number
-                && t.type == tileToRemove.type
-            );
-
-            if (item != null)
+            foreach (var t in targetHand)
             {
-                targetList.Remove(item);
-                Debug.Log($"Oyuncu {playerQue} elinden taş verisi silindi.");
+                // Joker kontrolü (Jokerse tipi Joker olmalı)
+                if (tileToRemove.type == TileType.Joker)
+                {
+                    if (t.type == TileType.Joker)
+                    {
+                        foundTile = t;
+                        break;
+                    }
+                }
+                // Normal taş kontrolü
+                else if (
+                    t.color == tileToRemove.color
+                    && t.number == tileToRemove.number
+                    && t.type == tileToRemove.type
+                )
+                {
+                    foundTile = t;
+                    break;
+                }
+            }
+
+            if (foundTile != null)
+            {
+                targetHand.Remove(foundTile);
+                // Debug.Log($"[TileDistrubite] Taş listeden silindi: {tileToRemove.color} {tileToRemove.number}");
+
+                // --- OYUN BİTİŞ KONTROLÜNÜ TETİKLE ---
+                // Taş silindikten sonra elin boşalıp boşalmadığını kontrol etmeliyiz
+                if (targetHand.Count == 0)
+                {
+                    // GameManager'da CheckGameStatus zaten her hamlede çalışıyor ama
+                    // burası manuel bir silme olduğu için garantiye almak isteyebilirsin.
+                }
             }
             else
             {
                 Debug.LogWarning(
-                    "Silinecek taş listede bulunamadı! Senkronizasyon hatası olabilir."
+                    $"[HATA] Silinecek taş listede bulunamadı! {tileToRemove.color} {tileToRemove.number} (Player: {playerQue})"
                 );
-            }
-
-            // B) GÖRSELDEN SİLME (Sadece o oyuncunun ekranında veya herkesin ekranında o oyuncunun ıstakasından)
-            // Eğer bu RPC herkesde çalışıyorsa, herkes o oyuncunun ıstakasını güncellemeli.
-            // Ancak genelde diğer oyuncular, rakibin ıstakasını kapalı görür.
-            // Biz yine de PlayerTileContainer içinde bu taşı arayıp silelim.
-
-            // Sadece bu işlemi yapan oyuncunun (LocalPlayer) ekranında görsel silme yapmamız yeterli,
-            // çünkü diğerleri zaten kapalı taş görüyor (veya senkronize ediliyor).
-
-            // PlayerQue kontrolü: Bu kodun çalıştığı bilgisayar, ceza yiyen oyuncu mu?
-            object localQue;
-            if (
-                PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out localQue)
-                && (int)localQue == playerQue
-            )
-            {
-                // Istakayı tara
-                foreach (Transform placeholder in playerTileContainer)
-                {
-                    if (placeholder.childCount > 0)
-                    {
-                        TileUI ui = placeholder.GetChild(0).GetComponent<TileUI>();
-                        if (
-                            ui != null
-                            && ui.tileDataInfo.color == tileToRemove.color
-                            && ui.tileDataInfo.number == tileToRemove.number
-                            && ui.tileDataInfo.type == tileToRemove.type
-                        )
-                        {
-                            // Bulduk! Yok et.
-                            Destroy(placeholder.GetChild(0).gameObject);
-                            Debug.Log("Görsel taş ıstakadan silindi.");
-                            break; // Bir tane silmek yeterli
-                        }
-                    }
-                }
             }
         }
     }
-
     #endregion
 }

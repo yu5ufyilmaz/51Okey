@@ -109,6 +109,10 @@ MonoBehaviour:
   - UpdateTableLimit
   - OnGameEndedRPC
   - CheckPenaltyRPC
+  - AddGeneralPenaltyRPC
+  - DeactivatePlayerTileByIndex
+  - ApplySidePickSuccessPenaltyRPC
+  - OnGameEndedDetailedRPC
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1
