@@ -52,6 +52,12 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     private bool inMiddle = false;
     private bool fromLeftContainer = false;
     public bool isIndicatorTile = false;
+
+    [Header("Scaling Settings")]
+    private Vector3 _originalScale; // Taşın ilk boyutu
+    private Vector3 _targetScale; // Olması gereken boyut
+    public float scaleSpeed = 15f; // Büyüme/Küçülme hızı
+    private List<Placeholder> allMeldPlaceholders = new List<Placeholder>();
     #endregion
     #region Awake ve Start
     private void Awake()
@@ -80,6 +86,18 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         tileDistrubite.RegisterTileUI(this);
         scoreManager.CheckForPer();
         FitToParent();
+        _originalScale = transform.localScale;
+        _targetScale = _originalScale;
+        Placeholder[] allPh = FindObjectsOfType<Placeholder>();
+
+        // Sadece 'isMeldArea' kutucuğu işaretli olanları listemize ekle
+        foreach (Placeholder ph in allPh)
+        {
+            if (ph.isMeldArea)
+            {
+                allMeldPlaceholders.Add(ph);
+            }
+        }
     }
 
     void CheckPlace()
@@ -165,6 +183,24 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     #endregion
 
     #region DRAG_HANDLERS
+    void Update()
+    {
+        if (Vector3.Distance(transform.localScale, _targetScale) < 0.01f)
+        {
+            // Tam hedef boyuta eşitle ki küsuratlı kalmasın
+            if (transform.localScale != _targetScale)
+                transform.localScale = _targetScale;
+
+            return; // Fonksiyondan çık, aşağıdaki işlemi yapma!
+        }
+
+        // Sadece boyut farkı varsa burası çalışır
+        transform.localScale = Vector3.Lerp(
+            transform.localScale,
+            _targetScale,
+            Time.deltaTime * scaleSpeed
+        );
+    }
 
     private (bool canDrop, bool canDraw) CanMoveTile()
     {
@@ -212,6 +248,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             StopCoroutine(currentMoveCoroutine);
             currentMoveCoroutine = null;
         }
+        _targetScale = _originalScale;
         // --- 1. SOL TARAFTAN ÇEKME KONTROLÜ (EN BAŞA KOYUYORUZ) ---
         // Eğer taş Soldaki (Yandaki) kutudaysa...
         if (transform.parent == leftTileContainer)
@@ -290,34 +327,59 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     }
     #endregion
     #region On Drag
+    [Header("Scaling Settings")]
+    [SerializeField]
+    private Vector3 shrinkScale = new Vector3(0.1f, 0.1f, 0.1f); // Küçülme boyutu
+
     public void OnDrag(PointerEventData eventData)
     {
+        // --- 1. GÜVENLİK KONTROLLERİ (SENİN ORİJİNAL KODLARIN) ---
         var (canDrop, canDraw) = CanMoveTile();
 
         if (!canDrop)
         {
-            Debug.LogWarning("Taş atılamaz!"); // Hata ayıklama logu
-            return; // Taş atılamıyorsa çık
+            Debug.LogWarning("Taş atılamaz!");
+            return;
         }
         if (!canDraw)
         {
-            Debug.LogWarning("Taş çekilemez!"); // Hata ayıklama logu
-            return; // Taş atılamıyorsa çık
+            Debug.LogWarning("Taş çekilemez!");
+            return;
         }
         if (gameObject.transform.parent.tag == "OtherSideTileContainer")
         {
-            Debug.LogWarning("Buradaki taşı hareket ettiremezsiniz!"); // Hata ayıklama logu
+            Debug.LogWarning("Buradaki taşı hareket ettiremezsiniz!");
             return;
         }
 
-        // Taş çekilebilir durumda ise
         if (isIndicatorTile || gameObject.transform.parent == rightTileContainer)
         {
-            Debug.LogWarning("Buradaki taşı hareket ettiremezsiniz!"); // Hata ayıklama logu
+            Debug.LogWarning("Buradaki taşı hareket ettiremezsiniz!");
             return;
         }
-
+        // --- HAREKET ---
         transform.position = Input.mousePosition;
+
+        // --- SCALING MANTIĞI ---
+        // Artık hem senin hem rakiplerin meld alanlarını algılar
+        Placeholder visualTarget = GetVisualClosestPlaceholder(100f);
+
+        if (visualTarget != null)
+        {
+            // Mesafe içindeyiz, küçül
+            if (_targetScale != shrinkScale)
+            {
+                _targetScale = shrinkScale;
+            }
+        }
+        else
+        {
+            // Mesafe dışındayız, büyü
+            if (_targetScale != _originalScale)
+            {
+                _targetScale = _originalScale;
+            }
+        }
     }
     #endregion
     #region On End Drag
@@ -327,262 +389,208 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        // 1. YETKİSİZ ALAN KONTROLÜ
-        if (gameObject.transform.parent.tag == "OtherSideTileContainer" || isIndicatorTile)
+        // --- 1. EN BAŞTAKİ ZORUNLU KONTROLLER ---
+        if (transform.parent.CompareTag("OtherSideTileContainer") || isIndicatorTile)
         {
+            _targetScale = _originalScale;
             StartCoroutine(SmoothMove(transform, originalParent));
-            Debug.LogWarning("Buradaki taşı hareket ettiremezsiniz!");
+            Debug.LogWarning("Bu taşa dokunamazsın!");
             return;
         }
 
         PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object queueValue);
         canvasGroup.blocksRaycasts = true;
 
-        Transform parentContainer = playerTileContainer;
-        Transform closestPlaceholder = null;
+        // --- 2. HEDEFİ BULMA (En Garantili Yöntem: Mesafe) ---
+        // Raycast yerine mesafe ölçüyoruz ki ıskalamasın.
+
+        Placeholder bestTarget = null;
         float closestDistance = float.MaxValue;
 
-        // En yakın kutucuğu bul
-        foreach (Transform placeholder in parentContainer)
+        // A) Kendi Istakamızdaki Kutuları Tara
+        foreach (Transform t in playerTileContainer)
         {
-            if (placeholder.CompareTag("Placeholder"))
+            float dist = Vector2.Distance(t.position, transform.position); // Z eksenini yoksayıyoruz (2D)
+            if (dist < 100f && dist < closestDistance) // 100 birimlik alan
             {
-                float distance = Vector3.Distance(placeholder.position, transform.position);
-                if (distance < closestDistance)
+                closestDistance = dist;
+                bestTarget = t.GetComponent<Placeholder>();
+            }
+        }
+
+        // B) Masadaki (Meld) Kutuları Tara (Global liste yerine anlık buluyoruz, hata riskini sıfırlar)
+        // Sadece eğer ıstakada bir yer bulamadıysak buraya bak (Performans için)
+        if (bestTarget == null)
+        {
+            Placeholder[] allPlaceholders = FindObjectsOfType<Placeholder>();
+            foreach (Placeholder ph in allPlaceholders)
+            {
+                // Sadece Masa (Meld) veya Atma (Right) alanlarına bak
+                if (ph.isMeldArea || ph.isRight)
                 {
-                    closestDistance = distance;
-                    closestPlaceholder = placeholder;
+                    float dist = Vector2.Distance(ph.transform.position, transform.position);
+                    if (dist < 100f && dist < closestDistance)
+                    {
+                        closestDistance = dist;
+                        bestTarget = ph;
+                    }
                 }
             }
         }
 
-        // GEÇERLİ BİR YER BULUNDUYSA VE MESAFE UYGUNSA
-        if (closestPlaceholder != null && closestDistance < dropDistanceThreshold)
+        // --- 3. HİÇBİR YER BULAMADIYSAK GERİ DÖN ---
+        if (bestTarget == null)
         {
-            if (turnManager.IsPlayerTurn() == true) // SIRA BİZDE Mİ?
-            {
-                // -----------------------------------------------------------
-                // AŞAMA 1: TAŞ ÇEKME (HENÜZ ÇEKİLMEMİŞSE)
-                // -----------------------------------------------------------
-                if (turnManager.canDrop == false)
-                {
-                    // A) ORTADAN ÇEKME
-                    if (inMiddle == true)
-                    {
-                        // --- [KRİTİK] ORTADA TAŞ BİTTİ Mİ KONTROLÜ ---
-                        if (tileDistrubite.allTiles.Count == 0)
-                        {
-                            Debug.LogWarning("Ortada çekilecek taş kalmadı! Oyun BİTİRİLİYOR.");
-
-                            // Oyunu Bitir Sinyali (-1: Kazanan Yok, Berabere/Bitti)
-                            if (GameManager.Instance != null && !GameManager.Instance.isGameEnded)
-                            {
-                                GameManager.Instance.photonView.RPC(
-                                    "FinishGameRPC",
-                                    RpcTarget.All,
-                                    -1,
-                                    false,
-                                    false
-                                );
-                            }
-
-                            StartCoroutine(SmoothMove(transform, originalParent));
-                            return;
-                        }
-                        // ---------------------------------------------
-
-                        SetTileData(tileDistrubite.allTiles[0]);
-                        tileDistrubite.photonView.RPC(
-                            "AddTileFromMiddlePlayerList",
-                            RpcTarget.AllBuffered,
-                            queueValue
-                        );
-
-                        turnManager.canDrop = true; // Artık atabilir
-                        inMiddle = false;
-
-                        StartCoroutine(SmoothMove(transform, closestPlaceholder));
-                        Debug.Log("Orta desteden taş çekildi.");
-                    }
-                    // B) SOLDAN (YANDAN) ÇEKME
-                    else if (fromLeftContainer == true)
-                    {
-                        turnManager.hasPickedFromSide = true;
-                        turnManager.hasOpenedThisTurn = false;
-                        turnManager.hasProcessedThisTurn = false;
-
-                        EventDispatcher.SummonEvent("OnSideTilePicked", this.tileDataInfo);
-
-                        StartCoroutine(SmoothMove(transform, closestPlaceholder));
-                        tileDistrubite.photonView.RPC(
-                            "AddTileFromDropPlayerList",
-                            RpcTarget.AllBuffered,
-                            queueValue
-                        );
-
-                        turnManager.canDrop = true;
-                        tileDistrubite.dropTile = this.tileDataInfo;
-                        fromLeftContainer = false;
-
-                        Debug.Log("Yandan taş çekildi.");
-                    }
-                    // C) SADECE YER DEĞİŞTİRME (Henüz çekmedi)
-                    else
-                    {
-                        // Çekmeden sağa atamaz
-                        if (
-                            closestPlaceholder.gameObject.GetComponent<Placeholder>().isRight
-                            == true
-                        )
-                        {
-                            Debug.LogWarning("Şu an taş atamazsın, önce taş çekmelisin.");
-                            StartCoroutine(SmoothMove(transform, originalParent));
-                            return;
-                        }
-                        else
-                        {
-                            StartCoroutine(SmoothMove(transform, closestPlaceholder));
-                        }
-                    }
-                }
-                // -----------------------------------------------------------
-                // AŞAMA 2: TAŞ ATMA / İŞLEME (ZATEN ÇEKİLMİŞSE)
-                // -----------------------------------------------------------
-                else
-                {
-                    // D) TEKRAR ÇEKMEYE ÇALIŞMA
-                    if (
-                        gameObject.transform.parent == middleTileContainer
-                        || fromLeftContainer == true
-                    )
-                    {
-                        Debug.LogWarning("Zaten taş çektiniz.");
-                        StartCoroutine(SmoothMove(transform, originalParent));
-                        return;
-                    }
-                    else
-                    {
-                        // E) TAŞ ATMA (TUR BİTİRME - SAĞ TARAFA SÜRÜKLEME)
-                        if (
-                            closestPlaceholder.gameObject.GetComponent<Placeholder>().isRight
-                            == true
-                        )
-                        {
-                            if (!turnManager.CanFinishTurn())
-                            {
-                                Debug.LogError("KURAL İHLALİ: Yandan taş aldınız ama açmadınız!");
-                                GameManager.Instance.HandleFailedSidePick(this.tileDataInfo);
-                                StartCoroutine(SmoothMove(transform, originalParent));
-                                return;
-                            }
-
-                            Debug.Log("Taş atılıyor, sıra değişecek.");
-
-                            // --- [YENİ] CEZA KONTROLÜ İÇİN RPC GÖNDER ---
-                            // EventDispatcher yerine direkt Master Client'a "Ben (queueValue) bu taşı attım, kontrol et" diyoruz.
-                            if (GameManager.Instance != null)
-                            {
-                                int myQue = 0;
-                                if (
-                                    PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue(
-                                        "PlayerQue",
-                                        out object q
-                                    )
-                                )
-                                    myQue = (int)q;
-
-                                GameManager.Instance.photonView.RPC(
-                                    "CheckPenaltyRPC",
-                                    RpcTarget.MasterClient, // Sadece Master hesaplasın
-                                    myQue, // BENİM ID'M (Yanlış kişiye yazılmasın diye)
-                                    this.tileDataInfo // Attığım Taş
-                                );
-                            }
-                            ExecuteNextTurn();
-                        }
-                        // F) MASAYA İŞLEME (Available Yerlere)
-                        else if (
-                            closestPlaceholder.gameObject.GetComponent<Placeholder>().available
-                            == true
-                        )
-                        {
-                            // (İşleme kodları ActivePers içinde otomatik yapılıyor, burası manuel sürükleme için)
-                            // Buradaki manuel işleme mantığını ActivePers ile senkronize etmek lazım ama
-                            // şu anlık basit bir geri atma yapalım, işlemek için butonu kullansınlar.
-                            // Veya buraya da ActivePers mantığı eklenebilir.
-
-                            // Şimdilik kafa karıştırmasın diye yerine oturtuyorum.
-                            // Eğer manuel sürükleyerek işleme yapıyorsan buradaki kodların ActivePers ile aynı olmalı.
-                            // Ama genellikle "İşle" butonu daha sağlıklıdır.
-
-                            Debug.Log("Manuel işleme denemesi (Buton kullanılması önerilir).");
-                            StartCoroutine(SmoothMove(transform, originalParent));
-                        }
-                        // G) ISTAKA İÇİNDE YER DEĞİŞTİRME
-                        else
-                        {
-                            StartCoroutine(SmoothMove(transform, closestPlaceholder));
-                        }
-                    }
-                }
-            }
-            else // SIRA OYUNCUDA DEĞİLSE
-            {
-                if (
-                    gameObject.transform.parent == middleTileContainer
-                    || gameObject.transform.parent == leftTileContainer
-                )
-                {
-                    StartCoroutine(SmoothMove(transform, originalParent));
-                    Debug.LogWarning("Sıra sende değil, taş çekemezsin.");
-                    return;
-                }
-                else
-                {
-                    if (closestPlaceholder.gameObject.GetComponent<Placeholder>().isRight != true)
-                    {
-                        StartCoroutine(SmoothMove(transform, closestPlaceholder));
-                    }
-                    else
-                    {
-                        StartCoroutine(SmoothMove(transform, originalParent));
-                        Debug.Log("Sıra sende değil, taş atamazsın.");
-                        return;
-                    }
-                }
-            }
-
-            // --- KAYDIRMA (SHIFT) MANTIĞI ---
-            if (closestPlaceholder.parent == playerTileContainer)
-            {
-                if (closestPlaceholder.childCount > 1)
-                {
-                    if (closestPlaceholder.parent != playerTileContainer)
-                    {
-                        StartCoroutine(SmoothMove(transform, originalParent));
-                        return;
-                    }
-
-                    if (closestPlaceholder.gameObject.GetComponent<Placeholder>().isRight == false)
-                    {
-                        Transform displacedTile = closestPlaceholder.GetChild(0);
-                        int targetIndex = closestPlaceholder.GetSiblingIndex();
-
-                        if (targetIndex < originalParent.GetSiblingIndex())
-                        {
-                            ShiftTilesRight(playerTileContainer, displacedTile, targetIndex + 1);
-                        }
-                        else
-                        {
-                            ShiftTilesLeft(playerTileContainer, displacedTile, targetIndex - 1);
-                        }
-                    }
-                }
-            }
-        }
-        else // GEÇERSİZ BİR YERE BIRAKILDIYSA
-        {
+            _targetScale = _originalScale;
             StartCoroutine(SmoothMove(transform, originalParent));
+            return;
+        }
+
+        // --- 4. HEDEF TÜRÜNE GÖRE İŞLEM YAP (TEK BLOK) ---
+
+        // SENARYO A: ATMA ALANI (SAĞ TARAFA BIRAKMA)
+        if (bestTarget.isRight)
+        {
+            if (turnManager.IsPlayerTurn())
+            {
+                if (turnManager.canDrop) // Taş çekmiş mi?
+                {
+                    // Yandan taş aldıysa açmak zorunda
+                    if (fromLeftContainer && !turnManager.hasOpenedThisTurn)
+                    {
+                        Debug.LogError("Yandan taş aldınız ama açmadınız!");
+                        GameManager.Instance.HandleFailedSidePick(this.tileDataInfo);
+                        _targetScale = _originalScale;
+                        StartCoroutine(SmoothMove(transform, originalParent));
+                        return;
+                    }
+
+                    Debug.Log("Sıra bitiriliyor...");
+                    // Ceza kontrolü ve Tur bitirme
+                    if (GameManager.Instance != null)
+                    {
+                        GameManager.Instance.photonView.RPC(
+                            "CheckPenaltyRPC",
+                            Photon.Pun.RpcTarget.MasterClient,
+                            (int)queueValue,
+                            this.tileDataInfo
+                        );
+                    }
+                    ExecuteNextTurn();
+                }
+                else
+                {
+                    Debug.LogWarning("Önce taş çekmelisiniz!");
+                    _targetScale = _originalScale;
+                    StartCoroutine(SmoothMove(transform, originalParent));
+                }
+            }
+            else
+            {
+                Debug.LogWarning("Sıra sizde değil!");
+                _targetScale = _originalScale;
+                StartCoroutine(SmoothMove(transform, originalParent));
+            }
+        }
+        // SENARYO B: ISTAKA İÇİ HAREKET (KENDİ YERİMİZ)
+        else if (bestTarget.transform.parent == playerTileContainer)
+        {
+            // Sıra bizde değilse bile düzenleme yapabiliriz (Çoğu okey oyununda serbesttir)
+            // Ama senin kuralına göre sıra kontrolü ekleyebiliriz. Şimdilik serbest bırakıyorum.
+
+            // 1. Taş Çekme Durumu (Orta veya Yandan)
+            if (turnManager.IsPlayerTurn() && !turnManager.canDrop)
+            {
+                if (inMiddle) // Ortadan çek
+                {
+                    if (tileDistrubite.allTiles.Count == 0)
+                        return; // Taş bitmişse dön
+
+                    SetTileData(tileDistrubite.allTiles[0]);
+                    tileDistrubite.photonView.RPC(
+                        "AddTileFromMiddlePlayerList",
+                        Photon.Pun.RpcTarget.AllBuffered,
+                        queueValue
+                    );
+                    turnManager.canDrop = true;
+                    inMiddle = false;
+                }
+                else if (fromLeftContainer) // Yandan çek
+                {
+                    turnManager.hasPickedFromSide = true;
+                    turnManager.hasOpenedThisTurn = false;
+                    turnManager.hasProcessedThisTurn = false;
+                    EventDispatcher.SummonEvent("OnSideTilePicked", this.tileDataInfo);
+                    tileDistrubite.photonView.RPC(
+                        "AddTileFromDropPlayerList",
+                        Photon.Pun.RpcTarget.AllBuffered,
+                        queueValue
+                    );
+                    turnManager.canDrop = true;
+                    tileDistrubite.dropTile = this.tileDataInfo;
+                    fromLeftContainer = false;
+                }
+            }
+
+            // 2. Kaydırma / Yer Değiştirme
+            if (
+                bestTarget.transform.childCount > 0
+                && bestTarget != originalParent.GetComponent<Placeholder>()
+            )
+            {
+                // Dolu yere koyduk, kaydır
+                Transform displacedTile = bestTarget.transform.GetChild(0);
+                int targetIndex = bestTarget.transform.GetSiblingIndex();
+                int originalIndex = originalParent.GetSiblingIndex();
+
+                if (targetIndex < originalIndex)
+                    ShiftTilesRight(playerTileContainer, displacedTile, targetIndex + 1);
+                else
+                    ShiftTilesLeft(playerTileContainer, displacedTile, targetIndex - 1);
+            }
+
+            _targetScale = _originalScale;
+            StartCoroutine(SmoothMove(transform, bestTarget.transform));
+        }
+        // SENARYO C: MELD ALANI (İŞLEME)
+        else
+        {
+            // 1. Sadece sırası gelen yapabilir
+            if (!turnManager.IsPlayerTurn())
+            {
+                Debug.LogWarning("Sıra sizde değil!");
+                _targetScale = _originalScale;
+                StartCoroutine(SmoothMove(transform, originalParent));
+                return;
+            }
+
+            // 2. Sadece elini açmış olan yapabilir
+            if (!scoreManager.hasOpenedSeries && !scoreManager.hasOpenedPairs)
+            {
+                Debug.LogWarning("Önce elinizi açmalısınız!");
+                _targetScale = _originalScale;
+                StartCoroutine(SmoothMove(transform, originalParent));
+                return;
+            }
+
+            // 3. İşlemeyi Dene
+            bool success = scoreManager.ProcessManualDrop(
+                this.tileDataInfo,
+                bestTarget.transform,
+                (int)queueValue
+            );
+
+            if (success)
+            {
+                Debug.Log("İşleme Başarılı!");
+                Destroy(gameObject); // Başarılıysa yok et
+            }
+            else
+            {
+                Debug.LogWarning("İşleme Başarısız (Kural Hatası)");
+                _targetScale = _originalScale;
+                StartCoroutine(SmoothMove(transform, originalParent));
+            }
         }
     }
     #endregion
@@ -925,10 +933,40 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
             tile.localPosition = Vector3.zero;
             tile.localScale = Vector3.one;
+            _targetScale = Vector3.one;
         }
 
         // Hareket bitti, değişkeni temizle
         currentMoveCoroutine = null;
     }
     #endregion
+
+    // TileUI.cs dosyasının en altındaki metodu bununla değiştir:
+    private Placeholder GetVisualClosestPlaceholder(float detectionRadius = 100f)
+    {
+        Placeholder bestTarget = null;
+        float closestDistanceSqr = detectionRadius * detectionRadius; // Karesini alıyoruz (Performans için)
+        Vector3 currentPos = transform.position;
+
+        // Start'ta doldurduğumuz "isMeldArea" listesini tara
+        foreach (Placeholder ph in allMeldPlaceholders)
+        {
+            if (ph == null)
+                continue;
+            // Eğer placeholder kapalıysa (inactive) hesaplama
+            if (!ph.gameObject.activeInHierarchy)
+                continue;
+
+            // Mesafeye bak
+            float dSqr = (ph.transform.position - currentPos).sqrMagnitude;
+
+            if (dSqr < closestDistanceSqr)
+            {
+                closestDistanceSqr = dSqr;
+                bestTarget = ph;
+            }
+        }
+
+        return bestTarget;
+    }
 }

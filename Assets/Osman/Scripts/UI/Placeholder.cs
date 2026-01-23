@@ -7,6 +7,7 @@ public class Placeholder : MonoBehaviour, IDropHandler
     public bool isRight = false; // Sağ taraf (Atma alanı) mı?
     public bool isDrop = false; // Çöp/Atma kutusu mu?
     public bool available = false; // İşlek (Meld) için uygun mu?
+    public bool isMeldArea = false;
     public bool willInstantiate = false; // Otomatik oluşturma flag'i
     public Tiles AvailableTileInfo; // Beklenen taş verisi
 

@@ -47,7 +47,6 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
     [SerializeField]
     List<Tiles> playerTiles4 = new List<Tiles>();
-    
 
     [Header("Melded Tiles")]
     [SerializeField]
@@ -1940,6 +1939,8 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         Debug.LogWarning("Istakada yer yok! Joker görseli oluşturulamadı.");
     }
 
+    // TileDistrubite.cs içine:
+
     [PunRPC]
     public void SyncProcessedTileRPC(
         int ownerQue,
@@ -1948,54 +1949,55 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         int placeholderIndex
     )
     {
-        // 1. İşlemin yapıldığı oyuncunun (Meld Sahibinin) alanını bul
-        string ownerNickName = "";
+        // 1. Bu ownerQue kime ait? O oyuncuyu bul.
+        Photon.Realtime.Player targetPlayer = null;
         foreach (var p in PhotonNetwork.PlayerList)
         {
             if (p.CustomProperties.TryGetValue("PlayerQue", out object q) && (int)q == ownerQue)
             {
-                ownerNickName = p.NickName;
+                targetPlayer = p;
                 break;
             }
         }
 
-        if (string.IsNullOrEmpty(ownerNickName))
+        if (targetPlayer == null)
             return;
 
-        Transform meldContainer = GameObject.Find(ownerNickName + " meld")?.transform;
+        // 2. O oyuncunun masasını (Meld Container) isminden bul.
+        // SeatManager mantığına göre: NickName + " meld"
+        GameObject meldContainer = GameObject.Find(targetPlayer.NickName + " meld");
         if (meldContainer == null)
             return;
 
-        // 2. Doğru Per Tipine Git (0: Single, 1: Multi, 2: Pair)
-        Transform typeContainer = meldContainer.GetChild(meldTypeInt);
+        // 3. Doğru satırı (Row) bul (Color=0, Number=1, Pair=2)
+        if (meldTypeInt >= meldContainer.transform.childCount)
+            return;
+        Transform rowTransform = meldContainer.transform.GetChild(meldTypeInt);
 
-        if (placeholderIndex < typeContainer.childCount)
+        // 4. Doğru kutucuğu (Placeholder) index ile bul
+        if (placeholderIndex >= rowTransform.childCount)
+            return;
+        Transform targetPlaceholder = rowTransform.GetChild(placeholderIndex);
+
+        // 5. Görseli Oluştur
+        // Eğer orada eski bir taş varsa (Joker Swap durumu) onu yok et
+        if (targetPlaceholder.childCount > 0)
         {
-            Transform targetPlaceholder = typeContainer.GetChild(placeholderIndex);
-
-            // A) ESKİ GÖRSELİ TEMİZLE
-            // (Eğer orada Joker varsa, görselini sil ki yeni taş yerine otursun)
-            if (targetPlaceholder.childCount > 0)
-            {
-                foreach (Transform child in targetPlaceholder)
-                {
-                    Destroy(child.gameObject);
-                }
-            }
-
-            // B) YENİ TAŞI OLUŞTUR
-            GameObject tileInstance = Instantiate(tilePrefab, targetPlaceholder);
-            TileUI ui = tileInstance.GetComponent<TileUI>();
-
-            if (ui != null)
-            {
-                ui.SetTileData(tileData);
-                ui.FitToParent();
-                ui.enabled = false; // Masadaki taşa tıklanmasın, sadece görsel
-            }
-
-            // Debug.Log($"[SYNC] Oyuncu {ownerQue} masasına taş işlendi: {tileData.color} {tileData.number}");
+            Destroy(targetPlaceholder.GetChild(0).gameObject);
         }
+
+        GameObject tileObj = Instantiate(tilePrefab, targetPlaceholder);
+        TileUI tileUI = tileObj.GetComponent<TileUI>();
+
+        // Remote clientlarda da doğru gözüksün
+        tileUI.SetTileData(tileData);
+        tileUI.FitToParent();
+
+        // ScoreManager'ı güncelle (Senkronizasyon için önemli)
+        // Eğer bu client MasterClient ise belki puan hesaplaması yapması gerekebilir
+        // Ama görsel senkronizasyon için bu kadarı yeterli.
+
+        Debug.Log($"Senkronizasyon Başarılı: {targetPlayer.NickName}'in masasına taş işlendi.");
     }
     #endregion
     #endregion

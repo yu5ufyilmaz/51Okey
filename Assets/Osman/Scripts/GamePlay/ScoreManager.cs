@@ -35,13 +35,13 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     public Dictionary<int, int> playerScores; // Oyuncu ID'si ve puanı
     private Transform playerMeldContainers;
     Transform pairPerPlaceHolder;
-    private Transform[] pairPerPlaceHolders;
+    public Transform[] pairPerPlaceHolders;
     Transform numberPerPlaceHolder;
-    private Transform[] numberPerPlaceHolders; // Player tile placeholders
+    public Transform[] numberPerPlaceHolders; // Player tile placeholders
     Transform colorPerPlaceHolder;
 
     [SerializeField]
-    private Transform[] colorPerPlaceHolders;
+    public Transform[] colorPerPlaceHolders;
     private TileDistrubite tileDistrubite; // Taşları yöneten sınıf
     private List<PendingJoker> pendingJokersToTake = new List<PendingJoker>();
 
@@ -96,19 +96,35 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
         int placeholderCount3 = pairPerPlaceHolder.childCount;
         pairPerPlaceHolders = new Transform[placeholderCount3];
+
         for (int i = 0; i < placeholderCount2; i++)
         {
             colorPerPlaceHolders[i] = colorPerPlaceHolder.GetChild(i);
+            // --- YENİ: Burası renkli per alanı, işaretle ---
+            Placeholder ph = colorPerPlaceHolders[i].GetComponent<Placeholder>();
+            if (ph != null)
+                ph.isMeldArea = true;
+            // ----------------------------------------------
         }
 
         for (int i = 0; i < placeholderCount; i++)
         {
             numberPerPlaceHolders[i] = numberPerPlaceHolder.GetChild(i);
+            // --- YENİ: Burası sayı per alanı, işaretle ---
+            Placeholder ph = numberPerPlaceHolders[i].GetComponent<Placeholder>();
+            if (ph != null)
+                ph.isMeldArea = true;
+            // ---------------------------------------------
         }
 
         for (int i = 0; i < placeholderCount3; i++)
         {
             pairPerPlaceHolders[i] = pairPerPlaceHolder.GetChild(i);
+            // --- YENİ: Burası çift per alanı, işaretle ---
+            Placeholder ph = pairPerPlaceHolders[i].GetComponent<Placeholder>();
+            if (ph != null)
+                ph.isMeldArea = true;
+            // --------------------------------------------
         }
     }
 
@@ -2688,5 +2704,117 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     }
     // Oyuncunun elinde kalan taşların sayısal toplamını hesaplar
 
+    #endregion
+    #region ManuelMelding
+    // ScoreManager.cs içine ekle
+
+    // ScoreManager.cs içindeki mevcut ProcessManualDrop metodunu bununla değiştir:
+
+    public bool ProcessManualDrop(Tiles tileData, Transform targetPlaceholder, int myPlayerQue)
+    {
+        Placeholder ph = targetPlaceholder.GetComponent<Placeholder>();
+
+        // 1. TEMEL KONTROLLER
+        if (ph == null)
+            return false;
+
+        // Joker Takası mı? (Dolu ve Jokerli bir yere mi bırakıyoruz?)
+        bool isJokerSwapTarget = false;
+        if (targetPlaceholder.childCount > 0)
+        {
+            TileUI existingTile = targetPlaceholder.GetChild(0).GetComponent<TileUI>();
+            if (existingTile != null && existingTile.tileDataInfo.type == TileType.Joker)
+                isJokerSwapTarget = true;
+        }
+
+        // Eğer yer müsait değilse ve Joker takası da değilse iptal et
+        if (!ph.available && !isJokerSwapTarget)
+            return false;
+
+        // 2. TAŞ EŞLEŞME KONTROLÜ
+        Tiles req = ph.AvailableTileInfo;
+        bool isMatch = false;
+
+        if (tileData.type == TileType.Joker)
+            isMatch = true;
+        else if (req != null && tileData.color == req.color && tileData.number == req.number)
+            isMatch = true;
+        else if (targetPlaceholder.parent.GetSiblingIndex() == (int)MeldType.MultiColor) // MultiColor İstisnası
+        {
+            if (req != null && tileData.number == req.number)
+                isMatch = true;
+        }
+
+        if (!isMatch)
+            return false;
+
+        // 3. KRİTİK NOKTA: SAHİBİ BULMA
+        // Bıraktığımız masa kime ait? (Benim masam da olabilir, rakibin masası da)
+        int targetOwnerQue = GetOwnerQueFromPlaceholder(targetPlaceholder);
+
+        if (targetOwnerQue == -1)
+        {
+            Debug.LogError("HATA: Hedef masanın sahibi bulunamadı! İsimlendirme hatası olabilir.");
+            return false;
+        }
+
+        // Meld Türü
+        MeldType meldType = (MeldType)targetPlaceholder.parent.GetSiblingIndex();
+
+        // Joker Var mı?
+        bool isPlaceholderJoker = false;
+        if (targetPlaceholder.childCount > 0)
+        {
+            TileUI existing = targetPlaceholder.GetChild(0).GetComponent<TileUI>();
+            if (existing != null && existing.tileDataInfo.type == TileType.Joker)
+                isPlaceholderJoker = true;
+        }
+
+        // 4. İŞLEMİ YAP
+        // Parametreler: (Yapan Kişi, Masanın Sahibi, Taş, Beklenen Taş...)
+        PerformTileProcessing(
+            myPlayerQue, // İşlemi yapan (Ben)
+            targetOwnerQue, // Masanın sahibi (Ben veya Rakip) <--- DÜZELTİLEN YER
+            tileData,
+            req ?? tileData,
+            targetPlaceholder,
+            meldType,
+            isPlaceholderJoker
+        );
+
+        // 5. IŞIKLARI GÜNCELLE
+        ph.available = false;
+        if (tileDistrubite != null)
+            tileDistrubite.RecalculateAllAvailableSlots();
+
+        return true;
+    }
+
+    private int GetOwnerQueFromPlaceholder(Transform placeholder)
+    {
+        // Hiyerarşi yapın: "NickName meld" -> "Color/Number Place" -> "Placeholder"
+        // Bu yüzden placeholder'ın dedesine (parent.parent) bakarak masa ismini buluyoruz.
+
+        if (placeholder.parent == null || placeholder.parent.parent == null)
+            return -1;
+
+        string containerName = placeholder.parent.parent.name; // Örn: "Ahmet meld"
+
+        foreach (var player in Photon.Pun.PhotonNetwork.PlayerList)
+        {
+            // SeatManager'da oluştururken verdiğin isim formatı: player.NickName + " meld"
+            string expectedName = player.NickName + " meld";
+
+            if (containerName == expectedName)
+            {
+                if (player.CustomProperties.TryGetValue("PlayerQue", out object queVal))
+                {
+                    return (int)queVal;
+                }
+            }
+        }
+
+        return -1; // Bulunamadı
+    }
     #endregion
 }
