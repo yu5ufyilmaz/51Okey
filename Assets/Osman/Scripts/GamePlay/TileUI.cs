@@ -6,6 +6,7 @@ using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.Tilemaps;
 using UnityEngine.UI;
 
@@ -605,31 +606,30 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object queueValue);
         int playerQueInt = (int)queueValue;
 
-        // --- 1. OYUN BİTİŞ KONTROLÜ (ELİM BİTTİ Mİ?) ---
+        // 1. ELDEN TAŞ DÜŞME MANTIĞI (Aynı kalıyor)
         List<Tiles> realTimePlayerTiles = tileDistrubite.GetPlayerTiles();
         List<Tiles> currentHandForCheck = new List<Tiles>(realTimePlayerTiles);
 
+        // Atılan taşı listeden düş
         var tileThrown = currentHandForCheck.FirstOrDefault(t =>
             t.color == tileDataInfo.color
             && t.number == tileDataInfo.number
             && t.type == tileDataInfo.type
         );
-
         if (tileThrown != null)
             currentHandForCheck.Remove(tileThrown);
 
+        // Yeni açılan perleri düş
         if (scoreManager != null)
         {
             List<Tiles> pendingTiles = scoreManager.GetAllTilesPendingCommit();
-            foreach (var pendingTile in pendingTiles)
+            foreach (var pt in pendingTiles)
             {
-                var itemToRemove = currentHandForCheck.FirstOrDefault(t =>
-                    t.color == pendingTile.color
-                    && t.number == pendingTile.number
-                    && t.type == pendingTile.type
+                var it = currentHandForCheck.FirstOrDefault(t =>
+                    t.color == pt.color && t.number == pt.number && t.type == pt.type
                 );
-                if (itemToRemove != null)
-                    currentHandForCheck.Remove(itemToRemove);
+                if (it != null)
+                    currentHandForCheck.Remove(it);
             }
         }
 
@@ -643,22 +643,20 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             data.handTiles = isGameReallyOver
                 ? new List<Tiles>()
                 : new List<Tiles> { new Tiles(TileColor.black, 1, TileType.Number) };
-
             EventDispatcher.SummonEvent("OnPlayerMoveFinished", data);
         }
 
-        // --- ELİM BİTTİYSE ÇIK ---
         if (isGameReallyOver)
         {
             Destroy(gameObject);
             yield break;
         }
 
-        // --- 2. İŞLEMLER ---
+        // --- GÖRSEL HAREKET ---
         StartCoroutine(SmoothMove(transform, rightTileContainer));
         yield return new WaitForSeconds(0.05f);
 
-        // Taşı Sil
+        // --- VERİTABANINDAN SİLME (ATILAN TAŞ) ---
         int indexToRemove = -1;
         List<Tiles> actualPlayerTiles = tileDistrubite.GetPlayerTiles();
         for (int i = 0; i < actualPlayerTiles.Count; i++)
@@ -684,44 +682,20 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
         yield return new WaitForSeconds(0.05f);
 
-        // Masa Güncellemeleri
+        // --- MASA GÜNCELLEMELERİ VE SENKRONİZASYON ---
         tileDistrubite.photonView.RPC("CheckForAvailableTiles", RpcTarget.All, playerQueInt);
         scoreManager.CommitAndStoreMelds();
         scoreManager.CommitJokerTransactions();
 
-        yield return new WaitForSeconds(0.05f);
-
-        var placements = scoreManager.GetAndClearPendingActivePlacements();
-        if (placements != null && placements.Count > 0)
-        {
-            foreach (var p in placements)
-            {
-                tileDistrubite.photonView.RPC(
-                    "RemoveActiveTileFromPlayerList",
-                    RpcTarget.All,
-                    playerQueInt,
-                    p.tileData
-                );
-                yield return new WaitForEndOfFrame();
-            }
-            tileDistrubite.photonView.RPC(
-                "InstantiateActiveTiles",
-                RpcTarget.All,
-                placements.ToArray()
-            );
-        }
+        // ** KRİTİK NOKTA: BEKLEYEN İŞLEMELERİ ŞİMDİ GÖNDER **
+        scoreManager.ExecutePendingSyncs();
 
         yield return new WaitForSeconds(0.05f);
 
-        // --- [YENİ EKLENEN KISIM] ORTADA TAŞ KALDI MI? ---
-        // Eğer ortada taş sayısı 0 ise, sırayı devretme, OYUNU BİTİR (Beraberlik).
+        // --- OYUN BİTİŞ / SIRA DEVRETME ---
         if (tileDistrubite.allTiles.Count == 0)
         {
-            Debug.LogWarning("Hamle yapıldı ve ortada taş kalmadı. Oyun BERABERE bitiyor.");
-
             if (GameManager.Instance != null && !GameManager.Instance.isGameEnded)
-            {
-                // -1 Kazanan Yok (Berabere) demektir.
                 GameManager.Instance.photonView.RPC(
                     "FinishGameRPC",
                     RpcTarget.All,
@@ -729,17 +703,12 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                     false,
                     false
                 );
-            }
-
             Destroy(gameObject);
-            yield break; // Fonksiyonu burada kes, NextTurn çalışmasın.
+            yield break;
         }
-        // ------------------------------------------------
 
-        // Eğer taş varsa sırayı devret
         turnManager.canDrop = false;
         turnManager.photonView.RPC("NextTurn", RpcTarget.AllBuffered);
-
         Destroy(gameObject);
     }
     #endregion

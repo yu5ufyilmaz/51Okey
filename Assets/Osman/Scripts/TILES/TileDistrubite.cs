@@ -47,6 +47,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
     [SerializeField]
     List<Tiles> playerTiles4 = new List<Tiles>();
+    
 
     [Header("Melded Tiles")]
     [SerializeField]
@@ -1900,18 +1901,31 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     private void InstantiateTileInFirstEmptySlot(Tiles tile)
     {
         if (playerTileContainers == null)
-        {
-            Debug.LogError("playerTileContainers başlatılmamış (Null). Taş oluşturulamıyor.");
             return;
-        }
 
-        // Boş yuva ara
         for (int i = 0; i < playerTileContainers.Length; i++)
         {
             Transform slot = playerTileContainers[i];
+            bool isSlotAvailable = false;
 
-            // Eğer slot boşsa
+            // 1. Slot tamamen boşsa
             if (slot.childCount == 0)
+            {
+                isSlotAvailable = true;
+            }
+            // 2. Slot dolu ama içindeki taş "Silinmek Üzere" (ActiveSelf = false) ise
+            // BURASI SENİN SORUNUNU ÇÖZEN YER!
+            else
+            {
+                GameObject childObj = slot.GetChild(0).gameObject;
+                if (!childObj.activeSelf)
+                {
+                    DestroyImmediate(childObj); // Engel olan hayalet taşı yok et
+                    isSlotAvailable = true;
+                }
+            }
+
+            if (isSlotAvailable)
             {
                 GameObject tileInstance = Instantiate(tilePrefab, slot);
                 TileUI tileUI = tileInstance.GetComponent<TileUI>();
@@ -1919,15 +1933,69 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 {
                     tileUI.SetTileData(tile);
                     tileUI.FitToParent();
-                    // Debug.Log($"Taş {i}. yuvaya eklendi: {tile.color} {tile.number}");
                 }
-                return; // Başarılı, çık
+                return;
+            }
+        }
+        Debug.LogWarning("Istakada yer yok! Joker görseli oluşturulamadı.");
+    }
+
+    [PunRPC]
+    public void SyncProcessedTileRPC(
+        int ownerQue,
+        Tiles tileData,
+        int meldTypeInt,
+        int placeholderIndex
+    )
+    {
+        // 1. İşlemin yapıldığı oyuncunun (Meld Sahibinin) alanını bul
+        string ownerNickName = "";
+        foreach (var p in PhotonNetwork.PlayerList)
+        {
+            if (p.CustomProperties.TryGetValue("PlayerQue", out object q) && (int)q == ownerQue)
+            {
+                ownerNickName = p.NickName;
+                break;
             }
         }
 
-        Debug.LogWarning(
-            "Istakada boş yer bulunamadı! (Full olabilir veya Destroy işlemi henüz tamamlanmadı)"
-        );
+        if (string.IsNullOrEmpty(ownerNickName))
+            return;
+
+        Transform meldContainer = GameObject.Find(ownerNickName + " meld")?.transform;
+        if (meldContainer == null)
+            return;
+
+        // 2. Doğru Per Tipine Git (0: Single, 1: Multi, 2: Pair)
+        Transform typeContainer = meldContainer.GetChild(meldTypeInt);
+
+        if (placeholderIndex < typeContainer.childCount)
+        {
+            Transform targetPlaceholder = typeContainer.GetChild(placeholderIndex);
+
+            // A) ESKİ GÖRSELİ TEMİZLE
+            // (Eğer orada Joker varsa, görselini sil ki yeni taş yerine otursun)
+            if (targetPlaceholder.childCount > 0)
+            {
+                foreach (Transform child in targetPlaceholder)
+                {
+                    Destroy(child.gameObject);
+                }
+            }
+
+            // B) YENİ TAŞI OLUŞTUR
+            GameObject tileInstance = Instantiate(tilePrefab, targetPlaceholder);
+            TileUI ui = tileInstance.GetComponent<TileUI>();
+
+            if (ui != null)
+            {
+                ui.SetTileData(tileData);
+                ui.FitToParent();
+                ui.enabled = false; // Masadaki taşa tıklanmasın, sadece görsel
+            }
+
+            // Debug.Log($"[SYNC] Oyuncu {ownerQue} masasına taş işlendi: {tileData.color} {tileData.number}");
+        }
     }
     #endregion
     #endregion
