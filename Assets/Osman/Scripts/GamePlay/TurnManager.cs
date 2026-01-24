@@ -115,7 +115,11 @@ public class TurnManager : MonoBehaviourPunCallbacks
         {
             currentTurnPlayer = 1; // Döngü başa döner
         }
-
+if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object q) && (int)q == currentTurnPlayer)
+{
+    // Senin zaten var olan metodun:
+    FindObjectOfType<TileDistrubite>().RecalculateAllAvailableSlots();
+}
         Debug.Log($"Player {currentTurnPlayer}'s turn.");
     }
 }

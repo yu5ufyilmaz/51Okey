@@ -134,7 +134,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     public void TryUpdateTableLimit(int openedScore)
     {
         // Eğer açılan puan mevcut limitten büyükse güncelle
-        if (openedScore > CurrentTableLimit)
+        if (openedScore >= CurrentTableLimit)
         {
             SetTableLimit(openedScore);
             Debug.Log($"<color=green>MASA LİMİTİ YÜKSELDİ: Yeni Limit {openedScore}</color>");
