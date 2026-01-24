@@ -137,10 +137,25 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
 
     // Yeni tur başladığında bunları sıfırlamak için (GameManager veya TurnManager çağırabilir)
+    // ScoreManager.cs içindeki metodu şu şekilde güncelle:
     public void ResetPlayerOpenStatus()
     {
         hasOpenedSeries = false;
         hasOpenedPairs = false;
+        playersWhoOpened.Clear();
+        pendingMeldInfos.Clear();
+        pendingMeldedTiles.Clear();
+        meldTileGO.Clear();
+
+        // --- DİZİLERİ SIFIRLA (DİZME HATASINI ÖNLER) ---
+        for (int i = 0; i < occupiedRows.Length; i++)
+            occupiedRows[i] = false;
+        for (int i = 0; i < occupiedRowsNumber.Length; i++)
+            occupiedRowsNumber[i] = false;
+        for (int i = 0; i < occupiedRowsPair.Length; i++)
+            occupiedRowsPair[i] = false;
+
+        Debug.Log("ScoreManager: Dizme alanları ve satır kayıtları sıfırlandı.");
     }
 
     public void UpdatePlayerScore(int playerQue, int penaltyPoints)

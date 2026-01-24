@@ -101,6 +101,34 @@ public class TurnManager : MonoBehaviourPunCallbacks
         return true;
     }
 
+    // TurnManager.cs içine ekle
+    [PunRPC]
+    public void RPC_ResetTurnForNewRound()
+    {
+        currentTurnPlayer = 1; // Sırayı tekrar 1. oyuncuya çek
+        ResetTurnFlags(); // Tüm PickedFromSide, hasOpened vb. bayrakları temizle
+
+        // Yerel oyuncunun sırasını kontrol et
+        if (
+            PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue(
+                "PlayerQue",
+                out object queueValue
+            )
+        )
+        {
+            int myQue = (int)queueValue;
+            canDrop = (myQue == 1); // Eğer 1. oyuncuysam taş atabilirim
+        }
+
+        // UI Işığını güncelle
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.UpdateTurnIndicators(currentTurnPlayer);
+        }
+
+        Debug.Log("TurnManager: Yeni el için sıralar sıfırlandı. Sıra 1. oyuncuda.");
+    }
+
     [PunRPC]
     private void NextTurn()
     {
@@ -115,11 +143,15 @@ public class TurnManager : MonoBehaviourPunCallbacks
         {
             currentTurnPlayer = 1; // Döngü başa döner
         }
-if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object q) && (int)q == currentTurnPlayer)
-{
-    // Senin zaten var olan metodun:
-    FindObjectOfType<TileDistrubite>().RecalculateAllAvailableSlots();
-}
+        if (
+            PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object q)
+            && (int)q == currentTurnPlayer
+        )
+        {
+            // Senin zaten var olan metodun:
+            FindObjectOfType<TileDistrubite>()
+                .RecalculateAllAvailableSlots();
+        }
         Debug.Log($"Player {currentTurnPlayer}'s turn.");
     }
 }

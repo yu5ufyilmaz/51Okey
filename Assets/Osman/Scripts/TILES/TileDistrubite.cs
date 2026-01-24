@@ -2146,5 +2146,48 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             }
         }
     }
+
+    // TileDistrubite.cs içerisinde
+    #region New Hand Reset and Redistribute
+    [PunRPC]
+    public void ResetTableAndRedistribute()
+    {
+        // 1. Sahnedeki TÜM TileUI ve görsel objeleri temizle
+        TileUI[] allTilesInScene = FindObjectsOfType<TileUI>();
+        foreach (TileUI tUI in allTilesInScene)
+        {
+            Destroy(tUI.gameObject);
+        }
+
+        // 2. Mantıksal listeleri ve eldeki taşları temizle
+        allTiles.Clear();
+        playerTiles1.Clear();
+        playerTiles2.Clear();
+        playerTiles3.Clear();
+        playerTiles4.Clear();
+
+        // Meld (açılan per) listelerini temizle
+        meltedTiles1.Clear();
+        meltedTiles2.Clear();
+        meltedTiles3.Clear();
+        meltedTiles4.Clear();
+
+        // 3. Placeholder (yuva) ışıklarını ve durumlarını sıfırla
+        Placeholder[] allPhs = FindObjectsOfType<Placeholder>();
+        foreach (var ph in allPhs)
+        {
+            ph.available = false;
+            ph.AvailableTileInfo = null;
+        }
+
+        // 4. MASTER CLIENT: Taşları yeniden üret ve dağıtımı başlat
+        if (PhotonNetwork.IsMasterClient)
+        {
+            Debug.Log("Master Client: Yeni el için taşlar hazırlanıyor...");
+            GeneratePlayerTiles(); // Taşları oluştur (106 taş + 2 sahte)
+            ShuffleTiles(); // Karıştır, göstergeyi seç ve SyncShuffledTiles'ı tetikle
+        }
+    }
+    #endregion
     #endregion
 }

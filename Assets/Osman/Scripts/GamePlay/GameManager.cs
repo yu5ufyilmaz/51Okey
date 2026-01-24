@@ -145,6 +145,29 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         Hashtable props = new Hashtable { { "TableLimit", limit } };
         PhotonNetwork.CurrentRoom.SetCustomProperties(props);
+
+        // Master Client kendi UI'ını ve limit bilgisini hemen tazelesin
+        Debug.Log($"Limit Ayarlandı: {limit}");
+    }
+
+    public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
+    {
+        if (propertiesThatChanged.ContainsKey("TableLimit"))
+        {
+            int newLimit = (int)propertiesThatChanged["TableLimit"];
+            Debug.Log($"Oda Limiti Güncellendi: {newLimit}");
+
+            // UI'ı her oyuncuda anında güncelle
+            if (UIManager.Instance != null)
+            {
+                // ScoreManager'dan oyuncunun mevcut puanlarını alarak UI'ı tazele
+                UIManager.Instance.UpdatePlayerStats(
+                    scoreManager.totalScore,
+                    scoreManager.pairTotalScore,
+                    newLimit
+                );
+            }
+        }
     }
 
     // --- CEZA YÖNETİMİ ---
@@ -573,10 +596,101 @@ public class GameManager : MonoBehaviourPunCallbacks
         StartCoroutine(RestartSequence());
     }
 
+    public void CheckRoundEnd()
+    {
+        // Mevcut odadaki el bilgilerini alıyoruz
+        int currentRound = (int)PhotonNetwork.CurrentRoom.CustomProperties["CurrentRound"];
+        int totalRounds = (int)PhotonNetwork.CurrentRoom.CustomProperties["TotalRounds"];
+
+        // Skorları mevcut elin sonuçlarına göre güncelle (ScoreManager üzerinden)
+        // ScoreManager.UpdateTotalScores(); // Bu metodun toplam skorları biriktirdiğinden emin ol
+
+        if (currentRound < totalRounds)
+        {
+            // Daha oynanacak el var
+            Debug.Log($"El bitti! {currentRound}. el tamamlandı. Sonraki ele geçiliyor...");
+
+            // MasterClient bir sonraki eli hazırlar
+            if (PhotonNetwork.IsMasterClient)
+            {
+                NextRoundSetup(currentRound + 1);
+            }
+        }
+        else
+        {
+            // Oyun tamamen bitti
+            Debug.Log("Tüm eller tamamlandı! Genel sonuçlar hesaplanıyor...");
+            //ShowFinalResults();
+        }
+    }
+
     private IEnumerator RestartSequence()
     {
-        Debug.Log("10 saniye sonra lobiye dönülüyor...");
-        yield return new WaitForSeconds(10f);
-        PhotonNetwork.LeaveRoom();
+        // Mevcut oda özelliklerinden tur bilgilerini al
+        int currentRound = (int)PhotonNetwork.CurrentRoom.CustomProperties["CurrentRound"];
+        int totalRounds = (int)PhotonNetwork.CurrentRoom.CustomProperties["TotalRounds"];
+
+        Debug.Log($"El bitti. Mevcut: {currentRound}, Toplam: {totalRounds}");
+
+        if (currentRound < totalRounds)
+        {
+            // Daha oynanacak el var
+            yield return new WaitForSeconds(10f); // Oyuncuların skor tablosuna bakması için süre
+
+            if (PhotonNetwork.IsMasterClient)
+            {
+                // Bir sonraki eli hazırla
+                NextRoundSetup(currentRound + 1);
+            }
+        }
+        else
+        {
+            // Tüm eller bitti, artık lobiye dönme vakti
+            Debug.Log("Tüm eller tamamlandı. 10 saniye içinde lobiye dönülüyor...");
+            yield return new WaitForSeconds(10f);
+            PhotonNetwork.LeaveRoom();
+        }
+    }
+
+    private void NextRoundSetup(int nextRoundValue)
+    {
+        // 1. Oda özelliklerini güncelle
+        Hashtable cp = new Hashtable();
+        cp.Add("CurrentRound", nextRoundValue);
+        PhotonNetwork.CurrentRoom.SetCustomProperties(cp);
+
+        // 2. Masayı temizlemek ve yeni eli başlatmak için RPC gönder
+        // Bu RPC; taşları siler, eli dağıtır ve statları sıfırlar
+        photonView.RPC("RPC_PrepareNextRound", RpcTarget.All);
+    }
+
+    // GameManager.cs içindeki ilgili kısım
+    // GameManager.cs içindeki RPC_PrepareNextRound metodunu güncelle
+    [PunRPC]
+    public void RPC_PrepareNextRound()
+    {
+        isGameEnded = false;
+        isGameReady = false;
+
+        if (UIManager.Instance != null)
+            UIManager.Instance.gameOverPanel.SetActive(false);
+
+        // --- TUR VE SIRA SIFIRLAMA ---
+        // TurnManager üzerindeki sırayı ve izinleri tüm clientlarda sıfırla
+        turnManager.photonView.RPC("RPC_ResetTurnForNewRound", RpcTarget.All);
+
+        // --- LİMİT SIFIRLAMA ---
+        if (PhotonNetwork.IsMasterClient)
+        {
+            SetTableLimit(51);
+        }
+
+        scoreManager.ResetPlayerOpenStatus();
+
+        // Taşları dağıtmayı en sona bırak ki sıralar hazır olsun
+        if (PhotonNetwork.IsMasterClient)
+        {
+            tileDistrubite.photonView.RPC("ResetTableAndRedistribute", RpcTarget.All);
+        }
     }
 }

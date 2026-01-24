@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
+using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class RoomManager : MonoBehaviourPunCallbacks
 {
@@ -23,46 +24,94 @@ public class RoomManager : MonoBehaviourPunCallbacks
 
     void Start()
     {
-        EventDispatcher.RegisterFunction("CreateRoom", CreateRoom);
-        EventDispatcher.RegisterFunction<string>("JoinRoom", JoinRoom);
-        EventDispatcher.RegisterFunction<int>("JoinRandomRoomOrCreate", JoinRandomRoomOrCreate);
+        EventDispatcher.RegisterFunction<string>("JoinRoom", JoinRoomManual);
+        // Rastgele katılma için yeni bir register
+        EventDispatcher.RegisterFunction("JoinRandomOrCreate", JoinRandomRoomOrCreateAuto);
         PhotonNetwork.AutomaticallySyncScene = true;
     }
 
     // Oda oluşturma işlemi
-    public void CreateRoom()
+    public void CreateCustomRoom(
+        string roomName,
+        string password,
+        int totalRounds,
+        bool isPasswordProtected
+    )
     {
         RoomOptions roomOptions = new RoomOptions
         {
             MaxPlayers = (byte)maxPlayers,
             CleanupCacheOnLeave = cleanupCacheOnLeave,
             EmptyRoomTtl = emptyRoomTtl,
-            IsOpen = isOpen,
-            IsVisible = isVisible,
+            PlayerTtl =
+                60000 // Yeniden bağlanma için 1 dakika süre
+            ,
         };
-        PhotonNetwork.CreateRoom(PhotonNetwork.NickName, roomOptions, TypedLobby.Default);
 
-        SceneChangeManager.Instance.ChangeScene("Table");
+        Hashtable roomProps = new Hashtable();
+        roomProps.Add("Password", isPasswordProtected ? password : "");
+        roomProps.Add("TotalRounds", totalRounds);
+        roomProps.Add("CurrentRound", 1);
+
+        roomOptions.CustomRoomProperties = roomProps;
+        roomOptions.CustomRoomPropertiesForLobby = new string[] { "Password", "TotalRounds" };
+
+        PhotonNetwork.CreateRoom(roomName, roomOptions, TypedLobby.Default);
     }
 
-    // Odaya katılma işlemi
-    public void JoinRoom(string _roomName)
+    // JOIN ROOM Butonu için: Önce rastgele şifresiz oda dener, yoksa kurar
+    public void JoinRandomRoomOrCreateAuto()
     {
-        PhotonNetwork.JoinRoom(_roomName);
-        SceneChangeManager.Instance.ChangeScene("Table");
-    }
-
-    // Rastgele oda bulma veya oluşturma işlemi
-    public void JoinRandomRoomOrCreate(int roomCount)
-    {
-        if (roomCount > 0)
+        // Sadece şifresi boş ("") olan odaları filtreliyoruz
+        ExitGames.Client.Photon.Hashtable expectedProps = new ExitGames.Client.Photon.Hashtable
         {
-            PhotonNetwork.JoinRandomRoom();
-            SceneChangeManager.Instance.ChangeScene("Table");
+            { "Password", "" },
+        };
+        PhotonNetwork.JoinRandomRoom(expectedProps, (byte)maxPlayers);
+    }
+
+    // Eğer JoinRandomRoom başarısız olursa (Oda yoksa) Photon bu callback'i çağırır
+    public override void OnJoinRandomFailed(short returnCode, string message)
+    {
+        Debug.Log("Uygun şifresiz oda bulunamadı, varsayılan oda kuruluyor...");
+        // Kural: Oyuncu adı, şifresiz, 1 el
+        CreateCustomRoom(PhotonNetwork.NickName, "", 1, false);
+    }
+
+    // Scripts/Photons/RoomManager.cs
+    // Scripts/Photons/RoomManager.cs içindeki ilgili metod:
+    public void JoinRoomWithPassword(
+        string _roomName,
+        string enteredPassword,
+        string actualPassword
+    )
+    {
+        // Boşlukları temizleyerek karşılaştırıyoruz
+        string cleanEntered = enteredPassword.Trim();
+        string cleanActual = actualPassword.Trim();
+
+        Debug.Log(
+            $"[Giriş Denemesi] Oda: '{_roomName}' | Girilen: '{cleanEntered}' | Beklenen: '{cleanActual}'"
+        );
+
+        if (cleanEntered == cleanActual)
+        {
+            PhotonNetwork.JoinRoom(_roomName); // Artık isim ve şifre kesinlikle doğru
         }
         else
         {
-            CreateRoom();
+            Debug.LogError("Hatalı Şifre! Girilen: " + cleanEntered);
         }
+    }
+
+    // Listeden tıklayarak katılma (Şifreli odalar için ileride buraya şifre sorma eklenecek)
+    public void JoinRoomManual(string _roomName)
+    {
+        PhotonNetwork.JoinRoom(_roomName);
+    }
+
+    public override void OnJoinedRoom()
+    {
+        SceneChangeManager.Instance.ChangeScene("Table");
     }
 }

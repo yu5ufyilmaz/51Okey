@@ -1,27 +1,33 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class RoomItem : MonoBehaviour
 {
-    public Text roomNameText;
-    private string _roomOwnerName;
-    public Text playerCountText;
-    ButtonFuncs manager;
+    public TMP_Text roomNameText; // UI'daki metin objesi
+    private string cleanRoomName; // Photon'un bildiği gerçek isim
+    private string roomPassword;
 
-    void Start()
+    public void SetRoomName(string _roomName, int _playerCount, string _password)
     {
-        manager = FindObjectOfType<ButtonFuncs>();
+        cleanRoomName = _roomName; // Gerçek ismi burada bozmadan sakla
+        roomPassword = _password;
+
+        // Ekranda nasıl görüneceğini ayarla (Emoji yerine güvenli karakter)
+        if (!string.IsNullOrEmpty(_password))
+        {
+            roomNameText.text = _roomName + " [P]"; // Font hatası vermemesi için [P] kullandık
+        }
+        else
+        {
+            roomNameText.text = _roomName;
+        }
     }
 
-    public void SetRoomName(string _roomName, int _playerCount)
+    public void OnClick()
     {
-        _roomOwnerName = _roomName;
-        roomNameText.text = _roomName + "'s Room";
-        playerCountText.text = _playerCount + " / 4";
-    }
-
-    public void OnClickItem()
-    {
-        manager.JoinRoom(_roomOwnerName);
+        // Ekranda yazan metni değil, 'cleanRoomName' değişkenini gönderiyoruz
+        FindObjectOfType<ButtonFuncs>()
+            .OnRoomItemClicked(cleanRoomName, roomPassword);
     }
 }
