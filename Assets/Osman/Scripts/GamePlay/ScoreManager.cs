@@ -1836,24 +1836,21 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 }
             }
         }
-        // ---------------------------------------------------------
-        // 2. MULTI COLOR (SAYI GRUBU) - [DÜZELTİLEN KISIM]
-        // ---------------------------------------------------------
-        else if (MultiColorCheck(per))
+        else if (MultiColorCheck(per)) // Sayı Grubu Kontrolü
         {
-            // Joker olmayan referans bir taş bul (Numarayı almak için)
+            // Joker olmayan bir taşı referans alarak grubun numarasını öğreniyoruz
             var refTile = per.FirstOrDefault(t => t.type != TileType.Joker);
             if (refTile != null)
             {
                 int targetNumber = refTile.number;
                 bool hasJoker = per.Any(tile => tile.type == TileType.Joker);
 
-                // Masada mevcut olan GERÇEK renkleri bul (Joker hariç)
+                // Masadaki mevcut (gerçek) renkleri buluyoruz
                 List<TileColor> existingColors = per.Where(t => t.type != TileType.Joker)
                     .Select(t => t.color)
                     .ToList();
 
-                // Tüm Olası Renkler
+                // Olası tüm renkler
                 List<TileColor> allColors = new List<TileColor>
                 {
                     TileColor.yellow,
@@ -1862,27 +1859,26 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                     TileColor.red,
                 };
 
-                // Eksik Olan Renkler (İşlenebilecek Renkler)
+                // Eksik olan renkleri tespit ediyoruz
                 List<TileColor> missingColors = allColors.Except(existingColors).ToList();
 
-                // --- DURUM 1: 3 TAŞ VARSA -> 4. SLOTU AÇ ---
+                // --- DURUM 1: 3 TAŞ VARSA 4. YUVAYI AÇ (EKLEME) ---
                 if (per.Count == 3)
                 {
-                    int fourthIndex = 3 + (4 * rowIndex); // 4. Sütun (Index 3)
-                    if (fourthIndex < targetContainer.childCount)
+                    // İndeks hesaplama: (rowIndex * 4) + 3 -> 4. sütun
+                    int fourthIndex = (rowIndex * 4) + 3;
+
+                    if (fourthIndex < numberPerPlaceHolders.Length)
                     {
-                        Transform phTransform = targetContainer.GetChild(fourthIndex);
+                        Transform phTransform = numberPerPlaceHolders[fourthIndex];
                         Placeholder ph = phTransform.GetComponent<Placeholder>();
 
                         if (ph != null && phTransform.childCount == 0)
                         {
                             ph.available = true;
-
-                            // DÜZELTME: Sabit siyah yerine, eksik renklerden ilkini varsayılan yapıyoruz.
-                            // (TryProcessTiles zaten renk kontrolü yapacağı için bu sadece veri taşıyıcıdır)
+                            // İlk eksik rengi varsayılan olarak atıyoruz (TryProcessTiles bunu esnetecek)
                             TileColor targetColor =
                                 (missingColors.Count > 0) ? missingColors[0] : TileColor.black;
-
                             ph.AvailableTileInfo = new Tiles(
                                 targetColor,
                                 targetNumber,
@@ -1892,49 +1888,34 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                     }
                 }
 
-                // --- DURUM 2: JOKER VARSA -> TAKAS (SWAP) AÇ ---
+                // --- DURUM 2: JOKER VARSA TAKAS (SWAP) YUVASINI AÇ ---
                 if (hasJoker)
                 {
-                    // Per içindeki Joker görselini bul
                     int start = rowIndex * 4;
                     int end = start + 4;
 
                     for (int i = start; i < end; i++)
                     {
-                        if (i >= targetContainer.childCount)
+                        if (i >= numberPerPlaceHolders.Length)
                             break;
 
-                        Transform phTransform = targetContainer.GetChild(i);
+                        Transform phTransform = numberPerPlaceHolders[i];
                         if (phTransform.childCount > 0)
                         {
                             TileUI tUI = phTransform.GetChild(0).GetComponent<TileUI>();
 
-                            // Eğer bu slotta Joker varsa
+                            // Eğer bu yuvada bir Joker duruyorsa
                             if (tUI != null && tUI.tileDataInfo.type == TileType.Joker)
                             {
                                 Placeholder jokerPh = phTransform.GetComponent<Placeholder>();
                                 if (jokerPh != null)
                                 {
                                     jokerPh.available = true;
-
-                                    // DÜZELTME: Joker'i almak için gereken taş EKSİK olan renktir.
-                                    // Eğer 4 taş varsa (R, B, Y, Joker) -> Eksik renk Siyah'tır. Joker Siyah yerine geçer.
-                                    // Oyuncu Siyah atarsa Joker'i alır.
-
-                                    TileColor requiredColor = TileColor.black; // Varsayılan
-
-                                    if (missingColors.Count == 1)
-                                    {
-                                        // Tam 4'lü per ise (3 renk + Joker), tek bir ihtimal vardır.
-                                        requiredColor = missingColors[0];
-                                    }
-                                    else if (missingColors.Count > 1)
-                                    {
-                                        // 3'lü per ise (2 renk + Joker), Joker iki renkten birini temsil ediyordur.
-                                        // İlk eksik rengi set ediyoruz ama TryProcessTiles'da esneklik sağlayacağız.
-                                        requiredColor = missingColors[0];
-                                    }
-
+                                    // Jokerin yerine gelmesi gereken eksik rengi belirle
+                                    TileColor requiredColor =
+                                        (missingColors.Count > 0)
+                                            ? missingColors[0]
+                                            : TileColor.black;
                                     jokerPh.AvailableTileInfo = new Tiles(
                                         requiredColor,
                                         targetNumber,
@@ -2076,110 +2057,91 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         tileDistrubite.RecalculateAllAvailableSlots();
     }
 
-    // --- 2. YARDIMCI METOT (İŞLEMİ GERÇEKLEŞTİREN) ---
     private void PerformTileProcessing(
         int playerQue,
         int ownerQue,
         Tiles tileInHand,
         Tiles req,
         Transform targetPlaceholder,
-        MeldType meldType,
+        ScoreManager.MeldType meldType,
         bool isJokerSwap
     )
     {
-        // A) CEZA KONTROLÜ (Hemen MasterClient'a bildirilir, bekletilmez)
-        int penaltyVictim = -1;
-        int penaltyVal = 0;
-        if (ownerQue != playerQue)
+        // 1. GÜVENLİK KONTROLÜ
+        List<Tiles> myHand = tileDistrubite.GetPlayerTiles();
+        if (!myHand.Contains(tileInHand))
+            return;
+
+        // 2. JOKER SWAP (Eski taşı temizle)
+        if (isJokerSwap && targetPlaceholder.childCount > 0)
         {
-            penaltyVictim = ownerQue;
-            penaltyVal = req.number * 10;
-            GameManager.Instance.photonView.RPC(
-                "ApplyProcessingPenaltyRPC",
-                RpcTarget.MasterClient,
-                penaltyVictim,
-                penaltyVal
-            );
+            Destroy(targetPlaceholder.GetChild(0).gameObject);
         }
 
-        // B) LOCAL GÖRSEL OLUŞTURMA (Hemen Gözükmeli)
+        // 3. MASADA GÖRSEL OLUŞTURMA (Yerel Geri Bildirim)
         GameObject tempGO = Instantiate(tilePrefab, targetPlaceholder);
+        tempGO.name = "PERMANENT_MELD_TILE";
 
-        Tiles tileToSend = new Tiles(tileInHand.color, tileInHand.number, tileInHand.type);
-        if (tileInHand.type == TileType.Joker) // Jokerse hedef rengine bürün
+        Tiles tileDataForUI = new Tiles(tileInHand.color, tileInHand.number, tileInHand.type);
+        if (tileInHand.type == TileType.Joker)
         {
-            tileToSend.color = req.color;
-            tileToSend.number = req.number;
-            tileToSend.type = TileType.Joker;
+            tileDataForUI.color = req.color;
+            tileDataForUI.number = req.number;
         }
 
-        tempGO.GetComponent<TileUI>().SetTileData(tileToSend);
-        tempGO.GetComponent<TileUI>().FitToParent();
-        meldTileGO.Add(tempGO); // Geri alma (Undo) için listeye ekle
-
-        // C) ESKİ TAŞI SİL / JOKERİ AL
-        if (targetPlaceholder.childCount > 1)
+        TileUI uiScript = tempGO.GetComponent<TileUI>();
+        if (uiScript != null)
         {
-            // Yeni taş (tempGO) eklendiği için, childCount en az 2 olmuştur.
-            // 0. indisteki obje, orada duran Eski Jokerdir.
-            TileUI oldTileUI = targetPlaceholder.GetChild(0).GetComponent<TileUI>();
-
-            if (oldTileUI != null)
-            {
-                // KRİTİK DÜZELTME: Destroy yerine DestroyImmediate kullanıyoruz.
-                // Böylece oyun motoru beklemeden objeyi siliyor.
-                // Bir sonraki Recalculate işleminde kod burayı "Jokersiz" olarak görüyor ve döngüye girmiyor.
-                DestroyImmediate(oldTileUI.gameObject);
-
-                if (isJokerSwap)
-                {
-                    // Joker verisini temizleyip oyuncuya ver
-                    Tiles cleanJoker = new Tiles(TileColor.black, 0, TileType.Joker);
-                    tileDistrubite.photonView.RPC(
-                        "AddTileToPlayerHand",
-                        RpcTarget.AllBuffered,
-                        playerQue,
-                        cleanJoker
-                    );
-                }
-            }
+            uiScript.SetTileData(tileDataForUI);
+            uiScript.FitToParent();
         }
 
-        // D) ELDEN SİL (Local ve Server Verisinden)
-        // Bu işlem anlık olmalı ki oyuncu taşı tekrar kullanamasın.
-        tileDistrubite.photonView.RPC("DeactivatePlayerTile", RpcTarget.All, playerQue, tileInHand);
-        tileDistrubite.photonView.RPC(
-            "RemoveTileFromPlayerListByValue",
-            RpcTarget.AllBuffered,
-            playerQue,
-            tileInHand
-        );
-
-        // E) SERVER SENKRONİZASYONU (GEÇİKMELİ - LİSTEYE EKLE)
-        // Artık hemen RPC atmıyoruz, listeye ekliyoruz.
+        // 4. SENKRONİZASYON VERİSİ
         PendingSyncData syncData = new PendingSyncData
         {
             ownerQue = ownerQue,
-            tileData = tileToSend,
+            tileData = tileDataForUI,
             meldType = (int)meldType,
             placeholderIndex = targetPlaceholder.GetSiblingIndex(),
         };
         pendingSyncActions.Add(syncData);
 
-        // F) UNDO KAYDI
-        Tiles undoJokerRef = new Tiles(TileColor.black, 0, TileType.Joker);
-        ProcessAction action = new ProcessAction();
-        action.type = isJokerSwap ? ActionType.JokerSwap : ActionType.NormalPlace;
-        action.tilePlayed = tileInHand;
-        action.targetSlot = targetPlaceholder;
-        action.visualObject = tempGO;
-        action.tileTaken = isJokerSwap ? undoJokerRef : null;
-        action.penaltyVictimQue = penaltyVictim;
-        action.penaltyAmount = penaltyVal;
-        actionHistory.Push(action);
+        // --- KRİTİK DÜZELTME: SİLME YÖNETİMİ ---
+        // Sadece bu işlemi başlatan yerel oyuncu (Ben) kendi listesini güncellemeli
+        if (playerQue == GetPlayerQue())
+        {
+            // Tüm clientlarda VERİ listesinden (playerTiles1 vs) sil
+            tileDistrubite.photonView.RPC(
+                "RemoveActiveTileFromPlayerList",
+                RpcTarget.AllBuffered,
+                playerQue,
+                tileInHand
+            );
+
+            // SADECE benim ekranımda ISTAKA görselini kapat
+            // DeactivatePlayerTile artık tek bir eşleşmeyi silip 'return' yapmalı
+            tileDistrubite.photonView.RPC(
+                "DeactivatePlayerTile",
+                RpcTarget.All,
+                playerQue,
+                tileInHand
+            );
+        }
+
+        if (isJokerSwap)
+        {
+            Tiles cleanJoker = new Tiles(TileColor.black, 0, TileType.Joker);
+            tileDistrubite.photonView.RPC(
+                "AddTileToPlayerHand",
+                RpcTarget.AllBuffered,
+                playerQue,
+                cleanJoker
+            );
+        }
 
         if (turnManager != null)
             turnManager.hasProcessedThisTurn = true;
+        tileDistrubite.RecalculateAllAvailableSlots();
     }
 
     // --- 3. BEKLEYEN SENKRONİZASYONLARI ÇALIŞTIR ---

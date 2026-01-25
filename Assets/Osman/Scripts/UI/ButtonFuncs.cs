@@ -43,7 +43,27 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
     //Lobi Manager Scripti
     void Start()
     {
-        PhotonNetwork.JoinLobby();
+        if (PhotonNetwork.IsConnectedAndReady)
+        {
+            PhotonNetwork.JoinLobby();
+        }
+    }
+
+    public override void OnConnectedToMaster()
+    {
+        // 'InLobby' yerine 'JoinedLobby' kullanmalısın
+        if (
+            PhotonNetwork.NetworkClientState != ClientState.JoiningLobby
+            && PhotonNetwork.NetworkClientState != ClientState.JoinedLobby
+        )
+        {
+            Debug.Log("Master Sunucuya Bağlanıldı, Lobiye Giriş Yapılıyor...");
+            PhotonNetwork.JoinLobby();
+        }
+        else
+        {
+            Debug.Log("Zaten lobiye giriliyor veya lobideyiz. JoinLobby çağrısı atlandı.");
+        }
     }
 
     public void CreateGame()

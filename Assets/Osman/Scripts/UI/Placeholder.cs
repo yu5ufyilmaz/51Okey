@@ -27,7 +27,8 @@ public class Placeholder : MonoBehaviour, IDropHandler
         GameObject droppedTile = eventData.pointerDrag;
         if (droppedTile == null)
             return;
-
+        if (isMeldArea)
+            return;
         // ---------------------------------------------------------------
         // [YENİ GÜVENLİK KONTROLÜ]
         // Sadece oyuncunun kendi ıstakasındaki (PlayerTileContainer)

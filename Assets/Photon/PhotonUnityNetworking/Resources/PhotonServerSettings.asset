@@ -117,6 +117,9 @@ MonoBehaviour:
   - RevertProcessingPenaltyRPC
   - SyncOpenedPlayerRPC
   - SyncProcessedTileRPC
+  - RPC_PrepareNextRound
+  - ResetTableAndRedistribute
+  - RPC_ResetTurnForNewRound
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

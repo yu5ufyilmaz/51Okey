@@ -150,21 +150,34 @@ public class GameManager : MonoBehaviourPunCallbacks
         Debug.Log($"Limit Ayarlandı: {limit}");
     }
 
-    public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
+    public override void OnRoomPropertiesUpdate(
+        ExitGames.Client.Photon.Hashtable propertiesThatChanged
+    )
     {
         if (propertiesThatChanged.ContainsKey("TableLimit"))
         {
             int newLimit = (int)propertiesThatChanged["TableLimit"];
-            Debug.Log($"Oda Limiti Güncellendi: {newLimit}");
 
-            // UI'ı her oyuncuda anında güncelle
-            if (UIManager.Instance != null)
+            // GÜVENLİK KONTROLÜ: Hem UIManager hem de scoreManager null olmamalı
+            if (UIManager.Instance != null && scoreManager != null)
             {
-                // ScoreManager'dan oyuncunun mevcut puanlarını alarak UI'ı tazele
+                // Puanları ScoreManager'dan, yeni limiti gelen veriden alıp UI'ı tazele
                 UIManager.Instance.UpdatePlayerStats(
                     scoreManager.totalScore,
                     scoreManager.pairTotalScore,
                     newLimit
+                );
+            }
+            else
+            {
+                // Eğer scoreManager null ise referansı tekrar bulmayı dene
+                if (scoreManager == null)
+                {
+                    _scoreManager = FindObjectOfType<ScoreManager>();
+                }
+
+                Debug.LogWarning(
+                    "OnRoomPropertiesUpdate: UIManager veya ScoreManager henüz hazır değil!"
                 );
             }
         }

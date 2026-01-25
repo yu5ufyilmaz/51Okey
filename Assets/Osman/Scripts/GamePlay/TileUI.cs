@@ -389,43 +389,39 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        // --- 1. EN BAŞTAKİ ZORUNLU KONTROLLER ---
+        // --- 1. TEMEL GÜVENLİK KONTROLLERİ ---
         if (transform.parent.CompareTag("OtherSideTileContainer") || isIndicatorTile)
         {
             _targetScale = _originalScale;
             StartCoroutine(SmoothMove(transform, originalParent));
-            Debug.LogWarning("Bu taşa dokunamazsın!");
             return;
         }
 
         PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object queueValue);
+        int localQueInt = (int)queueValue;
         canvasGroup.blocksRaycasts = true;
 
-        // --- 2. HEDEFİ BULMA (En Garantili Yöntem: Mesafe) ---
-        // Raycast yerine mesafe ölçüyoruz ki ıskalamasın.
-
+        // --- 2. HEDEF TESPİTİ (MESAFE BAZLI) ---
         Placeholder bestTarget = null;
         float closestDistance = float.MaxValue;
 
         // A) Kendi Istakamızdaki Kutuları Tara
         foreach (Transform t in playerTileContainer)
         {
-            float dist = Vector2.Distance(t.position, transform.position); // Z eksenini yoksayıyoruz (2D)
-            if (dist < 100f && dist < closestDistance) // 100 birimlik alan
+            float dist = Vector2.Distance(t.position, transform.position);
+            if (dist < 100f && dist < closestDistance)
             {
                 closestDistance = dist;
                 bestTarget = t.GetComponent<Placeholder>();
             }
         }
 
-        // B) Masadaki (Meld) Kutuları Tara (Global liste yerine anlık buluyoruz, hata riskini sıfırlar)
-        // Sadece eğer ıstakada bir yer bulamadıysak buraya bak (Performans için)
+        // B) Eğer Istakada Yer Bulamadıysak Masadaki (Meld) veya Atma Alanına Bak
         if (bestTarget == null)
         {
             Placeholder[] allPlaceholders = FindObjectsOfType<Placeholder>();
             foreach (Placeholder ph in allPlaceholders)
             {
-                // Sadece Masa (Meld) veya Atma (Right) alanlarına bak
                 if (ph.isMeldArea || ph.isRight)
                 {
                     float dist = Vector2.Distance(ph.transform.position, transform.position);
@@ -438,7 +434,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             }
         }
 
-        // --- 3. HİÇBİR YER BULAMADIYSAK GERİ DÖN ---
+        // Hiçbir yer bulunamadıysa eski yerine dön
         if (bestTarget == null)
         {
             _targetScale = _originalScale;
@@ -446,99 +442,76 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             return;
         }
 
-        // --- 4. HEDEF TÜRÜNE GÖRE İŞLEM YAP (TEK BLOK) ---
+        // --- 3. HEDEF TÜRÜNE GÖRE AKSİYONLAR ---
 
-        // SENARYO A: ATMA ALANI (SAĞ TARAFA BIRAKMA)
+        // DURUM A: TAŞ ATMA (SAĞ TARAF)
         if (bestTarget.isRight)
         {
-            if (turnManager.IsPlayerTurn())
+            if (turnManager.IsPlayerTurn() && turnManager.canDrop)
             {
-                if (turnManager.canDrop) // Taş çekmiş mi?
+                // Yandan alıp açmama kontrolü
+                if (fromLeftContainer && !turnManager.hasOpenedThisTurn)
                 {
-                    // Yandan taş aldıysa açmak zorunda
-                    if (fromLeftContainer && !turnManager.hasOpenedThisTurn)
-                    {
-                        Debug.LogError("Yandan taş aldınız ama açmadınız!");
-                        GameManager.Instance.HandleFailedSidePick(this.tileDataInfo);
-                        _targetScale = _originalScale;
-                        StartCoroutine(SmoothMove(transform, originalParent));
-                        return;
-                    }
-
-                    Debug.Log("Sıra bitiriliyor...");
-                    // Ceza kontrolü ve Tur bitirme
-                    if (GameManager.Instance != null)
-                    {
-                        GameManager.Instance.photonView.RPC(
-                            "CheckPenaltyRPC",
-                            Photon.Pun.RpcTarget.MasterClient,
-                            (int)queueValue,
-                            this.tileDataInfo
-                        );
-                    }
-                    ExecuteNextTurn();
-                }
-                else
-                {
-                    Debug.LogWarning("Önce taş çekmelisiniz!");
+                    GameManager.Instance.HandleFailedSidePick(this.tileDataInfo);
                     _targetScale = _originalScale;
                     StartCoroutine(SmoothMove(transform, originalParent));
+                    return;
                 }
+
+                // Atılan taş için ceza kontrolü ve tur bitirme
+                if (GameManager.Instance != null)
+                {
+                    GameManager.Instance.photonView.RPC(
+                        "CheckPenaltyRPC",
+                        RpcTarget.MasterClient,
+                        localQueInt,
+                        this.tileDataInfo
+                    );
+                }
+                ExecuteNextTurn();
             }
             else
             {
-                Debug.LogWarning("Sıra sizde değil!");
                 _targetScale = _originalScale;
                 StartCoroutine(SmoothMove(transform, originalParent));
             }
         }
-        // SENARYO B: ISTAKA İÇİ HAREKET (KENDİ YERİMİZ)
+        // DURUM B: KENDİ ISTAKASINDA DÜZENLEME VEYA TAŞ ÇEKME
         else if (bestTarget.transform.parent == playerTileContainer)
         {
-            // Sıra bizde değilse bile düzenleme yapabiliriz (Çoğu okey oyununda serbesttir)
-            // Ama senin kuralına göre sıra kontrolü ekleyebiliriz. Şimdilik serbest bırakıyorum.
-
-            // 1. Taş Çekme Durumu (Orta veya Yandan)
             if (turnManager.IsPlayerTurn() && !turnManager.canDrop)
             {
-                if (inMiddle) // Ortadan çek
+                if (inMiddle) // Ortadan çekme
                 {
-                    if (tileDistrubite.allTiles.Count == 0)
-                        return; // Taş bitmişse dön
-
                     SetTileData(tileDistrubite.allTiles[0]);
                     tileDistrubite.photonView.RPC(
                         "AddTileFromMiddlePlayerList",
-                        Photon.Pun.RpcTarget.AllBuffered,
-                        queueValue
+                        RpcTarget.AllBuffered,
+                        localQueInt
                     );
                     turnManager.canDrop = true;
                     inMiddle = false;
                 }
-                else if (fromLeftContainer) // Yandan çek
+                else if (fromLeftContainer) // Yandan çekme
                 {
                     turnManager.hasPickedFromSide = true;
-                    turnManager.hasOpenedThisTurn = false;
-                    turnManager.hasProcessedThisTurn = false;
                     EventDispatcher.SummonEvent("OnSideTilePicked", this.tileDataInfo);
                     tileDistrubite.photonView.RPC(
                         "AddTileFromDropPlayerList",
-                        Photon.Pun.RpcTarget.AllBuffered,
-                        queueValue
+                        RpcTarget.AllBuffered,
+                        localQueInt
                     );
                     turnManager.canDrop = true;
-                    tileDistrubite.dropTile = this.tileDataInfo;
                     fromLeftContainer = false;
                 }
             }
 
-            // 2. Kaydırma / Yer Değiştirme
+            // Kendi ıstakasında kaydırma mantığı
             if (
                 bestTarget.transform.childCount > 0
                 && bestTarget != originalParent.GetComponent<Placeholder>()
             )
             {
-                // Dolu yere koyduk, kaydır
                 Transform displacedTile = bestTarget.transform.GetChild(0);
                 int targetIndex = bestTarget.transform.GetSiblingIndex();
                 int originalIndex = originalParent.GetSiblingIndex();
@@ -552,42 +525,44 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             _targetScale = _originalScale;
             StartCoroutine(SmoothMove(transform, bestTarget.transform));
         }
-        // SENARYO C: MELD ALANI (İŞLEME)
+        // DURUM C: MASAYA TAŞ İŞLEME (MELD AREA)
         else
         {
-            // 1. Sadece sırası gelen yapabilir
-            if (!turnManager.IsPlayerTurn())
+            if (
+                !turnManager.IsPlayerTurn()
+                || (!scoreManager.hasOpenedSeries && !scoreManager.hasOpenedPairs)
+            )
             {
-                Debug.LogWarning("Sıra sizde değil!");
                 _targetScale = _originalScale;
                 StartCoroutine(SmoothMove(transform, originalParent));
                 return;
             }
 
-            // 2. Sadece elini açmış olan yapabilir
-            if (!scoreManager.hasOpenedSeries && !scoreManager.hasOpenedPairs)
-            {
-                Debug.LogWarning("Önce elinizi açmalısınız!");
-                _targetScale = _originalScale;
-                StartCoroutine(SmoothMove(transform, originalParent));
-                return;
-            }
-
-            // 3. İşlemeyi Dene
+            Tiles beingProcessed = this.tileDataInfo; // İşlenen taşın verisi
             bool success = scoreManager.ProcessManualDrop(
-                this.tileDataInfo,
+                beingProcessed,
                 bestTarget.transform,
-                (int)queueValue
+                localQueInt
             );
 
             if (success)
             {
-                Debug.Log("İşleme Başarılı!");
-                Destroy(gameObject); // Başarılıysa yok et
+                // 1. Önce bu objeyi hemen görünmez yap (RPC'nin bunu silmesini engeller)
+                gameObject.SetActive(false);
+
+                // 2. RPC'yi gönder (Bu RPC artık ıstakadaki diğer Siyah 11'i silmeyecek çünkü o aktif, bu pasif)
+                tileDistrubite.photonView.RPC(
+                    "DeactivatePlayerTile",
+                    RpcTarget.All,
+                    localQueInt,
+                    beingProcessed
+                );
+
+                // 3. Kendini yok et
+                Destroy(gameObject);
             }
             else
             {
-                Debug.LogWarning("İşleme Başarısız (Kural Hatası)");
                 _targetScale = _originalScale;
                 StartCoroutine(SmoothMove(transform, originalParent));
             }
