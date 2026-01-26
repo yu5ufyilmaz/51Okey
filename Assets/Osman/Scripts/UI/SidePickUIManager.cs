@@ -27,10 +27,14 @@ public class SidePickUIManager : MonoBehaviour
 
     private void Update()
     {
-        // Oyuncu per açtıysa buton kaybolsun (Açtıktan sonra iade edemez)
+        // Oyuncu per açtıysa VEYA yere taş işlediyse buton kaybolsun.
+        // Çünkü taşı kullanmış demektir, artık iade edemez.
         if (btnCancelPick.gameObject.activeSelf)
         {
-            if (GameManager.Instance.turnManager.hasOpenedThisTurn)
+            if (
+                GameManager.Instance.turnManager.hasOpenedThisTurn
+                || GameManager.Instance.turnManager.hasProcessedThisTurn
+            )
             {
                 btnCancelPick.gameObject.SetActive(false);
             }

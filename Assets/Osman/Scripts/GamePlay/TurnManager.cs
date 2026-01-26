@@ -69,30 +69,25 @@ public class TurnManager : MonoBehaviourPunCallbacks
         canDrop = false;
     }
 
-    // Turu bitirme kontrolü (GÜNCELLENDİ)
-    // TurnManager.cs -> CanFinishTurn Metodu
-
     public bool CanFinishTurn()
     {
         // Eğer yandan taş aldıysa kuralları kontrol et
         if (hasPickedFromSide)
         {
-            // ScoreManager referansını güvenli şekilde al
+            // ScoreManager referansını al
             ScoreManager sm = GameManager.Instance.scoreManager;
             if (sm == null)
                 sm = FindObjectOfType<ScoreManager>();
 
-            // Kural 1: Bu tur elini açtıysa (hasOpenedThisTurn) -> OK
-            // Kural 2: Bu tur yere taş işlediyse (hasProcessedThisTurn) -> OK
-            // Kural 3 (YENİ): Zaten daha önceden açmışsa (hasOpenedSeries veya hasOpenedPairs) -> OK
-            // Not: ScoreManager'daki hasOpenedSeries oyuncunun genel durumunu tutar.
+            // KURAL: Yandan taş alan oyuncu, O TUR İÇİNDE mutlaka:
+            // 1. Ya Yeni Per Açmalı (hasOpenedThisTurn)
+            // 2. Ya da Mevcut Perlere Taş işlemeli (hasProcessedThisTurn)
+            // NOT: "Daha önce açmış olması" (alreadyOpened) bu kuralı bypass etmez!
+            // O yüzden alreadyOpened değişkenini bu kontrole dahil etmiyoruz.
 
-            bool alreadyOpened = sm.hasOpenedSeries || sm.hasOpenedPairs;
-
-            if (!hasOpenedThisTurn && !hasProcessedThisTurn && !alreadyOpened)
+            if (!hasOpenedThisTurn && !hasProcessedThisTurn)
             {
-                // Hiçbir şartı sağlamıyorsa -> Yandan taş aldı ama ne açtı ne işledi ne de zaten açıktı.
-                // Bu durumda taşı geri iade edip ceza yemesi gerekir.
+                // Şartları sağlamadı, turu bitiremez (veya ceza yemeli)
                 return false;
             }
         }

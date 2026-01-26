@@ -442,23 +442,32 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             return;
         }
 
-        // --- 3. HEDEF TÜRÜNE GÖRE AKSİYONLAR ---
+        // TileUI.cs -> OnEndDrag -> if (bestTarget.isRight) bloğunun içi:
 
         // DURUM A: TAŞ ATMA (SAĞ TARAF)
         if (bestTarget.isRight)
         {
             if (turnManager.IsPlayerTurn() && turnManager.canDrop)
             {
-                // Yandan alıp açmama kontrolü
-                if (fromLeftContainer && !turnManager.hasOpenedThisTurn)
+                // --- [REFERANS BAĞLANTISI BURADA] ---
+                // TurnManager'a soruyoruz: "Turu bitirmeme izin var mı?"
+                // (Yandan aldıysam açtım mı/işledim mi kontrolünü o yapıyor)
+                if (!turnManager.CanFinishTurn())
                 {
+                    Debug.LogWarning(
+                        "KURAL HATASI: Yandan taş aldınız ama açmadınız/işlemediniz. İade ediliyor."
+                    );
+
+                    // Cezayı uygula ve taşı geri al
                     GameManager.Instance.HandleFailedSidePick(this.tileDataInfo);
+
                     _targetScale = _originalScale;
                     StartCoroutine(SmoothMove(transform, originalParent));
-                    return;
+                    return; // İŞLEM İPTAL
                 }
 
-                // Atılan taş için ceza kontrolü ve tur bitirme
+                // ... (Geri kalan kodlar aynı: Ceza kontrolü ve Tur devretme) ...
+
                 if (GameManager.Instance != null)
                 {
                     GameManager.Instance.photonView.RPC(

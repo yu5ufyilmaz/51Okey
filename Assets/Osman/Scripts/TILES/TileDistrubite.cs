@@ -466,28 +466,32 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void RemoveTileFromPlayerList(int playerNumber, int tileIndex)
     {
+        // 1. İşlem yapılacak listeyi seç
+        List<Tiles> targetList = null;
         switch (playerNumber)
         {
-            case 1:
-                InstatiateSideTiles(playerNumber, playerTiles1[tileIndex]);
-                playerTiles1.RemoveAt(tileIndex);
+            case 1: targetList = playerTiles1; break;
+            case 2: targetList = playerTiles2; break;
+            case 3: targetList = playerTiles3; break;
+            case 4: targetList = playerTiles4; break;
+        }
 
-                break;
-            case 2:
-                InstatiateSideTiles(playerNumber, playerTiles2[tileIndex]);
-                playerTiles2.RemoveAt(tileIndex);
+        // Liste kontrolü ve İndeks güvenliği
+        if (targetList != null && tileIndex >= 0 && tileIndex < targetList.Count)
+        {
+            // A. Yana Atılan Görseli Oluştur (Side Tile)
+            // Bu, hem atan kişide hem de rakiplerde çalışır. Böylece herkes atılan taşı görür.
+            InstatiateSideTiles(playerNumber, targetList[tileIndex]);
 
-                break;
-            case 3:
-                InstatiateSideTiles(playerNumber, playerTiles3[tileIndex]);
-                playerTiles3.RemoveAt(tileIndex);
+            // B. VERİYİ SİL (Herkes kendi hafızasındaki listeden silmeli)
+            targetList.RemoveAt(tileIndex);
 
-                break;
-            case 4:
-                InstatiateSideTiles(playerNumber, playerTiles4[tileIndex]);
-                playerTiles4.RemoveAt(tileIndex);
-
-                break;
+            // --- GÖRSEL SİLME İPTAL EDİLDİ ---
+            // Buradaki tüm Destroy/GameObject arama kodlarını sildik.
+            // Sebebi:
+            // 1. Local Player için: TileUI zaten animasyonla siliyor. (Burada silersek ikiz taş gidiyor)
+            // 2. Remote Player için: playerTileContainer "Benim" ıstakamdır. 
+            //    Rakip taş attı diye benim ıstakamdan taş arayıp silmemeli.
         }
     }
 
@@ -2011,7 +2015,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void RemoveTileFromPlayerListByValue(int playerQue, Tiles tileToRemove)
     {
-        // 1. Doğru oyuncunun listesini seç
+        // 1. VERİ SİLME (LİSTEDEN)
         List<Tiles> targetHand = null;
         if (playerQue == 1)
             targetHand = playerTiles1;
@@ -2024,10 +2028,8 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
         if (targetHand != null)
         {
-            // --- DÜZELTME: REFERANS DEĞİL, DEĞER KONTROLÜ ---
-            // Listeyi tara ve özellikleri (Renk, Numara, Tip) eşleşen İLK taşı bul
+            // Özellikleri (Renk, Numara, Tip) eşleşen İLK taşı bul
             Tiles foundTile = null;
-
             foreach (var t in targetHand)
             {
                 // Joker kontrolü (Jokerse tipi Joker olmalı)
@@ -2054,21 +2056,61 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             if (foundTile != null)
             {
                 targetHand.Remove(foundTile);
-                // Debug.Log($"[TileDistrubite] Taş listeden silindi: {tileToRemove.color} {tileToRemove.number}");
-
-                // --- OYUN BİTİŞ KONTROLÜNÜ TETİKLE ---
-                // Taş silindikten sonra elin boşalıp boşalmadığını kontrol etmeliyiz
-                if (targetHand.Count == 0)
-                {
-                    // GameManager'da CheckGameStatus zaten her hamlede çalışıyor ama
-                    // burası manuel bir silme olduğu için garantiye almak isteyebilirsin.
-                }
+                // Debug.Log($"[TileDistrubite] Veri silindi: {tileToRemove.color} {tileToRemove.number}");
             }
             else
             {
-                Debug.LogWarning(
-                    $"[HATA] Silinecek taş listede bulunamadı! {tileToRemove.color} {tileToRemove.number} (Player: {playerQue})"
-                );
+                // Debug.LogWarning($"[HATA] Silinecek taş veride yok! {tileToRemove.color} {tileToRemove.number}");
+            }
+        }
+
+        // 2. GÖRSEL SİLME (SADECE O OYUNCUNUN EKRANINDA)
+        // Eğer bu RPC benim sıram için çalışıyorsa, benim ekranımdaki ıstakadan görseli sil.
+        object localQue;
+        if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out localQue))
+        {
+            if ((int)localQue == playerQue)
+            {
+                if (playerTileContainer != null)
+                {
+                    foreach (Transform placeholder in playerTileContainer)
+                    {
+                        if (placeholder.childCount > 0)
+                        {
+                            GameObject tileObj = placeholder.GetChild(0).gameObject;
+                            TileUI ui = tileObj.GetComponent<TileUI>();
+
+                            // NOT: TileUI.OnEndDrag'da SetActive(false) yaptığımız için
+                            // kapalı olan taşları öncelikli bulup silmeliyiz.
+                            if (ui != null)
+                            {
+                                bool isMatch = false;
+
+                                // Eşleşme Kontrolü
+                                if (tileToRemove.type == TileType.Joker)
+                                {
+                                    if (ui.tileDataInfo.type == TileType.Joker)
+                                        isMatch = true;
+                                }
+                                else if (
+                                    ui.tileDataInfo.color == tileToRemove.color
+                                    && ui.tileDataInfo.number == tileToRemove.number
+                                    && ui.tileDataInfo.type == tileToRemove.type
+                                )
+                                {
+                                    isMatch = true;
+                                }
+
+                                if (isMatch)
+                                {
+                                    // GÖRSELİ YOK ET!
+                                    Destroy(tileObj);
+                                    return; // Bir tane sildik, yeterli.
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
