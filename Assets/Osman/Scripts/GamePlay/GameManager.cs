@@ -79,6 +79,14 @@ public class GameManager : MonoBehaviourPunCallbacks
         isGameReady = false;
     }
 
+    // GameManager.cs içine ekle:
+
+    // Yandan alınan taşı diğer scriptlerin okumasını sağlar
+    public Tiles CurrentSidePickTile
+    {
+        get { return currentSidePickTile; }
+    }
+
     private void Start()
     {
         EventDispatcher.RegisterFunction<HandData>("OnPlayerMoveFinished", CheckGameStatus);

@@ -807,9 +807,24 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
     public void OnPairButtonClick()
     {
+        // 1. SIRA KONTROLÜ
         if (turnManager.canDrop == true)
         {
-            // Bitiş Taşı Güvenlik Kontrolü
+            // -------------------------------------------------------------------------
+            // [YENİ EKLENEN KISIM] SERİ AÇANLAR İÇİN KISITLAMA
+            // -------------------------------------------------------------------------
+            // Kural: Eğer oyuncu daha önce Seri açmışsa (ve henüz Çift açmamışsa),
+            // Masada henüz kimse (GameManager kontrolüyle) Çift açmadıysa, buton çalışmaz.
+            if (hasOpenedSeries && !hasOpenedPairs && !GameManager.Instance.IsDoubleOpenedOnTable)
+            {
+                Debug.LogWarning(
+                    "Seri açtınız! Masada başkası Çift açmadığı sürece Çift açamazsınız."
+                );
+                return; // İşlemi burada durduruyoruz.
+            }
+            // -------------------------------------------------------------------------
+
+            // 2. BİTİŞ TAŞI GÜVENLİK KONTROLÜ
             int tilesToMeldCount = 0;
             foreach (var group in validPerss)
                 tilesToMeldCount += group.Count;
@@ -821,7 +836,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 return;
             }
 
-            // --- [DÜZELTME] LİMİT VE KURAL KONTROLLERİ ---
+            // 3. LİMİT VE KURAL KONTROLLERİ
             int currentLimit = GameManager.Instance.CurrentTableLimit;
             int myPairScore = pairTotalScore;
 
@@ -830,7 +845,9 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             // KURAL 1: Daha önce Çift açtıysam -> Limit Yok
             if (hasOpenedPairs)
                 limitPass = true;
-            // KURAL 2: Daha önce Seri açtıysam -> Limit Yok (İstediğim gibi çift de açabilirim veya işleyebilirim)
+            // KURAL 2: Daha önce Seri açtıysam -> Limit Yok
+            // (Yukarıdaki 'if' bloğundaki kısıtlamayı geçtiysek, yani masada çift varsa,
+            // seri açan kişi puana bakılmaksızın çift açabilir.)
             else if (hasOpenedSeries)
                 limitPass = true;
             // KURAL 3: Masada başkası çift açtıysa -> Limit Yok
@@ -874,40 +891,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         {
             Debug.Log("Sıra sizde değil.");
         }
-    }
-
-    // Yardımcı Metot: Masada çift var mı?
-    // ScoreManager.cs içine:
-
-    // YENİ: Masada (Herhangi bir oyuncuda) Çift var mı kontrolü
-    private bool CheckIfAnyPairOnTable()
-    {
-        // Tüm oyuncuları gez
-        foreach (var player in PhotonNetwork.PlayerList)
-        {
-            // Oyuncunun meld alanını isminden bul
-            GameObject meldObj = GameObject.Find(player.NickName + " meld");
-
-            if (meldObj != null)
-            {
-                // Meld yapısında: Child(0)=Renk, Child(1)=Sayı, Child(2)=Çift
-                // Eğer senin hiyerarşin farklıysa buradaki indeksi (2) düzeltmelisin.
-                Transform pairContainer = meldObj.transform.GetChild(2);
-
-                // O kaptaki tüm slotlara bak, dolu olan var mı?
-                foreach (Transform slot in pairContainer)
-                {
-                    if (slot.childCount > 0)
-                    {
-                        // Bir tane bile çift bulursak yeterli
-                        return true;
-                    }
-                }
-            }
-        }
-
-        // Kimse çift açmamış
-        return false;
     }
 
     public void OnTakeBackButtonClick()
@@ -2694,7 +2677,24 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         // 1. TEMEL KONTROLLER
         if (ph == null)
             return false;
+        if (turnManager.hasPickedFromSide)
+        {
+            Tiles sideTile = GameManager.Instance.CurrentSidePickTile;
 
+            // Eğer elimizdeki taş, yandan aldığımız taş ile birebir aynıysa (Renk, Sayı, Tip)
+            if (
+                sideTile != null
+                && tileData.color == sideTile.color
+                && tileData.number == sideTile.number
+                && tileData.type == sideTile.type
+            )
+            {
+                Debug.LogWarning(
+                    "KURAL: Yandan aldığınız taşı işleyemezsiniz! Sadece el açarken kullanabilirsiniz."
+                );
+                return false; // İşlemi iptal et
+            }
+        }
         // Joker Takası mı? (Dolu ve Jokerli bir yere mi bırakıyoruz?)
         bool isJokerSwapTarget = false;
         if (targetPlaceholder.childCount > 0)

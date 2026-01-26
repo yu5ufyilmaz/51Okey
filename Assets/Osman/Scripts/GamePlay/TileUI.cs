@@ -329,7 +329,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     #region On Drag
     [Header("Scaling Settings")]
     [SerializeField]
-    private Vector3 shrinkScale = new Vector3(0.1f, 0.1f, 0.1f); // Küçülme boyutu
+    private Vector3 shrinkScale = new Vector3(0.3f, 0.3f, 0.3f); // Küçülme boyutu
 
     public void OnDrag(PointerEventData eventData)
     {
