@@ -525,7 +525,6 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             _targetScale = _originalScale;
             StartCoroutine(SmoothMove(transform, bestTarget.transform));
         }
-        // DURUM C: MASAYA TAŞ İŞLEME (MELD AREA)
         else
         {
             if (
@@ -538,7 +537,12 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                 return;
             }
 
-            Tiles beingProcessed = this.tileDataInfo; // İşlenen taşın verisi
+            // İşlenecek taş verisi
+            Tiles beingProcessed = this.tileDataInfo;
+
+            // ScoreManager'a sor: Bu taşı buraya koyabilir miyim?
+            // NOT: ProcessManualDrop içindeki "PerformTileProcessing" metodu
+            // zaten masaya YENİ bir görsel koyuyor.
             bool success = scoreManager.ProcessManualDrop(
                 beingProcessed,
                 bestTarget.transform,
@@ -547,19 +551,17 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
             if (success)
             {
-                // 1. Önce bu objeyi hemen görünmez yap (RPC'nin bunu silmesini engeller)
+                // BAŞARILI OLDUYSA:
+                // Sadece bu objeyi GİZLE (Yok etme!). Çünkü asıl yok etme işlemi
+                // TileDistrubite'in listeyi güncellediği an yapılmalı.
+                // Ama oyuncuya "takılma" hissi vermemek için görseli kapatıyoruz.
                 gameObject.SetActive(false);
 
-                // 2. RPC'yi gönder (Bu RPC artık ıstakadaki diğer Siyah 11'i silmeyecek çünkü o aktif, bu pasif)
-                tileDistrubite.photonView.RPC(
-                    "DeactivatePlayerTile",
-                    RpcTarget.All,
-                    localQueInt,
-                    beingProcessed
-                );
+                // Buradaki kritik nokta: RemoveActiveTileFromPlayerList RPC'si
+                // ScoreManager tarafından zaten çağrılıyor (PerformTileProcessing içinde).
+                // O yüzden burada ekstra bir RPC çağırmıyoruz!
 
-                // 3. Kendini yok et
-                Destroy(gameObject);
+                // Destroy(gameObject); // BU SATIRI SİLİYORUZ!
             }
             else
             {
