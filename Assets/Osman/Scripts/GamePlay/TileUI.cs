@@ -586,6 +586,11 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     // 1. BU METODU ÇAĞIRACAKSIN (Eski NextTurnEvents yerine)
     private void ExecuteNextTurn()
     {
+        if (GameManager.Instance.scoreManager != null)
+        {
+            // Tur boyunca yaptığım işlemelerden doğan cezaları şimdi sunucuya gönderiyorum.
+            GameManager.Instance.scoreManager.CommitAllTurnPenalties();
+        }
         // Coroutine başlatıyoruz ki işlemleri zamana yayabilelim
         StartCoroutine(NextTurnRoutine());
     }

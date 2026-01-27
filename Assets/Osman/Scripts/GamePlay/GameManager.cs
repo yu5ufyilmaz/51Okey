@@ -320,10 +320,10 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
     }
 
-    // --- CEZA KONTROLÜ (ATILAN TAŞ İÇİN) ---
     [PunRPC]
     public void CheckPenaltyRPC(int playerQue, Tiles thrownTile)
     {
+        // Cezaları sadece Master Client hesaplar ve yazar
         if (!PhotonNetwork.IsMasterClient)
             return;
 
@@ -331,31 +331,36 @@ public class GameManager : MonoBehaviourPunCallbacks
         int penaltyAmount = 0;
         string reason = "";
 
-        // Okey Hesabı
+        // --- OKEY TAŞINI BELİRLE ---
         int okeyNumber = -1;
         TileColor okeyColor = TileColor.black;
+
         if (indicator != null)
         {
             okeyColor = indicator.color;
+            // Eğer gösterge Sahte Okey ise (Roket), Okey yine Sahte Okey'dir (veya kuralına göre değişir).
+            // Standart sayısal hesap:
             okeyNumber = indicator.number + 1;
             if (okeyNumber > 13)
                 okeyNumber = 1;
         }
 
         // --- 1. OKEY ATMA CEZASI (250 PUAN) ---
+        // Kural: Elindeki "Gerçek Okey" (joker görevi gören taş) yere atılamaz.
+        bool isRealOkey = (thrownTile.color == okeyColor && thrownTile.number == okeyNumber);
+
+        // Not: FakeJoker (Sahte Okey) atılabilir, o yüzden tipi FakeJoker OLMAMALI.
+        // Ancak thrownTile.type == TileType.Joker ise (sistemde wildcard olarak geçiyorsa) o da cezadır.
         if (
             thrownTile.type == TileType.Joker
-            || (
-                thrownTile.color == okeyColor
-                && thrownTile.number == okeyNumber
-                && thrownTile.type != TileType.FakeJoker
-            )
+            || (isRealOkey && thrownTile.type != TileType.FakeJoker)
         )
         {
             penaltyAmount = 250;
-            reason = "Okey Atıldı";
+            reason = "Okey (Joker) Atıldı";
         }
         // --- 2. GÖSTERGE ATMA CEZASI (250 PUAN) ---
+        // Kural: Yerden gösterge ile aynı taş atılamaz.
         else if (
             indicator != null
             && thrownTile.color == indicator.color
@@ -363,23 +368,26 @@ public class GameManager : MonoBehaviourPunCallbacks
         )
         {
             penaltyAmount = 250;
-            reason = "Gösterge Atıldı";
+            reason = "Gösterge Taşı Atıldı";
         }
         // --- 3. İŞLEK TAŞ ATMA CEZASI (250 PUAN) ---
+        // Kural: Masadaki perlerin devamı olabilecek (available) bir taş atılamaz.
         else
         {
+            // Sahte Okey (Joker resmi olan taş) her zaman atılabilir (eğer okey değilse), işlek sayılmaz.
             if (tileDistrubite.availableTiles != null && thrownTile.type != TileType.FakeJoker)
             {
                 foreach (var t in tileDistrubite.availableTiles)
                 {
+                    // Atılan taş, masadaki "aranan taşlar" listesinde var mı?
                     if (
                         t.color == thrownTile.color
                         && t.number == thrownTile.number
                         && t.type != TileType.Joker
-                    )
+                    ) // Joker ihtiyacı olan yere normal taş atılırsa cezadır
                     {
                         penaltyAmount = 250;
-                        reason = "İşlek Atıldı";
+                        reason = "İşlek Taş Atıldı";
                         break;
                     }
                 }
@@ -391,7 +399,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
             scoreManager.UpdatePlayerScore(playerQue, penaltyAmount);
             Debug.Log(
-                $"<color=red>CEZA KESİLDİ!</color> Sebep: {reason} -> Oyuncu {playerQue} -{penaltyAmount} Puan"
+                $"<color=red>CEZA KESİLDİ!</color> Sebep: {reason} -> Oyuncu {playerQue} +{penaltyAmount} Ceza Puanı"
             );
         }
     }
@@ -472,6 +480,8 @@ public class GameManager : MonoBehaviourPunCallbacks
     }
 
     // --- DETAYLI PUAN HESAPLAMA (ÜÇLÜ TABLO) ---
+    // GameManager.cs -> CalculateAndDistributeScores Metodu
+
     private void CalculateAndDistributeScores(
         int winnerActorNumber,
         bool isOkeyShot,
@@ -485,72 +495,55 @@ public class GameManager : MonoBehaviourPunCallbacks
         List<int> listPenalties = new List<int>(); // Orta Kısım: Cezalar (Artı Puanlar)
         List<int> listNetScores = new List<int>(); // Alt Kısım: Toplam (Net Skor)
 
-        // 1. ÇARPANLARI HESAPLA
-        int colorMultiplier = GetCurrentColorMultiplier();
-        int finishTypeMultiplier = 1;
-
-        if (isDoubleFinish)
-            finishTypeMultiplier *= 2;
-        if (isOkeyShot)
-            finishTypeMultiplier *= 2;
-
-        int totalMultiplier = colorMultiplier * finishTypeMultiplier;
-
-        Debug.Log(
-            $"[DETAYLI HESAP] Çarpanlar -> Renk: {colorMultiplier}, Bitiş: {finishTypeMultiplier}, Toplam: {totalMultiplier}"
-        );
+        // Gösterge taşını al (Çarpan hesabı için ScoreManager'a lazım olacak)
+        Tiles indicator = tileDistrubite.GetIndicatorTile();
 
         foreach (var player in PhotonNetwork.PlayerList)
         {
             actors.Add(player.ActorNumber);
             int pQue = tileDistrubite.GetQueueNumberOfPlayer(player);
 
-            int myReward = 0; // Örn: -600
-            int myPenalty = 0; // Örn: +101, +250
+            int myReward = 0; // Örn: -600 (Düşüm)
+            int myPenalty = 0; // Örn: +600, +250 (Ceza)
 
-            // A) OYUN İÇİ MEVCUT CEZALAR
+            // A) OYUN İÇİ MEVCUT CEZALAR (Okey atma, işlek atma vb.)
             if (scoreManager.playerScores.ContainsKey(pQue))
             {
                 myPenalty += scoreManager.playerScores[pQue];
             }
 
-            // B) OYUN SONU DURUMLARI
+            // B) OYUN SONU DURUMLARI (YENİ FONKSİYONU BURADA ÇAĞIRIYORUZ)
+            // ---------------------------------------------------------------------
+            bool isWinner = (winnerActorNumber != -1 && player.ActorNumber == winnerActorNumber);
+            bool hasOpened = scoreManager.HasPlayerOpened(pQue);
 
-            // --- KAZANAN ---
-            if (winnerActorNumber != -1 && player.ActorNumber == winnerActorNumber)
+            // TÜM MANTIĞI BU TEK SATIR HALLEDİYOR:
+            int roundResult = scoreManager.CalculatePenaltyForPlayer(
+                pQue,
+                hasOpened,
+                isWinner,
+                indicator
+            );
+
+            // Gelen sonuç EKSİ ise ÖDÜLDÜR (Düşüm), ARTI ise CEZADIR.
+            if (roundResult < 0)
             {
-                // PDF Kuralı: Baz Puan(100) x Toplam Çarpan (Düşülür)
-                myReward -= (100 * totalMultiplier);
-                Debug.Log($"Oyuncu {pQue} (KAZANAN): Düşer: {myReward}, Ceza: {myPenalty}");
+                myReward += roundResult; // Örn: -600 ekle
             }
-            // --- KAYBEDENLER ---
-            else if (winnerActorNumber != -1)
+            else
             {
-                bool hasOpened = scoreManager.HasPlayerOpened(pQue);
-
-                if (!hasOpened)
-                {
-                    // DURUM 1: HİÇ AÇMAMIŞ
-                    // PDF Kuralı: "Açmayan kişi 600 ceza" -> Baz(100) x Toplam Çarpan
-                    int notOpenedPenalty = 100 * totalMultiplier;
-                    myPenalty += notOpenedPenalty;
-                }
-                else
-                {
-                    // DURUM 2: AÇMIŞ AMA BİTEMEMİŞ
-                    // PDF Kuralı: "Açıp bitmeyen oyuncu elindeki taş başına ceza yer"
-                    int handPenalty = scoreManager.GetHandPenaltyForOpenedPlayer(
-                        pQue,
-                        totalMultiplier
-                    );
-                    myPenalty += handPenalty;
-                }
+                myPenalty += roundResult; // Örn: +600 ekle
             }
+            // ---------------------------------------------------------------------
 
-            // --- C) LİSTELERE EKLE ---
+            // C) LİSTELERE EKLE
             listRewards.Add(myReward);
             listPenalties.Add(myPenalty);
             listNetScores.Add(myReward + myPenalty);
+
+            Debug.Log(
+                $"Oyuncu {pQue} Sonuç -> Ceza: {myPenalty}, Düşüm: {myReward}, Toplam: {myReward + myPenalty}"
+            );
         }
 
         // 3. SONUÇLARI GÖNDER (3 ayrı dizi)

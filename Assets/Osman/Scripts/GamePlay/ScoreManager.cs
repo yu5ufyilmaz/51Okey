@@ -2050,12 +2050,12 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         bool isJokerSwap
     )
     {
-        // 1. GÜVENLİK KONTROLÜ
+        // 1. GÜVENLİK KONTROLÜ: Taş gerçekten elimde mi?
         List<Tiles> myHand = tileDistrubite.GetPlayerTiles();
         if (!myHand.Contains(tileInHand))
             return;
 
-        // 2. JOKER SWAP (Eski taşı temizle)
+        // 2. JOKER SWAP İSE: Masadaki eski taşı (Jokeri) görsel olarak yok et
         if (isJokerSwap && targetPlaceholder.childCount > 0)
         {
             Destroy(targetPlaceholder.GetChild(0).gameObject);
@@ -2065,6 +2065,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         GameObject tempGO = Instantiate(tilePrefab, targetPlaceholder);
         tempGO.name = "PERMANENT_MELD_TILE";
 
+        // Görsel veriyi hazırla (Joker ise masadaki rengi/numarayı alır)
         Tiles tileDataForUI = new Tiles(tileInHand.color, tileInHand.number, tileInHand.type);
         if (tileInHand.type == TileType.Joker)
         {
@@ -2079,7 +2080,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             uiScript.FitToParent();
         }
 
-        // 4. SENKRONİZASYON VERİSİ
+        // 4. SENKRONİZASYON VERİSİ HAZIRLA (Diğer oyunculara gitmek üzere)
         PendingSyncData syncData = new PendingSyncData
         {
             ownerQue = ownerQue,
@@ -2089,11 +2090,12 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         };
         pendingSyncActions.Add(syncData);
 
-        // --- KRİTİK DÜZELTME: SİLME YÖNETİMİ ---
-        // Sadece bu işlemi başlatan yerel oyuncu (Ben) kendi listesini güncellemeli
+        // ---------------------------------------------------------------------
+        // 5. YEREL İŞLEMLER (SADECE BENİM İÇİN)
+        // ---------------------------------------------------------------------
         if (playerQue == GetPlayerQue())
         {
-            // Tüm clientlarda VERİ listesinden (playerTiles1 vs) sil
+            // A) VERİ LİSTESİNDEN SİL (Tüm clientlarda senkronize silinir)
             tileDistrubite.photonView.RPC(
                 "RemoveActiveTileFromPlayerList",
                 RpcTarget.AllBuffered,
@@ -2101,16 +2103,62 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 tileInHand
             );
 
-            // SADECE benim ekranımda ISTAKA görselini kapat
-            // DeactivatePlayerTile artık tek bir eşleşmeyi silip 'return' yapmalı
+            // B) ISTAKA GÖRSELİNİ KAPAT (Sadece benim ekranımda)
             tileDistrubite.photonView.RPC(
                 "DeactivatePlayerTile",
                 RpcTarget.All,
                 playerQue,
                 tileInHand
             );
+
+            // C) CEZA MEKANİZMASI (YENİ EKLENEN KISIM)
+            int penaltyVictim = -1;
+            int penaltyScore = 0;
+
+            // Eğer bu masa benim değilse (Rakibe işliyorsam)
+            if (ownerQue != playerQue)
+            {
+                penaltyVictim = ownerQue;
+
+                // Ceza Hesabı: Taşın Numarası * 10
+                // Not: Eğer taş Joker ise, req.number (olması gereken sayı) kullanılır.
+                int numberForCalculation =
+                    (tileInHand.type == TileType.Joker && req != null)
+                        ? req.number
+                        : tileInHand.number;
+
+                penaltyScore = numberForCalculation * 10;
+
+                Debug.Log(
+                    $"<color=red>İŞLEME CEZASI:</color> Oyuncu {ownerQue}'ye {penaltyScore} puan kilitlendi!"
+                );
+
+                // GameManager üzerinden cezayı uygula
+                AddPendingPenalty(ownerQue, penaltyScore, tileInHand);
+
+                Debug.Log(
+                    $"<color=orange>[TASLAK]</color> Oyuncu {ownerQue} için {penaltyScore} ceza listeye eklendi."
+                );
+            }
+
+            // D) UNDO (GERİ ALMA) İÇİN KAYIT
+            // Yapılan hamleyi geçmişe ekliyoruz ki "Geri Al" butonuna basınca her şeyi (Ceza dahil) geri alabilelim.
+            ProcessAction action = new ProcessAction
+            {
+                type = isJokerSwap ? ActionType.JokerSwap : ActionType.NormalPlace,
+                tilePlayed = tileInHand,
+                tileTaken = isJokerSwap ? new Tiles(TileColor.black, 0, TileType.Joker) : null,
+                targetSlot = targetPlaceholder,
+                visualObject = tempGO,
+
+                // Ceza Bilgileri (Geri alma için önemli)
+                penaltyVictimQue = penaltyVictim,
+                penaltyAmount = penaltyScore,
+            };
+            actionHistory.Push(action);
         }
 
+        // 6. JOKER SWAP İSE: ELİME TEMİZ BİR JOKER VER
         if (isJokerSwap)
         {
             Tiles cleanJoker = new Tiles(TileColor.black, 0, TileType.Joker);
@@ -2122,8 +2170,10 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             );
         }
 
+        // 7. DURUM GÜNCELLEMELERİ
         if (turnManager != null)
             turnManager.hasProcessedThisTurn = true;
+
         tileDistrubite.RecalculateAllAvailableSlots();
     }
 
@@ -2380,15 +2430,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         // Eğer bu işlemde birine ceza kesildiyse, geri alıyoruz.
         if (lastAction.penaltyVictimQue != -1 && lastAction.penaltyAmount > 0)
         {
-            if (GameManager.Instance != null)
-            {
-                GameManager.Instance.photonView.RPC(
-                    "RevertProcessingPenaltyRPC",
-                    RpcTarget.MasterClient,
-                    lastAction.penaltyVictimQue,
-                    lastAction.penaltyAmount
-                );
-            }
+            RemovePendingPenalty(lastAction.penaltyVictimQue, lastAction.penaltyAmount);
         }
 
         // --- 2. GÖRSELİ KALDIR ---
@@ -2794,4 +2836,140 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         return -1; // Bulunamadı
     }
     #endregion
+    // ScoreManager.cs içine ekle
+
+    private int GetColorMultiplier(Tiles indicatorTile)
+    {
+        if (indicatorTile == null)
+            return 1; // Hata durumunda varsayılan
+
+        // Roket Kontrolü (Gösterge Sahte Okey ise)
+        // Not: TileType.FakeJoker veya senin sisteminde nasıl tutuluyorsa
+        if (indicatorTile.type == TileType.FakeJoker)
+            return 8;
+
+        switch (indicatorTile.color)
+        {
+            case TileColor.blue:
+                return 3;
+            case TileColor.black:
+                return 4;
+            case TileColor.red:
+                return 5;
+            case TileColor.yellow:
+                return 6;
+            default:
+                return 1;
+        }
+    }
+
+    public int CalculatePenaltyForPlayer(
+        int playerQue,
+        bool hasOpened,
+        bool isWinner,
+        Tiles indicatorTile
+    )
+    {
+        // Önce o elin çarpanını al (Mavi:3, Sarı:6 vs.)
+        int multiplier = GetColorMultiplier(indicatorTile);
+
+        // 1. KAZANAN OYUNCU (Düşüm)
+        if (isWinner)
+        {
+            // Biten oyuncudan puan düşülür (Kural: 100 x Renk Çarpanı)
+            // Örn: Sarıysa -600, Maviyse -300
+            return -100 * multiplier;
+        }
+
+        // 2. HİÇ AÇMAMIŞ OYUNCU (YENİ KURAL: SABİT 600)
+        if (!hasOpened)
+        {
+            // Eski Kod: return 100 * multiplier;
+
+            // YENİ KOD: Rengi ne olursa olsun sabit 600 ceza.
+            // Roket (x8) olsa bile 600 yazar.
+            return 600;
+        }
+        // 3. AÇMIŞ AMA BİTMEMİŞ OYUNCU
+        else
+        {
+            // Elinde kaç taş kaldığını bul
+            TileDistrubite td = FindObjectOfType<TileDistrubite>();
+            int remainingTileCount = td.GetPlayerHandCount(playerQue);
+
+            // KURAL: Taş Adedi x 10 x Renk Çarpanı
+            // Örn: Sarı (x6) ve 5 taş kaldıysa -> 5 x 10 x 6 = 300 Ceza
+            // Örn: Mavi (x3) ve 5 taş kaldıysa -> 5 x 10 x 3 = 150 Ceza
+            return remainingTileCount * 10 * multiplier;
+        }
+    }
+
+    [System.Serializable]
+    public struct PendingPenaltyInfo
+    {
+        public int victimQue; // Cezayı yiyecek kişi
+        public int penaltyAmount; // Ceza miktarı
+        public Tiles relatedTile; // Hangi taş yüzünden
+    }
+
+    // Bu tur içinde birikmiş ama henüz kesinleşmemiş cezalar
+    public List<PendingPenaltyInfo> currentTurnPenalties = new List<PendingPenaltyInfo>();
+
+    // 2. CEZAYI HAVUZA EKLEME (PerformTileProcessing İÇİNDE KULLANACAĞIZ)
+    public void AddPendingPenalty(int victimQue, int amount, Tiles tile)
+    {
+        PendingPenaltyInfo info = new PendingPenaltyInfo
+        {
+            victimQue = victimQue,
+            penaltyAmount = amount,
+            relatedTile = tile,
+        };
+        currentTurnPenalties.Add(info);
+        // Debug.Log($"[BEKLEYEN CEZA] Oyuncu {victimQue} için {amount} puan sıraya alındı.");
+    }
+
+    // 3. CEZAYI HAVUZDAN SİLME (UndoLastProcess İÇİNDE KULLANACAĞIZ)
+    public void RemovePendingPenalty(int victimQue, int amount)
+    {
+        // Listeyi sondan başa tara (En son ekleneni silmek için)
+        for (int i = currentTurnPenalties.Count - 1; i >= 0; i--)
+        {
+            if (
+                currentTurnPenalties[i].victimQue == victimQue
+                && currentTurnPenalties[i].penaltyAmount == amount
+            )
+            {
+                currentTurnPenalties.RemoveAt(i);
+                // Debug.Log("[UNDO] Bekleyen ceza iptal edildi.");
+                return; // Sadece bir tane sil ve çık
+            }
+        }
+    }
+
+    // 4. TUR SONUNDA CEZALARI KESİNLEŞTİRME (COMMIT)
+    // Bu metodu TileUI.ExecuteNextTurn içinde çağıracağız.
+    public void CommitAllTurnPenalties()
+    {
+        if (currentTurnPenalties.Count == 0)
+            return;
+
+        Debug.Log($"Tur bitiyor. {currentTurnPenalties.Count} adet ceza işleniyor...");
+
+        foreach (var penalty in currentTurnPenalties)
+        {
+            // GameManager üzerinden RPC gönder ve cezayı HERKESE duyur
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.photonView.RPC(
+                    "ApplyProcessingPenaltyRPC",
+                    Photon.Pun.RpcTarget.MasterClient,
+                    penalty.victimQue,
+                    penalty.penaltyAmount
+                );
+            }
+        }
+
+        // Listeyi temizle ki sonraki turda tekrar yazmasın
+        currentTurnPenalties.Clear();
+    }
 }

@@ -470,10 +470,18 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         List<Tiles> targetList = null;
         switch (playerNumber)
         {
-            case 1: targetList = playerTiles1; break;
-            case 2: targetList = playerTiles2; break;
-            case 3: targetList = playerTiles3; break;
-            case 4: targetList = playerTiles4; break;
+            case 1:
+                targetList = playerTiles1;
+                break;
+            case 2:
+                targetList = playerTiles2;
+                break;
+            case 3:
+                targetList = playerTiles3;
+                break;
+            case 4:
+                targetList = playerTiles4;
+                break;
         }
 
         // Liste kontrolü ve İndeks güvenliği
@@ -490,7 +498,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             // Buradaki tüm Destroy/GameObject arama kodlarını sildik.
             // Sebebi:
             // 1. Local Player için: TileUI zaten animasyonla siliyor. (Burada silersek ikiz taş gidiyor)
-            // 2. Remote Player için: playerTileContainer "Benim" ıstakamdır. 
+            // 2. Remote Player için: playerTileContainer "Benim" ıstakamdır.
             //    Rakip taş attı diye benim ıstakamdan taş arayıp silmemeli.
         }
     }
