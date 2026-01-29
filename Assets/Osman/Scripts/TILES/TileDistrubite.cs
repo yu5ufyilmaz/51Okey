@@ -695,8 +695,6 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 return;
         }
 
-        // --- KRİTİK DÜZELTME ---
-        // Tüm sahneyi değil, sadece oyuncunun kendi ıstakasını (playerTileContainer) tara!
         if (playerTileContainer == null)
             return;
 
@@ -707,20 +705,17 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             if (slot.childCount > 0)
             {
                 TileUI ui = slot.GetChild(0).GetComponent<TileUI>();
+
+                // Indicator (Gösterge) değilse kontrol et
                 if (ui != null && !ui.isIndicatorTile)
                 {
-                    // Özellikleri kontrol et
-                    if (
-                        ui.tileDataInfo.color == tileToDeactivate.color
-                        && ui.tileDataInfo.number == tileToDeactivate.number
-                        && ui.tileDataInfo.type == tileToDeactivate.type
-                    )
+                    // ESKİ: Renk, Numara, Tip kontrolü
+                    // YENİ: Sadece ID kontrolü
+                    if (ui.tileDataInfo.id == tileToDeactivate.id)
                     {
                         // Sadece ıstaka içindeyse yok et
                         Destroy(ui.gameObject);
-                        Debug.Log(
-                            $"[SILME] Istakadaki {tileToDeactivate.color} {tileToDeactivate.number} silindi."
-                        );
+                        Debug.Log($"[SILME] Istakadaki taş ID ile silindi: {tileToDeactivate.id}");
                         return; // Bir tane sildik, işimiz bitti.
                     }
                 }
@@ -760,15 +755,15 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         }
     }
 
+    // TileDistrubite.cs içindeki MeldTiles metodunu şu şekilde güncelle:
     [PunRPC]
     public void MeldTiles(int playerNumber, Tiles tileToRemove)
     {
-        // 1. Önce görselleri oluştur (Eğer eksik varsa tamamlar)
+        // 1. Masadaki görselleri oluştur (Tüm oyuncular için)
         InstatiateMeldTiles(playerNumber);
 
+        // 2. İşlem yapılacak doğru listeyi seç
         List<Tiles> targetList = null;
-
-        // Hangi oyuncunun listesinden silinecek?
         switch (playerNumber)
         {
             case 1:
@@ -785,43 +780,28 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 break;
         }
 
-        if (targetList != null)
-        {
-            // --- AKILLI SİLME MANTIĞI ---
-            // 1. Tam Eşleşme Ara (Renk, Numara, Tip)
-            Tiles foundTile = targetList.FirstOrDefault(t =>
-                t.color == tileToRemove.color
-                && t.number == tileToRemove.number
-                && t.type == tileToRemove.type
-            );
+        /* if (targetList != null)
+         {
+             // --- DÜZELTME: SADECE ID KONTROLÜ ---
+             // Asla renk/sayı eşleşmesine (fallback) düşmemeli.
+             // ID benzersizdir, varsa vardır, yoksa hata vermelidir.
+ 
+             Tiles foundTile = targetList.FirstOrDefault(t => t.id == tileToRemove.id);
+ 
+             if (foundTile != null)
+             {
+                 targetList.Remove(foundTile);
+                 // Debug.Log($"[MELD] Taş ID ile silindi: {tileToRemove.id}");
+             }
+             else
+             {
+                 Debug.LogError(
+                     $"[MELD HATASI] Oyuncu {playerNumber} elinde {tileToRemove.id} ID'li taş bulunamadı! (İkiz taş silinmesi engellendi)"
+                 );
+             }
+         }*/
 
-            // 2. Bulamazsa ve Silinecek Taş Joker İse -> Eldeki herhangi bir Jokeri bul
-            // (Masaya Kırmızı 5 Joker gitmiş olabilir ama elde Siyah 0 Joker vardır)
-            if (foundTile == null && tileToRemove.type == TileType.Joker)
-            {
-                foundTile = targetList.FirstOrDefault(t => t.type == TileType.Joker);
-            }
-
-            // 3. Bulamazsa -> Sadece Renk ve Numara tutanı bul (Tip farklı olabilir)
-            if (foundTile == null)
-            {
-                foundTile = targetList.FirstOrDefault(t =>
-                    t.color == tileToRemove.color && t.number == tileToRemove.number
-                );
-            }
-
-            // Bulduysan sil
-            if (foundTile != null)
-            {
-                targetList.Remove(foundTile);
-            }
-            else
-            {
-                // Debug.LogWarning($"Silinecek taş oyuncu listesinde bulunamadı: {tileToRemove.color} {tileToRemove.number}");
-            }
-        }
-
-        // Temizlik
+        // Temizlik işlemleri
         validMeltedTiles.Clear();
         positions.Clear();
     }
@@ -1051,8 +1031,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         }
     }
 
-    // TileDistrubite.cs -> GetAvailableTiles Metodu (Komple Değiştir)
-
+    // TileDistrubite.cs içerisindeki GetAvailableTiles Metodu
     public List<Tiles> GetAvailableTiles(List<Tiles> meld)
     {
         List<Tiles> availableTiles = new List<Tiles>();
@@ -1070,56 +1049,63 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 int minNumber = numbers.Min();
                 int maxNumber = numbers.Max();
 
-                // Sol tarafa ekleme
-                if (minNumber > 1)
+                // Referans taş (renk ve numara hesaplaması için joker olmayan bir taş)
+                var refTile = meld.FirstOrDefault(t => t.type != TileType.Joker);
+                if (refTile != null)
                 {
-                    var refTile = meld.FirstOrDefault(t => t.type != TileType.Joker);
-                    if (refTile != null)
+                    // Sol tarafa ekleme (Yeni taş, yeni ID olması normal)
+                    if (minNumber > 1)
+                    {
                         availableTiles.Add(
                             new Tiles(refTile.color, minNumber - 1, TileType.Number)
                         );
-                }
+                    }
 
-                // Sağ tarafa ekleme
-                if (maxNumber < 13)
-                {
-                    var refTile = meld.FirstOrDefault(t => t.type != TileType.Joker);
-                    if (refTile != null)
+                    // Sağ tarafa ekleme (Yeni taş, yeni ID olması normal)
+                    if (maxNumber < 13)
+                    {
                         availableTiles.Add(
                             new Tiles(refTile.color, maxNumber + 1, TileType.Number)
                         );
-                }
+                    }
 
-                // Joker Takası
-                if (hasJoker)
-                {
-                    var jokerTile = meld.First(tile => tile.type == TileType.Joker);
-                    // Not: Burada jokerin numarasını baz alıyoruz, sıralı perlerde bu genelde doğrudur
-                    availableTiles.Add(
-                        new Tiles(jokerTile.color, jokerTile.number, TileType.Number)
-                    );
+                    // Joker Takası - KRİTİK DÜZELTME
+                    if (hasJoker)
+                    {
+                        var jokerTile = meld.First(tile => tile.type == TileType.Joker);
+
+                        // Yeni bir taş oluşturuyoruz ama eşleşme mantığında bu taşın
+                        // "bir jokerin yerine geçeceği" bilgisini saklamalıyız.
+                        Tiles swapTarget = new Tiles(
+                            jokerTile.color,
+                            jokerTile.number,
+                            TileType.Number
+                        );
+
+                        // Takas edilecek taşın ID'sini masadaki jokerin ID'sine bağlayarak
+                        // ScoreManager'ın doğru taşı bulmasını sağlıyoruz.
+                        swapTarget.id = "SWAP_" + jokerTile.id;
+
+                        availableTiles.Add(swapTarget);
+                    }
                 }
             }
         }
         // -------------------------------------------------------
-        // 2. MULTI COLOR (Sayı Grubu) -- KRİTİK DÜZELTME BURADA
+        // 2. MULTI COLOR (Sayı Grubu)
         // -------------------------------------------------------
         else if (scoreManager.MultiColorCheck(meld))
         {
             if (meld.Count >= 3)
             {
-                // Joker olmayan bir taşı referans al (Numarayı bulmak için)
                 var refTile = meld.FirstOrDefault(t => t.type != TileType.Joker);
                 if (refTile != null)
                 {
                     int targetNumber = refTile.number;
-
-                    // Masadaki GERÇEK (Joker olmayan) renkleri bul
                     var realColors = meld.Where(t => t.type != TileType.Joker)
                         .Select(t => t.color)
                         .ToList();
 
-                    // Tüm renkler havuzu
                     List<TileColor> allColors = new List<TileColor>
                     {
                         TileColor.yellow,
@@ -1128,15 +1114,26 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                         TileColor.red,
                     };
 
-                    // Masada OLMAYAN renkleri bul
-                    // 3 taş varsa 1 renk eksiktir.
-                    // 4 taş varsa (biri Joker) yine 1 renk eksiktir (Jokerin sakladığı renk).
                     var missingColors = allColors.Except(realColors).ToList();
 
-                    // Eksik olan her rengi "Available" olarak ekle
+                    // Eksik renkleri ekle
                     foreach (var color in missingColors)
                     {
                         availableTiles.Add(new Tiles(color, targetNumber, TileType.Number));
+                    }
+
+                    // Joker Takası varsa işaretle
+                    if (meld.Any(t => t.type == TileType.Joker))
+                    {
+                        var jokerTile = meld.First(t => t.type == TileType.Joker);
+                        // Çoklu renk perlerinde joker herhangi bir eksik rengin yerine geçebilir.
+                        // Bu yüzden jokerin ID'sini koruyarak available listesine ekliyoruz.
+                        foreach (var color in missingColors)
+                        {
+                            Tiles swapTarget = new Tiles(color, targetNumber, TileType.Number);
+                            swapTarget.id = "SWAP_" + jokerTile.id;
+                            availableTiles.Add(swapTarget);
+                        }
                     }
                 }
             }
@@ -1148,10 +1145,13 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         {
             if (meld.Any(tile => tile.type == TileType.Joker))
             {
+                var jokerTile = meld.First(tile => tile.type == TileType.Joker);
                 var refTile = meld.FirstOrDefault(t => t.type != TileType.Joker);
                 if (refTile != null)
                 {
-                    availableTiles.Add(new Tiles(refTile.color, refTile.number, TileType.Number));
+                    Tiles swapTarget = new Tiles(refTile.color, refTile.number, TileType.Number);
+                    swapTarget.id = "SWAP_" + jokerTile.id;
+                    availableTiles.Add(swapTarget);
                 }
             }
         }
@@ -1613,47 +1613,39 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         RecalculateAllAvailableSlots();
     }
 
-    // TileDistrubite.cs
-
-    // TileDistrubite.cs
-
     public void RecalculateAllAvailableSlots()
     {
         if (scoreManager == null)
             scoreManager = FindObjectOfType<ScoreManager>();
 
-        // KURAL: Elini açmayan oyuncu (Seri veya Çift yoksa) HİÇBİR ŞEY işleyemez.
+        // Oyuncunun elini açıp açmadığını kontrol et
         bool hasOpenedHand = (
             scoreManager != null && (scoreManager.hasOpenedSeries || scoreManager.hasOpenedPairs)
         );
 
+        // ----------------------------------------------------------------------
+        // ADIM 1: LİSTEYİ TEMİZLE VE GÖRSEL HAZIRLIK
+        // ----------------------------------------------------------------------
         availableTiles.Clear();
-
-        // ----------------------------------------------------------------------
-        // ADIM 1: ÖNCE MASADAKİ TÜM "AVAILABLE" IŞIKLARINI SÖNDÜR (RESETLEME)
-        // ----------------------------------------------------------------------
-        // Bu adım Joker dahil her türlü işleme ihtimalini görsel ve mantıksal olarak sıfırlar.
 
         List<List<Tiles>> currentBoardMelds = new List<List<Tiles>>();
         List<(List<Tiles> per, int row, ScoreManager.MeldType type)> meldDetails =
             new List<(List<Tiles>, int, ScoreManager.MeldType)>();
 
+        // Önce sahnede yanan tüm ışıkları söndür (Resetleme)
         foreach (var player in PhotonNetwork.PlayerList)
         {
             Transform meldContainer = GameObject.Find(player.NickName + " meld")?.transform;
             if (meldContainer == null)
                 continue;
 
-            // Renk(0), Sayı(1), Çift(2) kaplarını gez
             foreach (Transform typeContainer in meldContainer)
             {
-                // O kaptaki her bir kutucuğu (Placeholder) gez
                 foreach (Transform placeholder in typeContainer)
                 {
                     Placeholder phComponent = placeholder.GetComponent<Placeholder>();
                     if (phComponent != null)
                     {
-                        // Eğer yuvada bir taş varsa (childCount > 0), ışığı söndür ve kilitli tut
                         if (placeholder.childCount > 0)
                         {
                             phComponent.available = false;
@@ -1665,22 +1657,12 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         }
 
         // ----------------------------------------------------------------------
-        // ADIM 2: EĞER OYUNCU ELİNİ AÇMADIYSA, İŞLEMİ BURADA BİTİR!
+        // ADIM 2: MASADAKİ TAŞLARI TARA (MANTIKSAL HESAPLAMA)
         // ----------------------------------------------------------------------
-        if (!hasOpenedHand)
-        {
-            Debug.Log(
-                "Oyuncu elini açmadığı için masaya taş işleyemez (Joker dahil). Hesaplama durduruldu."
-            );
-            return; // Çıkış. Kimse yeşil yanmayacak.
-        }
+        // DÜZELTME: Bu tarama işlemi artık "hasOpenedHand" kontrolünden ÖNCE yapılıyor.
+        // Böylece Master Client elini açmasa bile "availableTiles" listesi doluyor ve
+        // ceza kontrolünü doğru yapabiliyor.
 
-        // ----------------------------------------------------------------------
-        // ADIM 3: SADECE ELİNİ AÇMIŞSA HESAPLAMAYA DEVAM ET
-        // ----------------------------------------------------------------------
-        Debug.Log("Oyuncu elini açmış, işlek taşlar hesaplanıyor...");
-
-        // Masadaki taşları oku ve grupla (Mevcut mantık)
         foreach (var player in PhotonNetwork.PlayerList)
         {
             Transform meldContainer = GameObject.Find(player.NickName + " meld")?.transform;
@@ -1739,12 +1721,15 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             }
         }
 
-        // Matematiksel listeyi güncelle
+        // ----------------------------------------------------------------------
+        // ADIM 3: MANTIKSAL LİSTEYİ DOLDUR (availableTiles)
+        // ----------------------------------------------------------------------
         foreach (var per in currentBoardMelds)
         {
             var availableFromPer = GetAvailableTiles(per);
             foreach (var tile in availableFromPer)
             {
+                // ID önemli değil, Renk ve Sayı olarak listede yoksa ekle
                 bool exists = availableTiles.Any(t =>
                     t.color == tile.color && t.number == tile.number && t.type == tile.type
                 );
@@ -1753,18 +1738,22 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             }
         }
 
-        // Görsel Placeholder'ları Güncelle (Sadece açanlar buraya kadar gelebilir)
+        // ----------------------------------------------------------------------
+        // ADIM 4: GÖRSEL GÜNCELLEME (SADECE ELİNİ AÇANLAR İÇİN)
+        // ----------------------------------------------------------------------
+        // Ceza sistemi için gerekli veriyi yukarıda hazırladık.
+        // Ancak oyuncu elini açmadıysa, masadaki yerlerin yeşil yanmasını (available olmasını) engelliyoruz.
+
+        if (!hasOpenedHand)
+        {
+            // Debug.Log("Oyuncu elini açmadığı için görsel placeholder güncellemesi atlanıyor.");
+            return;
+        }
+
         foreach (var detail in meldDetails)
         {
-            int localQue = 0;
-            if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object q))
-                localQue = (int)q;
-
-            // Eğer UpdateAvailableForPlaceholders 3 parametre alıyorsa:
+            // ScoreManager'daki ilgili metodu çağırarak görselleri güncelle
             scoreManager.UpdateAvailableForPlaceholders(detail.per, detail.row);
-
-            // Eğer 2 parametre alıyorsa (Önceki versiyon):
-            // scoreManager.UpdateAvailableForPlaceholders(detail.per, detail.row);
         }
     }
 
@@ -1792,23 +1781,24 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
         if (targetList != null)
         {
-            // Daha hassas bir arama: Sadece özelliklere bakıyoruz
-            Tiles foundTile = targetList.FirstOrDefault(t =>
-                t.color == tileToRemove.color && t.number == tileToRemove.number
-            );
+            // --- DÜZELTME: ID KONTROLÜNE GEÇİŞ ---
+            // ESKİ KOD: t.color == tileToRemove.color && t.number == tileToRemove.number
+            // YENİ KOD: t.id == tileToRemove.id
 
-            // Eğer özellik tutuyorsa sil, yoksa log bas
+            Tiles foundTile = targetList.FirstOrDefault(t => t.id == tileToRemove.id);
+
             if (foundTile != null)
             {
                 targetList.Remove(foundTile);
                 Debug.Log(
-                    $"[SYNC] Oyuncu {playerQue} listesinden {tileToRemove.color} {tileToRemove.number} başarıyla silindi."
+                    $"[SYNC] Oyuncu {playerQue} listesinden ID:{tileToRemove.id} ({tileToRemove.color} {tileToRemove.number}) başarıyla silindi."
                 );
             }
             else
             {
-                Debug.LogWarning(
-                    $"[SYNC HATASI] Oyuncu {playerQue} elinde {tileToRemove.color} {tileToRemove.number} gerçekten yok! Mevcut el sayısı: {targetList.Count}"
+                // Eğer ID ile bulamazsak, sakın "benzerini" silmeye kalkma.
+                Debug.LogError(
+                    $"[SYNC HATASI] Oyuncu {playerQue} elinde {tileToRemove.id} ID'li taş YOK! İşlem iptal edildi."
                 );
             }
         }
@@ -1817,37 +1807,42 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void AddTileToPlayerHand(int playerQue, Tiles tileData)
     {
-        // 1. VERİ KISMI: Master Client, oyuncunun listesine (List<Tiles>) ekler
-        if (PhotonNetwork.IsMasterClient)
-        {
-            List<Tiles> targetHand = null;
-            switch (playerQue)
-            {
-                case 1:
-                    targetHand = playerTiles1;
-                    break;
-                case 2:
-                    targetHand = playerTiles2;
-                    break;
-                case 3:
-                    targetHand = playerTiles3;
-                    break;
-                case 4:
-                    targetHand = playerTiles4;
-                    break;
-            }
+        // -----------------------------------------------------------
+        // 1. VERİ KISMI (DÜZELTME BURADA)
+        // -----------------------------------------------------------
+        // ESKİ KOD: if (PhotonNetwork.IsMasterClient) { ... }
+        // YENİ KOD: Kontrolü kaldırdık. Herkes bu veriyi kendi listesine eklemeli.
 
-            if (targetHand != null)
-            {
-                targetHand.Add(tileData);
-            }
+        List<Tiles> targetHand = null;
+        switch (playerQue)
+        {
+            case 1:
+                targetHand = playerTiles1;
+                break;
+            case 2:
+                targetHand = playerTiles2;
+                break;
+            case 3:
+                targetHand = playerTiles3;
+                break;
+            case 4:
+                targetHand = playerTiles4;
+                break;
         }
 
-        // 2. GÖRSEL KISIM: Sadece o oyuncunun kendi ekranında (Local) görsel oluşturulur
+        if (targetHand != null)
+        {
+            targetHand.Add(tileData);
+            // Debug.Log($"[VERİ EKLENDİ] Oyuncu {playerQue} listesine Joker eklendi. Yeni adet: {targetHand.Count}");
+        }
+
+        // -----------------------------------------------------------
+        // 2. GÖRSEL KISMI (AYNEN KALIYOR)
+        // -----------------------------------------------------------
         object localQue;
         if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out localQue))
         {
-            // Eğer ben bu oyuncuysam, ıstakama görseli ekle
+            // Eğer bu oyuncu bensem, ıstakama görseli ekle
             if ((int)localQue == playerQue)
             {
                 InstantiateTileInFirstEmptySlot(tileData);
@@ -2023,104 +2018,93 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void RemoveTileFromPlayerListByValue(int playerQue, Tiles tileToRemove)
     {
-        // 1. VERİ SİLME (LİSTEDEN)
+        // ----------------------------------------------------------------
+        // 1. VERİ SİLME (LİSTEDEN) - SIKI ID KONTROLÜ
+        // ----------------------------------------------------------------
         List<Tiles> targetHand = null;
-        if (playerQue == 1)
-            targetHand = playerTiles1;
-        else if (playerQue == 2)
-            targetHand = playerTiles2;
-        else if (playerQue == 3)
-            targetHand = playerTiles3;
-        else if (playerQue == 4)
-            targetHand = playerTiles4;
+        switch (playerQue)
+        {
+            case 1:
+                targetHand = playerTiles1;
+                break;
+            case 2:
+                targetHand = playerTiles2;
+                break;
+            case 3:
+                targetHand = playerTiles3;
+                break;
+            case 4:
+                targetHand = playerTiles4;
+                break;
+        }
 
         if (targetHand != null)
         {
-            // Özellikleri (Renk, Numara, Tip) eşleşen İLK taşı bul
-            Tiles foundTile = null;
-            foreach (var t in targetHand)
-            {
-                // Joker kontrolü (Jokerse tipi Joker olmalı)
-                if (tileToRemove.type == TileType.Joker)
-                {
-                    if (t.type == TileType.Joker)
-                    {
-                        foundTile = t;
-                        break;
-                    }
-                }
-                // Normal taş kontrolü
-                else if (
-                    t.color == tileToRemove.color
-                    && t.number == tileToRemove.number
-                    && t.type == tileToRemove.type
-                )
-                {
-                    foundTile = t;
-                    break;
-                }
-            }
+            // Sadece ID ile eşleşen taşı bul
+            Tiles foundTile = targetHand.FirstOrDefault(t => t.id == tileToRemove.id);
 
             if (foundTile != null)
             {
                 targetHand.Remove(foundTile);
-                // Debug.Log($"[TileDistrubite] Veri silindi: {tileToRemove.color} {tileToRemove.number}");
             }
             else
             {
-                // Debug.LogWarning($"[HATA] Silinecek taş veride yok! {tileToRemove.color} {tileToRemove.number}");
+                // Eğer ID ile bulunamazsa ASLA Rengine/Numarasına bakıp silme!
+                // Çünkü elinde aynısından bir tane daha olabilir.
+                Debug.LogWarning(
+                    $"[SYNC KORUMA] Silinecek taş ID ile bulunamadı ({tileToRemove.id}). İkiz taş silinmemesi için işlem iptal edildi."
+                );
             }
         }
 
+        // ----------------------------------------------------------------
         // 2. GÖRSEL SİLME (SADECE O OYUNCUNUN EKRANINDA)
-        // Eğer bu RPC benim sıram için çalışıyorsa, benim ekranımdaki ıstakadan görseli sil.
+        // ----------------------------------------------------------------
         object localQue;
         if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out localQue))
         {
-            if ((int)localQue == playerQue)
+            if ((int)localQue == playerQue && playerTileContainer != null)
             {
-                if (playerTileContainer != null)
+                GameObject tileToDelete = null;
+
+                foreach (Transform placeholder in playerTileContainer)
                 {
-                    foreach (Transform placeholder in playerTileContainer)
+                    if (placeholder.childCount > 0)
                     {
-                        if (placeholder.childCount > 0)
+                        GameObject tileObj = placeholder.GetChild(0).gameObject;
+                        TileUI ui = tileObj.GetComponent<TileUI>();
+
+                        // --- KRİTİK DEĞİŞİKLİK ---
+                        // "else if" ile değer kontrolü yapan kısmı SİLDİK.
+                        // Sadece ID eşleşirse silinecek.
+                        if (ui != null && ui.tileDataInfo.id == tileToRemove.id)
                         {
-                            GameObject tileObj = placeholder.GetChild(0).gameObject;
-                            TileUI ui = tileObj.GetComponent<TileUI>();
-
-                            // NOT: TileUI.OnEndDrag'da SetActive(false) yaptığımız için
-                            // kapalı olan taşları öncelikli bulup silmeliyiz.
-                            if (ui != null)
-                            {
-                                bool isMatch = false;
-
-                                // Eşleşme Kontrolü
-                                if (tileToRemove.type == TileType.Joker)
-                                {
-                                    if (ui.tileDataInfo.type == TileType.Joker)
-                                        isMatch = true;
-                                }
-                                else if (
-                                    ui.tileDataInfo.color == tileToRemove.color
-                                    && ui.tileDataInfo.number == tileToRemove.number
-                                    && ui.tileDataInfo.type == tileToRemove.type
-                                )
-                                {
-                                    isMatch = true;
-                                }
-
-                                if (isMatch)
-                                {
-                                    // GÖRSELİ YOK ET!
-                                    Destroy(tileObj);
-                                    return; // Bir tane sildik, yeterli.
-                                }
-                            }
+                            tileToDelete = tileObj;
+                            break;
                         }
                     }
                 }
+
+                if (tileToDelete != null)
+                {
+                    Destroy(tileToDelete);
+                }
             }
         }
+    }
+
+    // Eşleştirme Yardımcısı (Eğer sınıfta yoksa en alta ekle)
+    private bool IsTileMatch(Tiles t1, Tiles t2)
+    {
+        if (t1 == null || t2 == null)
+            return false;
+
+        // Joker kontrolü
+        if (t1.type == TileType.Joker && t2.type == TileType.Joker)
+            return true;
+
+        // Normal kontrol
+        return (t1.color == t2.color && t1.number == t2.number && t1.type == t2.type);
     }
 
     // TileDistrubite.cs içerisinde

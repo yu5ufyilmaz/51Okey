@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using ExitGames.Client.Photon;
 using UnityEngine;
 
@@ -104,21 +105,35 @@ public static class TileSerialization
         return new ActiveTilePlacementInfo(tile, ownerQue, meldType, placeholderIndex);
     }
 
+    // TileSerialization.cs -> SerializeTiles Metodu
     private static short SerializeTiles(StreamBuffer outStream, object customObject)
     {
         Tiles tile = (Tiles)customObject;
+
+        // ID Yazma (String helper kullanarak)
+        WriteStringToStream(outStream, tile.id);
+
+        // Diğer veriler
         outStream.WriteByte((byte)tile.color);
         outStream.WriteByte((byte)tile.number);
         outStream.WriteByte((byte)tile.type);
-        return 0; // Success
+        return 0;
     }
 
     private static object DeserializeTiles(StreamBuffer inStream, short length)
     {
-        TileColor color = (TileColor)inStream.ReadByte();
-        int number = inStream.ReadByte();
-        TileType type = (TileType)inStream.ReadByte();
-        return new Tiles(color, number, type);
+        // Önce boş nesne oluştur (Artık Tiles.cs'de boş constructor var!)
+        Tiles tile = new Tiles();
+
+        // ID Okuma
+        tile.id = ReadStringFromStream(inStream);
+
+        // Diğer veriler
+        tile.color = (TileColor)inStream.ReadByte();
+        tile.number = inStream.ReadByte();
+        tile.type = (TileType)inStream.ReadByte();
+
+        return tile;
     }
 
     private static short SerializeListOfTiles(StreamBuffer outStream, object customObject)
@@ -257,5 +272,38 @@ public static class TileSerialization
         byte[] buffer = new byte[count];
         inStream.Read(buffer, 0, count); // Belirtilen sayıda byte oku
         return buffer; // Okunan byte dizisini döndür
+    }
+
+    private static void WriteIntToStream(StreamBuffer outStream, int value)
+    {
+        byte[] bytes = BitConverter.GetBytes(value);
+        outStream.Write(bytes, 0, bytes.Length);
+    }
+
+    private static int ReadIntFromStream(StreamBuffer inStream)
+    {
+        byte[] bytes = new byte[4];
+        inStream.Read(bytes, 0, 4);
+        return BitConverter.ToInt32(bytes, 0);
+    }
+
+    private static void WriteStringToStream(StreamBuffer outStream, string value)
+    {
+        if (value == null)
+            value = "";
+        byte[] strBytes = Encoding.UTF8.GetBytes(value);
+        WriteIntToStream(outStream, strBytes.Length); // Önce uzunluk
+        outStream.Write(strBytes, 0, strBytes.Length); // Sonra veri
+    }
+
+    private static string ReadStringFromStream(StreamBuffer inStream)
+    {
+        int length = ReadIntFromStream(inStream);
+        if (length == 0)
+            return "";
+
+        byte[] strBytes = new byte[length];
+        inStream.Read(strBytes, 0, length);
+        return Encoding.UTF8.GetString(strBytes);
     }
 }

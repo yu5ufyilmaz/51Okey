@@ -241,6 +241,8 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     }
 
     #region On Begin Drag
+    #region On Begin Drag
+    #region On Begin Drag
     public void OnBeginDrag(PointerEventData eventData)
     {
         if (currentMoveCoroutine != null)
@@ -249,45 +251,88 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             currentMoveCoroutine = null;
         }
         _targetScale = _originalScale;
-        // --- 1. SOL TARAFTAN ÇEKME KONTROLÜ (EN BAŞA KOYUYORUZ) ---
-        // Eğer taş Soldaki (Yandaki) kutudaysa...
+
+        // --- 1. SOL TARAFTAN ÇEKME KONTROLÜ ---
         if (transform.parent == leftTileContainer)
         {
             // A) SIRA SENDE Mİ?
             if (!turnManager.IsPlayerTurn())
             {
                 Debug.LogWarning("Sıra sende değil! Yandaki taşa dokunamazsın.");
-                eventData.pointerDrag = null; // Sürüklemeyi iptal et
+                eventData.pointerDrag = null;
                 return;
             }
 
-            // B) ZATEN TAŞ ÇEKTİN Mİ? (Ortadan veya Yandan)
-            // canDrop == true ise, elinde atılacak taş var demektir, yani çekmişsindir.
+            // B) ZATEN TAŞ ÇEKTİN Mİ? (canDrop true ise çekmişsindir)
             if (turnManager.canDrop == true)
             {
                 Debug.LogWarning("Zaten taş çektiniz! Yandan alamazsınız.");
-                eventData.pointerDrag = null; // Sürüklemeyi iptal et
+                eventData.pointerDrag = null;
+                return;
+            }
+
+            // C) AÇTIN MI / İŞLEDİN Mİ? (Yandan almak da bir çekme işlemidir)
+            if (turnManager.hasOpenedThisTurn || turnManager.hasProcessedThisTurn)
+            {
+                Debug.LogWarning("El açtınız veya işlediniz, yandan taş alamazsınız!");
+                eventData.pointerDrag = null;
                 return;
             }
 
             // Şartlar uygunsa işaretle
             fromLeftContainer = true;
         }
-        // -----------------------------------------------------------
+        // --- 2. ORTA TAŞLARDAN ÇEKME KONTROLÜ (DÜZELTİLDİ) ---
+        else if (
+            transform.parent == middleTileContainer
+            || transform.parent.CompareTag("MiddleTileContainer")
+        )
+        {
+            // A) SIRA SENDE Mİ?
+            if (!turnManager.IsPlayerTurn())
+            {
+                Debug.LogWarning("Sıra sende değil!");
+                eventData.pointerDrag = null;
+                return;
+            }
 
-        // 2. Genel Hareket İzni (Istaka içi düzenleme vs. için)
+            // B) KURAL İHLALİ KONTROLLERİ
+            // - Zaten taş çektiyse (canDrop = true) -> DÜZELTİLEN KISIM BURASI
+            // - Bu tur elini açtıysa (hasOpenedThisTurn)
+            // - Bu tur yere taş işlediyse (hasProcessedThisTurn)
+            if (
+                turnManager.canDrop
+                || turnManager.hasOpenedThisTurn
+                || turnManager.hasProcessedThisTurn
+            )
+            {
+                Debug.LogWarning(
+                    "Hamle yaptınız (Çektiniz/Açtınız/İşlediniz), tekrar taş çekemezsiniz!"
+                );
+                eventData.pointerDrag = null;
+                return;
+            }
+
+            // C) EL KAPASİTESİ KONTROLÜ (15 taş kuralı)
+            if (playerTiles.Count >= 15)
+            {
+                Debug.LogWarning("Eliniz dolu (15 Taş), yeni taş çekemezsiniz!");
+                eventData.pointerDrag = null;
+                return;
+            }
+        }
+
+        // --- 3. GENEL HAREKET İZNİ (CanMoveTile) ---
         var (canDrop, canDraw) = CanMoveTile();
 
         if (!canDraw)
         {
-            // Eğer soldan çekmeye çalışıyorsak yukarıdaki blok zaten yakalardı.
-            // Burası daha çok ıstaka içi veya orta taş için genel kontrol.
             Debug.LogWarning("Bu taşı şu an hareket ettiremezsiniz!");
             eventData.pointerDrag = null;
             return;
         }
 
-        // 3. Yasaklı Alanlar (Rakip, Gösterge, Atma Yeri)
+        // --- 4. YASAKLI ALANLAR ---
         if (
             gameObject.transform.parent.tag == "OtherSideTileContainer"
             || isIndicatorTile
@@ -299,25 +344,20 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             return;
         }
 
-        // 4. Masadaki (Meld) Taşları Kilitleme
+        // --- 5. MASADAKİ (MELD) TAŞLARI KİLİTLEME ---
         Transform currentParent = transform.parent;
         Transform grandParent = currentParent.parent;
 
-        // Eğer taşın dedesi PlayerTileContainer değilse (yani ıstakada değilse)
-        if (grandParent != playerTileContainer)
+        if (
+            grandParent != playerTileContainer
+            && currentParent != middleTileContainer
+            && currentParent != leftTileContainer
+            && currentParent != rightTileContainer
+        )
         {
-            // Ve bu taş Çekilebilir Alanlarda da (Orta, Sol) değilse...
-            if (
-                currentParent != middleTileContainer
-                && currentParent != leftTileContainer
-                && currentParent != rightTileContainer
-            )
-            {
-                // Demek ki masaya açılmış bir taş. KİLİTLE.
-                Debug.LogWarning("Masaya işlenmiş taşları hareket ettiremezsiniz!");
-                eventData.pointerDrag = null;
-                return;
-            }
+            Debug.LogWarning("Masaya işlenmiş taşları hareket ettiremezsiniz!");
+            eventData.pointerDrag = null;
+            return;
         }
 
         // --- SÜRÜKLEME BAŞLATILIYOR ---
@@ -325,6 +365,8 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         canvasGroup.blocksRaycasts = false;
         transform.SetParent(transform.root, true);
     }
+    #endregion
+    #endregion
     #endregion
     #region On Drag
     [Header("Scaling Settings")]
@@ -390,6 +432,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     public void OnEndDrag(PointerEventData eventData)
     {
         // --- 1. TEMEL GÜVENLİK KONTROLLERİ ---
+        // Rakip alandaki veya yasaklı taşları hareket ettiremezsin
         if (transform.parent.CompareTag("OtherSideTileContainer") || isIndicatorTile)
         {
             _targetScale = _originalScale;
@@ -442,14 +485,15 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             return;
         }
 
-        // TileUI.cs -> OnEndDrag -> if (bestTarget.isRight) bloğunun içi:
+        // --- 3. AKSİYON KARARLARI ---
 
-        // DURUM A: TAŞ ATMA (SAĞ TARAF)
+        // DURUM A: TAŞ ATMA (SAĞ TARAF - TUR BİTİRME)
         if (bestTarget.isRight)
         {
+            // Sadece sıra bendeyse ve ATACAK TAŞIM VARSA (canDrop=true) atabilirim
             if (turnManager.IsPlayerTurn() && turnManager.canDrop)
             {
-                // --- [REFERANS BAĞLANTISI BURADA] ---
+                // Yandan Taş Alma Kuralı Kontrolü:
                 // TurnManager'a soruyoruz: "Turu bitirmeme izin var mı?"
                 // (Yandan aldıysam açtım mı/işledim mi kontrolünü o yapıyor)
                 if (!turnManager.CanFinishTurn())
@@ -466,8 +510,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                     return; // İŞLEM İPTAL
                 }
 
-                // ... (Geri kalan kodlar aynı: Ceza kontrolü ve Tur devretme) ...
-
+                // Atılan taş için ceza kontrolü (Okey attı mı vs.)
                 if (GameManager.Instance != null)
                 {
                     GameManager.Instance.photonView.RPC(
@@ -477,10 +520,13 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                         this.tileDataInfo
                     );
                 }
+
+                // Her şey yolundaysa turu bitir
                 ExecuteNextTurn();
             }
             else
             {
+                // Sıra bende değilse veya taş çekmediysem atamam
                 _targetScale = _originalScale;
                 StartCoroutine(SmoothMove(transform, originalParent));
             }
@@ -488,6 +534,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         // DURUM B: KENDİ ISTAKASINDA DÜZENLEME VEYA TAŞ ÇEKME
         else if (bestTarget.transform.parent == playerTileContainer)
         {
+            // Taş Çekme İşlemi (Sıra bendeyse ve henüz çekmediysem)
             if (turnManager.IsPlayerTurn() && !turnManager.canDrop)
             {
                 if (inMiddle) // Ortadan çekme
@@ -498,24 +545,24 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                         RpcTarget.AllBuffered,
                         localQueInt
                     );
-                    turnManager.canDrop = true;
+                    turnManager.canDrop = true; // Artık atabilirim
                     inMiddle = false;
                 }
                 else if (fromLeftContainer) // Yandan çekme
                 {
-                    turnManager.hasPickedFromSide = true;
+                    turnManager.hasPickedFromSide = true; // Yandan aldığımı işaretle
                     EventDispatcher.SummonEvent("OnSideTilePicked", this.tileDataInfo);
                     tileDistrubite.photonView.RPC(
                         "AddTileFromDropPlayerList",
                         RpcTarget.AllBuffered,
                         localQueInt
                     );
-                    turnManager.canDrop = true;
+                    turnManager.canDrop = true; // Artık atabilirim
                     fromLeftContainer = false;
                 }
             }
 
-            // Kendi ıstakasında kaydırma mantığı
+            // Kendi ıstakasında kaydırma mantığı (Sürükle-Bırak)
             if (
                 bestTarget.transform.childCount > 0
                 && bestTarget != originalParent.GetComponent<Placeholder>()
@@ -534,13 +581,23 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             _targetScale = _originalScale;
             StartCoroutine(SmoothMove(transform, bestTarget.transform));
         }
+        // DURUM C: MASAYA TAŞ İŞLEME (MELDING)
         else
         {
+            // İŞLEME KURALI:
+            // 1. Sıra bende olacak.
+            // 2. [YENİ] Önce taş çekmiş olmalıyım (canDrop == true).
+            // 3. Daha önce açmış olmalıyım veya takım arkadaşım açmış olmalı.
+
             if (
                 !turnManager.IsPlayerTurn()
+                || !turnManager.canDrop
                 || (!scoreManager.hasOpenedSeries && !scoreManager.hasOpenedPairs)
             )
             {
+                if (!turnManager.canDrop)
+                    Debug.LogWarning("İşlem yapabilmek için önce taş çekmelisiniz!");
+
                 _targetScale = _originalScale;
                 StartCoroutine(SmoothMove(transform, originalParent));
                 return;
@@ -550,8 +607,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             Tiles beingProcessed = this.tileDataInfo;
 
             // ScoreManager'a sor: Bu taşı buraya koyabilir miyim?
-            // NOT: ProcessManualDrop içindeki "PerformTileProcessing" metodu
-            // zaten masaya YENİ bir görsel koyuyor.
+            // NOT: ScoreManager görseli kendi oluşturur (Instantiate).
             bool success = scoreManager.ProcessManualDrop(
                 beingProcessed,
                 bestTarget.transform,
@@ -560,20 +616,14 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
             if (success)
             {
-                // BAŞARILI OLDUYSA:
-                // Sadece bu objeyi GİZLE (Yok etme!). Çünkü asıl yok etme işlemi
-                // TileDistrubite'in listeyi güncellediği an yapılmalı.
-                // Ama oyuncuya "takılma" hissi vermemek için görseli kapatıyoruz.
+                // BAŞARILI:
+                // Sadece bu görseli GİZLE. Yok etme işlemini TileDistrubite yapacak.
+                // Destroy(gameObject) KULLANMIYORUZ!
                 gameObject.SetActive(false);
-
-                // Buradaki kritik nokta: RemoveActiveTileFromPlayerList RPC'si
-                // ScoreManager tarafından zaten çağrılıyor (PerformTileProcessing içinde).
-                // O yüzden burada ekstra bir RPC çağırmıyoruz!
-
-                // Destroy(gameObject); // BU SATIRI SİLİYORUZ!
             }
             else
             {
+                // Başarısızsa yerine dön
                 _targetScale = _originalScale;
                 StartCoroutine(SmoothMove(transform, originalParent));
             }
@@ -605,33 +655,48 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object queueValue);
         int playerQueInt = (int)queueValue;
 
-        // 1. ELDEN TAŞ DÜŞME MANTIĞI (Aynı kalıyor)
+        // 1. ELDEN TAŞ DÜŞME MANTIĞI
         List<Tiles> realTimePlayerTiles = tileDistrubite.GetPlayerTiles();
+
+        // Listeyi kopyalıyoruz ki orijinal veri bozulmadan simülasyon yapabilelim
         List<Tiles> currentHandForCheck = new List<Tiles>(realTimePlayerTiles);
 
-        // Atılan taşı listeden düş
-        var tileThrown = currentHandForCheck.FirstOrDefault(t =>
-            t.color == tileDataInfo.color
-            && t.number == tileDataInfo.number
-            && t.type == tileDataInfo.type
-        );
-        if (tileThrown != null)
-            currentHandForCheck.Remove(tileThrown);
+        // --- [DÜZELTME 1] ID KONTROLÜ İLE TAŞI BUL ---
+        // Eski yöntem (Renk/Sayı) yerine doğrudan benzersiz ID ile arıyoruz.
+        var tileThrown = currentHandForCheck.FirstOrDefault(t => t.id == tileDataInfo.id);
 
-        // Yeni açılan perleri düş
+        if (tileThrown != null)
+        {
+            currentHandForCheck.Remove(tileThrown);
+        }
+        else
+        {
+            Debug.LogError(
+                $"[NextTurnRoutine] HATA: Atılan taş ID ({tileDataInfo.id}) listede bulunamadı!"
+            );
+        }
+
+        // Yeni açılan perleri (henüz sunucuya gitmemiş olanları) de simülasyon listesinden düş
         if (scoreManager != null)
         {
             List<Tiles> pendingTiles = scoreManager.GetAllTilesPendingCommit();
             foreach (var pt in pendingTiles)
             {
+                // Not: Perdeki taşlar için de ID kontrolü yapmak en sağlıklısıdır,
+                // ancak ScoreManager yapına göre burada ID eşleşmesi yoksa şimdilik değer kontrolü kalabilir.
+                // Eğer pendingTiles içindeki taşların ID'leri korunuyorsa burayı da ID'ye çevirebilirsin.
                 var it = currentHandForCheck.FirstOrDefault(t =>
                     t.color == pt.color && t.number == pt.number && t.type == pt.type
                 );
+                // EĞER ID SİSTEMİN ScoreManager'DA TAM OTURDUYSA YUKARIDAKİ YERİNE ŞUNU KULLAN:
+                // var it = currentHandForCheck.FirstOrDefault(t => t.id == pt.id);
+
                 if (it != null)
                     currentHandForCheck.Remove(it);
             }
         }
 
+        // El tamamen bitti mi? (0 taş kaldıysa bitmiştir)
         bool isGameReallyOver = (currentHandForCheck.Count == 0);
 
         // GameManager'a Bildir
@@ -639,9 +704,11 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         {
             HandData data = new HandData();
             data.actorNumber = PhotonNetwork.LocalPlayer.ActorNumber;
+            // Eğer oyun bittiyse boş el gönder, bitmediyse göstermelik bir taş koy (kontrol için)
             data.handTiles = isGameReallyOver
                 ? new List<Tiles>()
                 : new List<Tiles> { new Tiles(TileColor.black, 1, TileType.Number) };
+
             EventDispatcher.SummonEvent("OnPlayerMoveFinished", data);
         }
 
@@ -655,34 +722,44 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         StartCoroutine(SmoothMove(transform, rightTileContainer));
         yield return new WaitForSeconds(0.05f);
 
-        // --- VERİTABANINDAN SİLME (ATILAN TAŞ) ---
+        // --- [DÜZELTME 2] VERİTABANINDAN SİLME (ATILAN TAŞ) ---
+        // TileDistrubite üzerindeki gerçek listeden hangi indeksi sileceğimizi ID ile buluyoruz.
         int indexToRemove = -1;
         List<Tiles> actualPlayerTiles = tileDistrubite.GetPlayerTiles();
+
         for (int i = 0; i < actualPlayerTiles.Count; i++)
         {
-            if (
-                actualPlayerTiles[i].color == tileDataInfo.color
-                && actualPlayerTiles[i].number == tileDataInfo.number
-                && actualPlayerTiles[i].type == tileDataInfo.type
-            )
+            // ESKİ KOD: Renk ve Sayı kontrolü (Kimlik karmaşası yaratıyordu)
+            // YENİ KOD: Sadece ID kontrolü
+            if (actualPlayerTiles[i].id == tileDataInfo.id)
             {
                 indexToRemove = i;
-                break;
+                break; // Doğru taşı bulduk, döngüden çık
             }
         }
 
         if (indexToRemove != -1)
+        {
             tileDistrubite.photonView.RPC(
                 "RemoveTileFromPlayerList",
-                RpcTarget.All,
+                RpcTarget.All, // Herkeste silinsin
                 playerQueInt,
                 indexToRemove
             );
+        }
+        else
+        {
+            Debug.LogError(
+                $"[KRİTİK HATA] Silinecek taşın ID'si ({tileDataInfo.id}) gerçek oyuncu listesinde bulunamadı!"
+            );
+        }
 
         yield return new WaitForSeconds(0.05f);
 
         // --- MASA GÜNCELLEMELERİ VE SENKRONİZASYON ---
+        // Diğer oyuncular için "işlek taş" (available tiles) kontrolünü yenile
         tileDistrubite.photonView.RPC("CheckForAvailableTiles", RpcTarget.All, playerQueInt);
+
         scoreManager.CommitAndStoreMelds();
         scoreManager.CommitJokerTransactions();
 
@@ -692,6 +769,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         yield return new WaitForSeconds(0.05f);
 
         // --- OYUN BİTİŞ / SIRA DEVRETME ---
+        // Ortada taş kalmadıysa beraberlik
         if (tileDistrubite.allTiles.Count == 0)
         {
             if (GameManager.Instance != null && !GameManager.Instance.isGameEnded)
@@ -706,8 +784,11 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             yield break;
         }
 
+        // Turu bitir, bayrakları sıfırla ve sırayı devret
         turnManager.canDrop = false;
         turnManager.photonView.RPC("NextTurn", RpcTarget.AllBuffered);
+
+        // Görsel nesneyi yok et
         Destroy(gameObject);
     }
     #endregion

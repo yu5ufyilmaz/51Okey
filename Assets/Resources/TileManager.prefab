@@ -55,6 +55,7 @@ MonoBehaviour:
   playerTiles3: []
   playerTiles4: []
   dropTile:
+    id: 
     color: 0
     number: 0
     type: 0

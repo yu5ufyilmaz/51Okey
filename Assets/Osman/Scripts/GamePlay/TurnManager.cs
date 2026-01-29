@@ -129,24 +129,47 @@ public class TurnManager : MonoBehaviourPunCallbacks
     {
         localPlayerTurn = false;
         currentTurnPlayer++;
-        if (UIManager.Instance != null)
-        {
-            // Yeni sıra kimdeyse onun ışığını yak
-            UIManager.Instance.UpdateTurnIndicators(currentTurnPlayer);
-        }
+
+        // Oyuncu sayısı sınırını aşarsa başa dön
         if (currentTurnPlayer > PhotonNetwork.PlayerList.Length)
         {
-            currentTurnPlayer = 1; // Döngü başa döner
+            currentTurnPlayer = 1;
         }
+
+        // --- [DÜZELTME BAŞLANGICI] ---
+
+        // KRİTİK DEĞİŞİKLİK:
+        // Masadaki "İşlek Taşları" (Available Slots) hesaplama işlemini
+        // "Sıra Bende mi?" kontrolünün DIŞINA çıkarıyoruz.
+        // Böylece sıra kimde olursa olsun, senin ekranındaki eski yeşil ışıklar söner
+        // ve liste (availableTiles) yeni tura göre güncellenir.
+
+        TileDistrubite tileDistrubite = FindObjectOfType<TileDistrubite>();
+        if (tileDistrubite != null)
+        {
+            tileDistrubite.RecalculateAllAvailableSlots();
+        }
+
+        // --- [DÜZELTME BİTİŞİ] ---
+
+
+        // SIRA BANA GELDİYSE, KİŞİSEL BAYRAKLARI (Açtı mı? İşledi mi?) SIFIRLA!
         if (
             PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object q)
             && (int)q == currentTurnPlayer
         )
         {
-            // Senin zaten var olan metodun:
-            FindObjectOfType<TileDistrubite>()
-                .RecalculateAllAvailableSlots();
+            ResetTurnFlags();
+
+            // NOT: RecalculateAllAvailableSlots() buradaydı,
+            // yukarı (herkes için çalışacak yere) taşıdık.
         }
+
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.UpdateTurnIndicators(currentTurnPlayer);
+        }
+
         Debug.Log($"Player {currentTurnPlayer}'s turn.");
     }
 }

@@ -191,11 +191,21 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
     }
 
-    // --- CEZA YÖNETİMİ ---
+
     public void RecordSidePick(Tiles tile)
     {
         if (tile != null)
-            currentSidePickTile = new Tiles(tile.color, tile.number, tile.type);
+        {
+            // HATALI OLAN: currentSidePickTile = new Tiles(tile.color, tile.number, tile.type);
+            // Bu kod ID'yi değiştirir!
+
+            // DOĞRUSU: Manuel kopyalama yapmalısın.
+            currentSidePickTile = new Tiles(); // Boş constructor (ID üretmeyen varsa onu kullan yoksa aşağıda ez)
+            currentSidePickTile.color = tile.color;
+            currentSidePickTile.number = tile.number;
+            currentSidePickTile.type = tile.type;
+            currentSidePickTile.id = tile.id; // <--- KRİTİK NOKTA: ID'Yİ KORU
+        }
     }
 
     public void HandleFailedSidePick(Tiles tileToThrow)
