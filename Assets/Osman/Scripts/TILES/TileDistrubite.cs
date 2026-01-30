@@ -188,18 +188,60 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         allTiles.RemoveAt(0);
         Debug.Log("Indicator tile is: " + indicatorTile.color + " " + indicatorTile.number);
 
-        // Find the upper number for the joker tile
-        int upperNumber = indicatorTile.number + 1;
-        if (upperNumber > 13)
-        {
-            upperNumber = 1; // Wrap around to 1 if it exceeds 13
-        }
+        // --- [YENİ MANTIK BAŞLANGICI] ---
 
-        // Update fake joker tiles
-        UpdateFakeJokerTiles(upperNumber, indicatorTile.color);
+        // Eğer çekilen gösterge taşı "Sahte Okey" (Resimli) ise;
+        if (indicatorTile.type == TileType.FakeJoker)
+        {
+            Debug.Log(
+                "ÖZEL DURUM: Gösterge Sahte Okey geldi. Diğer Sahte Okey 'Gerçek Joker' oluyor."
+            );
+            // Yeni yazdığımız fonksiyonu çağır
+            SetFakeJokerAsRealJoker();
+        }
+        else
+        {
+            // STANDART DURUM: Gösterge normal sayı.
+            // Bir fazlasını bul, o sayıları Joker yap.
+
+            int upperNumber = indicatorTile.number + 1;
+            if (upperNumber > 13)
+            {
+                upperNumber = 1; // 13'ten sonra 1'e dön
+            }
+
+            // Eski fonksiyonu çağır
+            UpdateFakeJokerTiles(upperNumber, indicatorTile.color);
+        }
+        // --- [YENİ MANTIK BİTİŞİ] ---
 
         // Sync the indicator tile across all clients
         photonView.RPC("SyncIndicatorTile", RpcTarget.All, indicatorTile);
+    }
+
+    // Bu fonksiyon SADECE gösterge taşı Sahte Okey (Resimli) olduğunda çalışır.
+    private void SetFakeJokerAsRealJoker()
+    {
+        foreach (var tile in allTiles)
+        {
+            // Listede kalan (henüz dağıtılmamış) diğer sahte okeyi bul
+            if (tile.type == TileType.FakeJoker)
+            {
+                // Bu taşı "Gerçek Joker" tipine çevir.
+                // ScoreManager, Type.Joker olan taşı her şeyin yerine sayacaktır.
+                tile.type = TileType.Joker;
+
+                // Not: Rengini veya numarasını değiştirmemize gerek yok.
+                // Çünkü bu taş artık "Wildcard" oldu, her renge ve her sayıya uyum sağlar.
+            }
+
+            // ÖNEMLİ: Normal sayı taşlarına (Type.Number) dokunmuyoruz.
+            // Çünkü bu senaryoda hiçbir sayı taşı Joker olmamalı.
+        }
+
+        // Dağıtımı ve senkronizasyonu tetikle (Aynen diğer fonksiyondaki gibi)
+        photonView.RPC("AssignPlayerQueue", RpcTarget.All);
+        photonView.RPC("SyncShuffledTiles", RpcTarget.All, allTiles.ToArray());
     }
 
     [PunRPC]
