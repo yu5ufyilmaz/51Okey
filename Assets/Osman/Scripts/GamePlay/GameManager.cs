@@ -318,6 +318,23 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
     }
 
+    // GameManager.cs içine eklenecek yeni metod
+
+    [PunRPC]
+    public void ApplyBulkProcessingPenaltyRPC(int victimQue, int totalPenaltyAmount)
+    {
+        // Sadece Master Client skor tablosuna yazma yetkisine sahiptir
+        if (PhotonNetwork.IsMasterClient)
+        {
+            // ScoreManager üzerinden toplam ceza miktarını oyuncunun hanesine ekle
+            scoreManager.UpdatePlayerScore(victimQue, totalPenaltyAmount);
+
+            Debug.Log(
+                $"<color=cyan>[OTOMATİK İŞLEME]</color> Oyuncu {victimQue} toplam {totalPenaltyAmount} ceza puanı aldı."
+            );
+        }
+    }
+
     // Geri Al (Undo) yapıldığında çağrılır: Kesilen cezayı iade eder.
     [PunRPC]
     public void RevertProcessingPenaltyRPC(int victimQue, int penaltyAmount)
@@ -372,7 +389,8 @@ public class GameManager : MonoBehaviourPunCallbacks
             reason = "Okey (Joker) Atıldı";
         }
         // --- 2. GÖSTERGE ATMA CEZASI (250 PUAN) ---
-        // Kural: Yerden gösterge ile aynı taş atılamaz.
+        // Kural: Gösterge taşı, çift açma durumunda "işlek" (useful) kabul edildiği için
+        // yere atılması yasaktır ve cezası işlek taş atma cezası (250) ile aynıdır.
         else if (
             indicator != null
             && thrownTile.color == indicator.color
@@ -380,7 +398,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         )
         {
             penaltyAmount = 250;
-            reason = "Gösterge Taşı Atıldı";
+            reason = "Gösterge Taşı (İşlek) Atıldı";
         }
         // --- 3. İŞLEK TAŞ ATMA CEZASI (250 PUAN) ---
         // Kural: Masadaki perlerin devamı olabilecek (available) bir taş atılamaz.
@@ -719,4 +737,5 @@ public class GameManager : MonoBehaviourPunCallbacks
             tileDistrubite.photonView.RPC("ResetTableAndRedistribute", RpcTarget.All);
         }
     }
+    
 }
