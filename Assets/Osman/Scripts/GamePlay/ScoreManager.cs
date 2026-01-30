@@ -2792,58 +2792,34 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         return -1; // Bulunamadı
     }
     #endregion
-    // ScoreManager.cs içine ekle
 
-    private int GetColorMultiplier(Tiles indicatorTile)
-    {
-        if (indicatorTile == null)
-            return 1; // Hata durumunda varsayılan
-
-        // Roket Kontrolü (Gösterge Sahte Okey ise)
-        // Not: TileType.FakeJoker veya senin sisteminde nasıl tutuluyorsa
-        if (indicatorTile.type == TileType.FakeJoker)
-            return 8;
-
-        switch (indicatorTile.color)
-        {
-            case TileColor.blue:
-                return 3;
-            case TileColor.black:
-                return 4;
-            case TileColor.red:
-                return 5;
-            case TileColor.yellow:
-                return 6;
-            default:
-                return 1;
-        }
-    }
 
     public int CalculatePenaltyForPlayer(
         int playerQue,
         bool hasOpened,
         bool isWinner,
-        Tiles indicatorTile
+        Tiles indicatorTile // Bu parametre artık sadece bilgi amaçlı durabilir veya silebilirsin, aşağıda GameManager kullanacağız.
     )
     {
-        // Önce o elin çarpanını al (Mavi:3, Sarı:6 vs.)
-        int multiplier = GetColorMultiplier(indicatorTile);
+        // --- DEĞİŞİKLİK BURADA ---
+        // Eskiden: int multiplier = GetColorMultiplier(indicatorTile);
+        // Yeni: Artık çarpanı doğrudan GameManager'dan (Ana Merkezden) soruyoruz.
+        // Böylece "Roket" (Sahte Okey) durumunu GameManager tek yerden yönetiyor.
+
+        int multiplier = GameManager.Instance.GetCurrentColorMultiplier();
 
         // 1. KAZANAN OYUNCU (Düşüm)
         if (isWinner)
         {
             // Biten oyuncudan puan düşülür (Kural: 100 x Renk Çarpanı)
-            // Örn: Sarıysa -600, Maviyse -300
+            // Örn: Sarıysa -600, Roket (Sahte Okey) ise -800
             return -100 * multiplier;
         }
 
         // 2. HİÇ AÇMAMIŞ OYUNCU (YENİ KURAL: SABİT 600)
         if (!hasOpened)
         {
-            // Eski Kod: return 100 * multiplier;
-
-            // YENİ KOD: Rengi ne olursa olsun sabit 600 ceza.
-            // Roket (x8) olsa bile 600 yazar.
+            // Kural gereği açmayana sabit 600 yazıyoruz.
             return 600;
         }
         // 3. AÇMIŞ AMA BİTMEMİŞ OYUNCU
@@ -2854,8 +2830,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             int remainingTileCount = td.GetPlayerHandCount(playerQue);
 
             // KURAL: Taş Adedi x 10 x Renk Çarpanı
-            // Örn: Sarı (x6) ve 5 taş kaldıysa -> 5 x 10 x 6 = 300 Ceza
-            // Örn: Mavi (x3) ve 5 taş kaldıysa -> 5 x 10 x 3 = 150 Ceza
+            // Örn: Roket (x8) ve 5 taş kaldıysa -> 5 x 10 x 8 = 400 Ceza
             return remainingTileCount * 10 * multiplier;
         }
     }

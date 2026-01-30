@@ -112,17 +112,20 @@ public class GameManager : MonoBehaviourPunCallbacks
     }
 
     // --- RENK ÇARPANI HESAPLAMA ---
+    // --- RENK ÇARPANI HESAPLAMA ---
     public int GetCurrentColorMultiplier()
     {
         Tiles indicator = tileDistrubite.GetIndicatorTile();
         if (indicator == null)
             return 1; // Hata önleyici varsayılan
 
-        // KURAL: Roket (Sahte Okey açıldıysa) -> 8 Katı
+        // --- [YENİ KURAL BURADA DEVREYE GİRİYOR] ---
+        // Eğer gösterge Sahte Okey ise (Resimli Taş), bu duruma "Roket" denir.
+        // PDF kurallarına göre çarpan 8 olur.
         if (indicator.type == TileType.FakeJoker)
             return 8;
 
-        // KURAL: Renk Çarpanları
+        // KURAL: Standart Renk Çarpanları
         switch (indicator.color)
         {
             case TileColor.yellow:
@@ -190,7 +193,6 @@ public class GameManager : MonoBehaviourPunCallbacks
             }
         }
     }
-
 
     public void RecordSidePick(Tiles tile)
     {
