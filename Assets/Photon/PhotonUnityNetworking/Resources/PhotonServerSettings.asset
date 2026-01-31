@@ -120,6 +120,7 @@ MonoBehaviour:
   - RPC_PrepareNextRound
   - ResetTableAndRedistribute
   - RPC_ResetTurnForNewRound
+  - ApplyBulkProcessingPenaltyRPC
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1
