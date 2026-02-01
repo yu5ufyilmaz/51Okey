@@ -56,6 +56,24 @@ public class UIManager : MonoBehaviourPunCallbacks
             gameOverPanel.SetActive(false);
     }
 
+    // UIManager.cs içine ekle
+
+    private void Start()
+    {
+        // Oyun başlar başlamaz "Anlık Puan" tablosundaki eski yazıları sil.
+        // ScoreManager'dan puanlar 0'lanıp gelene kadar boş dursun veya temiz gözüksün.
+        if (liveScoreContentText != null)
+        {
+            liveScoreContentText.text = "";
+        }
+
+        // Eğer oyun başında panel açıksa (ki genelde kapalı başlar ama) temiz bir liste oluştur.
+        if (isScoreboardOpen)
+        {
+            UpdateLiveScoreboardText();
+        }
+    }
+
     // --- GÜNCELLEME METODLARI ---
     public void ToggleLiveScoreboard()
     {

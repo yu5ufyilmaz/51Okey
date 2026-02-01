@@ -2151,43 +2151,71 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
     // TileDistrubite.cs içerisinde
     #region New Hand Reset and Redistribute
+    // TileDistrubite.cs içine
+
     [PunRPC]
     public void ResetTableAndRedistribute()
     {
-        // 1. Sahnedeki TÜM TileUI ve görsel objeleri temizle
+        Debug.Log("MASA SIFIRLANIYOR: Tüm listeler ve görseller temizleniyor...");
+
+        // 1. Sahnedeki TÜM TileUI (Taş) nesnelerini bul ve yok et
         TileUI[] allTilesInScene = FindObjectsOfType<TileUI>();
         foreach (TileUI tUI in allTilesInScene)
         {
-            Destroy(tUI.gameObject);
+            if (tUI.gameObject != null)
+                Destroy(tUI.gameObject);
         }
 
-        // 2. Mantıksal listeleri ve eldeki taşları temizle
+        // Yere atılan taşların referanslarını tutan listeyi temizle (Görseller yukarıda silindi ama liste dolu kalmasın)
+        droppedTiles.Clear();
+        dropTile = null;
+
+        // 2. Ana taş havuzunu ve oyuncu ellerini temizle
         allTiles.Clear();
         playerTiles1.Clear();
         playerTiles2.Clear();
         playerTiles3.Clear();
         playerTiles4.Clear();
 
-        // Meld (açılan per) listelerini temizle
+        // 3. Meld (Açılan Per) VERİLERİNİ temizle
         meltedTiles1.Clear();
         meltedTiles2.Clear();
         meltedTiles3.Clear();
         meltedTiles4.Clear();
 
-        // 3. Placeholder (yuva) ışıklarını ve durumlarını sıfırla
+        // --- KRİTİK DÜZELTME: POZİSYON LİSTELERİNİ TEMİZLE ---
+        // Eğer bunları temizlemezsen, yeni eldeki taşları eski elin koordinatlarına koymaya çalışır.
+        meltedTilesPositions1.Clear();
+        meltedTilesPositions2.Clear();
+        meltedTilesPositions3.Clear();
+        meltedTilesPositions4.Clear();
+
+        validMeltedTiles.Clear();
+        positions.Clear();
+
+        // Available (İşlek) hesaplamalarını sıfırla
+        availableTiles.Clear();
+        activePlacements.Clear();
+
+        // 4. Placeholder (yuva) ışıklarını ve durumlarını sıfırla
         Placeholder[] allPhs = FindObjectsOfType<Placeholder>();
         foreach (var ph in allPhs)
         {
             ph.available = false;
             ph.AvailableTileInfo = null;
+            // Eğer placeholder içinde child kaldıysa (Destroy'dan kaçan) onu da temizle
+            foreach (Transform child in ph.transform)
+            {
+                Destroy(child.gameObject);
+            }
         }
 
-        // 4. MASTER CLIENT: Taşları yeniden üret ve dağıtımı başlat
+        // 5. MASTER CLIENT: Taşları yeniden üret ve dağıtımı başlat
         if (PhotonNetwork.IsMasterClient)
         {
             Debug.Log("Master Client: Yeni el için taşlar hazırlanıyor...");
-            GeneratePlayerTiles(); // Taşları oluştur (106 taş + 2 sahte)
-            ShuffleTiles(); // Karıştır, göstergeyi seç ve SyncShuffledTiles'ı tetikle
+            GeneratePlayerTiles();
+            ShuffleTiles();
         }
     }
     #endregion

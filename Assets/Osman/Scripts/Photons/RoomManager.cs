@@ -112,6 +112,12 @@ public class RoomManager : MonoBehaviourPunCallbacks
 
     public override void OnJoinedRoom()
     {
+        Debug.Log("Odaya girildi. Eski puanlar temizleniyor...");
+
+        Hashtable resetProps = new Hashtable();
+        resetProps["PlayerScore"] = 0;
+        PhotonNetwork.LocalPlayer.SetCustomProperties(resetProps);
+
         SceneChangeManager.Instance.ChangeScene("Table");
     }
 }

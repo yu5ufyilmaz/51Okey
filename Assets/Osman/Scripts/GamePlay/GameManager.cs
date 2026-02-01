@@ -198,15 +198,9 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         if (tile != null)
         {
-            // HATALI OLAN: currentSidePickTile = new Tiles(tile.color, tile.number, tile.type);
-            // Bu kod ID'yi değiştirir!
-
-            // DOĞRUSU: Manuel kopyalama yapmalısın.
-            currentSidePickTile = new Tiles(); // Boş constructor (ID üretmeyen varsa onu kullan yoksa aşağıda ez)
-            currentSidePickTile.color = tile.color;
-            currentSidePickTile.number = tile.number;
-            currentSidePickTile.type = tile.type;
-            currentSidePickTile.id = tile.id; // <--- KRİTİK NOKTA: ID'Yİ KORU
+            // Sadece referansı eşitlemek veya tam kopyasını ID ile birlikte almak:
+            currentSidePickTile = tile;
+            Debug.Log($"Yandan alınan taş kaydedildi: {tile.color} {tile.number} ID: {tile.id}");
         }
     }
 
@@ -233,24 +227,13 @@ public class GameManager : MonoBehaviourPunCallbacks
     }
 
     [PunRPC]
-    public void ApplySidePickSuccessPenaltyRPC(int currentPlayerQue)
+    public void ApplySidePickSuccessPenaltyRPC(int currentPlayerQue, int pickedTileNumber)
     {
         if (!PhotonNetwork.IsMasterClient)
             return;
 
-        int penalty = 0;
-
         // KURAL: Taşın değerinin 10 katı.
-        if (currentSidePickTile != null)
-        {
-            penalty = currentSidePickTile.number * 10;
-        }
-        else
-        {
-            // Eğer taş null geldiyse varsayılan ceza 250
-            Debug.LogWarning("Yandan alınan taş verisi NULL! Varsayılan 250 ceza uygulanıyor.");
-            penalty = 250;
-        }
+        int penalty = (pickedTileNumber > 0) ? (pickedTileNumber * 10) : 250;
 
         // HEDEF: Cezayı "Açan" değil, taşı "Atan" (Bir Önceki Oyuncu) yer.
         int targetPlayerQue = (currentPlayerQue == 1) ? 4 : currentPlayerQue - 1;
@@ -710,6 +693,8 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     // GameManager.cs içindeki ilgili kısım
     // GameManager.cs içindeki RPC_PrepareNextRound metodunu güncelle
+    // GameManager.cs içindeki RPC_PrepareNextRound
+
     [PunRPC]
     public void RPC_PrepareNextRound()
     {
@@ -719,23 +704,45 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (UIManager.Instance != null)
             UIManager.Instance.gameOverPanel.SetActive(false);
 
-        // --- TUR VE SIRA SIFIRLAMA ---
-        // TurnManager üzerindeki sırayı ve izinleri tüm clientlarda sıfırla
+        // 1. Tur ve Sıra Sıfırlama
         turnManager.photonView.RPC("RPC_ResetTurnForNewRound", RpcTarget.All);
 
-        // --- LİMİT SIFIRLAMA ---
+        // 2. Masa Limiti Sıfırlama
         if (PhotonNetwork.IsMasterClient)
         {
             SetTableLimit(51);
+
+            // Eğer masa çift açılmış durumdaysa onu da sıfırla
+            ExitGames.Client.Photon.Hashtable props = new ExitGames.Client.Photon.Hashtable();
+            props.Add("IsDoubleOpened", false);
+            PhotonNetwork.CurrentRoom.SetCustomProperties(props);
         }
 
-        scoreManager.ResetPlayerOpenStatus();
+        // 3. Skor Yöneticisi Mantığını Sıfırla (Listeler temizlenir)
+        if (scoreManager != null)
+            scoreManager.ResetPlayerOpenStatus();
 
-        // Taşları dağıtmayı en sona bırak ki sıralar hazır olsun
+        // 4. Görselleri ve Taş Verilerini Sıfırla + Yeniden Dağıt
         if (PhotonNetwork.IsMasterClient)
         {
-            tileDistrubite.photonView.RPC("ResetTableAndRedistribute", RpcTarget.All);
+            // Ufak bir gecikme ile dağıtmak, istemcilerin temizliği bitirmesini garantiye alır
+            StartCoroutine(WaitAndRedistribute());
+        }
+        else
+        {
+            // Clientlar sadece kendi masalarını temizlesin, dağıtımı Master'dan gelecek RPC ile yapacaklar
+            if (tileDistrubite != null)
+                tileDistrubite.ResetTableAndRedistribute();
         }
     }
-    
+
+    // Master Client için yardımcı Coroutine
+    private IEnumerator WaitAndRedistribute()
+    {
+        // Herkesin temizlemesi için çok kısa bekle (0.2 sn)
+        yield return new WaitForSeconds(0.2f);
+
+        if (tileDistrubite != null)
+            tileDistrubite.photonView.RPC("ResetTableAndRedistribute", RpcTarget.All);
+    }
 }
