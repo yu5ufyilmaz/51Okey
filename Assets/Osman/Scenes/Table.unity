@@ -230,6 +230,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -349,6 +350,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -468,6 +470,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -587,6 +590,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -706,6 +710,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -825,6 +830,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -944,6 +950,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -1114,6 +1121,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -1233,6 +1241,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -1352,6 +1361,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -1471,6 +1481,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -1590,6 +1601,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -1709,6 +1721,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -1828,6 +1841,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -1947,6 +1961,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -2066,6 +2081,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -2185,6 +2201,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -2228,9 +2245,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1937019094}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190.9889, y: -425}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &103359153
@@ -2438,6 +2455,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -2557,6 +2575,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -2676,6 +2695,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -2795,6 +2815,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -3048,6 +3069,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -3167,6 +3189,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -3286,6 +3309,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -3405,6 +3429,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -3524,6 +3549,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -3643,6 +3669,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -3762,6 +3789,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -3881,6 +3909,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -4000,6 +4029,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -4170,6 +4200,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -4289,6 +4320,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -4408,6 +4440,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -4527,6 +4560,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -4646,6 +4680,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -4800,6 +4835,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -4919,6 +4955,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -5116,6 +5153,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -5235,6 +5273,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -5354,6 +5393,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -5473,6 +5513,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -5592,6 +5633,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -5711,6 +5753,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -5830,6 +5873,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -5988,6 +6032,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -6031,9 +6076,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1613274438}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190.9889, y: -425}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &283961352
@@ -6241,6 +6286,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -6360,6 +6406,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -6479,6 +6526,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -6598,6 +6646,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -6717,6 +6766,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -6837,6 +6887,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -7025,6 +7076,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -7315,6 +7367,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -7434,6 +7487,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -7553,6 +7607,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -7672,6 +7727,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -7791,6 +7847,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -7976,6 +8033,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -8095,6 +8153,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -8214,6 +8273,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -8333,6 +8393,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -8452,6 +8513,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -8571,6 +8633,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -8653,9 +8716,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1123908598}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190.9889, y: -625}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &393471392
@@ -8863,6 +8926,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -8982,6 +9046,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -9101,6 +9166,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -9220,6 +9286,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -9339,6 +9406,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -9458,6 +9526,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -9711,6 +9780,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -9830,6 +9900,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -9949,6 +10020,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -10155,6 +10227,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -10274,6 +10347,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -10393,6 +10467,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -10513,6 +10588,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -10591,9 +10667,9 @@ RectTransform:
   - {fileID: 1687805957}
   m_Father: {fileID: 1862362234}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190.9889, y: -400}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 381.9778, y: 800}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &471478606
@@ -10768,6 +10844,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -10887,6 +10964,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -11006,6 +11084,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -11259,6 +11338,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -11378,6 +11458,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -11497,6 +11578,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -11616,6 +11698,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -11735,6 +11818,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -11854,6 +11938,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -11973,6 +12058,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -12092,6 +12178,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -12211,6 +12298,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -12330,6 +12418,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -12449,6 +12538,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -12568,6 +12658,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -12687,6 +12778,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -12869,6 +12961,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -12912,9 +13005,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 471478605}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190.9889, y: -225}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &571157967
@@ -13122,6 +13215,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -13374,6 +13468,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -13493,6 +13588,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -13612,6 +13708,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -13731,6 +13828,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -13850,6 +13948,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -13969,6 +14068,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -14088,6 +14188,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -14410,6 +14511,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -14453,9 +14555,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1937019094}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190.9889, y: -625}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &624358161
@@ -14663,6 +14765,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -14782,6 +14885,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -14981,6 +15085,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -15208,6 +15313,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -15403,6 +15509,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -15552,6 +15659,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -15671,6 +15779,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -15790,6 +15899,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -15909,6 +16019,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -16028,6 +16139,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -16147,6 +16259,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -16266,6 +16379,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -16385,6 +16499,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -16504,6 +16619,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -16623,6 +16739,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -16742,6 +16859,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -16861,6 +16979,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -16980,6 +17099,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -17099,6 +17219,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -17368,6 +17489,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -17487,6 +17609,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -17606,6 +17729,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -17725,6 +17849,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -17844,6 +17969,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -17963,6 +18089,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -18082,6 +18209,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -18201,6 +18329,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -18398,6 +18527,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -18517,6 +18647,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -18636,6 +18767,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -18755,6 +18887,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -18932,9 +19065,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1937019094}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190.9889, y: -225}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &818122906
@@ -19142,6 +19275,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -19261,6 +19395,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -19514,6 +19649,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -19633,6 +19769,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -19752,6 +19889,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -19951,8 +20089,8 @@ MonoBehaviour:
   tableLimitText: {fileID: 923169770}
   currentScoreText: {fileID: 1634146747}
   currentPairText: {fileID: 1356014076}
-  rankingText: {fileID: 1093160603}
-  restartTimerText: {fileID: 1076065674}
+  rankingText: {fileID: 1076065674}
+  restartTimerText: {fileID: 1093160603}
   turnIndicators:
   - {fileID: 1423777971}
   - {fileID: 754546730}
@@ -20161,6 +20299,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -20280,6 +20419,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -20374,9 +20514,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1613274438}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190.9889, y: -225}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &885719180
@@ -20584,6 +20724,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -20703,6 +20844,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -20822,6 +20964,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -20941,6 +21084,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -21060,6 +21204,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -21179,6 +21324,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -21298,6 +21444,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -21684,6 +21831,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -21803,6 +21951,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -21922,6 +22071,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -22161,6 +22311,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -22280,6 +22431,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -22399,6 +22551,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -22569,6 +22722,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -22688,6 +22842,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -22807,6 +22962,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -22885,9 +23041,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1613274438}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190.9889, y: -625}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1007155280
@@ -23182,6 +23338,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -23341,6 +23498,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -23460,6 +23618,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -23579,6 +23738,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -23698,6 +23858,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -23817,6 +23978,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -23936,6 +24098,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -24055,6 +24218,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -24174,6 +24338,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -24294,6 +24459,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -24494,6 +24660,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -24613,6 +24780,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -24732,6 +24900,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -25047,6 +25216,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -25300,6 +25470,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -25534,6 +25705,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -25653,6 +25825,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -25772,6 +25945,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -26025,6 +26199,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -26144,6 +26319,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -26263,6 +26439,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -26382,6 +26559,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -26501,6 +26679,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -26544,9 +26723,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 471478605}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190.9889, y: -425}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1119258362
@@ -26683,9 +26862,9 @@ RectTransform:
   - {fileID: 393471391}
   m_Father: {fileID: 1862362234}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 603.7853, y: -400}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 381.9778, y: 800}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1123908599
@@ -26860,6 +27039,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -26979,6 +27159,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -27098,6 +27279,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -27217,6 +27399,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -27336,6 +27519,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -27589,6 +27773,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -27708,6 +27893,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -27961,6 +28147,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -28080,6 +28267,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -28199,6 +28387,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -28318,6 +28507,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -28570,6 +28760,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -28689,6 +28880,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -28808,6 +29000,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -28927,6 +29120,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -29231,6 +29425,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -29350,6 +29545,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -29544,6 +29740,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -29663,6 +29860,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -29916,6 +30114,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -30110,6 +30309,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -30230,6 +30430,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -30303,9 +30504,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1123908598}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190.9889, y: -25}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1252669485
@@ -30513,6 +30714,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -30556,9 +30758,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 471478605}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190.9889, y: -25}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1267016913
@@ -30766,6 +30968,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -30885,6 +31088,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -31004,6 +31208,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -31123,6 +31328,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -31242,6 +31448,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -31439,6 +31646,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -31558,6 +31766,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -31677,6 +31886,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -31796,6 +32006,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -32048,6 +32259,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -32167,6 +32379,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -32420,6 +32633,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -32626,6 +32840,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -32745,6 +32960,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -32864,6 +33080,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -32983,6 +33200,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -33102,6 +33320,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -33221,6 +33440,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -33340,6 +33560,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -33459,6 +33680,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -33653,6 +33875,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -33772,6 +33995,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -33891,6 +34115,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -34010,6 +34235,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -34397,6 +34623,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -34516,6 +34743,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -34635,6 +34863,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -34754,6 +34983,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -34873,6 +35103,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -34992,6 +35223,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -35111,6 +35343,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -35230,6 +35463,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -35349,6 +35583,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -35468,6 +35703,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -35587,6 +35823,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -35706,6 +35943,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -35825,6 +36063,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -35944,6 +36183,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -36141,6 +36381,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -36260,6 +36501,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -36379,6 +36621,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -36498,6 +36741,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -36617,6 +36861,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -36736,6 +36981,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -36855,6 +37101,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -36974,6 +37221,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -37093,6 +37341,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -37212,6 +37461,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -37406,6 +37656,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -37454,9 +37705,9 @@ RectTransform:
   - {fileID: 1007155279}
   m_Father: {fileID: 1862362234}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 1016.58167, y: -400}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 381.9778, y: 800}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1613274439
@@ -37631,6 +37882,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -37883,6 +38135,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -38002,6 +38255,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -38121,6 +38375,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -38374,6 +38629,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -38493,6 +38749,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -38536,9 +38793,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1937019094}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190.9889, y: -25}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1640544618
@@ -38746,6 +39003,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -38865,6 +39123,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -38984,6 +39243,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -39103,6 +39363,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -39223,6 +39484,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -39372,6 +39634,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -39415,9 +39678,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1613274438}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190.9889, y: -25}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1676598528
@@ -39676,6 +39939,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -39795,6 +40059,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -39874,9 +40139,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 471478605}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190.9889, y: -625}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1687805958
@@ -40084,6 +40349,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -40203,6 +40469,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -40322,6 +40589,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -40441,6 +40709,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -40560,6 +40829,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -40679,6 +40949,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -40798,6 +41069,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -40917,6 +41189,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -41036,6 +41309,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -41233,6 +41507,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -41427,6 +41702,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -41546,6 +41822,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -41733,6 +42010,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -42077,6 +42355,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -42105,7 +42384,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1805097997
 RectTransform:
   m_ObjectHideFlags: 0
@@ -42275,6 +42554,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -42394,6 +42674,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -42513,6 +42794,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -42632,6 +42914,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -42751,6 +43034,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -43007,6 +43291,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -43050,9 +43335,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1123908598}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190.9889, y: -225}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1850491412
@@ -43260,6 +43545,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -43485,6 +43771,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -43604,6 +43891,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -43723,6 +44011,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -43842,6 +44131,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -43961,6 +44251,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -44080,6 +44371,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -44199,6 +44491,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -44318,6 +44611,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -44437,6 +44731,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -44556,6 +44851,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -44604,9 +44900,9 @@ RectTransform:
   - {fileID: 624358160}
   m_Father: {fileID: 1862362234}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 1429.378, y: -400}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 381.9778, y: 800}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1937019095
@@ -44781,6 +45077,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -44900,6 +45197,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -45019,6 +45317,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -45138,6 +45437,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -45257,6 +45557,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -45376,6 +45677,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -45657,6 +45959,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -45776,6 +46079,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -45895,6 +46199,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -46014,6 +46319,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -46168,6 +46474,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -46287,6 +46594,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -46406,6 +46714,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -46570,6 +46879,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -46822,6 +47132,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -46941,6 +47252,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -47060,6 +47372,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -47230,6 +47543,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -47349,6 +47663,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -47468,6 +47783,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -47587,6 +47903,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -47706,6 +48023,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -47825,6 +48143,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -47944,6 +48263,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -48063,6 +48383,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -48182,6 +48503,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -48301,6 +48623,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -48420,6 +48743,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -48539,6 +48863,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -48582,9 +48907,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1123908598}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 190.9889, y: -425}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2068867244
@@ -48792,6 +49117,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -48911,6 +49237,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -49030,6 +49357,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -49149,6 +49477,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -49268,6 +49597,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -49387,6 +49717,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -49506,6 +49837,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -49834,6 +50166,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -49953,6 +50286,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -50072,6 +50406,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -50191,6 +50526,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -50310,6 +50646,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -50429,6 +50766,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -50548,6 +50886,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -50667,6 +51006,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -50786,6 +51126,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -50905,6 +51246,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51024,6 +51366,7 @@ MonoBehaviour:
   isMeldArea: 1
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51131,6 +51474,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51152,6 +51496,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51173,6 +51518,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51194,6 +51540,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51215,6 +51562,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51236,6 +51584,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51257,6 +51606,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51278,6 +51628,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51299,6 +51650,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51320,6 +51672,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51341,6 +51694,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51362,6 +51716,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51383,6 +51738,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51404,6 +51760,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51425,6 +51782,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51446,6 +51804,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51467,6 +51826,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51488,6 +51848,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51509,6 +51870,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51530,6 +51892,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51551,6 +51914,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51572,6 +51936,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51593,6 +51958,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51614,6 +51980,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51635,6 +52002,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51656,6 +52024,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51677,6 +52046,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51698,6 +52068,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51719,6 +52090,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0
@@ -51740,6 +52112,7 @@ MonoBehaviour:
   isMeldArea: 0
   willInstantiate: 0
   AvailableTileInfo:
+    id: 
     color: 0
     number: 0
     type: 0

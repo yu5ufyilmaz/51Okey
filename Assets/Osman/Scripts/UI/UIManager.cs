@@ -190,6 +190,7 @@ public class UIManager : MonoBehaviourPunCallbacks
     }
 
     // GameManager'dan gelen 3 ayrı listeyi (Diziyi) alıyoruz
+    // GameManager'dan gelen 3 ayrı listeyi (Diziyi) alıyoruz
     public void ShowDetailedGameOver(
         Dictionary<int, int> rewards,
         Dictionary<int, int> penalties,
@@ -200,6 +201,11 @@ public class UIManager : MonoBehaviourPunCallbacks
         {
             gameOverPanel.SetActive(true);
         }
+
+        // --- KAZANANI BULMA MANTIĞI (BAŞLANGIÇ) ---
+        int lowestScore = int.MaxValue; // En düşük puanı bulmak için yüksek bir sayıdan başlatıyoruz
+        string winnerName = "";
+        // ------------------------------------------
 
         // Tüm slotları gez ve verileri doldur
         foreach (var slot in playerResultSlots)
@@ -212,12 +218,11 @@ public class UIManager : MonoBehaviourPunCallbacks
                 // 1. İsim
                 slot.playerNameText.text = p.NickName;
 
-                // 2. Düşer (Reward) - Eksi Puanlar
+                // 2. Düşer (Reward)
                 if (rewards.ContainsKey(slot.seatNumber))
                 {
                     int val = rewards[slot.seatNumber];
                     slot.rewardText.text = val.ToString();
-                    // İsteğe bağlı renk: Yeşil
                     slot.rewardText.color = Color.green;
                 }
                 else
@@ -225,12 +230,11 @@ public class UIManager : MonoBehaviourPunCallbacks
                     slot.rewardText.text = "0";
                 }
 
-                // 3. Ceza (Penalty) - Artı Puanlar
+                // 3. Ceza (Penalty)
                 if (penalties.ContainsKey(slot.seatNumber))
                 {
                     int val = penalties[slot.seatNumber];
-                    slot.penaltyText.text = "+" + val.ToString(); // Önüne artı koyduk
-                    // İsteğe bağlı renk: Kırmızı
+                    slot.penaltyText.text = "+" + val.ToString();
                     slot.penaltyText.color = Color.red;
                 }
                 else
@@ -243,15 +247,23 @@ public class UIManager : MonoBehaviourPunCallbacks
                 {
                     int val = netScores[slot.seatNumber];
                     slot.netScoreText.text = val.ToString();
-                    slot.netScoreText.fontStyle = TMPro.FontStyles.Bold; // Kalın yap
+                    slot.netScoreText.fontStyle = TMPro.FontStyles.Bold;
 
-                    // Pozitifse Kırmızı, Negatifse Yeşil yapabilirsin (İsteğe bağlı)
                     if (val > 0)
                         slot.netScoreText.color = Color.red;
                     else if (val < 0)
                         slot.netScoreText.color = Color.green;
                     else
                         slot.netScoreText.color = Color.white;
+
+                    // --- KAZANAN KONTROLÜ ---
+                    // Eğer bu oyuncunun puanı şu ana kadar bulduğumuz en düşük puandan daha azsa
+                    if (val < lowestScore)
+                    {
+                        lowestScore = val;
+                        winnerName = p.NickName;
+                    }
+                    // ------------------------
                 }
                 else
                 {
@@ -260,13 +272,29 @@ public class UIManager : MonoBehaviourPunCallbacks
             }
             else
             {
-                // O koltukta oyuncu yoksa boş göster veya gizle
+                // O koltukta oyuncu yoksa boş göster
                 slot.playerNameText.text = "-";
                 slot.rewardText.text = "";
                 slot.penaltyText.text = "";
                 slot.netScoreText.text = "";
             }
         }
+
+        // --- KAZANANI YAZDIRMA ---
+        if (rankingText != null)
+        {
+            if (!string.IsNullOrEmpty(winnerName))
+            {
+                // İstersen rengini altın sarısı vs. yapabilirsin
+                rankingText.color = Color.yellow;
+                rankingText.text = $"{winnerName} Oyunu Kazandı!";
+            }
+            else
+            {
+                rankingText.text = "";
+            }
+        }
+        // -------------------------
     }
 
     // Yardımcı Fonksiyon: Koltuk Numarasına Göre Oyuncuyu Bulma

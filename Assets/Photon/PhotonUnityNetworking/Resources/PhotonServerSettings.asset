@@ -121,6 +121,7 @@ MonoBehaviour:
   - ResetTableAndRedistribute
   - RPC_ResetTurnForNewRound
   - ApplyBulkProcessingPenaltyRPC
+  - ApplyPenaltyRPC
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

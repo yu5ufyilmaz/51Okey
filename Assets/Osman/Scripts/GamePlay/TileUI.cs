@@ -638,8 +638,9 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     {
         if (GameManager.Instance.scoreManager != null)
         {
+            PenaltySystem.Instance.CommitAllTurnPenalties();
             // Tur boyunca yaptığım işlemelerden doğan cezaları şimdi sunucuya gönderiyorum.
-            GameManager.Instance.scoreManager.CommitAllTurnPenalties();
+            GameManager.Instance.scoreManager.CommitFinalTableLimit();
         }
         // Coroutine başlatıyoruz ki işlemleri zamana yayabilelim
         StartCoroutine(NextTurnRoutine());
