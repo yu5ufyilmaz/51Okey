@@ -10,7 +10,7 @@ public class PenaltySystem : MonoBehaviourPunCallbacks
 
     // --- VERİ YAPILARI ---
     [System.Serializable]
-    public class PendingPenaltyInfo // struct yerine class
+    public struct PendingPenaltyInfo // struct yerine class
     {
         public int victimQue;
         public int penaltyAmount;

@@ -734,19 +734,21 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         // Kural motoru için göstergeyi al
         Tiles indicator = tileDistrubite.GetIndicatorTile();
 
-        // ---------------------------------------------------------
-        // 1. RENKLİ SIRALI PERLER (Single Color)
-        // ---------------------------------------------------------
+        // --- TEK DÖNGÜ BAŞLANGICI ---
+        // Eskiden burada 2 ayrı döngü vardı, şimdi tek döngüde karar veriyoruz.
         foreach (var per in validPers)
         {
-            // YENİ KONTROL: OkeyRuleEngine kullanılıyor
+            bool isPlaced = false; // Bu per yerleşti mi?
+
+            // 1. ÖNCE SERİ (SINGLE COLOR) KONTROLÜ
+            // Joker - Mavi 4 - Joker gibi durumlarda önceliği Seri'ye veriyoruz.
             if (
                 OkeyRuleEngine.IsSingleColor(per, indicator) && OkeyRuleEngine.SingleColorCheck(per)
             )
             {
                 int rowIndex = -1;
 
-                // Boş satır bulma döngüsü (Senin kodun aynen kalıyor)
+                // Boş satır bulma döngüsü
                 for (int r = 0; r < 4; r++)
                 {
                     if (occupiedRows[r] == false)
@@ -775,6 +777,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 if (rowIndex != -1)
                 {
                     hasOpenedAnyMeld = true;
+                    isPlaced = true; // İŞARETLE: Bu per işlendi!
 
                     foreach (var tile in per)
                     {
@@ -806,7 +809,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                             pendingMeldInfos.Add(newMeldInfo);
                             pendingMeldedTiles.Add(tile);
 
-                            // GÖRSEL KAPATMA VE VERİ SİLME (Senin kodun aynen)
+                            // Görsel kapatma ve veri silme işlemleri...
                             int tileIndexToDeactivate = -1;
                             for (int i = 0; i < playerTileContainer.childCount; i++)
                             {
@@ -844,9 +847,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                     }
 
                     occupiedRows[rowIndex] = true;
-                    // Available slotları hesaplarken de per bilgisini gönderiyoruz
                     UpdateAvailableForPlaceholders(per, rowIndex);
-
                     tileDistrubite.photonView.RPC(
                         "MergeValidpers",
                         RpcTarget.AllBuffered,
@@ -857,19 +858,14 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                     positions.Clear();
                 }
             }
-        }
-
-        // ---------------------------------------------------------
-        // 2. SAYI GRUBU PERLERİ (Multi Color)
-        // ---------------------------------------------------------
-        foreach (var per in validPers)
-        {
-            // YENİ KONTROL: OkeyRuleEngine kullanılıyor
-            if (OkeyRuleEngine.MultiColorCheck(per))
+            // 2. SAYI GRUBU (MULTI COLOR) KONTROLÜ
+            // DİKKAT: "else if" kullandık! Eğer yukarıdaki "isPlaced" true olduysa buraya girmez.
+            // Ama garanti olsun diye !isPlaced kontrolünü de ekleyebilirsin.
+            else if (OkeyRuleEngine.MultiColorCheck(per))
             {
                 int rowIndex = -1;
 
-                // Boş satır bulma (Senin kodun aynen)
+                // Boş satır bulma
                 for (int r = 0; r < 4; r++)
                 {
                     if (occupiedRowsNumber[r] == false)
@@ -898,6 +894,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 if (rowIndex != -1)
                 {
                     hasOpenedAnyMeld = true;
+                    isPlaced = true;
 
                     foreach (var tile in per)
                     {
@@ -929,7 +926,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                             pendingMeldInfos.Add(newMeldInfo);
                             pendingMeldedTiles.Add(tile);
 
-                            // GÖRSEL KAPATMA VE VERİ SİLME
+                            // Görsel kapatma ve veri silme...
                             int tileIndexToDeactivate = -1;
                             for (int i = 0; i < playerTileContainer.childCount; i++)
                             {
@@ -968,7 +965,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
                     occupiedRowsNumber[rowIndex] = true;
                     UpdateAvailableForPlaceholders(per, rowIndex);
-
                     tileDistrubite.photonView.RPC(
                         "MergeValidpers",
                         RpcTarget.AllBuffered,
@@ -980,8 +976,9 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 }
             }
         }
+        // --- DÖNGÜ BİTİŞİ ---
 
-        // 3. OYUN KURALLARI VE CEZA KONTROLLERİ (Aynen Kalıyor)
+        // 3. OYUN KURALLARI VE CEZA KONTROLLERİ
         if (hasOpenedAnyMeld)
         {
             turnManager.hasOpenedThisTurn = true;
