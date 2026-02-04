@@ -639,7 +639,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         // DURUM B: KENDİ ISTAKAMIZ (SWAP MANTIĞI BURADA)
         else if (bestTarget.transform.parent == playerTileContainer)
         {
-            // -- Taş Çekme Kontrolleri (Aynen Kalsın) --
+            // -- Taş Çekme Kontrolleri (Burada değişiklik yok) --
             if (turnManager.IsPlayerTurn() && !turnManager.canDrop)
             {
                 if (inMiddle)
@@ -667,51 +667,71 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                 }
             }
 
-            // --- HİBRİT YERLEŞTİRME MANTIĞI ---
+            // --- SENİN İSTEDİĞİN ÖZEL KAYDIRMA/SWAP MANTIĞI ---
 
-            // Hedef kutu doluysa ve orası benim eski yerim değilse bir aksiyon lazım
+            // Eğer bırakılan kutu doluysa ve orası benim eski yerim değilse:
             if (
                 bestTarget.transform.childCount > 0
                 && bestTarget != originalParent.GetComponent<Placeholder>()
             )
             {
+                Transform residentTile = bestTarget.transform.GetChild(0);
+                TileUI residentUI = residentTile.GetComponent<TileUI>();
+
+                // Gösterge taşı kilitlidir, yerinden oynatılamaz.
+                if (residentUI != null && residentUI.isIndicatorTile)
+                {
+                    _targetScale = _originalScale;
+                    StartCoroutine(SmoothMove(transform, originalParent));
+                    return;
+                }
+
+                // Farenin taşın neresine geldiğini hesapla
+                // differenceX < 0 ise: Taşı kutunun SOLUNA bıraktık (Sağa itmek istiyoruz)
+                // differenceX > 0 ise: Taşı kutunun SAĞINA bıraktık (Sola itmek istiyoruz)
+                float differenceX = transform.position.x - bestTarget.transform.position.x;
                 int targetIndex = bestTarget.transform.GetSiblingIndex();
 
-                // Farenin/Parmağın taşın neresinde olduğuna bakıyoruz (Local fark)
-                // Eğer taşı kutunun soluna yakın bıraktıysak (fark < 0), sağa itmeye çalış.
-                // Eğer taşı kutunun sağına yakın bıraktıysak (fark > 0), sola itmeye çalış.
-                float differenceX = transform.position.x - bestTarget.transform.position.x;
-
-                bool shiftSuccess = false;
+                bool movedAside = false;
 
                 if (differenceX < 0)
                 {
-                    // Sola yakın bıraktım -> Mevcut taşı SAĞA ötele
-                    shiftSuccess = TryShiftRight(playerTileContainer, targetIndex);
+                    // SOLA bıraktık -> Mevcut taşı SAĞA (index + 1) kaydırmaya çalış
+                    if (
+                        CheckAndMoveNeighbor(
+                            bestTarget.transform.parent,
+                            residentUI,
+                            targetIndex + 1
+                        )
+                    )
+                    {
+                        movedAside = true;
+                    }
                 }
                 else
                 {
-                    // Sağa yakın bıraktım -> Mevcut taşı SOLA ötele
-                    shiftSuccess = TryShiftLeft(playerTileContainer, targetIndex);
+                    // SAĞA bıraktık -> Mevcut taşı SOLA (index - 1) kaydırmaya çalış
+                    if (
+                        CheckAndMoveNeighbor(
+                            bestTarget.transform.parent,
+                            residentUI,
+                            targetIndex - 1
+                        )
+                    )
+                    {
+                        movedAside = true;
+                    }
                 }
 
-                // --- SWAP (FALLBACK) ---
-                // Eğer kaydırma başarısız olduysa (yer yoksa), eski usül SWAP yap.
-                if (!shiftSuccess)
+                // Eğer kaydırma yapılamadıysa (Yan taraf doluysa veya duvarsa) -> SWAP YAP
+                if (!movedAside)
                 {
-                    Transform residentTile = bestTarget.transform.GetChild(0);
-                    TileUI residentUI = residentTile.GetComponent<TileUI>();
-                    if (residentUI != null)
-                    {
-                        // Kiracıyı benim eski yerime gönder
-                        residentUI.StartCoroutine(
-                            residentUI.SmoothMove(residentTile, originalParent)
-                        );
-                    }
+                    // İçerideki taş benim eski yerime gitsin
+                    residentUI.StartCoroutine(residentUI.SmoothMove(residentTile, originalParent));
                 }
             }
 
-            // Ben her türlü o kutuya gidiyorum (Ya boşaldı, ya da takas ettik)
+            // Ben her türlü o yeni kutuya yerleşiyorum (Çünkü ya boşaldı ya da takas ettik)
             _targetScale = _originalScale;
             StartCoroutine(SmoothMove(transform, bestTarget.transform));
         }
@@ -910,226 +930,6 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         Destroy(gameObject);
     }
     #endregion
-    #region Shift_Tiles
-    private void ShiftTilesRight(Transform parentContainer, Transform tileToShift, int startIndex)
-    {
-        // 1. GÜVENLİK KONTROLLERİ
-        if (parentContainer != playerTileContainer)
-            return;
-        if (gameObject.transform.parent == middleTileContainer)
-            return;
-
-        // [DÜZELTME 1]: Tag kontrolünü sildik.
-        // Zaten yukarıda parentContainer != playerTileContainer kontrolü var.
-        // Eğer oyuncu ıstakasında değilsek çalışmaz. Tag'e gerek yok.
-
-        // Gösterge taşı kaydırılamaz
-        TileUI tileUI = tileToShift.GetComponent<TileUI>();
-        if (tileUI != null && tileUI.isIndicatorTile)
-            return;
-
-        // --- 2. DUVAR (SINIR) TESPİTİ ---
-        int wallIndex = parentContainer.childCount;
-        for (int i = startIndex; i < parentContainer.childCount; i++)
-        {
-            Placeholder ph = parentContainer.GetChild(i).GetComponent<Placeholder>();
-            // Atma alanı (isRight) veya kilitli bir yer varsa orası duvardır
-            if (ph != null && ph.isRight)
-            {
-                wallIndex = i;
-                break;
-            }
-        }
-
-        // --- 3. YER VAR MI KONTROLÜ ---
-        bool hasSpace = false;
-        for (int i = startIndex; i < wallIndex; i++)
-        {
-            if (parentContainer.GetChild(i).childCount == 0)
-            {
-                hasSpace = true;
-                break;
-            }
-        }
-
-        // Yer yoksa işlemi iptal et ve taşı geri gönder (Eğer sürüklenen taşsa)
-        if (!hasSpace)
-        {
-            Debug.LogWarning("Sağ taraf dolu, kaydırma yapılamaz.");
-            if (tileToShift == transform)
-                StartCoroutine(SmoothMove(transform, originalParent));
-            return;
-        }
-
-        // --- 4. ZİNCİRLEME KAYDIRMA (DOMİNO ETKİSİ) ---
-        for (int i = startIndex; i < wallIndex; i++)
-        {
-            Transform currentPlaceholder = parentContainer.GetChild(i);
-
-            // A) KUTU BOŞ MU?
-            if (currentPlaceholder.childCount == 0)
-            {
-                // Boşsa taşı buraya gönder ve döngüyü bitir.
-                StartCoroutine(SmoothMove(tileToShift, currentPlaceholder));
-                return;
-            }
-            // B) KUTU DOLU MU?
-            else
-            {
-                // Kutudaki taşı (kiracıyı) hafızaya al
-                Transform residentTile = currentPlaceholder.GetChild(0);
-
-                // Elimdeki taşı bu kutuya yolla (Animasyon başlasın)
-                StartCoroutine(SmoothMove(tileToShift, currentPlaceholder));
-
-                // Artık elimdeki taş, az önce yerinden ettiğim taş oldu.
-                // Bir sonraki döngüde bunu bir yan kutuya taşıyacağız.
-                tileToShift = residentTile;
-            }
-        }
-    }
-
-    private void ShiftTilesLeft(Transform parentContainer, Transform tileToShift, int startIndex)
-    {
-        if (parentContainer != playerTileContainer)
-            return;
-        if (gameObject.transform.parent == middleTileContainer)
-            return;
-        // Tag kontrolünü burada da kaldırdık.
-
-        TileUI tileUI = tileToShift.GetComponent<TileUI>();
-        if (tileUI != null && tileUI.isIndicatorTile)
-            return;
-
-        // --- 1. SOL TARAFTA BOŞLUK VAR MI? ---
-        bool hasSpace = false;
-        for (int i = startIndex; i >= 0; i--)
-        {
-            if (parentContainer.GetChild(i).childCount == 0)
-            {
-                hasSpace = true;
-                break;
-            }
-        }
-
-        if (!hasSpace)
-        {
-            Debug.LogWarning("Sol taraf dolu, kaydırma yapılamaz.");
-            if (tileToShift == transform)
-                StartCoroutine(SmoothMove(transform, originalParent));
-            return;
-        }
-
-        // --- 2. ZİNCİRLEME KAYDIRMA ---
-        for (int i = startIndex; i >= 0; i--)
-        {
-            Transform currentPlaceholder = parentContainer.GetChild(i);
-
-            Placeholder ph = currentPlaceholder.GetComponent<Placeholder>();
-            if (ph != null && ph.isRight)
-                return; // Güvenlik
-
-            if (currentPlaceholder.childCount == 0)
-            {
-                StartCoroutine(SmoothMove(tileToShift, currentPlaceholder));
-                return;
-            }
-            else
-            {
-                Transform residentTile = currentPlaceholder.GetChild(0);
-                StartCoroutine(SmoothMove(tileToShift, currentPlaceholder));
-                tileToShift = residentTile;
-            }
-        }
-    }
-    #endregion
-    #region Smart Shift Logic (Akıllı Kaydırma)
-    // Sağa kaydırmayı dener. Başarılı olursa true, yer yoksa false döner.
-    private bool TryShiftRight(Transform container, int startIndex)
-    {
-        // 1. Duvarı (Boşluğu) Bul
-        int emptySlotIndex = -1;
-
-        // StartIndex'ten sağa doğru boş yer ara
-        for (int i = startIndex; i < container.childCount; i++)
-        {
-            Placeholder ph = container.GetChild(i).GetComponent<Placeholder>();
-            // Eğer atma alanıysa veya kilitliyse dur (Duvar)
-            if (ph.isRight)
-                break;
-
-            if (container.GetChild(i).childCount == 0)
-            {
-                emptySlotIndex = i;
-                break;
-            }
-        }
-
-        // Eğer boş yer yoksa veya çok uzaktaysa (Opsiyonel: sadece yan yana olanları kaydır) başarısız dön
-        if (emptySlotIndex == -1)
-            return false;
-
-        // 2. Kaydırma İşlemi (Ters Döngü)
-        // Boşluktan geriye doğru gelerek taşları birer sağa itiyoruz
-        // Örn: [Dolu1][Dolu2][BOŞ] -> [Dolu1][BOŞ][Dolu2] -> [BOŞ][Dolu1][Dolu2]
-        for (int i = emptySlotIndex; i > startIndex; i--)
-        {
-            Transform targetSlot = container.GetChild(i); // Boş olan (veya boşalacak olan)
-            Transform sourceSlot = container.GetChild(i - 1); // Oraya gelecek olan
-
-            if (sourceSlot.childCount > 0)
-            {
-                Transform tileToMove = sourceSlot.GetChild(0);
-                TileUI tileUI = tileToMove.GetComponent<TileUI>();
-                if (tileUI != null)
-                {
-                    tileUI.StartCoroutine(tileUI.SmoothMove(tileToMove, targetSlot));
-                }
-            }
-        }
-
-        return true; // Kaydırma işlemi başladı
-    }
-
-    // Sola kaydırmayı dener.
-    private bool TryShiftLeft(Transform container, int startIndex)
-    {
-        // 1. Sol tarafta boşluk ara
-        int emptySlotIndex = -1;
-
-        for (int i = startIndex; i >= 0; i--)
-        {
-            if (container.GetChild(i).childCount == 0)
-            {
-                emptySlotIndex = i;
-                break;
-            }
-        }
-
-        if (emptySlotIndex == -1)
-            return false;
-
-        // 2. Kaydırma İşlemi (Düz Döngü)
-        // Boşluktan hedefe doğru gelerek taşları sola çekiyoruz
-        for (int i = emptySlotIndex; i < startIndex; i++)
-        {
-            Transform targetSlot = container.GetChild(i); // Boş olan
-            Transform sourceSlot = container.GetChild(i + 1); // Taşın olduğu yer
-
-            if (sourceSlot.childCount > 0)
-            {
-                Transform tileToMove = sourceSlot.GetChild(0);
-                TileUI tileUI = tileToMove.GetComponent<TileUI>();
-                if (tileUI != null)
-                {
-                    tileUI.StartCoroutine(tileUI.SmoothMove(tileToMove, targetSlot));
-                }
-            }
-        }
-
-        return true;
-    }
-    #endregion
     #region SmoothMove
     // Private yerine PUBLIC yapıyoruz ki Swap sırasında diğer taşa erişebilelim
     public IEnumerator SmoothMove(Transform tile, Transform targetPlaceholder)
@@ -1176,6 +976,39 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         }
     }
     #endregion
+    /// <summary>
+    /// Belirtilen hedef index'in (targetIndex) uygun ve boş olup olmadığını kontrol eder.
+    /// Uygunsa residentUI taşını oraya gönderir ve true döner.
+    /// Değilse (Doluysa veya Duvarsa) hiçbir şey yapmaz ve false döner.
+    /// </summary>
+    private bool CheckAndMoveNeighbor(Transform container, TileUI residentUI, int targetIndex)
+    {
+        // 1. Sınır Kontrolü (Index var mı?)
+        if (targetIndex < 0 || targetIndex >= container.childCount)
+            return false;
+
+        Transform neighborPlaceholder = container.GetChild(targetIndex);
+        Placeholder phScript = neighborPlaceholder.GetComponent<Placeholder>();
+
+        // 2. Duvar Kontrolü (Atma alanı mı?)
+        if (phScript != null && phScript.isRight)
+            return false;
+
+        // 3. Doluluk Kontrolü (Senin isteğin: Sadece boşsa kaydır, doluysa kaydırma)
+        if (neighborPlaceholder.childCount == 0)
+        {
+            // BOŞ! O zaman taşı oraya kaydır.
+            residentUI.StartCoroutine(
+                residentUI.SmoothMove(residentUI.transform, neighborPlaceholder)
+            );
+            return true; // Başarılı, kaydırdık.
+        }
+        else
+        {
+            // DOLU! Kaydırma yapma, false dön (Böylece Swap devreye girecek)
+            return false;
+        }
+    }
 
     // TileUI.cs dosyasının en altındaki metodu bununla değiştir:
     private Placeholder GetVisualClosestPlaceholder(float detectionRadius = 100f)

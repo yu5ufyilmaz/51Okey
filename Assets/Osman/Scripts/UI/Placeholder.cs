@@ -64,45 +64,6 @@ public class Placeholder : MonoBehaviour, IDropHandler
                     droppedTile.GetComponent<TileUI>().FitToParent();
             }
             // 2. DURUM: Placeholder DOLUYSA -> Kaydırma (Shift) yapmaya çalış
-            else if (transform.childCount == 1)
-            {
-                Transform existingTileTransform = transform.GetChild(0);
-                TileUI existingTileUI = existingTileTransform.GetComponent<TileUI>();
-
-                // --- [YENİ EKLENEN GÖSTERGE KORUMASI] ---
-                // Eğer içerideki taş "Gösterge Taşı" ise, sakın dokunma!
-                if (existingTileUI != null && existingTileUI.isIndicatorTile)
-                {
-                    Debug.LogWarning("Gösterge taşının olduğu yere taş koyamazsın!");
-                    return; // Hiçbir şey yapma, taş TileUI.OnEndDrag ile geri dönecek.
-                }
-                // ----------------------------------------
-
-                Debug.Log("Placeholder dolu, kaydırma deneniyor...");
-
-                Transform newPlaceholder = FindEmptyPlaceholder(
-                    transform,
-                    existingTileTransform,
-                    droppedTile
-                );
-
-                if (newPlaceholder != null)
-                {
-                    // Eski taşı yeni boş yere taşı
-                    existingTileTransform.SetParent(newPlaceholder, false);
-                    existingTileTransform.localPosition = Vector3.zero;
-
-                    if (droppedTile.GetComponent<TileUI>())
-                        droppedTile.GetComponent<TileUI>().FitToParent();
-
-                    // Yeni gelen taşı buraya oturt
-                    droppedTile.transform.SetParent(transform, false);
-                    droppedTile.transform.localPosition = Vector3.zero;
-
-                    if (droppedTile.GetComponent<TileUI>())
-                        droppedTile.GetComponent<TileUI>().FitToParent();
-                }
-            }
         }
         // Eğer burası bir "Drop" (Çöp/Atma) alanı ise
         else
