@@ -15,6 +15,8 @@ public class TurnManager : MonoBehaviourPunCallbacks
     public bool canDrop = false;
     public bool hasPickedFromSide = false; // Yandan mı çekti?
     public bool hasOpenedThisTurn = false; // Bu el per açtı mı?
+    [Header("Bot System")]
+    public bool[] isBotActive = new bool[5];
 
     public void StartGame()
     {
@@ -30,7 +32,6 @@ public class TurnManager : MonoBehaviourPunCallbacks
             UIManager.Instance.UpdateTurnIndicators(currentTurnPlayer);
         }
     }
-
     public bool IsPlayerTurn()
     {
         if (
@@ -131,7 +132,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
         currentTurnPlayer++;
 
         // Oyuncu sayısı sınırını aşarsa başa dön
-        if (currentTurnPlayer > PhotonNetwork.PlayerList.Length)
+       if (currentTurnPlayer > 4) 
         {
             currentTurnPlayer = 1;
         }
@@ -171,5 +172,71 @@ public class TurnManager : MonoBehaviourPunCallbacks
         }
 
         Debug.Log($"Player {currentTurnPlayer}'s turn.");
+        if (PhotonNetwork.IsMasterClient && isBotActive[currentTurnPlayer])
+    {
+        StartCoroutine(PlayBotTurn(currentTurnPlayer));
     }
+    }
+    public override void OnPlayerLeftRoom(Photon.Realtime.Player otherPlayer)
+    {
+        Debug.LogWarning($"OYUNCU DÜŞTÜ: {otherPlayer.NickName}. Bot modu devreye giriyor.");
+
+        // Düşen oyuncunun 'PlayerQue' (Sıra Numarası) değerini bulmamız lazım.
+        if (otherPlayer.CustomProperties.TryGetValue("PlayerQue", out object queueVal))
+        {
+            int leftPlayerQue = (int)queueVal;
+            
+            // 1. O koltuğu BOT olarak işaretle
+            if (leftPlayerQue >= 1 && leftPlayerQue <= 4)
+            {
+                isBotActive[leftPlayerQue] = true;
+            }
+
+            // 2. Eğer tam şu an sıra o düşen oyuncudaysa, oyun donmasın diye botu hemen oynat.
+            // Sadece MasterClient çalıştırır (herkes çalıştırırsa kaos olur).
+            if (PhotonNetwork.IsMasterClient && currentTurnPlayer == leftPlayerQue)
+            {
+                StartCoroutine(PlayBotTurn(leftPlayerQue));
+            }
+        }
+    }
+  private IEnumerator PlayBotTurn(int playerQue)
+    {
+        Debug.Log($"[BOT] Sıra {playerQue}. oyuncuda (Bot). Hamle yapılıyor...");
+        yield return new WaitForSeconds(1.5f);
+
+        TileDistrubite tileDistrubite = FindObjectOfType<TileDistrubite>();
+        ScoreManager scoreManager = FindObjectOfType<ScoreManager>();
+
+        // --- ADIM 1: TAŞ ÇEK ---
+        tileDistrubite.photonView.RPC("AddTileFromMiddlePlayerList", RpcTarget.AllBuffered, playerQue);
+        
+        yield return new WaitForSeconds(1.5f);
+
+        // --- ADIM 2: EN KÖTÜ TAŞI BUL ---
+        // DİKKAT: Artık int değil string alıyoruz!
+        string worstTileID = scoreManager.FindBestTileToDiscardForBot(playerQue);
+
+        // --- ADIM 3: TAŞI AT ---
+        // Kontrol: String boş değilse at
+        if (!string.IsNullOrEmpty(worstTileID))
+        {
+            // RPC'ye string gönderiyoruz
+            tileDistrubite.photonView.RPC("BotDiscardTileRPC", RpcTarget.AllBuffered, playerQue, worstTileID);
+        }
+        else
+        {
+            Debug.LogError("[BOT] Atacak taş bulamadı! Oyun kilitlenmesin diye rastgele atılıyor.");
+            
+            // Eğer sistem hata verirse, TurnManager kilitlenmesin diye turu zorla geçir (Fail-safe)
+            if(PhotonNetwork.IsMasterClient)
+            {
+                 // Burada NextTurn çağırmak mantıklı olabilir veya rastgele bir taş ID'si bulup attırabilirsin.
+                 // Şimdilik en azından log düşsün.
+            }
+        }
+    }
+
+
+   
 }

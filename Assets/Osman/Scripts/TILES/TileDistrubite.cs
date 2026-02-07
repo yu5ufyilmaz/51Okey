@@ -30,6 +30,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [SerializeField]
     GameObject meldTilePrefab; // Meld tile prefab
     public List<Tiles> allTiles = new List<Tiles>();
+    private Dictionary<int, string> playerNamesByQueue = new Dictionary<int, string>();
 
     [SerializeField]
     List<TileUI> tileUIs;
@@ -389,6 +390,17 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
     public void DistributeTilesToAllPlayers()
     {
+        playerNamesByQueue.Clear();
+        foreach (var p in PhotonNetwork.PlayerList)
+        {
+            if (p.CustomProperties.TryGetValue("PlayerQue", out object q))
+            {
+                if (!playerNamesByQueue.ContainsKey((int)q))
+                {
+                    playerNamesByQueue.Add((int)q, p.NickName);
+                }
+            }
+        }
         int tilesForFirstPlayer = 15; // Number of tiles for the first player
         int tilesForOtherPlayers = 14; // Number of tiles for other players
 
@@ -609,24 +621,45 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
     void InstatiateSideTiles(int playerCount, Tiles tile)
     {
-        Player[] player = PhotonNetwork.PlayerList;
-        for (int i = 0; i < player.Length; i++)
+      string targetName = "";
+        if (playerNamesByQueue.ContainsKey(playerCount))
         {
-            if (player[i].CustomProperties.TryGetValue("PlayerQue", out object playerQue))
+            targetName = playerNamesByQueue[playerCount];
+        }
+        else
+        {
+            // Hafızada yoksa (çok nadir), son çare PlayerList'e bak (Yedek)
+            foreach(var p in PhotonNetwork.PlayerList)
             {
-                int playerQueInt = (int)playerQue;
-                if (playerQueInt == playerCount)
+                if(p.CustomProperties.TryGetValue("PlayerQue", out object q) && (int)q == playerCount)
                 {
-                    Transform sideTileContainer = GameObject.Find(player[i].NickName).transform;
-                    GameObject tileInstance = Instantiate(tilePrefab, sideTileContainer);
-                    TileUI tileUI = tileInstance.GetComponent<TileUI>();
-                    dropTile = tile;
-                    droppedTiles.Add(tileInstance);
-                    if (tileUI != null)
-                    {
-                        tileUI.SetTileData(tile);
-                    }
+                    targetName = p.NickName;
+                    break;
                 }
+            }
+        }
+
+        if (!string.IsNullOrEmpty(targetName))
+        {
+            GameObject containerGO = GameObject.Find(targetName);
+            if (containerGO != null)
+            {
+                Transform sideTileContainer = containerGO.transform;
+                GameObject tileInstance = Instantiate(tilePrefab, sideTileContainer);
+                TileUI tileUI = tileInstance.GetComponent<TileUI>();
+                
+                // Botun attığı taşı sisteme işle
+                dropTile = tile; 
+                droppedTiles.Add(tileInstance);
+
+                if (tileUI != null)
+                {
+                    tileUI.SetTileData(tile);
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[HATA] {targetName} isimli oyuncunun objesi sahnede bulunamadı!");
             }
         }
     }
@@ -2042,5 +2075,66 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         }
     }
     #endregion
+    #endregion
+    #region BOT CONTROLS
+    // TileDistrubite.cs içine ekle:
+
+    // 1. Botun elini ScoreManager'a vermek için yardımcı metod
+    public List<Tiles> GetPlayerTilesForBot(int playerQue)
+    {
+        switch (playerQue)
+        {
+            case 1: return playerTiles1;
+            case 2: return playerTiles2;
+            case 3: return playerTiles3;
+            case 4: return playerTiles4;
+            default: return new List<Tiles>();
+        }
+    }
+
+    // 2. Botun taş atmasını sağlayan RPC (Herkesin ekranında çalışır)
+  [PunRPC]
+    public void BotDiscardTileRPC(int playerQue, string tileID)
+    {
+        // A) Doğru listeyi bul
+        List<Tiles> hand = GetPlayerTilesForBot(playerQue);
+        
+        // B) Atılacak taşı ID ile bul
+        // ARTIK HATA VERMEZ: string == string karşılaştırması yapılıyor.
+        Tiles tileToDiscard = hand.FirstOrDefault(t => t.id == tileID);
+
+        if (tileToDiscard != null)
+        {
+            Debug.Log($"[BOT-MOVE] Bot (P{playerQue}) {tileToDiscard.color} {tileToDiscard.number} taşını attı.");
+
+            // C) Listeden Sil
+            hand.Remove(tileToDiscard);
+
+            // D) Görseli Yana At
+            // Not: InstatiateSideTiles metodun zaten Tiles objesi alıyor, burası sorunsuz.
+            InstatiateSideTiles(playerQue, tileToDiscard);
+
+            // E) Sırayı Geçir
+            if (PhotonNetwork.IsMasterClient)
+            {
+                TurnManager tm = FindObjectOfType<TurnManager>();
+                if (tm != null)
+                {
+                    tm.canDrop = false;
+                    tm.photonView.RPC("NextTurn", RpcTarget.AllBuffered);
+                }
+            }
+        }
+        else
+        {
+            Debug.LogError($"[BOT-ERROR] Botun atmak istediği taş ({tileID}) listede bulunamadı!");
+            
+            // Hata toleransı: Sırayı zorla geçir
+            if (PhotonNetwork.IsMasterClient)
+            {
+                FindObjectOfType<TurnManager>().photonView.RPC("NextTurn", RpcTarget.AllBuffered);
+            }
+        }
+    }
     #endregion
 }

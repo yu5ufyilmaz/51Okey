@@ -547,7 +547,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     [SerializeField]
     private float dropDistanceThreshold = 100f;
 
-    public void OnEndDrag(PointerEventData eventData)
+   public void OnEndDrag(PointerEventData eventData)
     {
         // --- 1. TEMEL GÜVENLİK KONTROLLERİ ---
         if (transform.parent.CompareTag("OtherSideTileContainer") || isIndicatorTile)
@@ -636,10 +636,10 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                 StartCoroutine(SmoothMove(transform, originalParent));
             }
         }
-        // DURUM B: KENDİ ISTAKAMIZ (SWAP MANTIĞI BURADA)
+        // DURUM B: KENDİ ISTAKAMIZ (SWAP ve AKILLI KAYDIRMA)
         else if (bestTarget.transform.parent == playerTileContainer)
         {
-            // -- Taş Çekme Kontrolleri (Burada değişiklik yok) --
+            // -- Taş Çekme Kontrolleri --
             if (turnManager.IsPlayerTurn() && !turnManager.canDrop)
             {
                 if (inMiddle)
@@ -667,13 +667,10 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                 }
             }
 
-            // --- SENİN İSTEDİĞİN ÖZEL KAYDIRMA/SWAP MANTIĞI ---
+            // --- AKILLI KAYDIRMA VE SWAP İŞLEMİ ---
 
-            // Eğer bırakılan kutu doluysa ve orası benim eski yerim değilse:
-            if (
-                bestTarget.transform.childCount > 0
-                && bestTarget != originalParent.GetComponent<Placeholder>()
-            )
+            // Bıraktığımız yer DOLU MU? ve orası zaten benim ESKİ YERİM DEĞİL Mİ?
+            if (bestTarget.transform.childCount > 0 && bestTarget != originalParent.GetComponent<Placeholder>())
             {
                 Transform residentTile = bestTarget.transform.GetChild(0);
                 TileUI residentUI = residentTile.GetComponent<TileUI>();
@@ -686,54 +683,33 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                     return;
                 }
 
-                // Farenin taşın neresine geldiğini hesapla
-                // differenceX < 0 ise: Taşı kutunun SOLUNA bıraktık (Sağa itmek istiyoruz)
-                // differenceX > 0 ise: Taşı kutunun SAĞINA bıraktık (Sola itmek istiyoruz)
-                float differenceX = transform.position.x - bestTarget.transform.position.x;
-                int targetIndex = bestTarget.transform.GetSiblingIndex();
+                // 1. ADIM: AKILLI BOŞLUK ARAMA
+                Placeholder smartEmptySpot = FindSmartEmptyPlaceholder(
+                    bestTarget.transform.parent, 
+                    bestTarget.transform.GetSiblingIndex()
+                );
 
-                bool movedAside = false;
-
-                if (differenceX < 0)
+                // Eğer uygun ve güvenli bir boşluk bulunduysa oraya kaydır
+                if (smartEmptySpot != null)
                 {
-                    // SOLA bıraktık -> Mevcut taşı SAĞA (index + 1) kaydırmaya çalış
-                    if (
-                        CheckAndMoveNeighbor(
-                            bestTarget.transform.parent,
-                            residentUI,
-                            targetIndex + 1
-                        )
-                    )
-                    {
-                        movedAside = true;
-                    }
+                    residentUI.StartCoroutine(residentUI.SmoothMove(residentTile, smartEmptySpot.transform));
+                    _targetScale = _originalScale;
+                    StartCoroutine(SmoothMove(transform, bestTarget.transform));
                 }
+                // Boşluk yoksa mecburen TAKAS (SWAP) yap
                 else
                 {
-                    // SAĞA bıraktık -> Mevcut taşı SOLA (index - 1) kaydırmaya çalış
-                    if (
-                        CheckAndMoveNeighbor(
-                            bestTarget.transform.parent,
-                            residentUI,
-                            targetIndex - 1
-                        )
-                    )
-                    {
-                        movedAside = true;
-                    }
-                }
-
-                // Eğer kaydırma yapılamadıysa (Yan taraf doluysa veya duvarsa) -> SWAP YAP
-                if (!movedAside)
-                {
-                    // İçerideki taş benim eski yerime gitsin
                     residentUI.StartCoroutine(residentUI.SmoothMove(residentTile, originalParent));
+                    _targetScale = _originalScale;
+                    StartCoroutine(SmoothMove(transform, bestTarget.transform));
                 }
             }
-
-            // Ben her türlü o yeni kutuya yerleşiyorum (Çünkü ya boşaldı ya da takas ettik)
-            _targetScale = _originalScale;
-            StartCoroutine(SmoothMove(transform, bestTarget.transform));
+            // Bıraktığımız yer BOŞSA -> Direkt yerleş
+            else
+            {
+                _targetScale = _originalScale;
+                StartCoroutine(SmoothMove(transform, bestTarget.transform));
+            }
         }
         // DURUM C: MASAYA İŞLEME (Aynı kalıyor)
         else
@@ -903,7 +879,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
         // ** KRİTİK NOKTA: BEKLEYEN İŞLEMELERİ ŞİMDİ GÖNDER **
         scoreManager.ExecutePendingSyncs();
-
+        scoreManager.ClearTurnHistory();
         yield return new WaitForSeconds(0.05f);
 
         // --- OYUN BİTİŞ / SIRA DEVRETME ---
@@ -1037,5 +1013,64 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         }
 
         return bestTarget;
+    }
+    /// <summary>
+    /// Istaka içinde, verilen başlangıç noktasından itibaren (önce sağ, sonra sol)
+    /// taşın kaydırılabileceği EN UYGUN ve BOŞ yeri bulur.
+    /// Duvarlara (isRight) çarpınca durur.
+    /// </summary>
+    private Placeholder FindSmartEmptyPlaceholder(Transform container, int startIndex)
+    {
+        int maxIndex = container.childCount - 1;
+
+        // --- 1. SAĞ TARAFI TARA ---
+        for (int i = startIndex + 1; i <= maxIndex; i++)
+        {
+            Transform sibling = container.GetChild(i);
+            Placeholder ph = sibling.GetComponent<Placeholder>();
+
+            // GÜVENLİK: Script yoksa geç
+            if (ph == null) continue;
+
+            // KRİTİK DUVAR KONTROLÜ: 
+            // Eğer baktığımız yer "Atma Alanı" (isRight) ise, DUR!
+            // Buradan ötesine (veya buraya) taş kayamaz.
+            if (ph.isRight) 
+            {
+                break; 
+            }
+
+            // Orta alana veya meld alanına kaymayı engelle (Ekstra önlem)
+            if (ph.isMeldArea || ph.isDrop) continue;
+
+            // BOŞ MU?
+            if (sibling.childCount == 0)
+            {
+                return ph; // Bulduk!
+            }
+        }
+
+        // --- 2. SOL TARAFI TARA (Eğer sağda yer yoksa) ---
+        for (int i = startIndex - 1; i >= 0; i--)
+        {
+            Transform sibling = container.GetChild(i);
+            Placeholder ph = sibling.GetComponent<Placeholder>();
+
+            if (ph == null) continue;
+
+            // Sol tarafta "isRight" (Atma Alanı) olması beklenmez ama yine de kontrol edelim
+            if (ph.isRight) continue;
+
+            if (ph.isMeldArea || ph.isDrop) continue;
+
+            // BOŞ MU?
+            if (sibling.childCount == 0)
+            {
+                return ph; // Bulduk!
+            }
+        }
+
+        // Hiçbir yer yoksa null döner
+        return null;
     }
 }

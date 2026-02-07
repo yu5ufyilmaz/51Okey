@@ -55,7 +55,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
             int seatNumber = availableSeats[0];
             availableSeats.RemoveAt(0); // Remove the assigned seat
             // Use RPC to assign the seat to the player on all clients
-            GameObject tileManager = PhotonNetwork.Instantiate(
+            GameObject tileManager = PhotonNetwork.InstantiateRoomObject(
                 tileManagerPrefab.name,
                 Vector3.zero,
                 Quaternion.identity,
@@ -343,23 +343,25 @@ public class SeatManager : MonoBehaviourPunCallbacks
         }
     }
 
+    // SeatManager.cs -> CountdownAndShuffle metodu
+
     private IEnumerator CountdownAndShuffle()
     {
         // Countdown from 3 to 0
         for (int i = 3; i > 0; i--)
         {
             Debug.Log($"Countdown: {i}");
-            //UpdateImageStates(i); // Update image states for the current countdown number
-            yield return new WaitForSeconds(1f); // Wait for 1 second
+            //UpdateImageStates(i); 
+            yield return new WaitForSeconds(1f); 
         }
-
-        // After countdown, shuffle the tiles
-        GameObject scoreManager = PhotonNetwork.Instantiate(
+        GameObject scoreManager = PhotonNetwork.InstantiateRoomObject(
             scoreManagerPrefab.name,
             Vector3.zero,
             Quaternion.identity,
             0
         );
+        // -------------------------
+
         scoreManager.SetActive(true);
         sManager = scoreManager.GetComponent<ScoreManager>();
 

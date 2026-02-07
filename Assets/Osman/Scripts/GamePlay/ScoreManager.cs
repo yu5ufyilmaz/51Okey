@@ -60,6 +60,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     [Header("Player Status")]
     public bool hasOpenedSeries = false; // Oyuncu seri açtı mı?
     public bool hasOpenedPairs = false; // Oyuncu çift açtı mı?
+    
     #region GENERATE_METHODS
     private void Start()
     {
@@ -1182,25 +1183,19 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
     void TakeBackPers()
     {
-        // Eğer geri alınacak taş yoksa işlem yapma
         if (pendingMeldedTiles.Count == 0)
             return;
 
         int playerQue = GetPlayerQue();
-
         Debug.Log($"Geri Topla Çalıştı: {pendingMeldedTiles.Count} adet taş geri alınıyor.");
 
-        // --- 1. TAŞLARI OYUNCUYA GERİ VER (YENİDEN OLUŞTUR) ---
+        // --- 1. TAŞLARI OYUNCUYA GERİ VER ---
         foreach (var tile in pendingMeldedTiles)
         {
-            // Joker ise fabrika ayarlarına döndür (Rengi/Numarası masada değişmiş olabilir)
             if (tile.type == TileType.Joker)
             {
                 ResetJokerData(tile);
             }
-
-            // TileDistrubite'a emri ver: "Bu taşı oyuncunun eline tekrar ekle!"
-            // Hem veriyi listeye ekler, hem de görseli (prefab) tekrar oluşturur.
             tileDistrubite.photonView.RPC(
                 "AddTileToPlayerHand",
                 RpcTarget.AllBuffered,
@@ -1214,12 +1209,10 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         {
             if (meldTile != null)
             {
-                // Masadaki alanların (occupiedRows) kilitlerini açmamız lazım
                 TileUI tileUI = meldTile.GetComponent<TileUI>();
                 if (tileUI != null)
                 {
                     Transform grandParent = meldTile.transform.parent.parent;
-
                     if (grandParent == colorPerPlaceHolder)
                         occupiedRows[tileUI.tileRow] = false;
                     else if (grandParent == numberPerPlaceHolder)
@@ -1227,57 +1220,38 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                     else if (grandParent == pairPerPlaceHolder)
                         occupiedRowsPair[tileUI.tileRow] = false;
                 }
-                Destroy(meldTile); // Masadaki kopyayı yok et
+                Destroy(meldTile);
             }
         }
         meldTileGO.Clear();
 
-        // --- 3. JOKER TAKASLARINI GERİ AL (Varsa) ---
-        // Eğer yerdeki bir jokeri alıp yerine taş koyduysak ve "Geri Al" dediysek:
-        foreach (var pendingJoker in pendingJokersToTake)
-        {
-            if (pendingJoker.originalPlaceholder != null)
-            {
-                // Orijinal jokeri masada tekrar görünür yap
-                // (Not: Eğer Swap işleminde Destroy ettiysek, burada Instantiate yapmamız gerekir.
-                // Ancak mevcut yapında Swap sırasında sadece Destroy ediyorsan, buraya özel bir Re-Instantiate eklemeliyiz.
-                // Şimdilik basitçe eldeki işlemi iptal ediyoruz.)
+        // --- 3. JOKER İŞLEMLERİ ---
+        // (Burada mevcut kodların aynen kalabilir)
 
-                // Basit çözüm: Swap işlemi "ActivePers" (İşleme) olduğu için buradaki TakeBackPers (Açma Geri Al)
-                // genellikle onu etkilemez ama güvenli temizlik yapalım.
-            }
-        }
-        pendingJokersToTake.Clear();
-
-        // --- 4. SENKRONİZASYON VE TEMİZLİK ---
-        // Diğer oyuncuların ekranındaki "bu oyuncu per açtı" bilgisini sil
+        // --- 4. SENKRONİZASYON VE DURUM GÜNCELLEME ---
         tileDistrubite.photonView.RPC("UnMergeValidPers", RpcTarget.AllBuffered, playerQue);
 
-        // Listeleri temizle
         pendingMeldedTiles.Clear();
         pendingMeldInfos.Clear();
-
-        // Oyuncunun "Açtı" durumunu iptal et (Eğer sadece bu taşlarla açtıysa)
-        // Ama dikkat: Oyuncu daha önceki turda açmış olabilir.
-        // Bu tur açtığı bayrağı (hasOpenedThisTurn) TurnManager'da sıfırlamalıyız.
         turnManager.hasOpenedThisTurn = false;
 
-        // Eğer daha önce hiç açmamışsa, genel bayrakları da indir
-        // (Burada mantığına göre; eğer commit edilmemişse zaten açılmamış sayılır)
-        if (!committedMelds.Any())
+        // [DÜZELTME 2]: Açma durumunu sadece "Geçmişte hiç açmamışsak" iptal et.
+        // Eğer committedMelds doluysa, demek ki önceki turlarda açmışız, o yüzden hasOpenedSeries TRUE kalmalı.
+        if (committedMelds.Count == 0)
         {
             hasOpenedSeries = false;
             hasOpenedPairs = false;
-            // GameManager listesinden de çıkmak gerekebilir ama orası karışık, şimdilik UI düzelsin yeter.
+            Debug.Log("Oyuncu masadaki TÜM taşlarını geri aldığı için 'Açtı' durumu iptal edildi.");
+        }
+        else
+        {
+            Debug.Log(
+                "Oyuncu bu tur açtıklarını geri aldı ama önceki turlardan açtığı taşlar duruyor."
+            );
         }
 
-        // Skor hesaplamasını tetikle ki puanın düşsün
         CheckForPer();
-
-        // Masadaki işlek ışıklarını tekrar hesapla (belki açtığım taşlar gidince masadaki durum değişmez ama olsun)
         tileDistrubite.RecalculateAllAvailableSlots();
-
-        Debug.Log("Geri alma işlemi başarıyla tamamlandı.");
     }
 
     // --- YARDIMCI METOD (Joker Verisini Düzeltmek İçin) ---
@@ -1949,12 +1923,17 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
     // ScoreManager.cs
 
+    // ScoreManager.cs içinde mevcut metodunu BU ŞEKİLDE GÜNCELLE
     public void CommitAndStoreMelds()
     {
         if (pendingMeldInfos.Count == 0)
             return;
 
         int playerQue = GetPlayerQue();
+
+        // [DÜZELTME 1]: Tur sonunda bu taşlar artık "Geçmişte Açılmış" sayılmalı.
+        // Listeye ekliyoruz ki sonraki tur "Geri Al" yapınca bunları silmesin veya açtığımızı unutmasın.
+        committedMelds.AddRange(pendingMeldInfos);
 
         foreach (var tileInfo in pendingMeldInfos)
         {
@@ -1963,16 +1942,31 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 "MeldTiles",
                 RpcTarget.AllBuffered,
                 playerQue,
-                tileInfo.tileData // tileData zaten orijinal ID'yi taşıyor
+                tileInfo.tileData
             );
 
             // Kendi ekranımızdaki pasif görseli ID ile bulup yok et
             DestroyTileGameObject(tileInfo.tileData);
         }
 
+        // Listeleri temizle ama committedMelds dolu kalacak
         pendingMeldInfos.Clear();
         pendingMeldedTiles.Clear();
         meldTileGO.Clear();
+    }
+
+    // ScoreManager.cs içinde mevcut TakeBackPers metodunu BU ŞEKİLDE GÜNCELLE
+
+
+    // [DÜZELTME 3]: Bu metodu ScoreManager.cs içine yeni EKLE
+    // Tur bittiğinde "İşlem Geçmişini" (Undo Stack) temizler.
+    public void ClearTurnHistory()
+    {
+        actionHistory.Clear();
+        // Ayrıca bekleyen işleme listelerini de temizleyelim, ne olur ne olmaz.
+        pendingSyncActions.Clear();
+        pendingActivePlacements.Clear();
+        Debug.Log("Tur bittiği için Geri Alma geçmişi (Action History) temizlendi.");
     }
 
     private void DestroyTileGameObject(Tiles tile)
@@ -2222,4 +2216,59 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         // İşlem bitince hafızayı sıfırla ki sonraki tura sarkmasın
         tempOpenedScore = 0;
     }
+    #region Bot Controls
+    // ScoreManager.cs içine en alta ekle:
+
+// ScoreManager.cs içine eklediğin metodu BU ŞEKİLDE GÜNCELLE:
+
+    // Dönüş tipi int -> string oldu
+    public string FindBestTileToDiscardForBot(int botPlayerQue)
+    {
+        // 1. Botun elini al
+        List<Tiles> hand = tileDistrubite.GetPlayerTilesForBot(botPlayerQue);
+        
+        // Eğer el boşsa null dön
+        if (hand == null || hand.Count == 0) return null; 
+
+        Tiles worstTile = null;
+        int lowestScore = 9999; 
+
+        foreach (var tile in hand)
+        {
+            // A) Joker Asla Atılmaz
+            if (tile.type == TileType.Joker || tile.type == TileType.FakeJoker) continue;
+
+            int currentScore = tile.number;
+
+            // B) İşlek Kontrolü
+            bool isUseful = false;
+            foreach (var other in hand)
+            {
+                if (other == tile) continue;
+                if (other.type == TileType.Joker) continue;
+
+                if (other.color == tile.color && Mathf.Abs(other.number - tile.number) == 1) isUseful = true;
+                if (other.number == tile.number && other.color != tile.color) isUseful = true;
+            }
+
+            if (isUseful) currentScore += 100;
+
+            // C) Karşılaştırma
+            if (currentScore < lowestScore)
+            {
+                lowestScore = currentScore;
+                worstTile = tile;
+            }
+        }
+
+        if (worstTile == null)
+        {
+            worstTile = hand.FirstOrDefault(t => t.type != TileType.Joker);
+        }
+
+        // ID string olduğu için direkt döndürüyoruz, sayı değil.
+        // Eğer worstTile hala null ise null döner.
+        return (worstTile != null) ? worstTile.id : null; 
+    }
+    #endregion
 }
