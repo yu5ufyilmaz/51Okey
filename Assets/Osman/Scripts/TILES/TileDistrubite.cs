@@ -235,14 +235,8 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 // Not: Rengini veya numarasını değiştirmemize gerek yok.
                 // Çünkü bu taş artık "Wildcard" oldu, her renge ve her sayıya uyum sağlar.
             }
-
-            // ÖNEMLİ: Normal sayı taşlarına (Type.Number) dokunmuyoruz.
-            // Çünkü bu senaryoda hiçbir sayı taşı Joker olmamalı.
         }
-
-        // Dağıtımı ve senkronizasyonu tetikle (Aynen diğer fonksiyondaki gibi)
-        photonView.RPC("AssignPlayerQueue", RpcTarget.All);
-        photonView.RPC("SyncShuffledTiles", RpcTarget.All, allTiles.ToArray());
+        StartCoroutine(DistributeWithDelay());
     }
 
     [PunRPC]
@@ -276,7 +270,19 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 tile.number = upperNumber;
             }
         }
+        StartCoroutine(DistributeWithDelay());
+    }
+
+    private IEnumerator DistributeWithDelay()
+    {
+        // 1. Önce herkesin sıra numarasını (PlayerQue) değiştir
         photonView.RPC("AssignPlayerQueue", RpcTarget.All);
+
+        // 2. Bu bilginin ağ üzerinden herkese gidip işlenmesi için kısa bir süre bekle
+        // 0.5 saniye genellikle yeterlidir.
+        yield return new WaitForSeconds(0.5f);
+
+        // 3. Sıralar güncellendikten sonra taşları dağıt
         photonView.RPC("SyncShuffledTiles", RpcTarget.All, allTiles.ToArray());
     }
     #endregion
@@ -284,53 +290,77 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void AssignPlayerQueue()
     {
-        // Only the MasterClient will assign the queue
+        // Sadece Master Client yönetir
         if (!PhotonNetwork.IsMasterClient)
             return;
 
-        // Get the list of players in the room
+        // Odadaki mevcut oyuncuları al
         var players = PhotonNetwork.CurrentRoom.Players.Values.ToList();
 
-        // Randomly select a player
+        // 1. Rastgele bir oyuncu seç (Bu kişi 1 Numara olup oyuna başlayacak)
         int randomIndex = Random.Range(0, players.Count);
         Player selectedPlayer = players[randomIndex];
 
-        // Get the seat number of the selected player
-        selectedPlayer.CustomProperties.TryGetValue("SeatNumber", out object seatNumberValue);
-        int selectedPlayerSeat = (int)seatNumberValue;
+        // Seçilen oyuncunun fiziksel koltuk numarasını (SeatNumber) al
+        if (!selectedPlayer.CustomProperties.TryGetValue("SeatNumber", out object seatObj))
+            return;
+        int startSeat = (int)seatObj; // Örn: 2 numaralı koltuk seçildi
 
-        // Assign PlayerQue value of 1 to the selected player
-        photonView.RPC("AssignQueueToPlayer", RpcTarget.AllBuffered, selectedPlayer.ActorNumber, 1);
+        // --- DÜZELTME BURADA ---
+        // Döngüyü oyuncu sayısına göre değil, SABİT 4 KOLTUK sayısına göre kuruyoruz.
+        // Böylece aradaki boşluklar (Botlar) sırayı kaydırmaz.
+        int totalSeats = 4;
 
-        // Assign queue values to other players in a circular manner
-        int queueValue = 2; // Start from 2
-        int playerCount = players.Count; // Total number of players
-
-        // Loop through players to assign queue values
-        for (int i = 1; i < playerCount; i++)
+        for (int i = 0; i < totalSeats; i++)
         {
-            // Calculate the next seat number in a circular manner
-            int nextSeat = (selectedPlayerSeat - 1 + i) % playerCount + 1;
+            // 1. Şu anki tur sırası (1, 2, 3, 4)
+            int currentQueueValue = i + 1;
 
-            // Find the player with the next seat number
-            Player player = players.FirstOrDefault(p =>
-            {
-                p.CustomProperties.TryGetValue("SeatNumber", out object otherSeatNumberValue);
-                return (int)otherSeatNumberValue == nextSeat;
-            });
+            // 2. Bu sıranın denk geldiği fiziksel koltuk numarasını hesapla
+            // (startSeat'ten başlayarak saat yönünde dönüyoruz)
+            // Örn: StartSeat 2 ise -> 2, 3, 4, 1 şeklinde döner.
+            int targetSeat = (startSeat - 1 + i) % totalSeats + 1;
 
-            // If the player is found and is not the selected player, assign the queue value
-            if (player != null && player != selectedPlayer)
+            // 3. Bu koltukta oturan bir oyuncu var mı diye bak
+            Player targetPlayer = players.FirstOrDefault(p =>
+                p.CustomProperties.TryGetValue("SeatNumber", out object s) && (int)s == targetSeat
+            );
+
+            if (targetPlayer != null)
             {
+                // OYUNCU VAR: Ona yeni sıra numarasını (PlayerQue) ata
                 photonView.RPC(
                     "AssignQueueToPlayer",
                     RpcTarget.AllBuffered,
-                    player.ActorNumber,
-                    queueValue
+                    targetPlayer.ActorNumber,
+                    currentQueueValue
                 );
-                queueValue++;
+
+                // Eğer bu kişi 1 numaraysa (Başlangıç oyuncusu), TurnManager'a da haber ver
+                if (currentQueueValue == 1)
+                {
+                    if (GameManager.Instance != null && GameManager.Instance.turnManager != null)
+                    {
+                        GameManager.Instance.turnManager.photonView.RPC(
+                            "SetTurnDirectly",
+                            RpcTarget.All,
+                            1
+                        );
+                    }
+                }
+            }
+            else
+            {
+                // OYUNCU YOK (BOT): Hiçbir şey yapma.
+                // TurnManager zaten "PlayerQue == currentQueueValue" olan insan bulamayınca
+                // otomatik olarak botu devreye sokacak.
+                Debug.Log(
+                    $"Koltuk {targetSeat} boş. Bu sıra (Queue: {currentQueueValue}) Bot tarafından oynanacak."
+                );
             }
         }
+
+        // İşlem bitti, dağıtımı tamamla
         photonView.RPC("AssignQueueComplete", RpcTarget.AllBuffered);
     }
 
@@ -385,8 +415,28 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     #endregion
     #region Distribute Tiles
 
+
     [PunRPC]
-    public void AssignQueueComplete() { }
+    public void AssignQueueComplete()
+    {
+        // 1. Önce taşları ve oyuncu listelerini güncelle (Mevcut kodların)
+        Debug.Log("Dağıtım ve Sıralama Tamamlandı.");
+
+        // Bot durumlarını güncelle (Master Client ise)
+        if (PhotonNetwork.IsMasterClient && GameManager.Instance.turnManager != null)
+        {
+            // Botları hesapla ama hemen başlatma, aşağıda başlatacağız.
+            GameManager.Instance.turnManager.RecalculateBotStates();
+        }
+
+        // 2. KRİTİK NOKTA: ARTIK VERİLER GELDİ, ARAYÜZÜ GÜNCELLEYEBİLİRİZ.
+        // TurnManager'a git ve "Artık görseli güncelle ve oyunu başlat" de.
+        if (GameManager.Instance != null && GameManager.Instance.turnManager != null)
+        {
+            // Herkeste aynı anda çalışsın diye TurnManager'daki özel başlatıcıyı çağırıyoruz.
+            GameManager.Instance.turnManager.StartRoundVisuals();
+        }
+    }
 
     public void DistributeTilesToAllPlayers()
     {
@@ -619,52 +669,100 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         }
     }
 
+    // TileDistrubite.cs dosyasında bu metodu bul ve DEĞİŞTİR:
+
     void InstatiateSideTiles(int playerCount, Tiles tile)
     {
-      string targetName = "";
-        if (playerNamesByQueue.ContainsKey(playerCount))
+        Transform targetTransform = null;
+
+        // --- ADIM 1: GARANTİ YÖNTEM (İndeks ile Bulma) ---
+        // Player 1 -> Index 0, Player 2 -> Index 1...
+        int containerIndex = playerCount - 1;
+
+        // Eğer liste henüz dolmadıysa veya boşsa, tekrar doldurmayı dene (Crash önleyici)
+        if (
+            dropTileContainers == null
+            || dropTileContainers.Length == 0
+            || dropTileContainers[0] == null
+        )
         {
-            targetName = playerNamesByQueue[playerCount];
-        }
-        else
-        {
-            // Hafızada yoksa (çok nadir), son çare PlayerList'e bak (Yedek)
-            foreach(var p in PhotonNetwork.PlayerList)
+            Debug.LogWarning(
+                $"[FIX] DropTileContainers listesi boş veya kırık! Yeniden aranıyor..."
+            );
+            GameObject containerParent = GameObject.Find("DropTileContainers");
+            if (containerParent != null)
             {
-                if(p.CustomProperties.TryGetValue("PlayerQue", out object q) && (int)q == playerCount)
-                {
-                    targetName = p.NickName;
-                    break;
-                }
+                dropTileContainer = containerParent.transform;
+                InitializeDropPlaceholders(); // Listeyi tekrar doldur
             }
         }
 
-        if (!string.IsNullOrEmpty(targetName))
+        // Şimdi listeden doğrudan çek
+        if (
+            dropTileContainers != null
+            && containerIndex >= 0
+            && containerIndex < dropTileContainers.Length
+        )
         {
-            GameObject containerGO = GameObject.Find(targetName);
-            if (containerGO != null)
-            {
-                Transform sideTileContainer = containerGO.transform;
-                GameObject tileInstance = Instantiate(tilePrefab, sideTileContainer);
-                TileUI tileUI = tileInstance.GetComponent<TileUI>();
-                
-                // Botun attığı taşı sisteme işle
-                dropTile = tile; 
-                droppedTiles.Add(tileInstance);
+            targetTransform = dropTileContainers[containerIndex];
+        }
 
-                if (tileUI != null)
-                {
-                    tileUI.SetTileData(tile);
-                }
+        // --- ADIM 2: YEDEK YÖNTEM (İsim ile Bulma) ---
+        // Eğer yukarıdaki yöntem çalışmazsa (ki çalışmalı), eski usul isimle aramayı dene.
+        if (targetTransform == null)
+        {
+            string targetName = "";
+            if (playerNamesByQueue.ContainsKey(playerCount))
+            {
+                targetName = playerNamesByQueue[playerCount];
             }
             else
             {
-                Debug.LogWarning($"[HATA] {targetName} isimli oyuncunun objesi sahnede bulunamadı!");
+                foreach (var p in PhotonNetwork.PlayerList)
+                {
+                    if (
+                        p.CustomProperties.TryGetValue("PlayerQue", out object q)
+                        && (int)q == playerCount
+                    )
+                    {
+                        targetName = p.NickName;
+                        break;
+                    }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(targetName))
+            {
+                GameObject containerGO = GameObject.Find(targetName);
+                if (containerGO != null)
+                    targetTransform = containerGO.transform;
             }
         }
-    }
 
-    // TileDistrubite.cs
+        // --- ADIM 3: OLUŞTURMA ---
+        if (targetTransform != null)
+        {
+            GameObject tileInstance = Instantiate(tilePrefab, targetTransform);
+            TileUI tileUI = tileInstance.GetComponent<TileUI>();
+
+            // Botun attığı taşı sisteme işle
+            dropTile = tile;
+            droppedTiles.Add(tileInstance);
+
+            if (tileUI != null)
+            {
+                tileUI.SetTileData(tile);
+            }
+            // Debug.Log($"[BAŞARILI] {playerCount}. oyuncunun attığı taş görsele eklendi.");
+        }
+        else
+        {
+            // Eğer hala bulunamıyorsa sahnede "DropTileContainers" adında bir obje ve altında 4 tane child olduğundan emin ol.
+            Debug.LogError(
+                $"[KRİTİK HATA] {playerCount}. Oyuncu için atma alanı KESİNLİKLE bulunamadı! Sahne yapısını kontrol et."
+            );
+        }
+    }
 
     void DestroySideTiles(int playerCount)
     {
@@ -2084,37 +2182,69 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     {
         switch (playerQue)
         {
-            case 1: return playerTiles1;
-            case 2: return playerTiles2;
-            case 3: return playerTiles3;
-            case 4: return playerTiles4;
-            default: return new List<Tiles>();
+            case 1:
+                return playerTiles1;
+            case 2:
+                return playerTiles2;
+            case 3:
+                return playerTiles3;
+            case 4:
+                return playerTiles4;
+            default:
+                return new List<Tiles>();
         }
     }
 
     // 2. Botun taş atmasını sağlayan RPC (Herkesin ekranında çalışır)
-  [PunRPC]
+    // TileDistrubite.cs içine:
+
+    [PunRPC]
     public void BotDiscardTileRPC(int playerQue, string tileID)
     {
         // A) Doğru listeyi bul
         List<Tiles> hand = GetPlayerTilesForBot(playerQue);
-        
+
         // B) Atılacak taşı ID ile bul
-        // ARTIK HATA VERMEZ: string == string karşılaştırması yapılıyor.
         Tiles tileToDiscard = hand.FirstOrDefault(t => t.id == tileID);
 
         if (tileToDiscard != null)
         {
-            Debug.Log($"[BOT-MOVE] Bot (P{playerQue}) {tileToDiscard.color} {tileToDiscard.number} taşını attı.");
+            Debug.Log(
+                $"[BOT-MOVE] Bot (P{playerQue}) {tileToDiscard.color} {tileToDiscard.number} taşını attı."
+            );
 
             // C) Listeden Sil
             hand.Remove(tileToDiscard);
 
             // D) Görseli Yana At
-            // Not: InstatiateSideTiles metodun zaten Tiles objesi alıyor, burası sorunsuz.
             InstatiateSideTiles(playerQue, tileToDiscard);
 
-            // E) Sırayı Geçir
+            // --- [YENİ EKLENEN KISIM] OYUN BİTİŞ KONTROLÜ ---
+            // Eğer bot taşı attıktan sonra ortada çekilecek taş kalmadıysa (allTiles == 0), oyun biter.
+            if (allTiles.Count == 0)
+            {
+                Debug.Log("[BOT] Ortada taş kalmadı. Oyun bitiriliyor...");
+
+                if (PhotonNetwork.IsMasterClient)
+                {
+                    // Oyun zaten bitmiş olarak işaretlenmediyse bitir
+                    if (GameManager.Instance != null && !GameManager.Instance.isGameEnded)
+                    {
+                        GameManager.Instance.photonView.RPC(
+                            "FinishGameRPC",
+                            RpcTarget.All,
+                            -1, // Kazanan yok (-1 = Beraberlik)
+                            false, // isPenalty
+                            false // isNormalWin
+                        );
+                    }
+                }
+                // NextTurn ÇAĞIRMIYORUZ, çünkü oyun bitti.
+                return;
+            }
+            // ------------------------------------------------
+
+            // E) Sırayı Geçir (Oyun bitmediyse)
             if (PhotonNetwork.IsMasterClient)
             {
                 TurnManager tm = FindObjectOfType<TurnManager>();
@@ -2128,8 +2258,8 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         else
         {
             Debug.LogError($"[BOT-ERROR] Botun atmak istediği taş ({tileID}) listede bulunamadı!");
-            
-            // Hata toleransı: Sırayı zorla geçir
+
+            // Hata toleransı: Sırayı zorla geçir ki oyun donmasın
             if (PhotonNetwork.IsMasterClient)
             {
                 FindObjectOfType<TurnManager>().photonView.RPC("NextTurn", RpcTarget.AllBuffered);

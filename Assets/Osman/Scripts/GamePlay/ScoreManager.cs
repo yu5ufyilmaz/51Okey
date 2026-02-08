@@ -60,7 +60,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     [Header("Player Status")]
     public bool hasOpenedSeries = false; // Oyuncu seri açtı mı?
     public bool hasOpenedPairs = false; // Oyuncu çift açtı mı?
-    
     #region GENERATE_METHODS
     private void Start()
     {
@@ -133,29 +132,36 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
     // ScoreManager.cs içine
 
+    // ScoreManager.cs içinde bu metodu bul ve tamamen bununla değiştir:
+
+    // ScoreManager.cs içinde bu metodu bul ve içeriğini güncelle:
+
     public void ResetPlayerOpenStatus()
     {
         hasOpenedSeries = false;
         hasOpenedPairs = false;
         playersWhoOpened.Clear();
+
+        // Bekleyen geçici listeleri temizle
         pendingMeldInfos.Clear();
         pendingMeldedTiles.Clear();
         meldTileGO.Clear();
         actionHistory.Clear();
         pendingSyncActions.Clear();
         pendingJokersToTake.Clear();
+        pendingActivePlacements.Clear();
 
-        // YENİ: PenaltySystem'daki listeyi temizle (Manuel olarak listeye erişemeyiz, ama tur başı zaten boş olmalı)
-        // Eğer PenaltySystem'da "ClearAll" gibi bir metodun yoksa, currentTurnPenalties public olduğu için:
+        // --- [DÜZELTME BURADA] ---
+        // Bunu temizlemezsek, yeni elde "Zaten açmıştın" hatası verir.
+        committedMelds.Clear();
+
+        // PenaltySystem temizliği
         if (PenaltySystem.Instance != null)
         {
             PenaltySystem.Instance.currentTurnPenalties.Clear();
         }
 
-        // ... (Kalan temizlik kodların aynen) ...
-        pendingActivePlacements.Clear();
-
-        // --- DİZİLERİ SIFIRLA (DİZME HATASINI ÖNLER) ---
+        // Dizileri sıfırla
         for (int i = 0; i < occupiedRows.Length; i++)
             occupiedRows[i] = false;
         for (int i = 0; i < occupiedRowsNumber.Length; i++)
@@ -170,7 +176,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 availableColumns[i] = true;
         }
 
-        Debug.Log("ScoreManager: Yeni el için tüm mantıksal veriler sıfırlandı.");
+        Debug.Log("ScoreManager: Yeni el için tüm listeler (committedMelds dahil) sıfırlandı.");
     }
 
     public void UpdatePlayerScore(int playerQue, int penaltyPoints)
@@ -2216,59 +2222,136 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         // İşlem bitince hafızayı sıfırla ki sonraki tura sarkmasın
         tempOpenedScore = 0;
     }
+
     #region Bot Controls
-    // ScoreManager.cs içine en alta ekle:
-
-// ScoreManager.cs içine eklediğin metodu BU ŞEKİLDE GÜNCELLE:
-
-    // Dönüş tipi int -> string oldu
-    public string FindBestTileToDiscardForBot(int botPlayerQue)
+    public string FindBestTileToDiscardForBot(int playerQue)
     {
-        // 1. Botun elini al
-        List<Tiles> hand = tileDistrubite.GetPlayerTilesForBot(botPlayerQue);
-        
-        // Eğer el boşsa null dön
-        if (hand == null || hand.Count == 0) return null; 
+        // 1. Botun elini çek
+        List<Tiles> hand = tileDistrubite.GetPlayerTilesForBot(playerQue);
+        if (hand == null || hand.Count == 0)
+            return "";
 
-        Tiles worstTile = null;
-        int lowestScore = 9999; 
+        // Göstergeyi al (Joker kontrolü için)
+        Tiles indicator = tileDistrubite.GetIndicatorTile();
 
-        foreach (var tile in hand)
+        // Aday Listesi (Atılabilecek taşlar)
+        // Başlangıçta tüm taşları aday yap, sonra değerli olanları eleyeceğiz.
+        List<Tiles> candidates = new List<Tiles>(hand);
+
+        // --- ELEME 1: JOKERLERİ KORU ---
+        // Okey taşını asla atma!
+        candidates.RemoveAll(t =>
+            t.type == TileType.Joker || OkeyRuleEngine.IsIndicator(t, indicator)
+        );
+
+        // Eğer elimizde sadece jokerler kaldıysa (çok düşük ihtimal), mecburen birini atacağız.
+        // Ama genelde buraya düşmez.
+        if (candidates.Count == 0)
+            candidates = new List<Tiles>(hand);
+
+        // --- ELEME 2: PERLERİ (SERİ/ÇİFT) KORU ---
+        // Elimizde hazır bir per varsa, onun parçalarını atma.
+        var groups = GetSplittedGroupsForBot(hand); // Bunu aşağıda tanımlayacağız
+        foreach (var group in groups)
         {
-            // A) Joker Asla Atılmaz
-            if (tile.type == TileType.Joker || tile.type == TileType.FakeJoker) continue;
-
-            int currentScore = tile.number;
-
-            // B) İşlek Kontrolü
-            bool isUseful = false;
-            foreach (var other in hand)
+            if (
+                OkeyRuleEngine.IsSingleColor(group, indicator)
+                && OkeyRuleEngine.SingleColorCheck(group)
+            )
             {
-                if (other == tile) continue;
-                if (other.type == TileType.Joker) continue;
-
-                if (other.color == tile.color && Mathf.Abs(other.number - tile.number) == 1) isUseful = true;
-                if (other.number == tile.number && other.color != tile.color) isUseful = true;
+                // Bu grup geçerli bir seri, içindeki taşları adaylardan çıkar
+                foreach (var t in group)
+                    candidates.Remove(t);
             }
-
-            if (isUseful) currentScore += 100;
-
-            // C) Karşılaştırma
-            if (currentScore < lowestScore)
+            else if (OkeyRuleEngine.MultiColorCheck(group))
             {
-                lowestScore = currentScore;
-                worstTile = tile;
+                // Bu grup geçerli bir renk grubu, koru
+                foreach (var t in group)
+                    candidates.Remove(t);
+            }
+            else if (OkeyRuleEngine.CheckForDoublePer(group, indicator))
+            {
+                // Çift perleri koru
+                foreach (var t in group)
+                    candidates.Remove(t);
             }
         }
 
-        if (worstTile == null)
+        // Eğer perleri koruyunca atacak taş kalmadıysa, en azından joker olmayan birini geri yükle
+        if (candidates.Count == 0)
         {
-            worstTile = hand.FirstOrDefault(t => t.type != TileType.Joker);
+            candidates = hand.Where(t => t.type != TileType.Joker).ToList();
         }
 
-        // ID string olduğu için direkt döndürüyoruz, sayı değil.
-        // Eğer worstTile hala null ise null döner.
-        return (worstTile != null) ? worstTile.id : null; 
+        // --- ELEME 3: İŞLEK TAŞ ANALİZİ (PUANLAMA) ---
+        // Adaylar arasından en "yalnız" olanı bulacağız.
+        Tiles bestCandidate = null;
+        int bestUselessScore = -1; // Yüksek puan = Daha gereksiz
+
+        foreach (var tile in candidates)
+        {
+            int uselessScore = 0;
+
+            // Kriter A: Bu taşın renginden başka kaç taş var? (Azsa gereksizdir)
+            int sameColorCount = hand.Count(t => t.color == tile.color && t != tile);
+            if (sameColorCount == 0)
+                uselessScore += 50; // Çok gereksiz
+            else if (sameColorCount == 1)
+                uselessScore += 20;
+
+            // Kriter B: Bu taşın sayısından başka kaç taş var?
+            int sameNumberCount = hand.Count(t => t.number == tile.number && t != tile);
+            if (sameNumberCount == 0)
+                uselessScore += 30;
+
+            // Kriter C: Sıralı komşusu var mı? (Örn: Mavi 4 varsa, Mavi 3 veya 5 var mı?)
+            bool hasNeighbor = hand.Any(t =>
+                t.color == tile.color && Mathf.Abs(t.number - tile.number) == 1
+            );
+            if (!hasNeighbor)
+                uselessScore += 40; // Komşusu yoksa gereksizdir
+
+            // Puanı kaydet
+            if (uselessScore > bestUselessScore)
+            {
+                bestUselessScore = uselessScore;
+                bestCandidate = tile;
+            }
+        }
+
+        // Eğer hala bir aday bulamadıysak rastgele (ilk) taşı seç
+        if (bestCandidate == null && candidates.Count > 0)
+            bestCandidate = candidates[0];
+
+        return bestCandidate != null ? bestCandidate.id : "";
+    }
+
+    public List<List<Tiles>> GetSplittedGroupsForBot(List<Tiles> botHand)
+    {
+        // Basitçe renklerine göre grupla (Daha gelişmişi yapılabilir ama şimdilik yeterli)
+        // Botun eli karışık gelebilir, o yüzden basit bir gruplama yapıyoruz.
+        // Gerçek bir Okey AI'sı için buraya "El Düzenleme" algoritması gerekir.
+        // Şimdilik sadece aynı renkleri bir araya getirip per var mı diye bakıyoruz.
+
+        List<List<Tiles>> groups = new List<List<Tiles>>();
+
+        // Renklere göre grupla
+        foreach (TileColor c in Enum.GetValues(typeof(TileColor)))
+        {
+            var colorGroup = botHand.Where(t => t.color == c).OrderBy(t => t.number).ToList();
+            if (colorGroup.Count >= 3)
+                groups.Add(colorGroup);
+        }
+
+        // Sayılara göre grupla (MultiColor için)
+        for (int i = 1; i <= 13; i++)
+        {
+            var numberGroup = botHand.Where(t => t.number == i).ToList();
+            if (numberGroup.Count >= 3)
+                groups.Add(numberGroup);
+        }
+
+        return groups;
     }
     #endregion
 }
