@@ -59,6 +59,7 @@ MonoBehaviour:
     color: 0
     number: 0
     type: 0
+  seatOfQue: 0000000000000000000000000000000000000000
   availableTiles: []
 --- !u!114 &8801788710803842167
 MonoBehaviour:

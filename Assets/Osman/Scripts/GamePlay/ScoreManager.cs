@@ -595,19 +595,14 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         // 1. SIRA KONTROLÜ
         if (turnManager.canDrop == true)
         {
-            // -------------------------------------------------------------------------
-            // [YENİ EKLENEN KISIM] SERİ AÇANLAR İÇİN KISITLAMA
-            // -------------------------------------------------------------------------
-            // Kural: Eğer oyuncu daha önce Seri açmışsa (ve henüz Çift açmamışsa),
-            // Masada henüz kimse (GameManager kontrolüyle) Çift açmadıysa, buton çalışmaz.
+            // --- SERİ AÇANLAR İÇİN KISITLAMA ---
             if (hasOpenedSeries && !hasOpenedPairs && !GameManager.Instance.IsDoubleOpenedOnTable)
             {
                 Debug.LogWarning(
                     "Seri açtınız! Masada başkası Çift açmadığı sürece Çift açamazsınız."
                 );
-                return; // İşlemi burada durduruyoruz.
+                return;
             }
-            // -------------------------------------------------------------------------
 
             // 2. BİTİŞ TAŞI GÜVENLİK KONTROLÜ
             int tilesToMeldCount = 0;
@@ -631,8 +626,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             if (hasOpenedPairs)
                 limitPass = true;
             // KURAL 2: Daha önce Seri açtıysam -> Limit Yok
-            // (Yukarıdaki 'if' bloğundaki kısıtlamayı geçtiysek, yani masada çift varsa,
-            // seri açan kişi puana bakılmaksızın çift açabilir.)
             else if (hasOpenedSeries)
                 limitPass = true;
             // KURAL 3: Masada başkası çift açtıysa -> Limit Yok
@@ -650,14 +643,13 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                     return;
                 }
 
-                // Limiti Yükseltme (Sadece ilk kez açıyorsam ve limit kuralıyla açıyorsam)
-                if (
-                    !hasOpenedPairs
-                    && !hasOpenedSeries
-                    && !GameManager.Instance.IsDoubleOpenedOnTable
-                    && myPairScore > currentLimit
-                )
-                    PlacePairPers(validPerss);
+                // --- DÜZELTME BURADA YAPILDI ---
+                // Eskiden PlacePairPers fonksiyonu "!hasOpenedPairs" şartının içindeydi.
+                // Artık limitPass true ise (yani kuralları geçiyorsak) taşları her zaman koyuyoruz.
+
+                PlacePairPers(validPerss);
+
+                // Masadaki boş yerleri tekrar hesapla
                 tileDistrubite.RecalculateAllAvailableSlots();
             }
             else

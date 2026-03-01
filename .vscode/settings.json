@@ -56,5 +56,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "51Okey.sln"
+    "dotnet.defaultSolution": "51Okey.slnx"
 }

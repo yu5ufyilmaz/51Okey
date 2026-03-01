@@ -294,41 +294,31 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         if (!PhotonNetwork.IsMasterClient)
             return;
 
-        // Odadaki mevcut oyuncuları al
         var players = PhotonNetwork.CurrentRoom.Players.Values.ToList();
-
-        // 1. Rastgele bir oyuncu seç (Bu kişi 1 Numara olup oyuna başlayacak)
         int randomIndex = Random.Range(0, players.Count);
         Player selectedPlayer = players[randomIndex];
 
-        // Seçilen oyuncunun fiziksel koltuk numarasını (SeatNumber) al
         if (!selectedPlayer.CustomProperties.TryGetValue("SeatNumber", out object seatObj))
             return;
-        int startSeat = (int)seatObj; // Örn: 2 numaralı koltuk seçildi
+        int startSeat = (int)seatObj;
 
-        // --- DÜZELTME BURADA ---
-        // Döngüyü oyuncu sayısına göre değil, SABİT 4 KOLTUK sayısına göre kuruyoruz.
-        // Böylece aradaki boşluklar (Botlar) sırayı kaydırmaz.
         int totalSeats = 4;
+        int[] newMapping = new int[5]; // HARİTA DİZİSİ
 
         for (int i = 0; i < totalSeats; i++)
         {
-            // 1. Şu anki tur sırası (1, 2, 3, 4)
             int currentQueueValue = i + 1;
-
-            // 2. Bu sıranın denk geldiği fiziksel koltuk numarasını hesapla
-            // (startSeat'ten başlayarak saat yönünde dönüyoruz)
-            // Örn: StartSeat 2 ise -> 2, 3, 4, 1 şeklinde döner.
             int targetSeat = (startSeat - 1 + i) % totalSeats + 1;
 
-            // 3. Bu koltukta oturan bir oyuncu var mı diye bak
+            // [KRİTİK] Haritaya kaydet (Bot olsun ya da olmasın bu sıra bu koltuğundur)
+            newMapping[currentQueueValue] = targetSeat;
+
             Player targetPlayer = players.FirstOrDefault(p =>
                 p.CustomProperties.TryGetValue("SeatNumber", out object s) && (int)s == targetSeat
             );
 
             if (targetPlayer != null)
             {
-                // OYUNCU VAR: Ona yeni sıra numarasını (PlayerQue) ata
                 photonView.RPC(
                     "AssignQueueToPlayer",
                     RpcTarget.AllBuffered,
@@ -336,32 +326,35 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                     currentQueueValue
                 );
 
-                // Eğer bu kişi 1 numaraysa (Başlangıç oyuncusu), TurnManager'a da haber ver
-                if (currentQueueValue == 1)
+                // Başlayanı bildir
+                if (
+                    currentQueueValue == 1
+                    && GameManager.Instance != null
+                    && GameManager.Instance.turnManager != null
+                )
                 {
-                    if (GameManager.Instance != null && GameManager.Instance.turnManager != null)
-                    {
-                        GameManager.Instance.turnManager.photonView.RPC(
-                            "SetTurnDirectly",
-                            RpcTarget.All,
-                            1
-                        );
-                    }
+                    GameManager.Instance.turnManager.photonView.RPC(
+                        "SetTurnDirectly",
+                        RpcTarget.All,
+                        1
+                    );
                 }
-            }
-            else
-            {
-                // OYUNCU YOK (BOT): Hiçbir şey yapma.
-                // TurnManager zaten "PlayerQue == currentQueueValue" olan insan bulamayınca
-                // otomatik olarak botu devreye sokacak.
-                Debug.Log(
-                    $"Koltuk {targetSeat} boş. Bu sıra (Queue: {currentQueueValue}) Bot tarafından oynanacak."
-                );
             }
         }
 
-        // İşlem bitti, dağıtımı tamamla
+        // Haritayı herkese senkronize et ve dağıtımı bitir
+        photonView.RPC("SyncQueToSeatMapping", RpcTarget.AllBuffered, newMapping);
         photonView.RPC("AssignQueueComplete", RpcTarget.AllBuffered);
+    }
+
+    // Bu yeni metodu hemen AssignPlayerQueue'nun altına ekle:
+    [PunRPC]
+    public void SyncQueToSeatMapping(int[] mapping)
+    {
+        seatOfQue = mapping;
+        Debug.Log(
+            $"[SİSTEM] Yeni Koltuk Haritası: Sıra 1->Koltuk {seatOfQue[1]}, Sıra 2->Koltuk {seatOfQue[2]}, Sıra 3->Koltuk {seatOfQue[3]}, Sıra 4->Koltuk {seatOfQue[4]}"
+        );
     }
 
     [PunRPC]
@@ -670,82 +663,49 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     }
 
     // TileDistrubite.cs dosyasında bu metodu bul ve DEĞİŞTİR:
+    public int[] seatOfQue = new int[5];
 
     void InstatiateSideTiles(int playerCount, Tiles tile)
     {
+        // playerCount = O anki Sıra Numarası (Queue) (Örn: 3. oyuncunun sırası)
         Transform targetTransform = null;
 
-        // --- ADIM 1: GARANTİ YÖNTEM (İndeks ile Bulma) ---
-        // Player 1 -> Index 0, Player 2 -> Index 1...
-        int containerIndex = playerCount - 1;
+        // 1. O sıranın fiziksel koltuğunu (SeatNumber) haritadan bul
+        int targetSeat = seatOfQue[playerCount];
 
-        // Eğer liste henüz dolmadıysa veya boşsa, tekrar doldurmayı dene (Crash önleyici)
-        if (
-            dropTileContainers == null
-            || dropTileContainers.Length == 0
-            || dropTileContainers[0] == null
-        )
+        // 2. SeatManager'ı bul
+        SeatManager seatManager = FindObjectOfType<SeatManager>();
+
+        if (seatManager != null && targetSeat >= 1 && targetSeat <= 4)
         {
-            Debug.LogWarning(
-                $"[FIX] DropTileContainers listesi boş veya kırık! Yeniden aranıyor..."
-            );
-            GameObject containerParent = GameObject.Find("DropTileContainers");
-            if (containerParent != null)
+            // 3. Kendi (Local) koltuk numaramı bul
+            int localSeatNumber = 1; // Varsayılan
+            if (
+                PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue(
+                    "SeatNumber",
+                    out object localSeatObj
+                )
+            )
             {
-                dropTileContainer = containerParent.transform;
-                InitializeDropPlaceholders(); // Listeyi tekrar doldur
+                localSeatNumber = (int)localSeatObj;
+            }
+
+            // 4. SeatManager'ın kullandığı sihirli formül ile hedef konteyneri (Offset) bul
+            int relativeIndex = (targetSeat - localSeatNumber + 4) % 4;
+
+            if (relativeIndex >= 0 && relativeIndex < seatManager.tiledropOffset.Length)
+            {
+                // Kutuyu bulduk! İsminin eski oyuncu kalması vs. artık umurumuzda değil.
+                targetTransform = seatManager.tiledropOffset[relativeIndex].transform;
             }
         }
 
-        // Şimdi listeden doğrudan çek
-        if (
-            dropTileContainers != null
-            && containerIndex >= 0
-            && containerIndex < dropTileContainers.Length
-        )
-        {
-            targetTransform = dropTileContainers[containerIndex];
-        }
-
-        // --- ADIM 2: YEDEK YÖNTEM (İsim ile Bulma) ---
-        // Eğer yukarıdaki yöntem çalışmazsa (ki çalışmalı), eski usul isimle aramayı dene.
-        if (targetTransform == null)
-        {
-            string targetName = "";
-            if (playerNamesByQueue.ContainsKey(playerCount))
-            {
-                targetName = playerNamesByQueue[playerCount];
-            }
-            else
-            {
-                foreach (var p in PhotonNetwork.PlayerList)
-                {
-                    if (
-                        p.CustomProperties.TryGetValue("PlayerQue", out object q)
-                        && (int)q == playerCount
-                    )
-                    {
-                        targetName = p.NickName;
-                        break;
-                    }
-                }
-            }
-
-            if (!string.IsNullOrEmpty(targetName))
-            {
-                GameObject containerGO = GameObject.Find(targetName);
-                if (containerGO != null)
-                    targetTransform = containerGO.transform;
-            }
-        }
-
-        // --- ADIM 3: OLUŞTURMA ---
+        // 5. Taşı Oluştur
         if (targetTransform != null)
         {
             GameObject tileInstance = Instantiate(tilePrefab, targetTransform);
             TileUI tileUI = tileInstance.GetComponent<TileUI>();
 
-            // Botun attığı taşı sisteme işle
             dropTile = tile;
             droppedTiles.Add(tileInstance);
 
@@ -753,13 +713,14 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             {
                 tileUI.SetTileData(tile);
             }
-            // Debug.Log($"[BAŞARILI] {playerCount}. oyuncunun attığı taş görsele eklendi.");
+            Debug.Log(
+                $"[BAŞARILI] {playerCount}. Sıranın taşı Koltuk {targetSeat} konumuna atıldı."
+            );
         }
         else
         {
-            // Eğer hala bulunamıyorsa sahnede "DropTileContainers" adında bir obje ve altında 4 tane child olduğundan emin ol.
             Debug.LogError(
-                $"[KRİTİK HATA] {playerCount}. Oyuncu için atma alanı KESİNLİKLE bulunamadı! Sahne yapısını kontrol et."
+                $"[KRİTİK HATA] {playerCount}. Sıra (Koltuk {targetSeat}) için atma alanı bulunamadı! SeatManager referansı koptu."
             );
         }
     }
