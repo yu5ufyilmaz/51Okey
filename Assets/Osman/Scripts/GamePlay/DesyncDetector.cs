@@ -21,6 +21,12 @@ public class DesyncDetector : MonoBehaviourPunCallbacks, IOnEventCallback
     [Tooltip("0 = rastgele. Master'da dağıtımdan önce girilirse aynı el tekrar dağıtılır.")]
     public int forcedSeed;
 
+    // SyncAutoTest master'da bunları okur; desync log metninden sayılmaz ("[DESYNC] Log dosyası" satırı da var).
+    public int OkCount,
+        DesyncCount;
+    public string FirstDesync;
+    public string LogPath { get; private set; }
+
     struct Entry
     {
         public string label,
@@ -28,7 +34,8 @@ public class DesyncDetector : MonoBehaviourPunCallbacks, IOnEventCallback
     }
 
     int deal,
-        move;
+        move,
+        seededDeals;
     StreamWriter log;
     readonly Dictionary<string, Dictionary<int, Entry>> received =
         new Dictionary<string, Dictionary<int, Entry>>();
@@ -54,7 +61,9 @@ public class DesyncDetector : MonoBehaviourPunCallbacks, IOnEventCallback
     public override void OnJoinedRoom()
     {
         // Yeni oda = yeni sayaç ve yeni log dosyası; yoksa önceki odadan kalan sayaçlar kayar.
-        deal = move = 0;
+        deal = move = seededDeals = 0;
+        OkCount = DesyncCount = 0;
+        FirstDesync = null;
         received.Clear();
         receivedOrder.Clear();
         badKeys.Clear();
@@ -63,11 +72,16 @@ public class DesyncDetector : MonoBehaviourPunCallbacks, IOnEventCallback
 
     public static int NextDealSeed()
     {
+        // Her el ayrı seed: aynı seed tüm ellere verilirse 2. el 1. elin aynısı dağıtılır.
         int seed =
-            Instance != null && Instance.forcedSeed != 0 ? Instance.forcedSeed : Environment.TickCount;
+            Instance != null && Instance.forcedSeed != 0
+                ? SeedForDeal(Instance.forcedSeed, ++Instance.seededDeals)
+                : Environment.TickCount;
         Instance?.Write($"SEED {seed}");
         return seed;
     }
+
+    public static int SeedForDeal(int forcedSeed, int dealIndex) => forcedSeed + dealIndex - 1;
 
     public static void Report(string label, bool newDeal = false)
     {
@@ -157,7 +171,10 @@ public class DesyncDetector : MonoBehaviourPunCallbacks, IOnEventCallback
 
         int expected = PhotonNetwork.PlayerList.Count(p => !p.IsInactive);
         if (byActor.Count == expected && !badKeys.Contains(key))
+        {
+            OkCount++;
             Debug.Log($"<color=green>[SYNC OK]</color> {key} {label} ({expected} client)");
+        }
     }
 
     void Compare(string key, int a, Entry ea, int b, Entry eb)
@@ -178,6 +195,8 @@ public class DesyncDetector : MonoBehaviourPunCallbacks, IOnEventCallback
             if (x != y)
                 msg.Append($"\n  #{a}: {x ?? field + "=<yok>"}\n  #{b}: {y ?? field + "=<yok>"}");
         }
+        DesyncCount++;
+        FirstDesync ??= msg.ToString();
         Debug.LogError(msg);
         Write(msg.ToString());
     }
@@ -223,6 +242,7 @@ public class DesyncDetector : MonoBehaviourPunCallbacks, IOnEventCallback
             int actor = PhotonNetwork.LocalPlayer?.ActorNumber ?? 0;
             string path = Path.Combine(dir, $"desync_{DateTime.Now:yyyyMMdd_HHmmss}_actor{actor}.log");
             log = new StreamWriter(path) { AutoFlush = true };
+            LogPath = path;
             Debug.Log($"[DESYNC] Log dosyası: {path}");
         }
         log.WriteLine(text);

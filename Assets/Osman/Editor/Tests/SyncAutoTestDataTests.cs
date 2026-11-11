@@ -78,4 +78,11 @@ public class SyncAutoTestDataTests
         Assert.AreEqual(0, read.errors.Count);
         Assert.IsEmpty(Directory.GetFiles(dir, "*.tmp"));
     }
+
+    [Test]
+    public void SeedForDeal_StepsPerDeal()
+    {
+        Assert.AreEqual(42, DesyncDetector.SeedForDeal(42, 1));
+        Assert.AreEqual(43, DesyncDetector.SeedForDeal(42, 2));
+    }
 }
