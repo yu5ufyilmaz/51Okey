@@ -183,6 +183,34 @@ public partial class SyncAutoTest
             .FirstOrDefault(p => !p.isRight && !p.isMeldArea && p.transform.childCount == 0)
             ?.transform;
 
+    // Masadaki tüm perler satır satır: (tür, yuva sırasıyla taşlar; boş yuva null). Tür 0 seri 13'lük, 1 grup 4'lük, 2 çift 2'lik.
+    List<(int type, Tiles[] row)> BoardRows()
+    {
+        var rows = new List<(int, Tiles[])>();
+        foreach (var player in PhotonNetwork.PlayerList)
+        {
+            var container = GameObject.Find(player.NickName + " meld");
+            if (container == null)
+                continue;
+            for (int type = 0; type < container.transform.childCount && type < 3; type++)
+            {
+                Transform typeContainer = container.transform.GetChild(type);
+                int rowSize = type == 0 ? 13 : type == 1 ? 4 : 2;
+                for (int start = 0; start + rowSize <= typeContainer.childCount; start += rowSize)
+                {
+                    var row = new Tiles[rowSize];
+                    for (int i = 0; i < rowSize; i++)
+                    {
+                        Transform slot = typeContainer.GetChild(start + i);
+                        row[i] = slot.childCount > 0 ? slot.GetChild(0).GetComponent<TileUI>()?.tileDataInfo : null;
+                    }
+                    rows.Add((type, row));
+                }
+            }
+        }
+        return rows;
+    }
+
     // Bu ID'li taşın sağındaki ilk boş yuva; yoksa herhangi bir boş yuva.
     Transform EmptyRackSlotAfter(string id)
     {
@@ -456,7 +484,8 @@ public partial class SyncAutoTest
             Add(que, 250); // yandan alıp açmadan atma: tek ceza, taş yana döner, ortadan 1 taş
         else
         {
-            var islek = v.Slots.Select(s => s.Needed).ToList();
+            // Yanan yuvalar (v.Slots) sadece açmış oyuncuda var; işlek masadaki taşlardan, herkes için aynı.
+            var islek = RuleOracle.Islek(BoardRows());
             Add(que, RuleOracle.DiscardPenalty(thrown, v.Indicator, v.PairsOpenedOnTable, islek, finishing));
             foreach (var kv in pendingProcessPenalty)
                 Add(kv.Key, kv.Value);

@@ -126,5 +126,10 @@ Kullanıcı: #58 bug değil (taş adedi × 10 × çarpan doğru).
 - Kazananın düşeri renge göre: 100 × renk çarpanı (sarı 600, kırmızı 500, …).
 - Kafa: masada kimse açmamışken oyuncunun aynı turda kemiksiz açıp bitmesi. Önceki turda açıp sonra biten kafa sayılmaz.
 - Gösterge kopyası atma cezası (250) sadece masada çift açılmışsa (kitap: "bu şartlar altında işlek sayılır").
+- Okeyin yerini tuttuğu taş işlektir, atılırsa 250 (2026-11-12). Örnek: masada y10 OKEY y12 y13 varken y11 atmak. İşlek, atanın per açıp açmamasından bağımsızdır; masadaki taşlardan çıkar:
+  - seride iki uç ve okeyin tuttuğu sayı;
+  - 3-4 taşlık sayı grubunda eksik renkler;
+  - çiftte okeyin eşi.
+- Sayı grubunda 3. taşken okey alınamaz, gerçek taş 4. olarak işlenir (2026-11-11).
 - Otomatik işle (`ActivePers`) okeyi ilk boşluğa koyabilir; ama elde atacak 1 taş bırakmalı.
 - İşleme cezaları sadece master'da uygulanır (`PlayerScore` yarışı giderildi).

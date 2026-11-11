@@ -854,16 +854,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         // El tamamen bitti mi? (0 taş kaldıysa bitmiştir)
         bool isGameReallyOver = (currentHandForCheck.Count == 0);
 
-        // Kural kitabı: okey atarak bitmek ödüllü bitiştir; bitiren atışa okey/işlek cezası yazılmaz.
-        if (!isGameReallyOver && GameManager.Instance != null)
-        {
-            GameManager.Instance.photonView.RPC(
-                "CheckPenaltyRPC",
-                RpcTarget.MasterClient,
-                playerQueInt,
-                tileDataInfo
-            );
-        }
+        // Atış cezası (okey/işlek) aşağıda, bu turun açma/işlemeleri gönderildikten sonra istenir.
 
         // Yandan alan turu açarak ya da işleyerek tamamladı: taşı atan önceki oyuncu taş sayısı × 10 yer.
         // Atışta yazılır ki geri almalar sayılmasın ve seri+çift açınca iki kez yazılmasın.
@@ -970,6 +961,19 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         // ** KRİTİK NOKTA: BEKLEYEN İŞLEMELERİ ŞİMDİ GÖNDER **
         scoreManager.ExecutePendingSyncs();
         scoreManager.ClearTurnHistory();
+
+        // Atış cezası master'da bu turun perleri ve işlemeleri masaya oturduktan sonra bakılır (RPC sırası korunur).
+        // Önce bakılınca, aynı turda y10'u perin ucuna işleyip öbür y10'u atan oyuncu eski masaya göre "işlek attı" yiyordu.
+        // Bitiren atış yukarıda çıktı: kural kitabına göre bitiren atışa okey/işlek cezası yazılmaz.
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.photonView.RPC(
+                "CheckPenaltyRPC",
+                RpcTarget.MasterClient,
+                playerQueInt,
+                tileDataInfo
+            );
+        }
         yield return new WaitForSeconds(0.05f);
 
         // --- OYUN BİTİŞ / SIRA DEVRETME ---

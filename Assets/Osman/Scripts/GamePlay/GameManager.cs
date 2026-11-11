@@ -342,6 +342,8 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (!PhotonNetwork.IsMasterClient)
             return;
 
+        // Atanın bu tur açtığı/işlediği taşlar az önce masaya oturdu; işlek listesi onlarla güncel olsun.
+        tileDistrubite.RecalculateAllAvailableSlots();
         string reason = DiscardPenaltyReason(
             thrownTile,
             tileDistrubite.GetIndicatorTile(),

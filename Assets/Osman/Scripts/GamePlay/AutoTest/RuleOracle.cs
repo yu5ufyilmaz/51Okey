@@ -48,6 +48,57 @@ public static class RuleOracle
         return 0;
     }
 
+    // Masadaki taşlardan işlek liste (atanın açıp açmamasından bağımsız). rows: (tür, yuva sırasıyla taşlar; boş = null),
+    // tür 0 seri (13'lük satır, yuva = sayı-1), 1 sayı grubu (4'lük), 2 çift (2'lik).
+    public static List<Tiles> Islek(IEnumerable<(int type, Tiles[] row)> rows)
+    {
+        var islek = new List<Tiles>();
+        void Add(TileColor c, int n) => islek.Add(new Tiles(c, n, TileType.Number));
+
+        foreach (var (type, row) in rows)
+        {
+            if (type == 0)
+            {
+                // Boşlukla ayrılan her dizi ayrı seri: iki uç + okeyin tuttuğu sayı (yuvası).
+                for (int s = 0; s < row.Length; s++)
+                {
+                    if (row[s] == null || (s > 0 && row[s - 1] != null))
+                        continue;
+                    int e = s;
+                    while (e + 1 < row.Length && row[e + 1] != null)
+                        e++;
+                    var real = row.Skip(s).Take(e - s + 1).FirstOrDefault(t => !IsOkey(t));
+                    if (real == null)
+                        continue;
+                    if (s > 0)
+                        Add(real.color, s);
+                    if (e < 12)
+                        Add(real.color, e + 2);
+                    for (int i = s; i <= e; i++)
+                        if (IsOkey(row[i]))
+                            Add(real.color, i + 1);
+                }
+            }
+            else
+            {
+                var tiles = row.Where(t => t != null).ToList();
+                var real = tiles.FirstOrDefault(t => !IsOkey(t));
+                if (real == null)
+                    continue;
+                var colors = tiles.Where(t => !IsOkey(t)).Select(t => t.color).ToList();
+                if (type == 1 && tiles.Count >= 3)
+                {
+                    foreach (TileColor c in System.Enum.GetValues(typeof(TileColor)))
+                        if (!colors.Contains(c))
+                            Add(c, real.number);
+                }
+                else if (type == 2 && tiles.Any(IsOkey))
+                    Add(real.color, real.number);
+            }
+        }
+        return islek;
+    }
+
     // Başkasının perine işlenen sayının 10 katı (gösterge kopyası 20 katı) per sahibine; kendi perine ceza yok.
     public static int ProcessPenalty(Tiles processed, int representedNumber, Tiles indicator, bool ontoOwnMeld)
     {

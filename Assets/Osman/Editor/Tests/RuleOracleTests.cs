@@ -21,6 +21,63 @@ public class RuleOracleTests
         Assert.AreEqual(0, RuleOracle.DiscardPenalty(new Tiles(TileColor.red, 9, TileType.FakeJoker), Ind, false, islek, false));
     }
 
+    // Masa satırı: yuva sırasıyla taşlar, boş yuva null. Seri satırında yuva = sayı - 1.
+    static Tiles[] SeriesRow(params (int number, Tiles tile)[] at)
+    {
+        var row = new Tiles[13];
+        foreach (var (n, t) in at)
+            row[n - 1] = t;
+        return row;
+    }
+
+    static bool Has(List<Tiles> islek, TileColor c, int n) => islek.Exists(t => t.color == c && t.number == n);
+
+    [Test]
+    public void Islek_SeriesEndsAndTheOkeysNumber()
+    {
+        // y10 OKEY y12 y13: uçlar y9 (13'ten sonrası yok), okeyin tuttuğu y11 de işlek (kullanıcı kararı).
+        var row = SeriesRow(
+            (10, T(TileColor.yellow, 10)),
+            (11, Okey()),
+            (12, T(TileColor.yellow, 12)),
+            (13, T(TileColor.yellow, 13))
+        );
+        var islek = RuleOracle.Islek(new[] { (0, row) });
+        Assert.IsTrue(Has(islek, TileColor.yellow, 9));
+        Assert.IsTrue(Has(islek, TileColor.yellow, 11));
+        Assert.AreEqual(2, islek.Count);
+    }
+
+    [Test]
+    public void Islek_TwoRunsInOneRowAreSeparateMelds()
+    {
+        var row = SeriesRow(
+            (2, T(TileColor.red, 2)),
+            (3, T(TileColor.red, 3)),
+            (4, T(TileColor.red, 4)),
+            (6, T(TileColor.blue, 6)),
+            (7, T(TileColor.blue, 7)),
+            (8, T(TileColor.blue, 8))
+        );
+        var islek = RuleOracle.Islek(new[] { (0, row) });
+        Assert.IsTrue(Has(islek, TileColor.red, 1) && Has(islek, TileColor.red, 5));
+        Assert.IsTrue(Has(islek, TileColor.blue, 5) && Has(islek, TileColor.blue, 9));
+        Assert.AreEqual(4, islek.Count);
+    }
+
+    [Test]
+    public void Islek_GroupMissingColorsAndPairOkeyMate()
+    {
+        // 7'li grup: kırmızı, mavi, okey -> sarı 7 ve siyah 7 eksik. Çift: okey + mavi 5 -> mavi 5.
+        var group = new[] { T(TileColor.red, 7), T(TileColor.blue, 7), Okey(), null };
+        var pair = new[] { Okey(), T(TileColor.blue, 5) };
+        var full = new[] { T(TileColor.red, 3), T(TileColor.blue, 3), T(TileColor.yellow, 3), T(TileColor.black, 3) };
+        var islek = RuleOracle.Islek(new[] { (1, group), (2, pair), (1, full) });
+        Assert.IsTrue(Has(islek, TileColor.yellow, 7) && Has(islek, TileColor.black, 7));
+        Assert.IsTrue(Has(islek, TileColor.blue, 5));
+        Assert.AreEqual(3, islek.Count);
+    }
+
     [Test]
     public void Discard_IndicatorCopyOnlyAfterPairsOpened()
     {
