@@ -717,6 +717,8 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             if (tileUI != null)
             {
                 tileUI.SetTileData(tile);
+                // Start'ı beklemeden yuvaya otur; yoksa ilk karede prefab boyunda görünür.
+                tileUI.FitToParent();
             }
             Debug.Log(
                 $"[BAŞARILI] {playerCount}. Sıranın taşı Koltuk {targetSeat} konumuna atıldı."

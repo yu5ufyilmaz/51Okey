@@ -39,6 +39,9 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     private Vector3 _currentVelocity; // SmoothDamp için
     private float _targetRotationZ;
 
+    // Atılan taş atma yerine kayarken başka taş oynatılmasın (çift atma / işleme).
+    private static float discardLockUntil;
+
     [Header("Game Feel")]
     [SerializeField]
     private float dragDamping = 0.01f; // Yumuşak takip (0.03 - 0.05 ideal)
@@ -280,6 +283,9 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             Debug.LogWarning("Gösterge taşını hareket ettiremezsiniz!");
             return (false, false);
         }
+
+        if (Time.time < discardLockUntil)
+            return (false, false);
 
         if (!turnManager.IsPlayerTurn())
         {
@@ -860,8 +866,24 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         }
 
         // --- GÖRSEL HAREKET ---
-        StartCoroutine(SmoothMove(transform, rightTileContainer));
-        yield return new WaitForSeconds(0.05f);
+        // Taş, yana atılan taşın çıkacağı yere tam varır; yenisi ancak o zaman çıkar ve bu taş aynı karede gizlenir.
+        // Önceden yenisi 0.05 sn'de çıkıyor, bu taş yarı yoldayken siliniyordu.
+        GameObject dropSpot = FindObjectOfType<SeatManager>()?.tiledropOffset[0];
+        Transform target = dropSpot != null ? dropSpot.transform : rightTileContainer;
+        discardLockUntil = Time.time + slideDuration + 0.5f;
+        if (target is RectTransform to && transform is RectTransform me && me.localScale.x > 0 && me.localScale.y > 0)
+        {
+            // Kayarken atma yerinin boyuna küçülsün ki yer değişiminde boyut zıplamasın (Update ölçeği _targetScale'e taşır).
+            float unitW = me.rect.width * me.lossyScale.x / me.localScale.x;
+            float unitH = me.rect.height * me.lossyScale.y / me.localScale.y;
+            if (unitW > 0 && unitH > 0)
+                _targetScale = new Vector3(
+                    to.rect.width * to.lossyScale.x / unitW,
+                    to.rect.height * to.lossyScale.y / unitH,
+                    1f
+                );
+        }
+        yield return Slide(transform, target.position);
 
         // --- [DÜZELTME 2] VERİTABANINDAN SİLME (ATILAN TAŞ) ---
         // TileDistrubite üzerindeki gerçek listeden hangi indeksi sileceğimizi ID ile buluyoruz.
@@ -887,6 +909,9 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                 playerQueInt,
                 indexToRemove
             );
+            // RPC yerelde hemen çalıştı, yana atılan taş tam bu noktada oluştu.
+            if (canvasGroup != null)
+                canvasGroup.alpha = 0f;
         }
         else
         {
@@ -937,8 +962,29 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     // Private yerine PUBLIC yapıyoruz ki Swap sırasında diğer taşa erişebilelim
     public IEnumerator SmoothMove(Transform tile, Transform targetPlaceholder)
     {
+        yield return Slide(tile, targetPlaceholder.position);
+
+        if (tile != null)
+        {
+            // [ÇÖZÜM]: true parametresi dünya pozisyonunu korur, zıplamayı önler.
+            tile.SetParent(targetPlaceholder, true);
+
+            // Görsel olarak zaten oradayız, şimdi verileri eşitleyelim.
+            tile.localPosition = Vector3.zero;
+            tile.localScale = Vector3.one;
+            tile.localRotation = Quaternion.identity;
+
+            FitToParent();
+            CheckPlace();
+
+            if (scoreManager != null)
+                scoreManager.CheckForPer();
+        }
+    }
+
+    IEnumerator Slide(Transform tile, Vector3 targetPos)
+    {
         Vector3 startPos = tile.position;
-        Vector3 targetPos = targetPlaceholder.position;
 
         float elapsedTime = 0f;
         float duration = slideDuration > 0 ? slideDuration : 0.25f;
@@ -962,21 +1008,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         }
 
         if (tile != null)
-        {
-            // [ÇÖZÜM]: true parametresi dünya pozisyonunu korur, zıplamayı önler.
-            tile.SetParent(targetPlaceholder, true);
-
-            // Görsel olarak zaten oradayız, şimdi verileri eşitleyelim.
-            tile.localPosition = Vector3.zero;
-            tile.localScale = Vector3.one;
-            tile.localRotation = Quaternion.identity;
-
-            FitToParent();
-            CheckPlace();
-
-            if (scoreManager != null)
-                scoreManager.CheckForPer();
-        }
+            tile.position = targetPos;
     }
     #endregion
     /// <summary>
