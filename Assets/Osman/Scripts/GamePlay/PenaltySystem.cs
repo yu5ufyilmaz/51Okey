@@ -39,8 +39,9 @@ public class PenaltySystem : MonoBehaviourPunCallbacks
     // BÖLÜM 1: CEZA HESAPLAMA MANTIĞI (Math & Rules)
     // =================================================================================
 
-    // Kural kitabı: kazanan her zaman 600 düşer. Açmayan sabit 600. Açan: kalan taş başına 10 × renk çarpanı
-    // (çift açtıysa 2 kat), elde kalan her okey ayrıca 250. Özel bitişte kaybedenlerin cezası finishMultiplier ile çarpılır.
+    // Kural kitabı: kazananın düşeri renge göre 100 × çarpan (sarı 600), bitiş türü değiştirmez. Açmayan sabit 600.
+    // Açan: kalan taş başına 10 × renk çarpanı (çift açtıysa 2 kat), elde kalan her okey ayrıca 250.
+    // Özel bitişte kaybedenlerin cezası finishMultiplier ile çarpılır.
     public static int EndPenalty(
         bool isWinner,
         bool hasOpened,
@@ -52,16 +53,16 @@ public class PenaltySystem : MonoBehaviourPunCallbacks
     )
     {
         if (isWinner)
-            return -600;
+            return -100 * colorMultiplier;
         int penalty = hasOpened
             ? normalTiles * 10 * colorMultiplier * (openedPairs ? 2 : 1) + okeys * 250
             : 600;
         return penalty * finishMultiplier;
     }
 
-    // Çiftten, okey atarak ya da kimse açmadan bitiş: her biri 2 kat, birbiriyle çarpılır.
-    public static int FinishMultiplier(bool pairs, bool okeyShot, bool nobodyElseOpened) =>
-        (pairs ? 2 : 1) * (okeyShot ? 2 : 1) * (nobodyElseOpened ? 2 : 1);
+    // Çiftten, okey atarak ya da kafa (kimse açmamışken aynı turda açıp bitmek) bitiş: her biri 2 kat, birbiriyle çarpılır.
+    public static int FinishMultiplier(bool pairs, bool okeyShot, bool kafa) =>
+        (pairs ? 2 : 1) * (okeyShot ? 2 : 1) * (kafa ? 2 : 1);
 
     /// <summary>
     /// Oyun sonunda bir oyuncunun yiyeceği cezayı hesaplar.
@@ -196,7 +197,10 @@ public class PenaltySystem : MonoBehaviourPunCallbacks
     [PunRPC]
     public void ApplyPenaltyRPC(int playerQue, int penaltyAmount)
     {
-        // ScoreManager'ı bul ve puanı güncelle
+        // Cezaları sadece master tutar (diğer cezalar da master'da); her client kendi eksik kopyasından
+        // PlayerScore yazarsa son yazan kazanır ve ekrandaki puan yanlış olur.
+        if (!PhotonNetwork.IsMasterClient)
+            return;
         if (GameManager.Instance != null && GameManager.Instance.scoreManager != null)
         {
             // ScoreManager'daki UpdatePlayerScore metodunu çağır

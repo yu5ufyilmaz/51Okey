@@ -217,7 +217,8 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (!PhotonNetwork.IsMasterClient)
             return;
 
-        int penalty = (pickedTileNumber > 0) ? (pickedTileNumber * 10) : 250;
+        // Kural kitabı: alınan taşın sayısının 10 katı (okey için de, 250 değil).
+        int penalty = pickedTileNumber * 10;
         int targetPlayerQue = (currentPlayerQue == 1) ? 4 : currentPlayerQue - 1;
 
         scoreManager.UpdatePlayerScore(targetPlayerQue, penalty);
@@ -259,6 +260,8 @@ public class GameManager : MonoBehaviourPunCallbacks
                 RpcTarget.AllBuffered,
                 playerQue
             );
+            // Ceza bir kez yazıldı; artık normal çekmiş sayılır, atabilir (yoksa her atma denemesi yeni +250).
+            turnManager.hasPickedFromSide = false;
         }
         else
         {
@@ -323,71 +326,57 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (!PhotonNetwork.IsMasterClient)
             return;
 
-        Tiles indicator = tileDistrubite.GetIndicatorTile();
-        int penaltyAmount = 0;
-        string reason = "";
-
-        // --- OKEY TAŞINI BELİRLE ---
-        int okeyNumber = -1;
-        TileColor okeyColor = TileColor.black;
-
-        if (indicator != null)
-        {
-            okeyColor = indicator.color;
-            okeyNumber = indicator.number + 1;
-            if (okeyNumber > 13)
-                okeyNumber = 1;
-        }
-
-        bool isRealOkey = (thrownTile.color == okeyColor && thrownTile.number == okeyNumber);
-
-        // 1. OKEY ATMA CEZASI
-        if (
-            thrownTile.type == TileType.Joker
-            || (isRealOkey && thrownTile.type != TileType.FakeJoker)
-        )
-        {
-            penaltyAmount = 250;
-            reason = "Okey (Joker) Atıldı";
-        }
-        // 2. GÖSTERGE ATMA CEZASI
-        else if (
-            indicator != null
-            && thrownTile.color == indicator.color
-            && thrownTile.number == indicator.number
-        )
-        {
-            penaltyAmount = 250;
-            reason = "Gösterge Taşı (İşlek) Atıldı";
-        }
-        // 3. İŞLEK TAŞ ATMA CEZASI
-        else
-        {
-            if (tileDistrubite.availableTiles != null && thrownTile.type != TileType.FakeJoker)
-            {
-                foreach (var t in tileDistrubite.availableTiles)
-                {
-                    if (
-                        t.color == thrownTile.color
-                        && t.number == thrownTile.number
-                        && t.type != TileType.Joker
-                    )
-                    {
-                        penaltyAmount = 250;
-                        reason = "İşlek Taş Atıldı";
-                        break;
-                    }
-                }
-            }
-        }
-
+        int penaltyAmount = DiscardPenalty(
+            thrownTile,
+            tileDistrubite.GetIndicatorTile(),
+            IsDoubleOpenedOnTable,
+            tileDistrubite.availableTiles
+        );
         if (penaltyAmount > 0)
         {
             scoreManager.UpdatePlayerScore(playerQue, penaltyAmount);
             Debug.Log(
-                $"<color=red>CEZA KESİLDİ!</color> Sebep: {reason} -> Oyuncu {playerQue} +{penaltyAmount}"
+                $"<color=red>CEZA KESİLDİ!</color> Atılan: {thrownTile.color} {thrownTile.number} -> Oyuncu {playerQue} +{penaltyAmount}"
             );
         }
+    }
+
+    // Okey, işlek taş ya da (masada çift açıldıysa) gösterge kopyası atmak: 250. Bir atışta tek ceza.
+    // Kural kitabı: gösterge "bu şartlar altında" (biri çift açınca işlenebildiği için) işlek sayılır.
+    public static int DiscardPenalty(
+        Tiles thrownTile,
+        Tiles indicator,
+        bool pairsOpenedOnTable,
+        IEnumerable<Tiles> islekTiles
+    )
+    {
+        int okeyNumber = -1;
+        TileColor okeyColor = TileColor.black;
+        if (indicator != null)
+        {
+            okeyColor = indicator.color;
+            okeyNumber = indicator.number % 13 + 1;
+        }
+        bool isRealOkey = thrownTile.color == okeyColor && thrownTile.number == okeyNumber;
+
+        if (thrownTile.type == TileType.Joker || (isRealOkey && thrownTile.type != TileType.FakeJoker))
+            return 250;
+        if (
+            indicator != null
+            && thrownTile.type == TileType.Number
+            && thrownTile.color == indicator.color
+            && thrownTile.number == indicator.number
+        )
+            return pairsOpenedOnTable ? 250 : 0;
+        if (
+            islekTiles != null
+            && thrownTile.type != TileType.FakeJoker
+            && islekTiles.Any(t =>
+                t.color == thrownTile.color && t.number == thrownTile.number && t.type != TileType.Joker
+            )
+        )
+            return 250;
+        return 0;
     }
 
     // --- OYUN BİTİŞ KONTROLÜ ---
@@ -400,8 +389,8 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (data.handTiles.Count == 0)
         {
             Debug.Log($"OYUN BİTTİ! Kazanan ActorNumber: {data.actorNumber}");
-            // isDoubleFinish master'da playersWhoOpenedPairs'ten hesaplanır.
-            photonView.RPC("FinishGameRPC", RpcTarget.All, data.actorNumber, data.okeyFinish, false);
+            // Çiftten bitiş master'da playersWhoOpenedPairs'ten hesaplanır; okey ve kafa sadece bitirenin client'ında bilinir.
+            photonView.RPC("FinishGameRPC", RpcTarget.All, data.actorNumber, data.okeyFinish, data.kafa);
             return;
         }
 
@@ -445,7 +434,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     }
 
     [PunRPC]
-    public void FinishGameRPC(int winnerActorNumber, bool isOkeyShot, bool isDoubleFinish)
+    public void FinishGameRPC(int winnerActorNumber, bool isOkeyShot, bool isKafa)
     {
         if (!isGameReady)
             return;
@@ -455,22 +444,18 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         if (PhotonNetwork.IsMasterClient)
         {
-            CalculateAndDistributeScores(winnerActorNumber, isOkeyShot, isDoubleFinish);
+            CalculateAndDistributeScores(winnerActorNumber, isOkeyShot, isKafa);
         }
     }
 
-    private void CalculateAndDistributeScores(
-        int winnerActorNumber,
-        bool isOkeyShot,
-        bool isDoubleFinish
-    )
+    private void CalculateAndDistributeScores(int winnerActorNumber, bool isOkeyShot, bool isKafa)
     {
         List<int> actors = new List<int>();
         List<int> listRewards = new List<int>();
         List<int> listPenalties = new List<int>();
         List<int> listNetScores = new List<int>();
 
-        // Özel bitiş çarpanı: çiftten, okey atarak ya da masada kendisinden başka kimse açmadan bitiş.
+        // Özel bitiş çarpanı: çiftten, okey atarak ya da kafa bitiş.
         int finishMultiplier = 1;
         Player winner = winnerActorNumber != -1 ? PhotonNetwork.CurrentRoom.GetPlayer(winnerActorNumber) : null;
         if (winner != null)
@@ -479,7 +464,7 @@ public class GameManager : MonoBehaviourPunCallbacks
             finishMultiplier = PenaltySystem.FinishMultiplier(
                 scoreManager.playersWhoOpenedPairs.Contains(winnerQue),
                 isOkeyShot,
-                scoreManager.playersWhoOpened.All(q => q == winnerQue)
+                isKafa
             );
         }
 

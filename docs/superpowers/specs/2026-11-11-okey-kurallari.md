@@ -113,3 +113,18 @@ Kullanıcı: #58 bug değil (taş adedi × 10 × çarpan doğru).
 2. Oyun hep "katlamalı" mı? Kod limiti her açılışta yükseltiyor; kitap bunu katlamalı mod için söylüyor.
 3. Açmayan oyuncunun 600'ü sabit mi, renk çarpanıyla mı? (Kitap örneği sarı için 600.)
 4. "Aynı elde en fazla 2 taş işleme"deki "el" bir tur mu, yoksa oyunun bir eli mi?
+
+### Kullanıcı kararları (2026-11-11)
+
+- İlk açma 51 ile olur (`>= 51`); biri açtıktan sonra yeri geçmek gerekir (katlamalı mod; katlamasız ileride).
+- Açmayan oyuncu: sabit 600.
+- "Aynı elde en fazla 2 taş işleme": el = tur.
+- Yandan alıp açamayan: bir kez +250, kilitlenmez; "geri bırak" tuşu cezasız.
+- Limit altında açma denemesi: ceza yok, ekranda "Limitin yetmiyor, açamazsın" mesajı.
+- Yandan alma cezası (önceki oyuncuya taş sayısı × 10): turu işleyerek tamamlarsa da, önceden açmış biri yeni per açarsa da yazılır; okey alınsa da 250 değil, sayı × 10.
+- Önceden açmış oyuncunun sonraki açılışları masa limitini yükseltmez.
+- Kazananın düşeri renge göre: 100 × renk çarpanı (sarı 600, kırmızı 500, …).
+- Kafa: masada kimse açmamışken oyuncunun aynı turda kemiksiz açıp bitmesi. Önceki turda açıp sonra biten kafa sayılmaz.
+- Gösterge kopyası atma cezası (250) sadece masada çift açılmışsa (kitap: "bu şartlar altında işlek sayılır").
+- Otomatik işle (`ActivePers`) okeyi ilk boşluğa koyabilir; ama elde atacak 1 taş bırakmalı.
+- İşleme cezaları sadece master'da uygulanır (`PlayerScore` yarışı giderildi).

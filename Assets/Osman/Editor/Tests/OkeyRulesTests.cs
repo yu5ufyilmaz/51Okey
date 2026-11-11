@@ -118,6 +118,37 @@ public class OkeyRulesTests
     }
 
     [Test]
+    public void EndPenalty_WinnerRewardScalesWithColour()
+    {
+        // "Sarı da biter ise 600 düşer": düşer = 100 × renk çarpanı
+        Assert.AreEqual(-600, PenaltySystem.EndPenalty(true, true, false, 0, 0, 6, 1));
+        Assert.AreEqual(-500, PenaltySystem.EndPenalty(true, true, false, 0, 0, 5, 1));
+        Assert.AreEqual(-800, PenaltySystem.EndPenalty(true, true, false, 0, 0, 8, 4));
+    }
+
+    // --- Atma cezası ---
+
+    [Test]
+    public void DiscardPenalty_IndicatorCopyOnlyAfterPairsOpened()
+    {
+        var ind = T(TileColor.blue, 5);
+        var none = new List<Tiles>();
+        Assert.AreEqual(0, GameManager.DiscardPenalty(T(TileColor.blue, 5), ind, false, none));
+        Assert.AreEqual(250, GameManager.DiscardPenalty(T(TileColor.blue, 5), ind, true, none));
+    }
+
+    [Test]
+    public void DiscardPenalty_OkeyAndIslek()
+    {
+        var ind = T(TileColor.blue, 5);
+        var islek = new List<Tiles> { T(TileColor.red, 9) };
+        Assert.AreEqual(250, GameManager.DiscardPenalty(Okey(), ind, false, islek));
+        Assert.AreEqual(250, GameManager.DiscardPenalty(T(TileColor.red, 9), ind, false, islek));
+        Assert.AreEqual(0, GameManager.DiscardPenalty(T(TileColor.red, 8), ind, false, islek));
+        Assert.AreEqual(0, GameManager.DiscardPenalty(new Tiles(TileColor.red, 9, TileType.FakeJoker), ind, false, islek));
+    }
+
+    [Test]
     public void FinishMultiplier_Multiplies()
     {
         Assert.AreEqual(1, PenaltySystem.FinishMultiplier(false, false, false));

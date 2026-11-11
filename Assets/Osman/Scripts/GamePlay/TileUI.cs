@@ -816,12 +816,35 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             );
         }
 
+        // Yandan alan turu açarak ya da işleyerek tamamladı: taşı atan önceki oyuncu taş sayısı × 10 yer.
+        // Atışta yazılır ki geri almalar sayılmasın ve seri+çift açınca iki kez yazılmasın.
+        if (
+            turnManager.hasPickedFromSide
+            && (turnManager.hasOpenedThisTurn || turnManager.hasProcessedThisTurn)
+            && GameManager.Instance != null
+            && GameManager.Instance.CurrentSidePickTile != null
+        )
+        {
+            GameManager.Instance.photonView.RPC(
+                "ApplySidePickSuccessPenaltyRPC",
+                RpcTarget.MasterClient,
+                playerQueInt,
+                GameManager.Instance.CurrentSidePickTile.number
+            );
+        }
+
         // GameManager'a Bildir
         if (tileDistrubite != null)
         {
             HandData data = new HandData();
             data.actorNumber = PhotonNetwork.LocalPlayer.ActorNumber;
             data.okeyFinish = isGameReallyOver && tileDataInfo.type == TileType.Joker;
+            // Kafa: masada kimse açmamışken aynı turda kemiksiz açıp bitmek.
+            data.kafa =
+                isGameReallyOver
+                && scoreManager != null
+                && scoreManager.FirstOpenThisTurn
+                && scoreManager.playersWhoOpened.All(q => q == playerQueInt);
             // Eğer oyun bittiyse boş el gönder, bitmediyse göstermelik bir taş koy (kontrol için)
             data.handTiles = isGameReallyOver
                 ? new List<Tiles>()

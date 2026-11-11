@@ -189,6 +189,42 @@ public class UIManager : MonoBehaviourPunCallbacks
         }
     }
 
+    // --- KISA BİLGİ MESAJI (ör. "limitin yetmiyor") ---
+    private TextMeshProUGUI messageText;
+    private Coroutine messageRoutine;
+
+    public void ShowMessage(string message, float seconds = 2.5f)
+    {
+        if (messageText == null)
+        {
+            // Sahneye ayrıca eklemeye gerek kalmasın diye ilk kullanımda masa limiti yazısının canvas'ına kurulur.
+            Canvas canvas = tableLimitText != null ? tableLimitText.canvas.rootCanvas : FindObjectOfType<Canvas>();
+            if (canvas == null)
+                return;
+            messageText = new GameObject("MessageText", typeof(RectTransform)).AddComponent<TextMeshProUGUI>();
+            messageText.transform.SetParent(canvas.transform, false);
+            if (tableLimitText != null)
+                messageText.font = tableLimitText.font;
+            messageText.alignment = TextAlignmentOptions.Center;
+            messageText.fontSize = 42;
+            messageText.color = Color.yellow;
+            messageText.raycastTarget = false;
+            messageText.rectTransform.sizeDelta = new Vector2(1200f, 120f);
+        }
+        messageText.text = message;
+        messageText.transform.SetAsLastSibling();
+        messageText.gameObject.SetActive(true);
+        if (messageRoutine != null)
+            StopCoroutine(messageRoutine);
+        messageRoutine = StartCoroutine(HideMessageAfter(seconds));
+    }
+
+    private IEnumerator HideMessageAfter(float seconds)
+    {
+        yield return new WaitForSeconds(seconds);
+        messageText.gameObject.SetActive(false);
+    }
+
     // GameManager'dan gelen 3 ayrı listeyi (Diziyi) alıyoruz
     // GameManager'dan gelen 3 ayrı listeyi (Diziyi) alıyoruz
     public void ShowDetailedGameOver(

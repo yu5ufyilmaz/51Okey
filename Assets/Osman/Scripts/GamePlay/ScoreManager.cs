@@ -142,6 +142,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         hasOpenedPairs = false;
         playersWhoOpened.Clear();
         playersWhoOpenedPairs.Clear();
+        FirstOpenThisTurn = false;
 
         // El içi cezalar (okey/işlek atma, işleme) o elin sonucuna yazıldı; yeni ele taşınmasın.
         // Sıra (que) her el değiştiği için eski cezalar yoksa başka oyuncunun hanesine geçerdi.
@@ -588,9 +589,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             }
             else
             {
-                Debug.LogWarning(
-                    $"Yetersiz Puan! Eliniz: {myCurrentScore}, Gereken: {currentLimit} üzeri."
-                );
+                ShowLimitMessage(myCurrentScore, currentLimit);
             }
         }
         else
@@ -658,9 +657,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             }
             else
             {
-                Debug.LogWarning(
-                    $"Yetersiz Çift Puanı! Eliniz: {myPairScore}, Gereken: {currentLimit} üzeri veya masada çift açılmalı."
-                );
+                ShowLimitMessage(myPairScore, currentLimit);
             }
         }
         else
@@ -985,26 +982,15 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         if (hasOpenedAnyMeld)
         {
             turnManager.hasOpenedThisTurn = true;
+            if (!HasPlayerOpened(GetPlayerQue()))
+                FirstOpenThisTurn = true;
             GameManager.Instance.photonView.RPC(
                 "SyncOpenedPlayerRPC",
                 RpcTarget.AllBuffered,
                 GetPlayerQue()
             );
 
-            if (turnManager.hasPickedFromSide)
-            {
-                int tileNumber =
-                    GameManager.Instance.CurrentSidePickTile != null
-                        ? GameManager.Instance.CurrentSidePickTile.number
-                        : 0;
-                GameManager.Instance.photonView.RPC(
-                    "ApplySidePickSuccessPenaltyRPC",
-                    RpcTarget.MasterClient,
-                    GetPlayerQue(),
-                    tileNumber
-                );
-            }
-
+            // Yandan alma cezası (önceki oyuncuya) atışta yazılır: TileUI.NextTurnRoutine.
             hasOpenedSeries = true;
             Debug.Log("Oyuncu başarıyla per açtı. Kısıtlamalar kaldırıldı.");
         }
@@ -1157,6 +1143,8 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         if (hasOpenedAnyPair)
         {
             turnManager.hasOpenedThisTurn = true;
+            if (!HasPlayerOpened(GetPlayerQue()))
+                FirstOpenThisTurn = true;
             GameManager.Instance.photonView.RPC(
                 "SyncOpenedPlayerRPC",
                 RpcTarget.AllBuffered,
@@ -1169,20 +1157,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 GetPlayerQue()
             );
             GameManager.Instance.SetDoubleOpened();
-
-            if (turnManager.hasPickedFromSide)
-            {
-                int tileNumber =
-                    (GameManager.Instance.CurrentSidePickTile != null)
-                        ? GameManager.Instance.CurrentSidePickTile.number
-                        : 0;
-                GameManager.Instance.photonView.RPC(
-                    "ApplySidePickSuccessPenaltyRPC",
-                    RpcTarget.MasterClient,
-                    GetPlayerQue(),
-                    tileNumber
-                );
-            }
             Debug.Log("Çift açıldı ve sisteme işlendi.");
         }
     }
@@ -1240,6 +1214,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         pendingMeldedTiles.Clear();
         pendingMeldInfos.Clear();
         turnManager.hasOpenedThisTurn = false;
+        FirstOpenThisTurn = false;
 
         // [DÜZELTME 2]: Açma durumunu sadece "Geçmişte hiç açmamışsak" iptal et.
         // Eğer committedMelds doluysa, demek ki önceki turlarda açmışız, o yüzden hasOpenedSeries TRUE kalmalı.
@@ -1603,6 +1578,10 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
             List<Tiles> currentHand = tileDistrubite.GetPlayerTiles();
             int playerQue = GetPlayerQue();
+
+            // Atacak bir taş elde kalmalı.
+            if (currentHand.Count <= 1)
+                break;
 
             foreach (var player in PhotonNetwork.PlayerList)
             {
@@ -1975,6 +1954,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     public void ClearTurnHistory()
     {
         actionHistory.Clear();
+        FirstOpenThisTurn = false;
         // Ayrıca bekleyen işleme listelerini de temizleyelim, ne olur ne olmaz.
         pendingSyncActions.Clear();
         pendingActivePlacements.Clear();
@@ -2014,6 +1994,16 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     }
 
     bool AnyoneElseOpened() => playersWhoOpened.Any(q => q != GetPlayerQue());
+
+    // Limit altında açma denemesi cezasız; oyuncuya sadece neden açamadığı söylenir.
+    void ShowLimitMessage(int score, int tableLimit)
+    {
+        int needed = AnyoneElseOpened() ? tableLimit + 1 : tableLimit;
+        string message = $"Limitin yetmiyor, açamazsın! (Elin: {score}, gereken: {needed})";
+        Debug.LogWarning(message);
+        if (UIManager.Instance != null)
+            UIManager.Instance.ShowMessage(message);
+    }
 
     // Seri satırı: sütun = satır*13 + (sayı-1). Bu tur bu pere işlenenleri ve perin önceki sayılarını ayırıp
     // "bir uçtan turda en fazla 2 taş" kuralını uygular.
@@ -2232,10 +2222,15 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
     private int tempOpenedScore = 0;
 
+    // Bu tur ilk kez açtı mı? Limiti sadece ilk açılış yükseltir; kafa bitişi de buna bakar.
+    public bool FirstOpenThisTurn;
+
     public void CommitFinalTableLimit()
     {
+        // Önceden açmış biri sonradan per açarsa limit yükselmez.
+        if (!FirstOpenThisTurn) { }
         // Eğer oyuncu bu tur Seri açmışsa
-        if (hasOpenedSeries)
+        else if (hasOpenedSeries)
         {
             // Hafızadaki (açarkenki) puanı kullan!
             GameManager.Instance.TryUpdateTableLimit(tempOpenedScore);
