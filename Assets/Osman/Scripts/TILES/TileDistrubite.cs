@@ -1108,54 +1108,8 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     }
     #endregion
     #region Checking AvailableTiles
+    // Tek kaynak: RecalculateAllAvailableSlots masadaki gerçek taşlardan kurar (işlenenler dahil).
     public List<Tiles> availableTiles = new List<Tiles>();
-
-    [PunRPC]
-    public void CheckForAvailableTiles(int playerQue)
-    {
-        // Her bir oyuncunun melded taşlarını kontrol et
-        switch (playerQue)
-        {
-            case 1:
-                // CheckMeldedTiles(meltedTiles1, playerQue);
-                photonView.RPC("CheckMeldedTiles", RpcTarget.AllBuffered, meltedTiles1);
-                break;
-            case 2:
-                // CheckMeldedTiles(meltedTiles2, playerQue);
-                photonView.RPC("CheckMeldedTiles", RpcTarget.AllBuffered, meltedTiles2);
-                break;
-            case 3:
-                // CheckMeldedTiles(meltedTiles3, playerQue);
-                photonView.RPC("CheckMeldedTiles", RpcTarget.AllBuffered, meltedTiles3);
-                break;
-            case 4:
-                //CheckMeldedTiles(meltedTiles4, playerQue);
-                photonView.RPC("CheckMeldedTiles", RpcTarget.AllBuffered, meltedTiles4);
-                break;
-        }
-    }
-
-    [PunRPC]
-    private void CheckMeldedTiles(List<List<Tiles>> meldedTiles)
-    {
-        foreach (var meld in meldedTiles)
-        {
-            var availableFromMeld = GetAvailableTiles(meld);
-
-            foreach (var tile in availableFromMeld)
-            {
-                // Eğer availableTiles listesinde yoksa ekle
-                if (
-                    !availableTiles.Any(t =>
-                        t.color == tile.color && t.number == tile.number && t.type == tile.type
-                    )
-                )
-                {
-                    availableTiles.Add(tile);
-                }
-            }
-        }
-    }
 
     // TileDistrubite.cs -> GetAvailableTiles Metodu
 

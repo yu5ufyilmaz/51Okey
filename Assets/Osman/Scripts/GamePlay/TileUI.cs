@@ -923,8 +923,9 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         yield return new WaitForSeconds(0.05f);
 
         // --- MASA GÜNCELLEMELERİ VE SENKRONİZASYON ---
-        // Diğer oyuncular için "işlek taş" (available tiles) kontrolünü yenile
-        tileDistrubite.photonView.RPC("CheckForAvailableTiles", RpcTarget.All, playerQueInt);
+        // İşlek listesi NextTurn'de herkeste masadaki gerçek taşlardan yeniden kurulur (RecalculateAllAvailableSlots).
+        // Burada eskiden açılıştaki perlerden ekleme yapan bir RPC vardı; işlenen taşları bilmediği ve geç ulaştığı için
+        // artık işlek olmayan taşı (ör. işlenmiş b8) geri ekliyor, sonraki atışta haksız 250 yazdırıyordu.
 
         scoreManager.CommitAndStoreMelds();
         scoreManager.CommitJokerTransactions();
