@@ -38,12 +38,13 @@ function Read-SyncStatus {
 
 # Statuses[0] host'tur. Öncelik: DESYNC > Error > eksik status > zaman aşımı > yakalanan hata > hiç kıyas yok.
 # Error eksik status'tan önce: biri girişte düşerse sonraki guest'ler hiç başlamaz, asıl sebep o Error'dır.
+# -NoHost: odayı telefon kurdu, master o; editörlerde sync sayacı yok, sadece hata ve [BUG] bakılır.
 function Get-SyncTestVerdict {
-    param([object[]]$Statuses, [string[]]$Nicks, [bool]$TimedOut)
+    param([object[]]$Statuses, [string[]]$Nicks, [bool]$TimedOut, [switch]$NoHost)
     $fail = { param($reason) [pscustomobject]@{ Pass = $false; Reason = $reason } }
 
     $host0 = $Statuses[0]
-    if ($host0 -and $host0.sync.desync -gt 0) { return & $fail "DESYNC: $($host0.sync.first)" }
+    if (-not $NoHost -and $host0 -and $host0.sync.desync -gt 0) { return & $fail "DESYNC: $($host0.sync.first)" }
     for ($i = 0; $i -lt $Nicks.Count; $i++) {
         $s = $Statuses[$i]
         if ($s -and $s.state -eq 'Error') { return & $fail "$($Nicks[$i]): Error: $(@($s.errors)[0])" }
@@ -65,6 +66,7 @@ function Get-SyncTestVerdict {
         $s = $Statuses[$i]
         if (@($s.errors).Count -gt 0) { return & $fail "$($Nicks[$i]): $(@($s.errors)[0])" }
     }
+    if ($NoHost) { return [pscustomobject]@{ Pass = $true; Reason = "$($host0.deal) el, test oyuncularında hata yok" } }
     # Snapshot'lar master'a hiç ulaşmadıysa "desync 0" bir şey kanıtlamaz.
     if ($host0.sync.ok -le 0) { return & $fail "host hiç snapshot kıyaslamadı (ok 0)" }
     [pscustomobject]@{ Pass = $true; Reason = "$($host0.deal) el, ok $($host0.sync.ok), desync 0" }

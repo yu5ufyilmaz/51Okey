@@ -81,6 +81,22 @@ Describe 'Get-SyncTestVerdict' {
         $v = Get-SyncTestVerdict -Statuses $s -Nicks $Nicks -TimedOut $false
         $v.Pass | Should Be $false
     }
+
+    It 'passes in join mode, where no editor is master and nothing is compared' {
+        $bots = @('AT-g1', 'AT-g2', 'AT-g3')
+        $s = $bots | ForEach-Object { New-Status $_ -ok 0 }
+        $v = Get-SyncTestVerdict -Statuses $s -Nicks $bots -TimedOut $false -NoHost
+        $v.Pass | Should Be $true
+    }
+
+    It 'still fails on a bot error in join mode' {
+        $bots = @('AT-g1', 'AT-g2', 'AT-g3')
+        $s = $bots | ForEach-Object { New-Status $_ -ok 0 }
+        $s[1] = New-Status 'AT-g2' -ok 0 -errors @('[BUG] 1.4 AT-g2: x')
+        $v = Get-SyncTestVerdict -Statuses $s -Nicks $bots -TimedOut $false -NoHost
+        $v.Pass | Should Be $false
+        $v.Reason | Should Match 'BUG'
+    }
 }
 
 Describe 'Test-EditorStopped' {

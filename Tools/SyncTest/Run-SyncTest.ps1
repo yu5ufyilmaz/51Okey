@@ -7,6 +7,7 @@
   powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -Deals 1 -InjectDesync 5   # harness kendini test eder: FAIL beklenir
   powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -Mode smart -Seed 11       # test oyuncuları (diz, aç, işle, yandan al)
   powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -Mode smart -Mistakes 0.3 # bazen bilerek kural dışı
+  powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -JoinRoom osman        # telefonda kurulan odaya 3 clone test oyuncusu olarak girer
   Tasarım (smart): docs/superpowers/specs/2026-11-11-test-oyunculari-design.md
 .NOTES
   1 el ~4 dk sürer. Claude 10 dk'lık komut sınırına takılmasın diye uzun koşuları arka planda (run_in_background) başlatır;
@@ -21,6 +22,7 @@ param(
     [double]$Mistakes = 0,
     [int]$InjectOracleBug = 0,   # öz-test: AT-g1 bu hamlede beklenen cezayı bilerek bozar, [BUG] ile FAIL beklenir
     [switch]$KeepPlaying,
+    [string]$JoinRoom = '',   # insana karşı: odayı telefon kurar (master o), 3 clone bu ada katılır
     [string[]]$Projects = @(
         'C:\Users\osman\Documents\51Okey',
         'C:\Users\osman\Documents\51Okey_clone_0',
@@ -30,9 +32,11 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\SyncTestLib.ps1"
+if ($JoinRoom -and -not $PSBoundParameters.ContainsKey('Mode')) { $Mode = 'smart' }
 if ($TimeoutSec -le 0) {
     $TimeoutSec = Get-DefaultTimeoutSec $Deals
     if ($Mode -eq 'smart') { $TimeoutSec *= 2 }   # dizme ve gözlem beklemeleri turları uzatır
+    if ($JoinRoom) { $TimeoutSec = 3600 * $Deals }   # insan düşünür; el başına 1 saat
 }
 
 $Nicks = @('AT-host', 'AT-g1', 'AT-g2', 'AT-g3')
@@ -41,6 +45,8 @@ function Leaf($p) { Split-Path $p -Leaf }
 # powershell -File diziyi tek string olarak verir: "a,b,c,d"
 if ($Projects.Count -eq 1) { $Projects = @($Projects[0] -split ',' | ForEach-Object { $_.Trim() }) }
 if ($Projects.Count -ne $Nicks.Count) { Write-Host "HATA: -Projects $($Nicks.Count) proje olmalı (host + 3 guest), $($Projects.Count) verildi"; exit 1 }
+# Ana editör boş kalır (build orada alınır); master telefon olduğu için host config'i yok.
+if ($JoinRoom) { $Projects = $Projects[1..3]; $Nicks = $Nicks[1..3] }
 
 function Read-All {
     $all = New-Object object[] $Projects.Count
@@ -97,7 +103,7 @@ $setStart = Join-Path ([IO.Path]::GetTempPath()) "synctest_setstart_$runId.cs"
 $resetStart = Join-Path ([IO.Path]::GetTempPath()) "synctest_resetstart_$runId.cs"
 [IO.File]::WriteAllText($setStart, 'UnityEditor.SceneManagement.EditorSceneManager.playModeStartScene = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEditor.SceneAsset>("Assets/Osman/Scenes/MainMenu.unity"); UnityEditor.SceneManagement.EditorSceneManager.playModeStartScene != null')
 [IO.File]::WriteAllText($resetStart, 'UnityEditor.SceneManagement.EditorSceneManager.playModeStartScene = null; true')
-Write-Host "runId $runId | $Deals el | seed $Seed$(if ($InjectDesync) { " | AT-g1 $InjectDesync. hamlede desync enjekte eder" })"
+Write-Host "runId $runId | $Deals el | seed $Seed$(if ($JoinRoom) { " | '$JoinRoom' odasına katılır" })$(if ($InjectDesync) { " | AT-g1 $InjectDesync. hamlede desync enjekte eder" })"
 try {
     # 3. Hazırlık
     for ($i = 0; $i -lt $Projects.Count; $i++) {
@@ -110,8 +116,8 @@ try {
         New-Item -ItemType Directory -Force $dir | Out-Null
         $cfg = [ordered]@{
             runId              = $runId
-            role               = $(if ($i -eq 0) { 'host' } else { 'guest' })
-            roomName           = "autotest_$runId"
+            role               = $(if ($i -eq 0 -and -not $JoinRoom) { 'host' } else { 'guest' })
+            roomName           = $(if ($JoinRoom) { $JoinRoom } else { "autotest_$runId" })
             nickName           = $Nicks[$i]
             deals              = $Deals
             seed               = $Seed
@@ -144,7 +150,7 @@ try {
         $all = Read-All
         $h = $all[0]
         $moves = ($all | ForEach-Object { if ($_) { $_.myMoves } else { '?' } }) -join '/'
-        $line = "deal $(if ($h) { $h.deal } else { '?' }) | moves $moves | ok $(if ($h) { $h.sync.ok }) desync $(if ($h) { $h.sync.desync })"
+        $line = "deal $(if ($h) { $h.deal } else { '?' }) | moves $moves$(if (-not $JoinRoom) { " | ok $(if ($h) { $h.sync.ok }) desync $(if ($h) { $h.sync.desync })" })"
         if ($line -ne $last) { Write-Host $line; $last = $line }
         $states = @($all | ForEach-Object { if ($_) { $_.state } else { '' } })
         if (@($states | Where-Object { $_ -eq 'Done' }).Count -eq $Projects.Count) { break }
@@ -201,7 +207,7 @@ if ($Mode -eq 'smart') {
     }
 }
 
-$v = Get-SyncTestVerdict -Statuses $final -Nicks $Nicks -TimedOut $timedOut
+$v = Get-SyncTestVerdict -Statuses $final -Nicks $Nicks -TimedOut $timedOut -NoHost:([bool]$JoinRoom)
 $elapsed = [int]((Get-Date) - $started).TotalSeconds
 if ($v.Pass) { Write-Host "PASS: $($v.Reason) ($elapsed sn)"; exit 0 }
 Write-Host "FAIL: $($v.Reason) ($elapsed sn)"
