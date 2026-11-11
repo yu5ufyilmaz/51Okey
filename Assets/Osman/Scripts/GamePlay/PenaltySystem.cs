@@ -205,6 +205,7 @@ public class PenaltySystem : MonoBehaviourPunCallbacks
         {
             // ScoreManager'daki UpdatePlayerScore metodunu çağır
             GameManager.Instance.scoreManager.UpdatePlayerScore(playerQue, penaltyAmount);
+            GameManager.Instance.AnnouncePenalty(playerQue, penaltyAmount, "Perine işlendi");
 
             Debug.Log(
                 $"<color=red>[PENALTY APPLIED]</color> Oyuncu {playerQue} ceza yedi: {penaltyAmount}"

@@ -225,6 +225,68 @@ public class UIManager : MonoBehaviourPunCallbacks
         messageText.gameObject.SetActive(false);
     }
 
+    // --- CEZA YAZISI: cezayı yiyenin isimliğinin üstünde "+250 / sebep", büyüyerek çıkar, aşağı düşerek söner ---
+    private readonly int[] activePenaltyFloats = new int[5];
+
+    public void ShowPenaltyFloat(int playerQue, int amount, string reason)
+    {
+        int myQue = 0;
+        if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object val))
+            myQue = (int)val;
+        if (myQue == 0 || playerQue < 1 || playerQue > 4)
+            return;
+        // turnIndicators sıraya göre dizili (UpdateTurnIndicators ile aynı formül); isimlik onun ebeveyni.
+        int idx = (playerQue - myQue + 4) % 4;
+        if (idx >= turnIndicators.Length || turnIndicators[idx] == null)
+            return;
+        Transform nameplate = turnIndicators[idx].transform.parent;
+        Canvas canvas = nameplate.GetComponentInParent<Canvas>()?.rootCanvas;
+        if (canvas == null)
+            return;
+
+        var t = new GameObject("PenaltyFloat", typeof(RectTransform)).AddComponent<TextMeshProUGUI>();
+        t.transform.SetParent(canvas.transform, false);
+        if (tableLimitText != null)
+            t.font = tableLimitText.font;
+        t.text = $"+{amount}\n<size=55%>{reason}</size>";
+        t.alignment = TextAlignmentOptions.Center;
+        t.fontSize = 48;
+        t.color = new Color(1f, 0.25f, 0.2f);
+        t.outlineWidth = 0.2f;
+        t.outlineColor = Color.black;
+        t.raycastTarget = false;
+        t.rectTransform.sizeDelta = new Vector2(420f, 130f);
+        t.rectTransform.position = nameplate.position;
+        // Aynı oyuncuya üst üste ceza gelirse (birkaç işleme) yazılar çakışmasın.
+        t.rectTransform.anchoredPosition += new Vector2(0f, 90f + 55f * activePenaltyFloats[playerQue]);
+        t.transform.SetAsLastSibling();
+        activePenaltyFloats[playerQue]++;
+        StartCoroutine(PenaltyFloat(t, playerQue));
+    }
+
+    private IEnumerator PenaltyFloat(TextMeshProUGUI t, int playerQue)
+    {
+        RectTransform rt = t.rectTransform;
+        Vector2 start = rt.anchoredPosition;
+        for (float e = 0f; e < 1.8f && t != null; e += Time.deltaTime)
+        {
+            rt.localScale =
+                Vector3.one
+                * (
+                    e < 0.2f ? Mathf.Lerp(0.4f, 1.15f, e / 0.2f)
+                    : e < 0.3f ? Mathf.Lerp(1.15f, 1f, (e - 0.2f) / 0.1f)
+                    : 1f
+                );
+            float fall = Mathf.Clamp01((e - 0.8f) / 1f);
+            rt.anchoredPosition = start + Vector2.down * 70f * fall * fall;
+            t.alpha = 1f - fall;
+            yield return null;
+        }
+        if (t != null)
+            Destroy(t.gameObject);
+        activePenaltyFloats[playerQue]--;
+    }
+
     // GameManager'dan gelen 3 ayrı listeyi (Diziyi) alıyoruz
     // GameManager'dan gelen 3 ayrı listeyi (Diziyi) alıyoruz
     public void ShowDetailedGameOver(

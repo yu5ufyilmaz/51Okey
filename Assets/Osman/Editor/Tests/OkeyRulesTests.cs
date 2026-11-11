@@ -149,6 +149,19 @@ public class OkeyRulesTests
     }
 
     [Test]
+    public void DiscardPenaltyReason_NamesWhatWasThrown()
+    {
+        var ind = T(TileColor.blue, 5);
+        var islek = new List<Tiles> { T(TileColor.red, 9) };
+        Assert.AreEqual("Okey attı", GameManager.DiscardPenaltyReason(Okey(), ind, false, islek));
+        Assert.AreEqual("Okey attı", GameManager.DiscardPenaltyReason(T(TileColor.blue, 6), ind, false, islek));
+        Assert.AreEqual("Gösterge attı", GameManager.DiscardPenaltyReason(T(TileColor.blue, 5), ind, true, islek));
+        Assert.AreEqual("İşlek attı", GameManager.DiscardPenaltyReason(T(TileColor.red, 9), ind, false, islek));
+        Assert.IsNull(GameManager.DiscardPenaltyReason(T(TileColor.blue, 5), ind, false, islek));
+        Assert.IsNull(GameManager.DiscardPenaltyReason(T(TileColor.red, 8), ind, false, islek));
+    }
+
+    [Test]
     public void FinishMultiplier_Multiplies()
     {
         Assert.AreEqual(1, PenaltySystem.FinishMultiplier(false, false, false));

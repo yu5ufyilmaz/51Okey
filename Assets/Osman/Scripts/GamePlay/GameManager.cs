@@ -207,8 +207,20 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (PhotonNetwork.IsMasterClient)
         {
             scoreManager.UpdatePlayerScore(playerQue, penaltyScore);
+            AnnouncePenalty(playerQue, penaltyScore, "Yandan aldı, açamadı");
             Debug.Log($"[GENEL CEZA] Oyuncu {playerQue} için {penaltyScore} puan ceza işlendi.");
         }
+    }
+
+    // Master ceza yazınca herkes, cezayı yiyenin isimliğinin üstünde miktarı ve sebebi görür.
+    public void AnnouncePenalty(int playerQue, int amount, string reason) =>
+        photonView.RPC(nameof(ShowPenaltyRPC), RpcTarget.All, playerQue, amount, reason);
+
+    [PunRPC]
+    void ShowPenaltyRPC(int playerQue, int amount, string reason)
+    {
+        if (UIManager.Instance != null)
+            UIManager.Instance.ShowPenaltyFloat(playerQue, amount, reason);
     }
 
     [PunRPC]
@@ -222,6 +234,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         int targetPlayerQue = (currentPlayerQue == 1) ? 4 : currentPlayerQue - 1;
 
         scoreManager.UpdatePlayerScore(targetPlayerQue, penalty);
+        AnnouncePenalty(targetPlayerQue, penalty, "Taşı yandan alındı");
         currentSidePickTile = null;
 
         Debug.Log(
@@ -326,15 +339,17 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (!PhotonNetwork.IsMasterClient)
             return;
 
-        int penaltyAmount = DiscardPenalty(
+        string reason = DiscardPenaltyReason(
             thrownTile,
             tileDistrubite.GetIndicatorTile(),
             IsDoubleOpenedOnTable,
             tileDistrubite.availableTiles
         );
-        if (penaltyAmount > 0)
+        if (reason != null)
         {
+            int penaltyAmount = 250;
             scoreManager.UpdatePlayerScore(playerQue, penaltyAmount);
+            AnnouncePenalty(playerQue, penaltyAmount, reason);
             Debug.Log(
                 $"<color=red>CEZA KESİLDİ!</color> Atılan: {thrownTile.color} {thrownTile.number} -> Oyuncu {playerQue} +{penaltyAmount}"
             );
@@ -344,6 +359,14 @@ public class GameManager : MonoBehaviourPunCallbacks
     // Okey, işlek taş ya da (masada çift açıldıysa) gösterge kopyası atmak: 250. Bir atışta tek ceza.
     // Kural kitabı: gösterge "bu şartlar altında" (biri çift açınca işlenebildiği için) işlek sayılır.
     public static int DiscardPenalty(
+        Tiles thrownTile,
+        Tiles indicator,
+        bool pairsOpenedOnTable,
+        IEnumerable<Tiles> islekTiles
+    ) => DiscardPenaltyReason(thrownTile, indicator, pairsOpenedOnTable, islekTiles) != null ? 250 : 0;
+
+    // Ceza yoksa null; varsa ekranda cezanın altında yazan sebep.
+    public static string DiscardPenaltyReason(
         Tiles thrownTile,
         Tiles indicator,
         bool pairsOpenedOnTable,
@@ -360,14 +383,14 @@ public class GameManager : MonoBehaviourPunCallbacks
         bool isRealOkey = thrownTile.color == okeyColor && thrownTile.number == okeyNumber;
 
         if (thrownTile.type == TileType.Joker || (isRealOkey && thrownTile.type != TileType.FakeJoker))
-            return 250;
+            return "Okey attı";
         if (
             indicator != null
             && thrownTile.type == TileType.Number
             && thrownTile.color == indicator.color
             && thrownTile.number == indicator.number
         )
-            return pairsOpenedOnTable ? 250 : 0;
+            return pairsOpenedOnTable ? "Gösterge attı" : null;
         if (
             islekTiles != null
             && thrownTile.type != TileType.FakeJoker
@@ -375,8 +398,8 @@ public class GameManager : MonoBehaviourPunCallbacks
                 t.color == thrownTile.color && t.number == thrownTile.number && t.type != TileType.Joker
             )
         )
-            return 250;
-        return 0;
+            return "İşlek attı";
+        return null;
     }
 
     // --- OYUN BİTİŞ KONTROLÜ ---
