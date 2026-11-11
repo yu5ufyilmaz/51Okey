@@ -5,11 +5,14 @@
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -Deals 1
   powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -Deals 1 -InjectDesync 5   # harness kendini test eder: FAIL beklenir
+.NOTES
+  1 el ~4 dk sürer. Claude 10 dk'lık komut sınırına takılmasın diye uzun koşuları arka planda (run_in_background) başlatır;
+  süreç yarıda öldürülürse finally çalışmaz, editörler Play'de ve config'ler Temp'te kalır.
 #>
 param(
     [int]$Deals = 1,
     [int]$Seed = 0,
-    [int]$TimeoutSec = 600,
+    [int]$TimeoutSec = 0,   # 0 = el sayısına göre (Get-DefaultTimeoutSec)
     [int]$InjectDesync = 0,
     [switch]$KeepPlaying,
     [string[]]$Projects = @(
@@ -21,6 +24,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\SyncTestLib.ps1"
+if ($TimeoutSec -le 0) { $TimeoutSec = Get-DefaultTimeoutSec $Deals }
 
 $Nicks = @('AT-host', 'AT-g1', 'AT-g2', 'AT-g3')
 function Leaf($p) { Split-Path $p -Leaf }
@@ -52,7 +56,7 @@ foreach ($p in $Projects) {
     # Play'e yeni girmiş bir editör domain reload yüzünden ~15 sn cevap vermeyebilir.
     try { $st = Invoke-UnityCmd $p @('editor', 'status') -Retries 10 }
     catch { $problems += "${p}: erişilemiyor ($($_.Exception.Message))"; continue }
-    if ($st.playMode -eq 'playing') { $problems += "$(Leaf $p): zaten Play'de" }
+    if (-not (Test-EditorStopped $st)) { $problems += "$(Leaf $p): zaten Play'de (playMode=$($st.playMode))" }
 }
 if ($problems.Count -gt 0) { $problems | ForEach-Object { Write-Host "HATA: $_" }; exit 1 }
 
@@ -78,12 +82,19 @@ foreach ($p in $Projects) {
 $runId = Get-Date -Format 'yyyyMMdd_HHmmss'
 $timedOut = $false
 $started = Get-Date
+# Photon'a sadece MainMenu'deki PhotonManager bağlanır; editörde hangi sahne açıksa açık olsun Play oradan başlasın.
+# Kod dosyadan verilir: PowerShell 5.1 native argümanlardaki tırnakları siler.
+$setStart = Join-Path ([IO.Path]::GetTempPath()) "synctest_setstart_$runId.cs"
+$resetStart = Join-Path ([IO.Path]::GetTempPath()) "synctest_resetstart_$runId.cs"
+[IO.File]::WriteAllText($setStart, 'UnityEditor.SceneManagement.EditorSceneManager.playModeStartScene = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEditor.SceneAsset>("Assets/Osman/Scenes/MainMenu.unity"); UnityEditor.SceneManagement.EditorSceneManager.playModeStartScene != null')
+[IO.File]::WriteAllText($resetStart, 'UnityEditor.SceneManagement.EditorSceneManager.playModeStartScene = null; true')
 Write-Host "runId $runId | $Deals el | seed $Seed$(if ($InjectDesync) { " | AT-g1 $InjectDesync. hamlede desync enjekte eder" })"
 try {
     # 3. Hazırlık
     for ($i = 0; $i -lt $Projects.Count; $i++) {
         $p = $Projects[$i]
         Invoke-UnityCmd $p @('editor', 'set_auto_tick', '--enabled', 'true', '--persist', 'false') | Out-Null
+        if ((Invoke-UnityCmd $p @('script', 'eval', '--file', $setStart)) -ne $true) { throw "$(Leaf $p): Play başlangıç sahnesi MainMenu yapılamadı" }
         Invoke-UnityCmd $p @('console', 'clear') | Out-Null
         $dir = Join-Path $p 'Temp\SyncAutoTest'
         if (Test-Path $dir) { Remove-Item "$dir\*" -Recurse -Force }
@@ -138,6 +149,8 @@ finally {
         if (-not $KeepPlaying) {
             try { Invoke-UnityCmd $p @('editor.playmode', 'stop') -Retries 10 | Out-Null }
             catch { Write-Host "UYARI: $(Leaf $p) Play'den çıkarılamadı: $($_.Exception.Message)" }
+            try { Invoke-UnityCmd $p @('script', 'eval', '--file', $resetStart) -Retries 10 | Out-Null }
+            catch { Write-Host "UYARI: $(Leaf $p) Play başlangıç sahnesi sıfırlanamadı: $($_.Exception.Message)" }
         }
         $cfgPath = Join-Path $p 'Temp\SyncAutoTest\config.json'
         if (Test-Path $cfgPath) { Remove-Item $cfgPath -Force }
@@ -145,7 +158,7 @@ finally {
 }
 
 # 7. Topla
-$noise = 'Unity Remote requirements check failed|Google\.IOSResolver|mainTemplate\.gradle|^\[DESYNC\]'
+$noise = 'Unity Remote requirements check failed|Unable to perform online search|Google\.IOSResolver|mainTemplate\.gradle|^\[DESYNC\]'
 foreach ($p in $Projects) {
     try {
         $e = Invoke-UnityCmd $p @('console', 'get', '--level', 'error', '--tail', '20')

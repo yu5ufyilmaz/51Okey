@@ -39,6 +39,7 @@ public class SyncAutoTestStatus
         que,
         deal,
         myMoves;
+    public bool isMyTurn; // Zaman aşımında runner takılanı bununla bulur.
     public List<string> errors = new List<string>();
     public string desyncLog;
     public SyncCounts sync = new SyncCounts();

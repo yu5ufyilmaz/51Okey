@@ -80,6 +80,32 @@ public class SyncAutoTestDataTests
     }
 
     [Test]
+    public void IsGameError_IgnoresEditorSideErrors()
+    {
+        Assert.IsFalse(
+            SyncAutoTest.IsGameError(
+                "Unable to perform online search:",
+                "UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()\n",
+                LogType.Error
+            )
+        );
+        Assert.IsFalse(SyncAutoTest.IsGameError("[DESYNC] 1.2: x", "DesyncDetector:Compare ()\n", LogType.Error));
+        Assert.IsFalse(SyncAutoTest.IsGameError("warn", "TileUI:OnEndDrag ()\n", LogType.Warning));
+    }
+
+    [Test]
+    public void IsGameError_KeepsGameErrors()
+    {
+        Assert.IsTrue(
+            SyncAutoTest.IsGameError("NullReferenceException", "TileUI.OnEndDrag ()\n", LogType.Exception)
+        );
+        Assert.IsTrue(
+            SyncAutoTest.IsGameError("Operation CreateGame not called", "UnityEngine.Debug:LogError (object)\n", LogType.Error)
+        );
+        Assert.IsTrue(SyncAutoTest.IsGameError("boom", "", LogType.Error));
+    }
+
+    [Test]
     public void SeedForDeal_StepsPerDeal()
     {
         Assert.AreEqual(42, DesyncDetector.SeedForDeal(42, 1));

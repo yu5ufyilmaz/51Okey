@@ -290,17 +290,20 @@ public class SyncAutoTest : MonoBehaviourPunCallbacks
             Fail("odadan düştü");
     }
 
-    void OnLog(string message, string stackTrace, LogType type)
+    public static bool IsGameError(string message, string stackTrace, LogType type)
     {
         if (type != LogType.Error && type != LogType.Exception && type != LogType.Assert)
-            return;
-        // Master'ın desync'leri DesyncDetector sayacından okunur. Unity Remote hatası Editor'ün
-        // Android hedefte her Play'de bastığı adb uyarısı, oyunla ilgisi yok.
-        if (
-            message.StartsWith("[DESYNC]")
-            || message.Contains("Unity Remote requirements check failed")
-            || status.errors.Count >= MaxErrors
-        )
+            return false;
+        // Master'ın desync'leri DesyncDetector sayacından okunur.
+        if (message.StartsWith("[DESYNC]"))
+            return false;
+        // Stack'i Editor'de başlayan hatalar (Package Manager, Unity Remote/adb...) oyunla ilgisiz.
+        return !(stackTrace ?? "").TrimStart().StartsWith("UnityEditor.");
+    }
+
+    void OnLog(string message, string stackTrace, LogType type)
+    {
+        if (!IsGameError(message, stackTrace, type) || status.errors.Count >= MaxErrors)
             return;
         string firstFrame = string.IsNullOrEmpty(stackTrace) ? "" : stackTrace.Split('\n')[0];
         status.errors.Add(firstFrame.Length > 0 ? $"{message} @ {firstFrame}" : message);
@@ -331,6 +334,8 @@ public class SyncAutoTest : MonoBehaviourPunCallbacks
         status.que = MyQue;
         status.deal = deal;
         status.myMoves = myMoves;
+        status.isMyTurn =
+            state == State.Playing && turnManager != null && turnManager.currentTurnPlayer == MyQue;
         var dd = DesyncDetector.Instance;
         if (Config.IsHost && dd != null)
         {

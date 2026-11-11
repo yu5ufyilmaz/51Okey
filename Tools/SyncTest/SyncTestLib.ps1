@@ -36,31 +36,42 @@ function Read-SyncStatus {
     }
 }
 
-# Statuses[0] host'tur. Öncelik: eksik status > DESYNC > Error > zaman aşımı > yakalanan hata.
+# Statuses[0] host'tur. Öncelik: DESYNC > Error > eksik status > zaman aşımı > yakalanan hata > hiç kıyas yok.
+# Error eksik status'tan önce: biri girişte düşerse sonraki guest'ler hiç başlamaz, asıl sebep o Error'dır.
 function Get-SyncTestVerdict {
     param([object[]]$Statuses, [string[]]$Nicks, [bool]$TimedOut)
     $fail = { param($reason) [pscustomobject]@{ Pass = $false; Reason = $reason } }
 
+    $host0 = $Statuses[0]
+    if ($host0 -and $host0.sync.desync -gt 0) { return & $fail "DESYNC: $($host0.sync.first)" }
+    for ($i = 0; $i -lt $Nicks.Count; $i++) {
+        $s = $Statuses[$i]
+        if ($s -and $s.state -eq 'Error') { return & $fail "$($Nicks[$i]): Error: $(@($s.errors)[0])" }
+    }
     for ($i = 0; $i -lt $Nicks.Count; $i++) {
         if ($null -eq $Statuses[$i]) { return & $fail "$($Nicks[$i]): status yok" }
     }
-    $host0 = $Statuses[0]
-    if ($host0.sync.desync -gt 0) { return & $fail "DESYNC: $($host0.sync.first)" }
-    for ($i = 0; $i -lt $Nicks.Count; $i++) {
-        $s = $Statuses[$i]
-        if ($s.state -eq 'Error') { return & $fail "$($Nicks[$i]): Error: $(@($s.errors)[0])" }
-    }
     if ($TimedOut) {
-        for ($i = 0; $i -lt $Nicks.Count; $i++) {
+        # Takılan genelde sırası gelen client'tır; yoksa ilk bitmeyen.
+        $stuck = @(0..($Nicks.Count - 1) | Where-Object { $Statuses[$_].state -ne 'Done' })
+        $turn = @($stuck | Where-Object { $Statuses[$_].isMyTurn })
+        if ($stuck.Count -gt 0) {
+            $i = $(if ($turn.Count -gt 0) { $turn[0] } else { $stuck[0] })
             $s = $Statuses[$i]
-            if ($s.state -ne 'Done') {
-                return & $fail "zaman aşımı: $($Nicks[$i]) $($s.state) (deal $($s.deal), moves $($s.myMoves))"
-            }
+            return & $fail "zaman aşımı: $($Nicks[$i]) $($s.state)$(if ($s.isMyTurn) { ', sıra onda' }) (deal $($s.deal), moves $($s.myMoves))"
         }
     }
     for ($i = 0; $i -lt $Nicks.Count; $i++) {
         $s = $Statuses[$i]
         if (@($s.errors).Count -gt 0) { return & $fail "$($Nicks[$i]): $(@($s.errors)[0])" }
     }
+    # Snapshot'lar master'a hiç ulaşmadıysa "desync 0" bir şey kanıtlamaz.
+    if ($host0.sync.ok -le 0) { return & $fail "host hiç snapshot kıyaslamadı (ok 0)" }
     [pscustomobject]@{ Pass = $true; Reason = "$($host0.deal) el, ok $($host0.sync.ok), desync 0" }
 }
+
+# Kullanıcı Play'deyse (pause dahil) runner o editöre dokunmamalı.
+function Test-EditorStopped($status) { $null -ne $status -and $status.playMode -eq 'stopped' }
+
+# Ölçüm: giriş 60-90 sn, bir el 140-200 sn, eller arası 10 sn.
+function Get-DefaultTimeoutSec([int]$Deals) { 120 + 240 * $Deals }
