@@ -62,8 +62,6 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [SerializeField]
     List<List<Tiles>> meltedTiles4 = new List<List<Tiles>>();
 
-    [SerializeField]
-    List<List<Tiles>> validMeltedTiles = new List<List<Tiles>>();
     public Tiles dropTile;
     Transform playerTileContainer; // Player tile container
     private Transform[] playerTileContainers; // Player tile placeholders
@@ -920,13 +918,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 targetList = playerTiles4;
                 break;
         }
-
-        // Temizlik işlemleri
-        validMeltedTiles.Clear();
-        positions.Clear();
     }
-
-    List<List<Vector2Int>> positions = new List<List<Vector2Int>>();
 
     // TileDistrubite.cs -> InstatiateMeldTiles Metodu
 
@@ -941,7 +933,9 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         if (localPlayerQueInt == playerCount)
             return;
 
-        // Hangi listeyi kullanacağız?
+        // Hangi listeyi kullanacağız? Yerel değişken: alan olsaydı sonraki Clear asıl meltedTilesN'yi silerdi.
+        List<List<Tiles>> validMeltedTiles;
+        List<List<Vector2Int>> positions;
         switch (playerCount)
         {
             case 1:
@@ -960,6 +954,8 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 validMeltedTiles = meltedTiles4;
                 positions = meltedTilesPositions4;
                 break;
+            default:
+                return;
         }
 
         // Oyuncuları gez ve doğru container'ı bul
@@ -2111,9 +2107,6 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         meltedTilesPositions2.Clear();
         meltedTilesPositions3.Clear();
         meltedTilesPositions4.Clear();
-
-        validMeltedTiles.Clear();
-        positions.Clear();
 
         // Available (İşlek) hesaplamalarını sıfırla
         availableTiles.Clear();
