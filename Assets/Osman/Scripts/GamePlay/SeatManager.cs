@@ -27,6 +27,10 @@ public class SeatManager : MonoBehaviourPunCallbacks
     public RectTransform[] spawnPositions;
     bool gameIsStart = false;
 
+    [Header("Bot Settings")]
+    // "Botlarla Oyna" seçili masada başka oyuncuların katılması için beklenen süre (sn). Sonra boş koltuklar botla dolar.
+    public float botFillDelay = 10f;
+
     private void Awake()
     {
         TileSerialization.RegisterCustomTypes(); // Custom serialization for TileDataInfo
@@ -71,8 +75,27 @@ public class SeatManager : MonoBehaviourPunCallbacks
                 PhotonNetwork.LocalPlayer.ActorNumber,
                 seatNumber
             );
+
+            // Masa açılırken "Botlarla Oyna" seçildiyse (RoomManager.CreateCustomRoom)
+            if (
+                PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue("FillWithBots", out object fill)
+                && (bool)fill
+            )
+                StartCoroutine(StartWithBotsAfterDelay());
         }
         UpdateSeatDisplay(); // Update the seat display for the local player
+    }
+
+    private IEnumerator StartWithBotsAfterDelay()
+    {
+        yield return new WaitForSeconds(botFillDelay);
+        if (!gameIsStart)
+        {
+            Debug.Log(
+                $"Oda {botFillDelay} sn içinde dolmadı. Boş koltuklar botla dolduruluyor ({PhotonNetwork.PlayerList.Length} insan)."
+            );
+            StartGame(true);
+        }
     }
 
     public override void OnPlayerEnteredRoom(Player newPlayer)
@@ -327,16 +350,20 @@ public class SeatManager : MonoBehaviourPunCallbacks
     #region Starting Game
     public GameObject[] imageGameObjects;
 
-    private void StartGame()
+    private void StartGame(bool fillWithBots = false)
     {
         if (!gameIsStart)
         {
-            if (PhotonNetwork.PlayerList.Length == 4)
+            if (PhotonNetwork.PlayerList.Length == 4 || fillWithBots)
             {
                 // Check if all players are assigned a seat
                 if (tileDistrubite != null && PhotonNetwork.IsMasterClient)
                 {
                     Debug.Log(PhotonNetwork.LocalPlayer.NickName + " is the master client.");
+                    // Geri sayım sırasında ikinci kez başlamasın; oyun başladıktan sonra odaya kimse girmesin
+                    gameIsStart = true;
+                    PhotonNetwork.CurrentRoom.IsOpen = false;
+                    PhotonNetwork.CurrentRoom.IsVisible = false;
                     StartCoroutine(CountdownAndShuffle());
                 }
             }
@@ -366,8 +393,6 @@ public class SeatManager : MonoBehaviourPunCallbacks
         sManager = scoreManager.GetComponent<ScoreManager>();
 
         tileDistrubite.ShuffleTiles();
-
-        gameIsStart = true; // Set the game as started
     }
 
     private void UpdateImageStates(int countdownValue)

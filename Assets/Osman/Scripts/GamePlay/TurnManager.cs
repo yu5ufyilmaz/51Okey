@@ -61,8 +61,10 @@ public class TurnManager : MonoBehaviourPunCallbacks
         foreach (var p in PhotonNetwork.PlayerList)
         {
             // Oyuncunun sıra numarasına bak, eğer şu anki sırayla eşleşiyorsa o bir İnsandır.
+            // Bağlantısı kopan oyuncu (PlayerTtl süresince) listede kalır ama IsInactive olur: onun yerine bot oynar.
             if (
-                p.CustomProperties.TryGetValue("PlayerQue", out object q)
+                !p.IsInactive
+                && p.CustomProperties.TryGetValue("PlayerQue", out object q)
                 && (int)q == currentTurnPlayer
             )
             {

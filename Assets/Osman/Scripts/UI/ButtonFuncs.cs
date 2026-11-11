@@ -30,6 +30,7 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
     public TMP_InputField passwordInput;
     public TMP_Dropdown roundsDropdown;
     public Toggle passwordToggle;
+    private Toggle botsToggle; // Sahnede yok: Start'ta şifre toggle'ı kopyalanarak oluşturulur
 
     [Header("Password Popup UI")]
     public GameObject passwordPopupPanel;
@@ -43,10 +44,44 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
     //Lobi Manager Scripti
     void Start()
     {
+        botsToggle = CreateBotsToggle();
+
         if (PhotonNetwork.IsConnectedAndReady)
         {
             PhotonNetwork.JoinLobby();
         }
+    }
+
+    // "Botlarla Oyna" seçeneği: şifre kutucuğunun kopyası, tur seçiminin (Dropdown) sağında durur
+    private Toggle CreateBotsToggle()
+    {
+        Toggle toggle = Instantiate(passwordToggle, passwordToggle.transform.parent);
+        toggle.name = "BotsToggle";
+        toggle.onValueChanged = new Toggle.ToggleEvent(); // Kopyalanan OnPasswordToggleChanged bağlantısını sil
+        toggle.isOn = false;
+
+        RectTransform rect = (RectTransform)toggle.transform;
+        rect.anchoredPosition = new Vector2(
+            75f,
+            ((RectTransform)roundsDropdown.transform).anchoredPosition.y
+        );
+
+        // Yazı stili tur seçimindeki yazıdan alınır (aynı font ve renk)
+        TextMeshProUGUI label = new GameObject("Label", typeof(RectTransform))
+            .AddComponent<TextMeshProUGUI>();
+        label.transform.SetParent(toggle.transform, false);
+        label.font = roundsDropdown.captionText.font;
+        label.color = roundsDropdown.captionText.color;
+        label.text = "Botlarla Oyna";
+        label.alignment = TextAlignmentOptions.MidlineLeft;
+        label.enableAutoSizing = true;
+        label.fontSizeMin = 18f;
+        label.fontSizeMax = 48f;
+        label.raycastTarget = false;
+        label.rectTransform.anchoredPosition = new Vector2(165f, 0f); // Kutucuğun sağı
+        label.rectTransform.sizeDelta = new Vector2(210f, 100f);
+
+        return toggle;
     }
 
     public override void OnConnectedToMaster()
@@ -99,6 +134,7 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
         roomNameInput.text = PhotonNetwork.NickName;
         passwordToggle.isOn = false;
         passwordInput.interactable = false;
+        botsToggle.isOn = false;
     }
 
     public void OnPasswordToggleChanged()
@@ -125,13 +161,13 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
 
         if (int.TryParse(numericPart, out rounds))
         {
-            roomManager.CreateCustomRoom(rName, pass, rounds, passwordToggle.isOn);
+            roomManager.CreateCustomRoom(rName, pass, rounds, passwordToggle.isOn, botsToggle.isOn);
         }
         else
         {
             Debug.LogError("Dropdown seçeneğinde geçerli bir sayı bulunamadı: " + dropdownText);
             // Varsayılan bir değer atayabilirsin
-            roomManager.CreateCustomRoom(rName, pass, 1, passwordToggle.isOn);
+            roomManager.CreateCustomRoom(rName, pass, 1, passwordToggle.isOn, botsToggle.isOn);
         }
     }
 

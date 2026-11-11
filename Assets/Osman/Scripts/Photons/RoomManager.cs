@@ -35,7 +35,8 @@ public class RoomManager : MonoBehaviourPunCallbacks
         string roomName,
         string password,
         int totalRounds,
-        bool isPasswordProtected
+        bool isPasswordProtected,
+        bool fillWithBots = false
     )
     {
         RoomOptions roomOptions = new RoomOptions
@@ -52,6 +53,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
         roomProps.Add("Password", isPasswordProtected ? password : "");
         roomProps.Add("TotalRounds", totalRounds);
         roomProps.Add("CurrentRound", 1);
+        roomProps.Add("FillWithBots", fillWithBots); // SeatManager okur: boş koltuklar botla dolar
 
         roomOptions.CustomRoomProperties = roomProps;
         roomOptions.CustomRoomPropertiesForLobby = new string[] { "Password", "TotalRounds" };

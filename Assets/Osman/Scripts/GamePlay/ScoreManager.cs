@@ -2218,9 +2218,13 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     #region Bot Controls
     public string FindBestTileToDiscardForBot(int playerQue)
     {
-        // 1. Botun elini çek
-        List<Tiles> hand = tileDistrubite.GetPlayerTilesForBot(playerQue);
-        if (hand == null || hand.Count == 0)
+        // 1. Botun elini çek (KOPYA: kural kontrolleri jokerin sayı/rengini değiştiriyor,
+        // gerçek liste bozulursa sadece Master'ın verisi değişir ve misafirlerle senkron kopar)
+        List<Tiles> hand = tileDistrubite
+            .GetPlayerTilesForBot(playerQue)
+            .Select(t => new Tiles { id = t.id, color = t.color, number = t.number, type = t.type })
+            .ToList();
+        if (hand.Count == 0)
             return "";
 
         // Göstergeyi al (Joker kontrolü için)
