@@ -1,8 +1,10 @@
 using System.Collections;
 using System.IO;
+using System.Linq;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 
 // Sadece Editor'de ve <proje>/Temp/SyncAutoTest/config.json varken çalışır (Tools/SyncTest/Run-SyncTest.ps1 yazar).
@@ -21,6 +23,7 @@ public class SyncAutoTest : MonoBehaviourPunCallbacks
     }
 
     const float StuckSeconds = 60f;
+    const float MoveTimeout = 5f;
     const int MaxErrors = 30;
 
     public static SyncAutoTest Instance { get; private set; }
@@ -34,6 +37,8 @@ public class SyncAutoTest : MonoBehaviourPunCallbacks
     int myMoves;
     string root;
     RoomManager roomManager;
+    TurnManager turnManager;
+    bool moving;
     readonly SyncAutoTestStatus status = new SyncAutoTestStatus();
 
     int MyQue =>
@@ -143,7 +148,115 @@ public class SyncAutoTest : MonoBehaviourPunCallbacks
         }
     }
 
-    void TickPlaying() { }
+    void TickPlaying()
+    {
+        var gm = GameManager.Instance;
+        if (moving || !gm.isGameReady || gm.isGameEnded)
+            return;
+        if (turnManager == null)
+            turnManager = FindObjectOfType<TurnManager>();
+        if (turnManager != null && turnManager.IsPlayerTurn())
+            StartCoroutine(PlayMyTurn());
+    }
+
+    IEnumerator PlayMyTurn()
+    {
+        moving = true;
+        yield return StartCoroutine(DrawAndDiscard());
+        moving = false;
+    }
+
+    // Hamleler insan oyuncunun yolundan: TileUI.OnBeginDrag/OnEndDrag. RPC'yi oyun kendisi atar.
+    IEnumerator DrawAndDiscard()
+    {
+        int que = MyQue;
+        Transform hand = GameObject.Find("PlayerTileContainer").transform;
+
+        // 1. sıradaki oyuncu eli fazla taşla açar, çekmeden atar (canDrop baştan true).
+        if (!turnManager.canDrop)
+        {
+            // Ortadaki TileUI'ler sadece görüntü; çekilen hangisi olursa allTiles[0] ile giydirilir. Üstteki = son sibling.
+            Transform middle = GameObject.Find("MiddleTileContainer").transform;
+            TileUI top =
+                middle.childCount > 0 ? middle.GetChild(middle.childCount - 1).GetComponent<TileUI>() : null;
+            Placeholder slot = hand.GetComponentsInChildren<Placeholder>()
+                .FirstOrDefault(p => !p.isRight && !p.isMeldArea && p.transform.childCount == 0);
+            if (top == null || slot == null)
+            {
+                Fail($"çekme: orta taş={top != null} boş slot={slot != null}");
+                yield break;
+            }
+            if (!DragTo(top, slot.transform))
+            {
+                Fail("çekme reddedildi");
+                yield break;
+            }
+            for (float t = 0; !(turnManager.canDrop && top.transform.parent == slot.transform); t += Time.unscaledDeltaTime)
+            {
+                if (GameManager.Instance.isGameEnded)
+                    yield break;
+                if (t > MoveTimeout)
+                {
+                    Fail("çekme zaman aşımı");
+                    yield break;
+                }
+                yield return null;
+            }
+        }
+
+        yield return new WaitForSeconds(Config.moveDelaySec);
+
+        string id = FindObjectOfType<ScoreManager>().FindBestTileToDiscardForBot(que);
+        TileUI tile = hand.GetComponentsInChildren<TileUI>()
+            .FirstOrDefault(x => x.tileDataInfo != null && x.tileDataInfo.id == id);
+        if (tile == null)
+        {
+            Fail($"atılacak taş elde yok: {id}");
+            yield break;
+        }
+        // IndicatorTileContainer da isRight; atma yeri ıstakadaki RightTileContainer.
+        if (!DragTo(tile, GameObject.Find("RightTileContainer").transform))
+        {
+            Fail("atma reddedildi");
+            yield break;
+        }
+        for (float t = 0; turnManager.currentTurnPlayer == que && !GameManager.Instance.isGameEnded; t += Time.unscaledDeltaTime)
+        {
+            if (t > MoveTimeout)
+            {
+                Fail("atma zaman aşımı");
+                yield break;
+            }
+            yield return null;
+        }
+
+        myMoves++;
+        // Harness'in kendi testi: sadece yerel deste bozulur, master sonraki snapshot'ta [DESYNC] görmeli.
+        if (Config.injectDesyncAtMove > 0 && myMoves == Config.injectDesyncAtMove)
+        {
+            var tiles = FindObjectOfType<TileDistrubite>().allTiles;
+            tiles.RemoveAt(tiles.Count - 1);
+            Debug.LogWarning("[AUTOTEST] desync enjekte edildi");
+        }
+        WriteStatus();
+    }
+
+    // Overlay canvas: ekran noktası için kamera yok. OnBeginDrag hamleyi reddederse pointerDrag'i null yapar.
+    bool DragTo(TileUI tile, Transform target)
+    {
+        var e = new PointerEventData(EventSystem.current)
+        {
+            position = RectTransformUtility.WorldToScreenPoint(null, tile.transform.position),
+            pointerDrag = tile.gameObject,
+        };
+        e.pressPosition = e.position;
+        tile.OnBeginDrag(e);
+        if (e.pointerDrag == null)
+            return false;
+        tile.transform.position = target.position;
+        tile.OnEndDrag(e);
+        return true;
+    }
 
     void Join() => roomManager.JoinRoomWithPassword(Config.roomName, Config.runId, Config.runId);
 

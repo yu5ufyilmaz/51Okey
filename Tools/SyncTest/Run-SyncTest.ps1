@@ -78,7 +78,7 @@ foreach ($p in $Projects) {
 $runId = Get-Date -Format 'yyyyMMdd_HHmmss'
 $timedOut = $false
 $started = Get-Date
-Write-Host "runId $runId · $Deals el · seed $Seed$(if ($InjectDesync) { " · AT-g1 $InjectDesync. hamlede desync enjekte eder" })"
+Write-Host "runId $runId | $Deals el | seed $Seed$(if ($InjectDesync) { " | AT-g1 $InjectDesync. hamlede desync enjekte eder" })"
 try {
     # 3. Hazırlık
     for ($i = 0; $i -lt $Projects.Count; $i++) {
@@ -121,7 +121,7 @@ try {
         $all = Read-All
         $h = $all[0]
         $moves = ($all | ForEach-Object { if ($_) { $_.myMoves } else { '?' } }) -join '/'
-        $line = "deal $(if ($h) { $h.deal } else { '?' }) · moves $moves · ok $(if ($h) { $h.sync.ok }) desync $(if ($h) { $h.sync.desync })"
+        $line = "deal $(if ($h) { $h.deal } else { '?' }) | moves $moves | ok $(if ($h) { $h.sync.ok }) desync $(if ($h) { $h.sync.desync })"
         if ($line -ne $last) { Write-Host $line; $last = $line }
         $states = @($all | ForEach-Object { if ($_) { $_.state } else { '' } })
         if (@($states | Where-Object { $_ -eq 'Done' }).Count -eq $Projects.Count) { break }
