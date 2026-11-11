@@ -149,6 +149,8 @@ public class DesyncDetector : MonoBehaviourPunCallbacks, IOnEventCallback
     void Store(int dealNo, int moveNo, int actor, string label, string snapshot)
     {
         string key = $"{dealNo}.{moveNo}";
+        // AppendLine Windows'ta \r\n, Android'de \n yazar; telefon-editör kıyası her hamlede yanlış alarm veriyordu.
+        snapshot = snapshot.Replace("\r", "");
         if (!received.TryGetValue(key, out var byActor))
         {
             byActor = new Dictionary<int, Entry>();

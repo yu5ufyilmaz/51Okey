@@ -266,13 +266,16 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         yield return new WaitForSeconds(0.2f);
 
-        if (giveNewTile)
+        if (giveNewTile && tileDistrubite.allTiles.Count > 0)
         {
+            // RPC sadece veriye ekler; ıstakaya da konmazsa oyuncu görmediği bir taşla kalır, eli hiç bitmez.
+            Tiles drawn = tileDistrubite.allTiles[0];
             tileDistrubite.photonView.RPC(
                 "AddTileFromMiddlePlayerList",
                 RpcTarget.AllBuffered,
                 playerQue
             );
+            tileDistrubite.InstantiateTileInFirstEmptySlot(drawn);
             // Ceza bir kez yazıldı; artık normal çekmiş sayılır, atabilir (yoksa her atma denemesi yeni +250).
             turnManager.hasPickedFromSide = false;
         }

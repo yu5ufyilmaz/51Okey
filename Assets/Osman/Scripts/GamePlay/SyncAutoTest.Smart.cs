@@ -183,6 +183,19 @@ public partial class SyncAutoTest
             .FirstOrDefault(p => !p.isRight && !p.isMeldArea && p.transform.childCount == 0)
             ?.transform;
 
+    // Bu ID'li taşın sağındaki ilk boş yuva; yoksa herhangi bir boş yuva.
+    Transform EmptyRackSlotAfter(string id)
+    {
+        TileUI anchor = HandTileUI(id);
+        int after = anchor != null ? anchor.transform.parent.GetSiblingIndex() : -1;
+        return Rack.GetComponentsInChildren<Placeholder>()
+                .FirstOrDefault(p =>
+                    !p.isRight && !p.isMeldArea && p.transform.childCount == 0 && p.transform.GetSiblingIndex() > after
+                )
+                ?.transform
+            ?? EmptyRackSlot();
+    }
+
     // --- Gözlem ---
 
     class Obs
@@ -254,7 +267,7 @@ public partial class SyncAutoTest
             {
                 bool side = step.Kind == StepKind.DrawSide;
                 TileUI tile = side ? SideTileUI() : TopMiddleTile();
-                Transform slot = EmptyRackSlot();
+                Transform slot = step.TileId != null ? EmptyRackSlotAfter(step.TileId) : EmptyRackSlot();
                 if (tile == null || slot == null || !DragTo(tile, slot))
                 {
                     Fail($"{step.Kind}: taş={tile != null} slot={slot != null}");

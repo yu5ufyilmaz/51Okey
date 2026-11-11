@@ -76,7 +76,9 @@ public class TestPlayerBrain
     bool arrangedThisTurn,
         mistakeUsed,
         sideCancelled,
-        sideForMistake;
+        sideForMistake,
+        twinProbe,
+        twinProbedThisDeal;
     readonly Dictionary<string, int> processedAtEnd = new Dictionary<string, int>();
 
     public TestPlayerBrain(int seed, double mistakeRate)
@@ -91,12 +93,13 @@ public class TestPlayerBrain
     public void NewDeal()
     {
         pathPairs = null;
+        twinProbedThisDeal = false;
         NewTurn();
     }
 
     public void NewTurn()
     {
-        arrangedThisTurn = mistakeUsed = sideCancelled = sideForMistake = false;
+        arrangedThisTurn = mistakeUsed = sideCancelled = sideForMistake = twinProbe = false;
         processedAtEnd.Clear();
         TurnMistake = Mistake.None;
         if (mistakeRate > 0 && rng.NextDouble() < mistakeRate)
@@ -171,6 +174,15 @@ public class TestPlayerBrain
             return null;
         if (v.SideTile != null && !sideCancelled)
         {
+            // İkiz testi: yandakinin eşi elimdeyse elde bir kez al-geri bırak; oyun ikizleri ID ile ayırmalı.
+            // TileId = eldeki ikiz: alınan taş onun sağına konur (ikizden önce bulunan ilk eş silinirdi).
+            var side = v.SideTile;
+            var twin = v.Hand.FirstOrDefault(t => t.type == side.type && t.color == side.color && t.number == side.number);
+            if (!twinProbedThisDeal && twin != null)
+            {
+                twinProbedThisDeal = twinProbe = true;
+                return Step(StepKind.DrawSide, $"ikiz testi: yandan {Name(side)} alıp geri bırakacağım", tile: twin);
+            }
             if (TakeMistake(Mistake.SidePickNoOpen) || TakeMistake(Mistake.SidePickCancel))
             {
                 sideForMistake = true;
@@ -189,6 +201,13 @@ public class TestPlayerBrain
     public PlanStep NextAction(TableView v)
     {
         var hand = v.Hand;
+
+        if (v.PickedFromSide && twinProbe)
+        {
+            twinProbe = false;
+            sideCancelled = true;
+            return Step(StepKind.CancelSide, "ikiz testi: geri bırak");
+        }
 
         if (v.PickedFromSide && sideForMistake)
         {

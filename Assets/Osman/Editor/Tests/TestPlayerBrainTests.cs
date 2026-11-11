@@ -49,6 +49,25 @@ public class TestPlayerBrainTests
     }
 
     [Test]
+    public void Brain_TwinOnSideIsTakenAndReturnedOncePerDeal()
+    {
+        var brain = new TestPlayerBrain(1, 0);
+        brain.NewDeal();
+        var twin = T(TileColor.black, 2); // elde de b2 var
+        var view = View(SeriesHand(), false, twin);
+        Assert.AreEqual(StepKind.DrawSide, brain.PlanDraw(view).Kind);
+
+        var hand = SeriesHand();
+        hand.Add(twin);
+        var picked = View(hand, true, null);
+        picked.PickedFromSide = true;
+        Assert.AreEqual(StepKind.CancelSide, brain.NextAction(picked).Kind);
+
+        brain.NewTurn();
+        Assert.AreEqual(StepKind.DrawMiddle, brain.PlanDraw(view).Kind);
+    }
+
+    [Test]
     public void Brain_FirstPlayerDoesNotDraw()
     {
         var brain = new TestPlayerBrain(1, 0);

@@ -677,6 +677,18 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
         // 2. DURUM KONTROLÜ: Önce işlemeleri (Active Pers / Swap) kontrol et
         // Eğer oyuncu bu tur bir taş işlemişse veya joker değiştirmişse, önce bunları geri alıyoruz.
+        // Masadan alınan okey bu tur açılan perde kullanıldıysa önce per toplanır: okey ele dönmeden
+        // takas geri alınırsa okey hem perde hem eski yerinde kalır (iki okey).
+        if (
+            actionHistory.Count > 0
+            && actionHistory.Peek().type == ActionType.JokerSwap
+            && pendingMeldedTiles.Any(t => t.id == actionHistory.Peek().tileTaken.id)
+        )
+        {
+            TakeBackPers();
+            return;
+        }
+
         if (actionHistory.Count > 0)
         {
             Debug.Log("Akıllı Buton: Son işleme geri alınıyor...");

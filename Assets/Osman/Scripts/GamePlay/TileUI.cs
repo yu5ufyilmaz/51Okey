@@ -42,6 +42,13 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     // Atılan taş atma yerine kayarken başka taş oynatılmasın (çift atma / işleme).
     private static float discardLockUntil;
 
+    // Elde tutulan taş. Tutulurken yuvası boş görünür; süre dolumu hamlesi oraya taş koyup üst üste bindirmesin.
+    private static TileUI held;
+    public static bool Busy => held != null || Time.time < discardLockUntil;
+
+    // SmoothMove'un gittiği yuva; varınca yuva doluysa ve oradaki taş gitmiyorsa boş yuvaya sapılır.
+    private Transform movingTo;
+
     [Header("Game Feel")]
     [SerializeField]
     private float dragDamping = 0.01f; // Yumuşak takip (0.03 - 0.05 ideal)
@@ -473,6 +480,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         _currentVelocity = Vector3.zero;
         _targetRotationZ = 0f;
         // --- SÜRÜKLEME BAŞLATILIYOR ---
+        held = this;
         originalParent = transform.parent;
         canvasGroup.blocksRaycasts = false;
         transform.SetParent(transform.root, true);
@@ -579,6 +587,8 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
    public void OnEndDrag(PointerEventData eventData)
     {
+        if (held == this)
+            held = null;
         // Parlayan hedef yuva (varsa); parıltı ve büyütme her durumda burada kapanır.
         Placeholder assisted = ProcessAssist.End(this);
 
@@ -645,12 +655,21 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         // DURUM A: TAŞ ATMA (SAĞ TARAF)
         if (bestTarget.isRight)
         {
-            if (turnManager.IsPlayerTurn() && turnManager.canDrop)
+            // Kilit: önceki atış hâlâ kayarken ikinci parmakla/otomatik hamleyle ikinci taş atılmasın.
+            if (turnManager.IsPlayerTurn() && turnManager.canDrop && Time.time >= discardLockUntil)
             {
                 if (!turnManager.CanFinishTurn())
                 {
                     Debug.LogWarning("KURAL HATASI: Açmadan bitiremezsiniz.");
+                    Tiles returned = GameManager.Instance.CurrentSidePickTile ?? tileDataInfo;
                     GameManager.Instance.HandleFailedSidePick(this.tileDataInfo);
+                    // Atılmaya çalışılan taş yandan alınanın kendisiyse yana iade edildi (yeni görseli orada);
+                    // bu görsel ıstakaya geri dönerse verisi olmayan hayalet taş olur.
+                    if (returned.id == tileDataInfo.id)
+                    {
+                        Destroy(gameObject);
+                        return;
+                    }
                     _targetScale = _originalScale;
                     StartCoroutine(SmoothMove(transform, originalParent));
                     return;
@@ -668,6 +687,14 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         // DURUM B: KENDİ ISTAKAMIZ (SWAP ve AKILLI KAYDIRMA)
         else if (bestTarget.transform.parent == playerTileContainer)
         {
+            // Ortadaki/yandaki taş ancak gerçekten çekilebiliyorsa ıstakaya girer; yoksa verisiz hayalet taş olurdu.
+            if ((inMiddle || fromLeftContainer) && !(turnManager.IsPlayerTurn() && !turnManager.canDrop))
+            {
+                _targetScale = _originalScale;
+                StartCoroutine(SmoothMove(transform, originalParent));
+                return;
+            }
+
             // -- Taş Çekme Kontrolleri --
             if (turnManager.IsPlayerTurn() && !turnManager.canDrop)
             {
@@ -778,6 +805,8 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     // 1. BU METODU ÇAĞIRACAKSIN (Eski NextTurnEvents yerine)
     private void ExecuteNextTurn()
     {
+        // Atış başladı: tur devredilene kadar yeni sürükleme, ikinci atış ve süre dolumu hamlesi yok.
+        discardLockUntil = Time.time + slideDuration + 0.5f;
         if (GameManager.Instance.scoreManager != null)
         {
             PenaltySystem.Instance.CommitAllTurnPenalties();
@@ -819,25 +848,8 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             );
         }
 
-        // Yeni açılan perleri (henüz sunucuya gitmemiş olanları) de simülasyon listesinden düş
-        if (scoreManager != null)
-        {
-            List<Tiles> pendingTiles = scoreManager.GetAllTilesPendingCommit();
-            foreach (var pt in pendingTiles)
-            {
-                // Not: Perdeki taşlar için de ID kontrolü yapmak en sağlıklısıdır,
-                // ancak ScoreManager yapına göre burada ID eşleşmesi yoksa şimdilik değer kontrolü kalabilir.
-                // Eğer pendingTiles içindeki taşların ID'leri korunuyorsa burayı da ID'ye çevirebilirsin.
-                var it = currentHandForCheck.FirstOrDefault(t =>
-                    t.color == pt.color && t.number == pt.number && t.type == pt.type
-                );
-                // EĞER ID SİSTEMİN ScoreManager'DA TAM OTURDUYSA YUKARIDAKİ YERİNE ŞUNU KULLAN:
-                // var it = currentHandForCheck.FirstOrDefault(t => t.id == pt.id);
-
-                if (it != null)
-                    currentHandForCheck.Remove(it);
-            }
-        }
+        // Bu tur açılan/işlenen taşlar açıldıkları anda veriden düşüyor (RemoveTileFromPlayerListByValue).
+        // Burada bir daha renk/sayıyla düşmek eldeki ikizlerini de siliyor, el bitmeden "bitti" sayıyordu.
 
         // El tamamen bitti mi? (0 taş kaldıysa bitmiştir)
         bool isGameReallyOver = (currentHandForCheck.Count == 0);
@@ -901,7 +913,6 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         // Önceden yenisi 0.05 sn'de çıkıyor, bu taş yarı yoldayken siliniyordu.
         GameObject dropSpot = FindObjectOfType<SeatManager>()?.tiledropOffset[0];
         Transform target = dropSpot != null ? dropSpot.transform : rightTileContainer;
-        discardLockUntil = Time.time + slideDuration + 0.5f;
         if (target is RectTransform to && transform is RectTransform me && me.localScale.x > 0 && me.localScale.y > 0)
         {
             // Kayarken atma yerinin boyuna küçülsün ki yer değişiminde boyut zıplamasın (Update ölçeği _targetScale'e taşır).
@@ -917,28 +928,14 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         yield return Slide(transform, target.position);
 
         // --- [DÜZELTME 2] VERİTABANINDAN SİLME (ATILAN TAŞ) ---
-        // TileDistrubite üzerindeki gerçek listeden hangi indeksi sileceğimizi ID ile buluyoruz.
-        int indexToRemove = -1;
-        List<Tiles> actualPlayerTiles = tileDistrubite.GetPlayerTiles();
-
-        for (int i = 0; i < actualPlayerTiles.Count; i++)
-        {
-            // ESKİ KOD: Renk ve Sayı kontrolü (Kimlik karmaşası yaratıyordu)
-            // YENİ KOD: Sadece ID kontrolü
-            if (actualPlayerTiles[i].id == tileDataInfo.id)
-            {
-                indexToRemove = i;
-                break; // Doğru taşı bulduk, döngüden çık
-            }
-        }
-
-        if (indexToRemove != -1)
+        // Herkes kendi listesinde taşı ID ile bulur.
+        if (tileDistrubite.GetPlayerTiles().Any(t => t.id == tileDataInfo.id))
         {
             tileDistrubite.photonView.RPC(
                 "RemoveTileFromPlayerList",
                 RpcTarget.All, // Herkeste silinsin
                 playerQueInt,
-                indexToRemove
+                tileDataInfo.id
             );
             // RPC yerelde hemen çalıştı, yana atılan taş tam bu noktada oluştu.
             if (canvasGroup != null)
@@ -994,7 +991,32 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     // Private yerine PUBLIC yapıyoruz ki Swap sırasında diğer taşa erişebilelim
     public IEnumerator SmoothMove(Transform tile, Transform targetPlaceholder)
     {
+        movingTo = targetPlaceholder;
         yield return Slide(tile, targetPlaceholder.position);
+        // Kayarken oyuncu taşı yakaladıysa yeri artık sürükleme belirler.
+        if (held == this)
+        {
+            movingTo = null;
+            yield break;
+        }
+
+        // Yuva yalnızca varışta alınır: kayarken başka taş oraya oturduysa (hızlı iki bırakış, otomatik çekiş,
+        // yana itilen taş) üst üste binmesin; alttaki görünmez olur.
+        while (tile != null && targetPlaceholder.parent == playerTileContainer && SlotTaken(targetPlaceholder, tile))
+        {
+            Placeholder free = FindSmartEmptyPlaceholder(playerTileContainer, targetPlaceholder.GetSiblingIndex());
+            if (free == null)
+                break;
+            targetPlaceholder = free.transform;
+            movingTo = targetPlaceholder;
+            yield return Slide(tile, targetPlaceholder.position);
+            if (held == this)
+            {
+                movingTo = null;
+                yield break;
+            }
+        }
+        movingTo = null;
 
         if (tile != null)
         {
@@ -1014,6 +1036,20 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         }
     }
 
+    // Yuvada başka bir taş var ve o taş başka yere gitmiyor.
+    static bool SlotTaken(Transform slot, Transform me)
+    {
+        foreach (Transform child in slot)
+        {
+            if (child == me)
+                continue;
+            TileUI other = child.GetComponent<TileUI>();
+            if (other == null || other.movingTo == null || other.movingTo == slot)
+                return true;
+        }
+        return false;
+    }
+
     IEnumerator Slide(Transform tile, Vector3 targetPos)
     {
         Vector3 startPos = tile.position;
@@ -1023,7 +1059,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
         while (elapsedTime < duration)
         {
-            if (tile == null)
+            if (tile == null || (held != null && held.transform == tile))
                 yield break;
 
             float t = elapsedTime / duration;

@@ -565,44 +565,38 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         }
     }
 
+    // Atılan taş ID ile gelir: sıra numarası, client'ların elleri bir kez ayrışırsa herkeste başka taşı attırırdı.
     [PunRPC]
-    public void RemoveTileFromPlayerList(int playerNumber, int tileIndex)
+    public void RemoveTileFromPlayerList(int playerNumber, string tileId)
     {
-        // 1. İşlem yapılacak listeyi seç
-        List<Tiles> targetList = null;
-        switch (playerNumber)
+        List<Tiles> hand = playerNumber switch
         {
-            case 1:
-                targetList = playerTiles1;
-                break;
-            case 2:
-                targetList = playerTiles2;
-                break;
-            case 3:
-                targetList = playerTiles3;
-                break;
-            case 4:
-                targetList = playerTiles4;
-                break;
+            1 => playerTiles1,
+            2 => playerTiles2,
+            3 => playerTiles3,
+            4 => playerTiles4,
+            _ => null,
+        };
+        int tileIndex = hand == null ? -1 : hand.FindIndex(t => t.id == tileId);
+        if (tileIndex < 0)
+        {
+            Debug.LogError($"[SYNC HATASI] Oyuncu {playerNumber} elinde atılan taş yok: {tileId}");
+            return;
         }
 
-        // Liste kontrolü ve İndeks güvenliği
-        if (targetList != null && tileIndex >= 0 && tileIndex < targetList.Count)
-        {
-            // A. Yana Atılan Görseli Oluştur (Side Tile)
-            // Bu, hem atan kişide hem de rakiplerde çalışır. Böylece herkes atılan taşı görür.
-            InstatiateSideTiles(playerNumber, targetList[tileIndex]);
+        // A. Yana Atılan Görseli Oluştur (Side Tile)
+        // Bu, hem atan kişide hem de rakiplerde çalışır. Böylece herkes atılan taşı görür.
+        InstatiateSideTiles(playerNumber, hand[tileIndex]);
 
-            // B. VERİYİ SİL (Herkes kendi hafızasındaki listeden silmeli)
-            targetList.RemoveAt(tileIndex);
+        // B. VERİYİ SİL (Herkes kendi hafızasındaki listeden silmeli)
+        hand.RemoveAt(tileIndex);
 
-            // --- GÖRSEL SİLME İPTAL EDİLDİ ---
-            // Buradaki tüm Destroy/GameObject arama kodlarını sildik.
-            // Sebebi:
-            // 1. Local Player için: TileUI zaten animasyonla siliyor. (Burada silersek ikiz taş gidiyor)
-            // 2. Remote Player için: playerTileContainer "Benim" ıstakamdır.
-            //    Rakip taş attı diye benim ıstakamdan taş arayıp silmemeli.
-        }
+        // --- GÖRSEL SİLME İPTAL EDİLDİ ---
+        // Buradaki tüm Destroy/GameObject arama kodlarını sildik.
+        // Sebebi:
+        // 1. Local Player için: TileUI zaten animasyonla siliyor. (Burada silersek ikiz taş gidiyor)
+        // 2. Remote Player için: playerTileContainer "Benim" ıstakamdır.
+        //    Rakip taş attı diye benim ıstakamdan taş arayıp silmemeli.
     }
 
     [PunRPC]
@@ -1766,7 +1760,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         }
     }
 
-    private void InstantiateTileInFirstEmptySlot(Tiles tile)
+    public void InstantiateTileInFirstEmptySlot(Tiles tile)
     {
         if (playerTileContainers == null)
             return;
@@ -1891,44 +1885,13 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void ReturnTileToSide(int returningPlayerQue, Tiles tileToReturn)
     {
-        // 1. Taşı iade eden oyuncudan BİR ÖNCEKİ oyuncuyu bul
+        // Taş, onu atan (bir önceki) oyuncunun atma yerine, ilk atıldığı yola geri döner.
+        // Eskiden isimle aranan bir kutuya konuyor ve droppedTiles'a eklenmiyordu: sonra biri alınca
+        // diğer ekranlarda yanlış görsel siliniyor, iade edilen taş masada hayalet gibi kalıyordu.
         int previousPlayerQue = returningPlayerQue - 1;
         if (previousPlayerQue < 1)
             previousPlayerQue = 4;
-
-        // 2. O oyuncunun ismini bul
-        string targetContainerName = "";
-        foreach (var p in PhotonNetwork.PlayerList)
-        {
-            if (
-                p.CustomProperties.TryGetValue("PlayerQue", out object q)
-                && (int)q == previousPlayerQue
-            )
-            {
-                targetContainerName = p.NickName;
-                break;
-            }
-        }
-
-        Transform targetContainer = null;
-        if (!string.IsNullOrEmpty(targetContainerName))
-            targetContainer = GameObject.Find(targetContainerName)?.transform;
-
-        // Eğer önceki oyuncuyu bulamazsan (Test ortamı vs.) genel kutuya koy
-        if (targetContainer == null)
-            targetContainer = dropTileContainer;
-
-        if (targetContainer != null)
-        {
-            GameObject returnedTileObj = Instantiate(tilePrefab, targetContainer);
-            TileUI tileUI = returnedTileObj.GetComponent<TileUI>();
-            if (tileUI != null)
-            {
-                tileUI.SetTileData(tileToReturn);
-                tileUI.FitToParent();
-                dropTile = tileToReturn; // Tekrar çekilebilir yap
-            }
-        }
+        InstatiateSideTiles(previousPlayerQue, tileToReturn);
     }
 
     [PunRPC]
@@ -2186,6 +2149,39 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     #endregion
 
     #region DESYNC DEBUG
+    // Istakadaki görseller ile bu client'ın el verisi aynı taşlar mı (ID ile)? Uyumluysa null, değilse fark.
+    // Sürüklenen/kayan taş o an kökte (canvas) durur; elde olduğu sürece o da sayılır.
+    public string RackMismatch()
+    {
+        var hand = GetPlayerTiles();
+        var handIds = new HashSet<string>(hand.Select(t => t.id));
+        var onRack = new List<Tiles>();
+        var floating = new HashSet<string>();
+        foreach (TileUI ui in FindObjectsOfType<TileUI>())
+        {
+            if (ui.isIndicatorTile || ui.tileDataInfo == null)
+                continue;
+            Transform p = ui.transform.parent;
+            if (p != null && p.parent == playerTileContainer)
+                onRack.Add(ui.tileDataInfo);
+            else if (p == ui.transform.root)
+                floating.Add(ui.tileDataInfo.id);
+        }
+        var rackIds = new HashSet<string>(onRack.Select(t => t.id));
+        var missing = hand.Where(t => !rackIds.Contains(t.id) && !floating.Contains(t.id)).ToList();
+        var extra = onRack.Where(t => !handIds.Contains(t.id)).ToList();
+        var twice = onRack.GroupBy(t => t.id).Where(g => g.Count() > 1).Select(g => g.First()).ToList();
+        // Aynı yuvada iki taş: alttaki görünmez, oyuncu için kayıptır.
+        var stacked = playerTileContainers
+            .Where(s => s.childCount > 1)
+            .SelectMany(s => s.GetComponentsInChildren<TileUI>().Skip(1).Select(u => u.tileDataInfo))
+            .ToList();
+        if (missing.Count + extra.Count + twice.Count + stacked.Count == 0)
+            return null;
+        return $"ekranda yok: {DesyncDetector.TileList(missing)} | veride yok: {DesyncDetector.TileList(extra)} "
+            + $"| iki kez: {DesyncDetector.TileList(twice)} | üst üste: {DesyncDetector.TileList(stacked)}";
+    }
+
     // DesyncDetector için bu client'ın masa verisini satır satır yazar.
     public void AppendSyncState(System.Text.StringBuilder sb)
     {

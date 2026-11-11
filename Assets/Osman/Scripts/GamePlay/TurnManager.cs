@@ -132,6 +132,8 @@ public class TurnManager : MonoBehaviourPunCallbacks
             || TurnStartTime <= 0
             || TurnRemaining > 0f
             || !IsPlayerTurn()
+            // Oyuncu taş tutuyor ya da atış kayıyor: hamle onun elinde, araya girilirse taş üst üste biner.
+            || TileUI.Busy
         )
             return;
         StartCoroutine(AutoPlayTurn());
@@ -332,7 +334,13 @@ public class TurnManager : MonoBehaviourPunCallbacks
 
         TileDistrubite tileDistrubite = FindObjectOfType<TileDistrubite>();
         if (tileDistrubite != null)
+        {
             tileDistrubite.RecalculateAllAvailableSlots();
+            // Taş kaybı/ikiz silinmesi: ıstakada görünen taşlar verideki elle aynı olmalı.
+            string rack = tileDistrubite.RackMismatch();
+            if (rack != null)
+                Debug.LogError($"[ISTAKA] sıra {currentTurnPlayer}: {rack}");
+        }
 
         if (
             PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object q)
