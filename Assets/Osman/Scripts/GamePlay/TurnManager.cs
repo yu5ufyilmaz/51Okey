@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
@@ -26,8 +27,21 @@ public class TurnManager : MonoBehaviourPunCallbacks
     [Header("Bot System")]
     public bool[] isBotActive = new bool[5];
 
+    [Header("Tur Süresi")]
+    [SerializeField]
+    private float turnSeconds = 30f;
+    public float TurnSeconds => turnSeconds;
+
+    // Herkeste aynı saat: sırayı başlatan RPC'nin sunucu zamanı. 0 = sayaç yok.
+    public double TurnStartTime { get; private set; }
+    public float TurnRemaining =>
+        Mathf.Max(0f, turnSeconds - (float)(PhotonNetwork.Time - TurnStartTime));
+
+    private bool autoPlaying;
+
     public void StartGame()
     {
+        TurnStartTime = PhotonNetwork.Time;
         Player player = PhotonNetwork.LocalPlayer;
         player.CustomProperties.TryGetValue("PlayerQue", out object queueValue);
         int queueValueInt = (int)queueValue;
@@ -45,6 +59,8 @@ public class TurnManager : MonoBehaviourPunCallbacks
 
     void Update()
     {
+        TickTurnTimer();
+
         // Sadece MasterClient yönetir
         if (!PhotonNetwork.IsMasterClient)
             return;
@@ -102,6 +118,75 @@ public class TurnManager : MonoBehaviourPunCallbacks
         }
     }
 
+    // Süre biten oyuncunun hamlesini kendi cihazı yapar: rafı ve sürükle-bırak yolu onda.
+    // Test oyuncuları (editör otopilotu) kendi temposunda oynar, onlara karışılmaz.
+    private void TickTurnTimer()
+    {
+        var gm = GameManager.Instance;
+        if (
+            autoPlaying
+            || SyncAutoTest.Instance != null
+            || gm == null
+            || !gm.isGameReady
+            || gm.isGameEnded
+            || TurnStartTime <= 0
+            || TurnRemaining > 0f
+            || !IsPlayerTurn()
+        )
+            return;
+        StartCoroutine(AutoPlayTurn());
+    }
+
+    // Süre doldu: yandan alıp açamadıysa geri bırak, çekmediyse ortadan çek, botun seçtiği taşı at.
+    private IEnumerator AutoPlayTurn()
+    {
+        autoPlaying = true;
+        int que = currentTurnPlayer;
+        Debug.Log($"[SÜRE] P{que} süresi doldu, hamle otomatik yapılıyor.");
+
+        if (hasPickedFromSide && !hasOpenedThisTurn && !hasProcessedThisTurn)
+        {
+            FindObjectOfType<SidePickUIManager>()?.OnCancelButtonClicked();
+            yield return WaitUntilOrTimeout(() => !hasPickedFromSide && !canDrop, 3f);
+        }
+
+        Transform hand = GameObject.Find("PlayerTileContainer").transform;
+        if (!canDrop)
+        {
+            // Ortadaki TileUI'ler görüntü; üstteki = son sibling.
+            Transform middle = GameObject.Find("MiddleTileContainer").transform;
+            TileUI top =
+                middle.childCount > 0
+                    ? middle.GetChild(middle.childCount - 1).GetComponent<TileUI>()
+                    : null;
+            Placeholder slot = hand.GetComponentsInChildren<Placeholder>()
+                .FirstOrDefault(p => !p.isRight && !p.isMeldArea && p.transform.childCount == 0);
+            if (top != null && slot != null && TileUI.SimulateDrag(top, slot.transform))
+                yield return WaitUntilOrTimeout(() => canDrop, 3f);
+        }
+
+        if (canDrop && currentTurnPlayer == que)
+        {
+            string id = FindObjectOfType<ScoreManager>().FindBestTileToDiscardForBot(que);
+            TileUI tile = hand.GetComponentsInChildren<TileUI>()
+                .FirstOrDefault(x => x.tileDataInfo != null && x.tileDataInfo.id == id);
+            if (tile != null)
+                TileUI.SimulateDrag(tile, GameObject.Find("RightTileContainer").transform);
+            yield return WaitUntilOrTimeout(() => currentTurnPlayer != que, 5f);
+        }
+
+        // Hamle yine de olmadıysa (ör. reddedildi) yeni süre ver, her karede tekrar denemesin.
+        if (currentTurnPlayer == que)
+            TurnStartTime = PhotonNetwork.Time;
+        autoPlaying = false;
+    }
+
+    private static IEnumerator WaitUntilOrTimeout(System.Func<bool> done, float seconds)
+    {
+        for (float t = 0f; t < seconds && !done(); t += Time.deltaTime)
+            yield return null;
+    }
+
     private void ForceSkipBotTurn()
     {
         // Tüm coroutine'leri durdur (Sıkışanı iptal et)
@@ -117,9 +202,10 @@ public class TurnManager : MonoBehaviourPunCallbacks
 
     // TurnManager.cs içine eklenecek:
     [PunRPC]
-    public void SetTurnDirectly(int turnIndex)
+    public void SetTurnDirectly(int turnIndex, PhotonMessageInfo info)
     {
         currentTurnPlayer = turnIndex;
+        TurnStartTime = info.SentServerTime;
         // Sıra göstergelerini güncelle
         if (UIManager.Instance != null)
             UIManager.Instance.UpdateTurnIndicators(currentTurnPlayer);
@@ -231,9 +317,10 @@ public class TurnManager : MonoBehaviourPunCallbacks
     }
 
     [PunRPC]
-    private void NextTurn()
+    private void NextTurn(PhotonMessageInfo info)
     {
         localPlayerTurn = false;
+        TurnStartTime = info.SentServerTime;
 
         // Kilidi ve zamanlayıcıyı sıfırla
         isBotMoving = false;
@@ -425,6 +512,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
     {
         // 1. Sıra numarasını garantiye al
         currentTurnPlayer = 1;
+        TurnStartTime = PhotonNetwork.Time;
 
         // 2. Bot kilidini aç (Artık veriler taze, bot oynayabilir)
         isBotLogicPaused = false;

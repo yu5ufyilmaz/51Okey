@@ -256,22 +256,7 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
         WriteStatus();
     }
 
-    // Overlay canvas: ekran noktası için kamera yok. OnBeginDrag hamleyi reddederse pointerDrag'i null yapar.
-    bool DragTo(TileUI tile, Transform target)
-    {
-        var e = new PointerEventData(EventSystem.current)
-        {
-            position = RectTransformUtility.WorldToScreenPoint(null, tile.transform.position),
-            pointerDrag = tile.gameObject,
-        };
-        e.pressPosition = e.position;
-        tile.OnBeginDrag(e);
-        if (e.pointerDrag == null)
-            return false;
-        tile.transform.position = target.position;
-        tile.OnEndDrag(e);
-        return true;
-    }
+    bool DragTo(TileUI tile, Transform target) => TileUI.SimulateDrag(tile, target);
 
     void Join() => roomManager.JoinRoomWithPassword(Config.roomName, Config.runId, Config.runId);
 

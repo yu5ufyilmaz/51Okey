@@ -189,6 +189,77 @@ public class UIManager : MonoBehaviourPunCallbacks
         }
     }
 
+    // --- TUR SÜRESİ BARI: sırası gelenin isimliğinin alt şeridinde, süreyle soldan azalır, yeşil→sarı→kırmızı ---
+    private TurnManager turnManager;
+    private UnityEngine.UI.Image[] timerBars;
+    private static Sprite whiteSprite;
+    private static readonly Color barGreen = new Color(0.03f, 1f, 0f);
+    private static readonly Color barYellow = new Color(1f, 0.85f, 0f);
+    private static readonly Color barRed = new Color(1f, 0.2f, 0.15f);
+
+    private void Update()
+    {
+        if (turnManager == null)
+            turnManager = FindObjectOfType<TurnManager>();
+        var gm = GameManager.Instance;
+        if (turnManager == null || gm == null || turnIndicators == null)
+            return;
+        int myQue = 0;
+        if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object val))
+            myQue = (int)val;
+        if (myQue == 0)
+            return;
+
+        bool running = gm.isGameReady && !gm.isGameEnded && turnManager.TurnStartTime > 0;
+        int active = (turnManager.currentTurnPlayer - myQue + 4) % 4;
+        float left = running ? turnManager.TurnRemaining / turnManager.TurnSeconds : 0f;
+        for (int i = 0; i < turnIndicators.Length; i++)
+        {
+            var bar = TimerBar(i);
+            if (bar == null)
+                continue;
+            bool on = running && i == active;
+            if (bar.gameObject.activeSelf != on)
+                bar.gameObject.SetActive(on);
+            if (!on)
+                continue;
+            bar.fillAmount = left;
+            bar.color =
+                left > 0.5f
+                    ? Color.Lerp(barYellow, barGreen, (left - 0.5f) * 2f)
+                    : Color.Lerp(barRed, barYellow, left * 2f);
+        }
+    }
+
+    // İlk kullanımda isimliğin (kullanici_ui) alt koyu şeridine oturan bir dolgu bar kurulur.
+    private UnityEngine.UI.Image TimerBar(int i)
+    {
+        if (timerBars == null)
+            timerBars = new UnityEngine.UI.Image[turnIndicators.Length];
+        if (timerBars[i] != null || turnIndicators[i] == null)
+            return timerBars[i];
+        if (whiteSprite == null)
+            whiteSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f));
+
+        var go = new GameObject("TurnTimerBar", typeof(RectTransform), typeof(UnityEngine.UI.Image));
+        go.transform.SetParent(turnIndicators[i].transform.parent, false);
+        var rt = (RectTransform)go.transform;
+        // Şerit, görselin alt %22'si; kenarlardan biraz içeride.
+        rt.anchorMin = new Vector2(0.02f, 0.04f);
+        rt.anchorMax = new Vector2(0.98f, 0.19f);
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
+        var img = go.GetComponent<UnityEngine.UI.Image>();
+        img.sprite = whiteSprite;
+        img.type = UnityEngine.UI.Image.Type.Filled;
+        img.fillMethod = UnityEngine.UI.Image.FillMethod.Horizontal;
+        img.fillOrigin = 0;
+        img.raycastTarget = false;
+        go.SetActive(false);
+        timerBars[i] = img;
+        return img;
+    }
+
     // --- KISA BİLGİ MESAJI (ör. "limitin yetmiyor") ---
     private TextMeshProUGUI messageText;
     private Coroutine messageRoutine;

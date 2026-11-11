@@ -126,6 +126,7 @@ MonoBehaviour:
   - SetTurnDirectly
   - SyncQueToSeatMapping
   - SyncOpenedPairsRPC
+  - ShowPenaltyRPC
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

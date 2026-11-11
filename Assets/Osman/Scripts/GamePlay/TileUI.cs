@@ -217,6 +217,24 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     #endregion
 
     #region DRAG_HANDLERS
+    // Sürükle-bırakı koddan yapar (süre dolunca otomatik hamle, test oyuncuları); insanla aynı kural yolundan geçer.
+    // Overlay canvas: ekran noktası için kamera yok. OnBeginDrag hamleyi reddederse pointerDrag'i null yapar.
+    public static bool SimulateDrag(TileUI tile, Transform target)
+    {
+        var e = new PointerEventData(EventSystem.current)
+        {
+            position = RectTransformUtility.WorldToScreenPoint(null, tile.transform.position),
+            pointerDrag = tile.gameObject,
+        };
+        e.pressPosition = e.position;
+        tile.OnBeginDrag(e);
+        if (e.pointerDrag == null)
+            return false;
+        tile.transform.position = target.position;
+        tile.OnEndDrag(e);
+        return true;
+    }
+
     void Update()
     {
         // OPTİMİZASYON KİLİDİ: Eğer taş sürüklenmiyorsa VE boyutu/yeri oturmuşsa çalışma!
