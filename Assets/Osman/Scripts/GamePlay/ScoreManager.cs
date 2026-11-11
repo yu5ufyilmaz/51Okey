@@ -1273,7 +1273,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     }
 
     // Bu taş yerden sökülüp alınabilir mi? (Joker veya Gösterge ise EVET)
-    private bool IsSwappable(Tiles tile)
+    public bool IsSwappable(Tiles tile)
     {
         if (tile == null)
             return false;
@@ -1835,7 +1835,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         return count;
     }
 
-    private List<TileColor> GetUsedColorsInMultiColorRow(Transform placeholder)
+    public static List<TileColor> GetUsedColorsInMultiColorRow(Transform placeholder)
     {
         List<TileColor> usedColors = new List<TileColor>();
         Transform parentRow = placeholder.parent;

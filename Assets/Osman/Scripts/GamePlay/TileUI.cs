@@ -478,6 +478,10 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         transform.SetParent(transform.root, true);
         _currentVelocity = Vector3.zero; // Hızı sıfırla
         _targetRotationZ = 0f;
+
+        // Istakadaki taş: işlenebileceği yuvaları parlat (sıra, çekiş ve açmış olma ProcessAssist'te kontrol edilir).
+        if (grandParent == playerTileContainer)
+            ProcessAssist.Begin(this);
     }
     #endregion
     #endregion
@@ -564,6 +568,8 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                 _targetScale = _originalScale;
             }
         }
+
+        ProcessAssist.Drag(this);
     }
     #endregion
     #region On End Drag
@@ -573,6 +579,9 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
    public void OnEndDrag(PointerEventData eventData)
     {
+        // Parlayan hedef yuva (varsa); parıltı ve büyütme her durumda burada kapanır.
+        Placeholder assisted = ProcessAssist.End(this);
+
         // --- 1. TEMEL GÜVENLİK KONTROLLERİ ---
         if (transform.parent.CompareTag("OtherSideTileContainer") || isIndicatorTile)
         {
@@ -601,7 +610,11 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             }
         }
 
-        // B) Masa / Atma Alanı
+        // B) Parlayan işleme yuvası: büyümüş alanda gösterilen yere düşer.
+        if (bestTarget == null)
+            bestTarget = assisted;
+
+        // C) Masa / Atma Alanı
         if (bestTarget == null)
         {
             Placeholder[] allPlaceholders = FindObjectsOfType<Placeholder>();
