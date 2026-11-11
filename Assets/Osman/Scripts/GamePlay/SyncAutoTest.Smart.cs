@@ -196,14 +196,17 @@ public partial class SyncAutoTest
         public int Limit;
     }
 
+    // Master puan tablosunun sahibi: oyunun bot koltukları dahil herkesi oradan okur (botların PlayerScore özelliği yok).
     Obs Observe() =>
         new Obs
         {
-            Scores = PhotonNetwork.PlayerList.Where(p => p.CustomProperties.ContainsKey("PlayerQue"))
-                .ToDictionary(
-                    p => (int)p.CustomProperties["PlayerQue"],
-                    p => p.CustomProperties.TryGetValue("PlayerScore", out object s) ? (int)s : 0
-                ),
+            Scores = PhotonNetwork.IsMasterClient && Sm.playerScores != null
+                ? new Dictionary<int, int>(Sm.playerScores)
+                : PhotonNetwork.PlayerList.Where(p => p.CustomProperties.ContainsKey("PlayerQue"))
+                    .ToDictionary(
+                        p => (int)p.CustomProperties["PlayerQue"],
+                        p => p.CustomProperties.TryGetValue("PlayerScore", out object s) ? (int)s : 0
+                    ),
             Hand = Td.GetPlayerTiles().Count,
             OpenedSeries = Sm.hasOpenedSeries,
             OpenedPairs = Sm.hasOpenedPairs,
@@ -329,10 +332,12 @@ public partial class SyncAutoTest
                     yield break;
                 }
                 bool expectAccept = step.Mistake == Mistake.None;
+                string tileId = tile.tileDataInfo.id;
                 DragTo(tile, slot);
-                yield return StartCoroutine(WaitFor(() => Td.GetPlayerTiles().Count < before.Hand, expectAccept ? ObserveTimeout : 1f));
-                Obs after = Observe();
-                bool accepted = after.Hand < before.Hand;
+                // Okey değişiminde el sayısı aynı kalır (taş gider, okey gelir); ölçü taşın elden çıkması.
+                System.Func<bool> gone = () => !Td.GetPlayerTiles().Any(t => t.id == tileId);
+                yield return StartCoroutine(WaitFor(gone, expectAccept ? ObserveTimeout : 1f));
+                bool accepted = gone();
                 Check($"işle {TestPlayerBrain.Name(tile.tileDataInfo)} -> que{sv.OwnerQue}", expectAccept ? "işlendi" : "reddedildi", accepted ? "işlendi" : "reddedildi");
                 if (accepted)
                 {

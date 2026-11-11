@@ -21,6 +21,7 @@ public class SyncAutoTestConfig
     public string mode = "simple";
     public float mistakeRate;
     public int injectOracleBugAtMove; // öz-test: bu hamlede beklenen değeri bilerek boz
+    public bool fillWithBots; // tek editör: host odayı kurar, boş koltukları oyunun botları doldurur
 
     public bool IsHost => role == "host";
     public bool IsSmart => mode == "smart";

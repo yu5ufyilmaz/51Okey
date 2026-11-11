@@ -9,6 +9,7 @@
   powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -Mode smart -Mistakes 0.3 # bazen bilerek kural dışı
   powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -JoinRoom osman        # telefonda kurulan odaya 3 clone test oyuncusu olarak girer
   powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -JoinRoom '*'          # adı bilinmiyorsa: lobide boş koltuklu ilk oda
+  powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -Solo -Mode smart        # clone'lar kapalı: tek test oyuncusu + oyunun botları
   Tasarım (smart): docs/superpowers/specs/2026-11-11-test-oyunculari-design.md
 .NOTES
   1 el ~4 dk sürer. Claude 10 dk'lık komut sınırına takılmasın diye uzun koşuları arka planda (run_in_background) başlatır;
@@ -24,6 +25,7 @@ param(
     [int]$InjectOracleBug = 0,   # öz-test: AT-g1 bu hamlede beklenen cezayı bilerek bozar, [BUG] ile FAIL beklenir
     [switch]$KeepPlaying,
     [string]$JoinRoom = '',   # insana karşı: odayı telefon kurar (master o), 3 clone bu ada katılır
+    [switch]$Solo,   # sadece ana editör: test oyuncusu + oyunun 3 botu (clone'lar kapalıyken)
     [string[]]$Projects = @(
         'C:\Users\osman\Documents\51Okey',
         'C:\Users\osman\Documents\51Okey_clone_0',
@@ -48,6 +50,8 @@ if ($Projects.Count -eq 1) { $Projects = @($Projects[0] -split ',' | ForEach-Obj
 if ($Projects.Count -ne $Nicks.Count) { Write-Host "HATA: -Projects $($Nicks.Count) proje olmalı (host + 3 guest), $($Projects.Count) verildi"; exit 1 }
 # Ana editör boş kalır (build orada alınır); master telefon olduğu için host config'i yok.
 if ($JoinRoom) { $Projects = $Projects[1..3]; $Nicks = $Nicks[1..3] }
+# Tek insan: kıyaslanacak başka client yok, sync sayacı boş kalır; hüküm hata ve [BUG]'a bakar.
+if ($Solo) { $Projects = @($Projects[0]); $Nicks = @($Nicks[0]) }
 
 function Read-All {
     $all = New-Object object[] $Projects.Count
@@ -127,6 +131,7 @@ try {
             mode               = $Mode
             mistakeRate        = $Mistakes
             injectOracleBugAtMove = $(if ($i -eq 1) { $InjectOracleBug } else { 0 })
+            fillWithBots       = [bool]$Solo
         }
         [IO.File]::WriteAllText((Join-Path $dir 'config.json'), ($cfg | ConvertTo-Json))
     }
@@ -208,7 +213,7 @@ if ($Mode -eq 'smart') {
     }
 }
 
-$v = Get-SyncTestVerdict -Statuses $final -Nicks $Nicks -TimedOut $timedOut -NoHost:([bool]$JoinRoom)
+$v = Get-SyncTestVerdict -Statuses $final -Nicks $Nicks -TimedOut $timedOut -NoHost:([bool]$JoinRoom -or $Solo)
 $elapsed = [int]((Get-Date) - $started).TotalSeconds
 if ($v.Pass) { Write-Host "PASS: $($v.Reason) ($elapsed sn)"; exit 0 }
 Write-Host "FAIL: $($v.Reason) ($elapsed sn)"

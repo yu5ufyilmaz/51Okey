@@ -129,7 +129,7 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
                     }
                     // Şifreli oda: aynı AppId'deki bir telefon build'i JoinRandom ile test odasına düşmesin.
                     if (Config.IsHost)
-                        roomManager.CreateCustomRoom(Config.roomName, Config.runId, Config.deals, true, false);
+                        roomManager.CreateCustomRoom(Config.roomName, Config.runId, Config.deals, true, Config.fillWithBots);
                     else
                         Join();
                     SetState(State.Joining);
