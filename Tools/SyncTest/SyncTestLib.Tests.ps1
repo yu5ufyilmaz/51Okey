@@ -114,3 +114,28 @@ Describe 'Read-SyncStatus' {
         (Read-SyncStatus -Project $project).state | Should Be 'Playing'
     }
 }
+
+Describe 'Get-FirstBugKey' {
+    It 'returns the key of the first [BUG] error' {
+        $s = New-Statuses
+        $s[2] = New-Status 'AT-g2' -errors @('NullReference @ X', '[BUG] 1.21 AT-g2: at r9 beklenen que3 +250 gözlenen ceza yok')
+        Get-FirstBugKey -Statuses $s | Should Be '1.21'
+    }
+
+    It 'returns null when there is no bug' {
+        Get-FirstBugKey -Statuses (New-Statuses) | Should Be $null
+    }
+}
+
+Describe 'Get-JournalExcerpt' {
+    It 'returns the lines of every journal at that key' {
+        $a = Join-Path $TestDrive 'a.log'
+        $b = Join-Path $TestDrive 'b.log'
+        [IO.File]::WriteAllText($a, "1.20 | AT-host que1 | x`n1.21 | AT-host que1 | y`n")
+        [IO.File]::WriteAllText($b, "1.21 | AT-g1 que2 | z`n1.22 | AT-g1 que2 | w`n")
+        $lines = @(Get-JournalExcerpt -Paths @($a, $b, (Join-Path $TestDrive 'missing.log')) -Key '1.21')
+        $lines.Count | Should Be 2
+        $lines[0] | Should Match 'AT-host.*y'
+        $lines[1] | Should Match 'AT-g1.*z'
+    }
+}

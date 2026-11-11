@@ -5,6 +5,9 @@
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -Deals 1
   powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -Deals 1 -InjectDesync 5   # harness kendini test eder: FAIL beklenir
+  powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -Mode smart -Seed 11       # test oyuncuları (diz, aç, işle, yandan al)
+  powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -Mode smart -Mistakes 0.3 # bazen bilerek kural dışı
+  Tasarım (smart): docs/superpowers/specs/2026-11-11-test-oyunculari-design.md
 .NOTES
   1 el ~4 dk sürer. Claude 10 dk'lık komut sınırına takılmasın diye uzun koşuları arka planda (run_in_background) başlatır;
   süreç yarıda öldürülürse finally çalışmaz, editörler Play'de ve config'ler Temp'te kalır.
@@ -14,6 +17,9 @@ param(
     [int]$Seed = 0,
     [int]$TimeoutSec = 0,   # 0 = el sayısına göre (Get-DefaultTimeoutSec)
     [int]$InjectDesync = 0,
+    [ValidateSet('simple', 'smart')][string]$Mode = 'simple',
+    [double]$Mistakes = 0,
+    [int]$InjectOracleBug = 0,   # öz-test: AT-g1 bu hamlede beklenen cezayı bilerek bozar, [BUG] ile FAIL beklenir
     [switch]$KeepPlaying,
     [string[]]$Projects = @(
         'C:\Users\osman\Documents\51Okey',
@@ -24,7 +30,10 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\SyncTestLib.ps1"
-if ($TimeoutSec -le 0) { $TimeoutSec = Get-DefaultTimeoutSec $Deals }
+if ($TimeoutSec -le 0) {
+    $TimeoutSec = Get-DefaultTimeoutSec $Deals
+    if ($Mode -eq 'smart') { $TimeoutSec *= 2 }   # dizme ve gözlem beklemeleri turları uzatır
+}
 
 $Nicks = @('AT-host', 'AT-g1', 'AT-g2', 'AT-g3')
 function Leaf($p) { Split-Path $p -Leaf }
@@ -108,6 +117,9 @@ try {
             seed               = $Seed
             injectDesyncAtMove = $(if ($i -eq 1) { $InjectDesync } else { 0 })
             moveDelaySec       = 0.3
+            mode               = $Mode
+            mistakeRate        = $Mistakes
+            injectOracleBugAtMove = $(if ($i -eq 1) { $InjectOracleBug } else { 0 })
         }
         [IO.File]::WriteAllText((Join-Path $dir 'config.json'), ($cfg | ConvertTo-Json))
     }
@@ -172,6 +184,21 @@ foreach ($p in $Projects) {
 }
 for ($i = 0; $i -lt $Projects.Count; $i++) {
     if ($final[$i] -and $final[$i].desyncLog) { Write-Host "$($Nicks[$i]) log: $($final[$i].desyncLog)" }
+}
+
+if ($Mode -eq 'smart') {
+    # Oyuncular gerçekten açıp işledi mi görünsün; [BUG] varsa o hamlede 4 günlüğün ne dediği.
+    for ($i = 0; $i -lt $Projects.Count; $i++) {
+        $s = $final[$i]
+        if (-not $s) { continue }
+        Write-Host ("{0}: açma {1}, işleme {2}, yandan {3}, bilerek hata {4}, bug {5}, bitiş {6} | günlük: {7}" -f `
+                $Nicks[$i], $s.opens, $s.processes, $s.sidePicks, $s.mistakes, $s.bugs, $(if ($s.finishType) { $s.finishType } else { '-' }), $s.journal)
+    }
+    $bugKey = Get-FirstBugKey -Statuses $final
+    if ($bugKey) {
+        Write-Host "İlk [BUG] hamlesi $bugKey, günlüklerde o hamle:"
+        Get-JournalExcerpt -Paths @($final | ForEach-Object { if ($_) { $_.journal } }) -Key $bugKey | ForEach-Object { Write-Host "  $_" }
+    }
 }
 
 $v = Get-SyncTestVerdict -Statuses $final -Nicks $Nicks -TimedOut $timedOut

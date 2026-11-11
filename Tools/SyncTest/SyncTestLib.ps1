@@ -75,3 +75,24 @@ function Test-EditorStopped($status) { $null -ne $status -and $status.playMode -
 
 # Ölçüm: giriş 60-90 sn, bir el 140-200 sn, eller arası 10 sn.
 function Get-DefaultTimeoutSec([int]$Deals) { 120 + 240 * $Deals }
+
+# Test oyuncusu [BUG] hatalarını "[BUG] <el.hamle> ..." diye yazar; ilkinin anahtarı.
+function Get-FirstBugKey {
+    param([object[]]$Statuses)
+    foreach ($s in $Statuses) {
+        if (-not $s) { continue }
+        foreach ($e in @($s.errors)) {
+            if ("$e" -match '^\[BUG\] (\S+) ') { return $Matches[1] }
+        }
+    }
+    return $null
+}
+
+# Her client günlüğünden aynı el.hamle anahtarındaki satırlar (lockstep: anahtar herkeste aynı hamleyi gösterir).
+function Get-JournalExcerpt {
+    param([string[]]$Paths, [string]$Key)
+    foreach ($p in $Paths) {
+        if (-not $p -or -not (Test-Path $p)) { continue }
+        Get-Content -Path $p -Encoding UTF8 | Where-Object { $_ -like "$Key |*" }
+    }
+}
