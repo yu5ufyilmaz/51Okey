@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 
 // Sadece Editor'de ve <proje>/Temp/SyncAutoTest/config.json varken çalışır (Tools/SyncTest/Run-SyncTest.ps1 yazar).
 // Odaya girer, kendi koltuğunu insan kod yolundan oynar, durumunu status.json'a yazar.
-public class SyncAutoTest : MonoBehaviourPunCallbacks
+public partial class SyncAutoTest : MonoBehaviourPunCallbacks
 {
     public enum State
     {
@@ -69,12 +69,15 @@ public class SyncAutoTest : MonoBehaviourPunCallbacks
     {
         base.OnEnable();
         Application.logMessageReceived += OnLog;
+        GameManager.HandResult += OnHandResult;
     }
 
     public override void OnDisable()
     {
         base.OnDisable();
         Application.logMessageReceived -= OnLog;
+        GameManager.HandResult -= OnHandResult;
+        journal?.Dispose();
     }
 
     void Start() => SetState(State.Connecting);
@@ -162,7 +165,7 @@ public class SyncAutoTest : MonoBehaviourPunCallbacks
     IEnumerator PlayMyTurn()
     {
         moving = true;
-        yield return StartCoroutine(DrawAndDiscard());
+        yield return StartCoroutine(Config.IsSmart ? SmartTurn() : DrawAndDiscard());
         moving = false;
     }
 
