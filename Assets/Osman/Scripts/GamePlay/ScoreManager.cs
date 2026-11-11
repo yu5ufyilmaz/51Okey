@@ -1820,6 +1820,21 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     }
 
     // Yardımcı Metot: MultiColor satırındaki renkleri bulur
+    // Sayı grubu alanı 4'lük satırlardan oluşur; yuvanın kendi grubundaki (satırındaki) dolu yuva sayısı.
+    // Bütün alanı saymak, iki ayrı 3'lü grup varken 6 bulup 3'lü gruptan okey aldırıyordu.
+    public static int FilledInGroupRow(Transform placeholder)
+    {
+        Transform parentRow = placeholder.parent;
+        int rowStart = placeholder.GetSiblingIndex() / 4 * 4;
+        int count = 0;
+        for (int k = rowStart; k < rowStart + 4 && k < parentRow.childCount; k++)
+        {
+            if (parentRow.GetChild(k).childCount > 0)
+                count++;
+        }
+        return count;
+    }
+
     private List<TileColor> GetUsedColorsInMultiColorRow(Transform placeholder)
     {
         List<TileColor> usedColors = new List<TileColor>();
@@ -2091,16 +2106,12 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         else if (meldType == MeldType.MultiColor)
         {
             Transform rowParent = targetPlaceholder.parent;
-            int tileCountInRow = 0;
-
-            // Satırdaki dolu yuva sayısını hesapla
-            for (int i = 0; i < rowParent.childCount; i++)
-            {
-                if (rowParent.GetChild(i).childCount > 0)
-                    tileCountInRow++;
-            }
+            int rowStart = targetPlaceholder.GetSiblingIndex() / 4 * 4;
+            int rowEnd = Mathf.Min(rowStart + 4, rowParent.childCount);
+            int tileCountInRow = FilledInGroupRow(targetPlaceholder);
 
             // --- KRİTİK KURAL: MultiColor'da Joker takası SADECE 4 taş varken (full per) yapılabilir. ---
+            // 3'lü grupta okey alınamaz; gerçek taş 4. taş olarak işlenir.
             if (isJokerSwapTarget && tileCountInRow < 4)
             {
                 Debug.LogWarning(
@@ -2117,7 +2128,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             }
             else if (isJokerSwapTarget) // Req null ise ama joker varsa yanındaki taştan sayıyı al
             {
-                for (int i = 0; i < rowParent.childCount; i++)
+                for (int i = rowStart; i < rowEnd; i++)
                 {
                     if (rowParent.GetChild(i).childCount > 0)
                     {

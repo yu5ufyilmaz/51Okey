@@ -148,6 +148,24 @@ public class OkeyRulesTests
         Assert.AreEqual(0, GameManager.DiscardPenalty(new Tiles(TileColor.red, 9, TileType.FakeJoker), ind, false, islek));
     }
 
+    // --- Gruptan okey alma: sadece 4'lü grupta; sayım o grubun satırıyla sınırlı ---
+
+    [Test]
+    public void FilledInGroupRow_CountsOnlyThatRow()
+    {
+        // Sayı grubu alanı 4 satır x 4 yuva; satır 0 ve satır 1'de üçer taş (iki ayrı 3'lü grup).
+        var container = new UnityEngine.GameObject("NumberPerPlaceHolder").transform;
+        for (int i = 0; i < 16; i++)
+            new UnityEngine.GameObject("ph" + i).transform.SetParent(container);
+        foreach (int i in new[] { 0, 1, 2, 4, 5, 6 })
+            new UnityEngine.GameObject("tile").transform.SetParent(container.GetChild(i));
+
+        Assert.AreEqual(3, ScoreManager.FilledInGroupRow(container.GetChild(2)));
+        Assert.AreEqual(3, ScoreManager.FilledInGroupRow(container.GetChild(7)));
+        Assert.AreEqual(0, ScoreManager.FilledInGroupRow(container.GetChild(9)));
+        UnityEngine.Object.DestroyImmediate(container.gameObject);
+    }
+
     [Test]
     public void DiscardPenaltyReason_NamesWhatWasThrown()
     {
