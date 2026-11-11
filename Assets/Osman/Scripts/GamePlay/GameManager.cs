@@ -449,6 +449,8 @@ public class GameManager : MonoBehaviourPunCallbacks
             return;
         isGameEnded = true;
 
+        DesyncDetector.Report("Finish");
+
         if (PhotonNetwork.IsMasterClient)
         {
             CalculateAndDistributeScores(winnerActorNumber, isOkeyShot, isDoubleFinish);

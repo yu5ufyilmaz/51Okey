@@ -259,6 +259,8 @@ public class TurnManager : MonoBehaviourPunCallbacks
             UIManager.Instance.UpdateTurnIndicators(currentTurnPlayer);
 
         // Bot kontrolü artık Update() içinde yapılıyor.
+
+        DesyncDetector.Report("NextTurn");
     }
 
     public override void OnPlayerLeftRoom(Photon.Realtime.Player otherPlayer)

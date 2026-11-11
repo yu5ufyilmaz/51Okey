@@ -149,6 +149,11 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
     public void ShuffleTiles()
     {
+        // Aynı seed = aynı dağıtım (sıra seçimi de bu Random'dan çıkıyor). Seed log'a yazılır.
+        int seed = DesyncDetector.NextDealSeed();
+        Random.InitState(seed);
+        Debug.Log($"[SEED] Dağıtım seed: {seed}");
+
         for (int i = 0; i < allTiles.Count; i++)
         {
             Tiles temp = allTiles[i];
@@ -176,6 +181,8 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         {
             GameManager.Instance.SetGameReady();
         }
+
+        DesyncDetector.Report("Deal", newDeal: true);
     }
     #endregion
     #region Find Joker Tile
@@ -2225,6 +2232,39 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             {
                 FindObjectOfType<TurnManager>().photonView.RPC("NextTurn", RpcTarget.AllBuffered);
             }
+        }
+    }
+    #endregion
+
+    #region DESYNC DEBUG
+    // DesyncDetector için bu client'ın masa verisini satır satır yazar.
+    public void AppendSyncState(System.Text.StringBuilder sb)
+    {
+        sb.Append("seats=").AppendLine(string.Join(",", seatOfQue.Skip(1)));
+        sb.Append("ind=").AppendLine(DesyncDetector.TileKey(GetIndicatorTile()));
+        sb.Append($"pile({allTiles.Count})=").AppendLine(DesyncDetector.TileList(allTiles));
+        sb.Append("drop=").AppendLine(DesyncDetector.TileKey(dropTile));
+
+        List<Tiles>[] hands = { playerTiles1, playerTiles2, playerTiles3, playerTiles4 };
+        List<List<Tiles>>[] melds = { meltedTiles1, meltedTiles2, meltedTiles3, meltedTiles4 };
+        for (int i = 0; i < 4; i++)
+        {
+            sb.Append($"hand{i + 1}({hands[i].Count})=").AppendLine(DesyncDetector.TileList(hands[i]));
+            sb.Append($"meld{i + 1}=")
+                .AppendLine(string.Join(" | ", melds[i].Select(DesyncDetector.TileList)));
+        }
+
+        // İşleme sonrası masa sadece UI'da tutuluyor; yerleşim farkı alarm vermesin diye sıralı.
+        foreach (var player in PhotonNetwork.PlayerList.OrderBy(p => p.ActorNumber))
+        {
+            Transform meldContainer = GameObject.Find(player.NickName + " meld")?.transform;
+            if (meldContainer == null)
+                continue;
+            var ids = meldContainer
+                .GetComponentsInChildren<TileUI>()
+                .Select(t => DesyncDetector.TileKey(t.tileDataInfo))
+                .OrderBy(k => k, StringComparer.Ordinal);
+            sb.Append($"board#{player.ActorNumber}=").AppendLine(string.Join(" ", ids));
         }
     }
     #endregion
