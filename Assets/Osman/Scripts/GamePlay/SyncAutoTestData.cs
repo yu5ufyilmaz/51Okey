@@ -17,7 +17,13 @@ public class SyncAutoTestConfig
         injectDesyncAtMove;
     public float moveDelaySec = 0.3f;
 
+    // "simple": çek-at otopilot. "smart": test oyuncusu (TestPlayerBrain).
+    public string mode = "simple";
+    public float mistakeRate;
+    public int injectOracleBugAtMove; // öz-test: bu hamlede beklenen değeri bilerek boz
+
     public bool IsHost => role == "host";
+    public bool IsSmart => mode == "smart";
 }
 
 [Serializable]
@@ -40,6 +46,13 @@ public class SyncAutoTestStatus
         deal,
         myMoves;
     public bool isMyTurn; // Zaman aşımında runner takılanı bununla bulur.
+    public int opens,
+        processes,
+        sidePicks,
+        mistakes,
+        bugs;
+    public string finishType;
+    public string journal;
     public List<string> errors = new List<string>();
     public string desyncLog;
     public SyncCounts sync = new SyncCounts();

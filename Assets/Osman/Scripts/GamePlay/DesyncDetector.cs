@@ -70,6 +70,9 @@ public class DesyncDetector : MonoBehaviourPunCallbacks, IOnEventCallback
         CloseLog();
     }
 
+    // Test oyuncusu günlüğü bu anahtarla yazar (lockstep: her client'ta aynı).
+    public static string CurrentKey => Instance != null ? $"{Instance.deal}.{Instance.move}" : "0.0";
+
     public static int NextDealSeed()
     {
         // Her el ayrı seed: aynı seed tüm ellere verilirse 2. el 1. elin aynısı dağıtılır.

@@ -531,6 +531,9 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
     }
 
+    // Test oyuncusu (SyncAutoTest) el sonucunu kendi beklentisiyle karşılaştırmak için dinler; abonesi yoksa etkisiz.
+    public static event System.Action<int[], int[], int[], int[]> HandResult;
+
     [PunRPC]
     public void OnGameEndedDetailedRPC(
         int[] actors,
@@ -540,6 +543,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     )
     {
         isGameEnded = true;
+        HandResult?.Invoke(actors, rewards, penalties, netScores);
         Dictionary<int, int> dictRewards = new Dictionary<int, int>();
         Dictionary<int, int> dictPenalties = new Dictionary<int, int>();
         Dictionary<int, int> dictNetScores = new Dictionary<int, int>();

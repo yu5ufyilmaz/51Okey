@@ -42,6 +42,42 @@ public class SyncAutoTestDataTests
     }
 
     [Test]
+    public void Config_ReadsSmartFields()
+    {
+        WriteConfig(
+            "{\"runId\":\"r1\",\"role\":\"guest\",\"mode\":\"smart\",\"mistakeRate\":0.3,\"injectOracleBugAtMove\":5}"
+        );
+        Assert.IsTrue(SyncAutoTestFiles.TryLoadConfig(root, out var c));
+        Assert.AreEqual("smart", c.mode);
+        Assert.AreEqual(0.3f, c.mistakeRate, 1e-6);
+        Assert.AreEqual(5, c.injectOracleBugAtMove);
+    }
+
+    [Test]
+    public void Config_DefaultsToSimpleMode()
+    {
+        WriteConfig("{\"runId\":\"r1\"}");
+        Assert.IsTrue(SyncAutoTestFiles.TryLoadConfig(root, out var c));
+        Assert.AreEqual("simple", c.mode);
+    }
+
+    [Test]
+    public void Status_WritesCounters()
+    {
+        var s = new SyncAutoTestStatus { opens = 2, processes = 3, sidePicks = 1, mistakes = 4, bugs = 1, finishType = "okey" };
+        SyncAutoTestFiles.WriteStatus(root, s);
+        var read = JsonUtility.FromJson<SyncAutoTestStatus>(
+            File.ReadAllText(Path.Combine(SyncAutoTestFiles.Dir(root), "status.json"))
+        );
+        Assert.AreEqual(2, read.opens);
+        Assert.AreEqual(3, read.processes);
+        Assert.AreEqual(1, read.sidePicks);
+        Assert.AreEqual(4, read.mistakes);
+        Assert.AreEqual(1, read.bugs);
+        Assert.AreEqual("okey", read.finishType);
+    }
+
+    [Test]
     public void TryLoadConfig_MissingFile_ReturnsFalse()
     {
         Assert.IsFalse(SyncAutoTestFiles.TryLoadConfig(root, out _));
