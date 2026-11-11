@@ -619,15 +619,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                     return;
                 }
 
-                if (GameManager.Instance != null)
-                {
-                    GameManager.Instance.photonView.RPC(
-                        "CheckPenaltyRPC",
-                        RpcTarget.MasterClient,
-                        localQueInt,
-                        this.tileDataInfo
-                    );
-                }
+                // Atma cezası (okey/işlek) NextTurnRoutine'de: bitiren atış cezalanmaz.
                 ExecuteNextTurn();
             }
             else
@@ -813,11 +805,23 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         // El tamamen bitti mi? (0 taş kaldıysa bitmiştir)
         bool isGameReallyOver = (currentHandForCheck.Count == 0);
 
+        // Kural kitabı: okey atarak bitmek ödüllü bitiştir; bitiren atışa okey/işlek cezası yazılmaz.
+        if (!isGameReallyOver && GameManager.Instance != null)
+        {
+            GameManager.Instance.photonView.RPC(
+                "CheckPenaltyRPC",
+                RpcTarget.MasterClient,
+                playerQueInt,
+                tileDataInfo
+            );
+        }
+
         // GameManager'a Bildir
         if (tileDistrubite != null)
         {
             HandData data = new HandData();
             data.actorNumber = PhotonNetwork.LocalPlayer.ActorNumber;
+            data.okeyFinish = isGameReallyOver && tileDataInfo.type == TileType.Joker;
             // Eğer oyun bittiyse boş el gönder, bitmediyse göstermelik bir taş koy (kontrol için)
             data.handTiles = isGameReallyOver
                 ? new List<Tiles>()

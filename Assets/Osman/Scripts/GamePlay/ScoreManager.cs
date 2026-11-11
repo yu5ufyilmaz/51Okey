@@ -141,6 +141,11 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         hasOpenedSeries = false;
         hasOpenedPairs = false;
         playersWhoOpened.Clear();
+        playersWhoOpenedPairs.Clear();
+
+        // El içi cezalar (okey/işlek atma, işleme) o elin sonucuna yazıldı; yeni ele taşınmasın.
+        // Sıra (que) her el değiştiği için eski cezalar yoksa başka oyuncunun hanesine geçerdi.
+        InitializeScores(4);
 
         // Bekleyen geçici listeleri temizle
         pendingMeldInfos.Clear();
@@ -425,7 +430,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                     if (OkeyRuleEngine.CheckForDoublePer(per, indicator))
                     {
                         pairPerCountLocal++;
-                        pairScore += OkeyRuleEngine.CalculateDoublePerScore(per);
+                        pairScore += OkeyRuleEngine.CalculateDoublePerScore(per, indicator);
                     }
                     else
                     {
@@ -568,8 +573,13 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             int currentLimit = GameManager.Instance.CurrentTableLimit;
             int myCurrentScore = totalScore;
 
-            // Daha önce açtıysam limit beni bağlamaz
-            bool limitPass = hasOpenedSeries ? true : (myCurrentScore > currentLimit);
+            // Daha önce açtıysam limit beni bağlamaz; ilk açan 51 ile, sonrakiler yeri geçerek açar.
+            bool limitPass = OkeyRuleEngine.PassesOpenLimit(
+                myCurrentScore,
+                currentLimit,
+                AnyoneElseOpened(),
+                hasOpenedSeries
+            );
 
             if (limitPass)
             {
@@ -620,20 +630,14 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             int currentLimit = GameManager.Instance.CurrentTableLimit;
             int myPairScore = pairTotalScore;
 
-            bool limitPass = false;
-
-            // KURAL 1: Daha önce Çift açtıysam -> Limit Yok
-            if (hasOpenedPairs)
-                limitPass = true;
-            // KURAL 2: Daha önce Seri açtıysam -> Limit Yok
-            else if (hasOpenedSeries)
-                limitPass = true;
-            // KURAL 3: Masada başkası çift açtıysa -> Limit Yok
-            else if (GameManager.Instance.IsDoubleOpenedOnTable)
-                limitPass = true;
-            // KURAL 4: Hiçbiri yoksa -> Limit Kontrolü
-            else if (myPairScore > currentLimit)
-                limitPass = true;
+            // Daha önce açtıysam limit yok. Kural kitabı: çift açmak için de 51'i (katlamalıda yeri) geçmek gerekir;
+            // masada başkasının çift açmış olması limiti kaldırmaz.
+            bool limitPass = OkeyRuleEngine.PassesOpenLimit(
+                myPairScore,
+                currentLimit,
+                AnyoneElseOpened(),
+                hasOpenedPairs || hasOpenedSeries
+            );
 
             if (limitPass)
             {
@@ -1015,16 +1019,15 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         foreach (var pair in validPairs)
         {
             // YENİ: Puan hesabı RuleEngine'den
-            int pairScore = OkeyRuleEngine.CalculateDoublePerScore(pair);
+            int pairScore = OkeyRuleEngine.CalculateDoublePerScore(pair, indicator);
 
             // --- LİMİT KONTROLÜ (Değişmedi) ---
-            bool canOpen = false;
-            if (HasPlayerOpened(GetPlayerQue()))
-                canOpen = true;
-            else if (GameManager.Instance.IsDoubleOpenedOnTable)
-                canOpen = true;
-            else if (pairTotalScore >= GameManager.Instance.CurrentTableLimit)
-                canOpen = true;
+            bool canOpen = OkeyRuleEngine.PassesOpenLimit(
+                pairTotalScore,
+                GameManager.Instance.CurrentTableLimit,
+                AnyoneElseOpened(),
+                HasPlayerOpened(GetPlayerQue())
+            );
 
             if (!canOpen)
             {
@@ -1160,6 +1163,11 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 GetPlayerQue()
             );
             hasOpenedPairs = true;
+            GameManager.Instance.photonView.RPC(
+                "SyncOpenedPairsRPC",
+                RpcTarget.AllBuffered,
+                GetPlayerQue()
+            );
             GameManager.Instance.SetDoubleOpened();
 
             if (turnManager.hasPickedFromSide)
@@ -1649,6 +1657,9 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                                 if (isSwap && matchInHand.type == TileType.Joker)
                                     continue;
 
+                                if (meldType == MeldType.SingleColor && !isSwap && !SeriesEndAllows(phTransform))
+                                    continue;
+
                                 int ownerQue = -1;
                                 if (player.CustomProperties.TryGetValue("PlayerQue", out object q))
                                     ownerQue = (int)q;
@@ -1791,6 +1802,8 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 visualObject = tempGO,
             };
             actionHistory.Push(action);
+            // Yandan alan, açmak yerine işleyerek de turu bitirebilir (TurnManager.CanFinishTurn).
+            turnManager.hasProcessedThisTurn = true;
         }
 
         // Joker İadesi
@@ -1858,6 +1871,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             return;
 
         ProcessAction lastAction = actionHistory.Pop();
+        turnManager.hasProcessedThisTurn = actionHistory.Count > 0;
         int playerQue = GetPlayerQue();
 
         // 1. CEZA İADESİ (PenaltySystem Kullanılıyor)
@@ -1992,10 +2006,41 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     #endregion
     #region Game Score Manager
     public HashSet<int> playersWhoOpened = new HashSet<int>();
+    public HashSet<int> playersWhoOpenedPairs = new HashSet<int>();
 
     public bool HasPlayerOpened(int playerQue)
     {
         return playersWhoOpened.Contains(playerQue);
+    }
+
+    bool AnyoneElseOpened() => playersWhoOpened.Any(q => q != GetPlayerQue());
+
+    // Seri satırı: sütun = satır*13 + (sayı-1). Bu tur bu pere işlenenleri ve perin önceki sayılarını ayırıp
+    // "bir uçtan turda en fazla 2 taş" kuralını uygular.
+    bool SeriesEndAllows(Transform slot)
+    {
+        int row = slot.GetSiblingIndex() / 13;
+        List<int> processed = actionHistory
+            .Where(a =>
+                a.type == ActionType.NormalPlace
+                && a.targetSlot != null
+                && a.targetSlot.parent == slot.parent
+                && a.targetSlot.GetSiblingIndex() / 13 == row
+            )
+            .Select(a => a.targetSlot.GetSiblingIndex() % 13 + 1)
+            .ToList();
+        List<int> per = new List<int>();
+        for (int c = 0; c < 13; c++)
+        {
+            int idx = row * 13 + c;
+            if (
+                idx < slot.parent.childCount
+                && slot.parent.GetChild(idx).childCount > 0
+                && !processed.Contains(c + 1)
+            )
+                per.Add(c + 1);
+        }
+        return OkeyRuleEngine.CanProcessSeriesEnd(slot.GetSiblingIndex() % 13 + 1, per, processed);
     }
 
     public List<Tiles> GetAllTilesPendingCommit()
@@ -2028,21 +2073,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         if (ph == null)
             return false;
 
-        // Yandan alınan taş kontrolü: Yandan alınan taş o tur işlenemez.
-        if (turnManager.hasPickedFromSide)
-        {
-            Tiles sideTile = GameManager.Instance.CurrentSidePickTile;
-            if (
-                sideTile != null
-                && tileData.color == sideTile.color
-                && tileData.number == sideTile.number
-                && tileData.id == sideTile.id
-            ) // ID kontrolü en güvenlisidir
-            {
-                Debug.LogWarning("KURAL: Yandan aldığınız taşı işleyemezsiniz!");
-                return false;
-            }
-        }
+        // Normal modda yandan alınan taş o tur işlenebilir (yasak sadece Hardcore modda).
 
         bool isJokerSwapTarget = false;
         if (targetPlaceholder.childCount > 0)
@@ -2134,6 +2165,12 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
         if (!isMatch)
             return false;
+
+        if (meldType == MeldType.SingleColor && !isJokerSwapTarget && !SeriesEndAllows(targetPlaceholder))
+        {
+            Debug.LogWarning("KURAL: Bir pere aynı turda bir uçtan en fazla 2 taş işlenebilir!");
+            return false;
+        }
 
         // 3. SAHİBİ VE SENKRONİZASYON VERİSİNİ BULMA
         int targetOwnerQue = GetOwnerQueFromPlaceholder(targetPlaceholder);

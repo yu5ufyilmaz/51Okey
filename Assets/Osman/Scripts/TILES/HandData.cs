@@ -8,5 +8,6 @@ public class HandData
 {
     public int actorNumber; // Oyuncunun ID'si
     public bool isFinishMove; // Bu hamle oyunu bitiren hamle mi?
+    public bool okeyFinish; // Son atılan taş okey mi? (Okey atarak bitiş: diğerleri 2 kat ceza)
     public List<Tiles> handTiles; // O an elindeki taşlar (Bitip bitmediğini kontrol için)
 }

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
@@ -399,7 +400,8 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (data.handTiles.Count == 0)
         {
             Debug.Log($"OYUN BİTTİ! Kazanan ActorNumber: {data.actorNumber}");
-            photonView.RPC("FinishGameRPC", RpcTarget.All, data.actorNumber, false, false);
+            // isDoubleFinish master'da playersWhoOpenedPairs'ten hesaplanır.
+            photonView.RPC("FinishGameRPC", RpcTarget.All, data.actorNumber, data.okeyFinish, false);
             return;
         }
 
@@ -468,7 +470,18 @@ public class GameManager : MonoBehaviourPunCallbacks
         List<int> listPenalties = new List<int>();
         List<int> listNetScores = new List<int>();
 
-        Tiles indicator = tileDistrubite.GetIndicatorTile();
+        // Özel bitiş çarpanı: çiftten, okey atarak ya da masada kendisinden başka kimse açmadan bitiş.
+        int finishMultiplier = 1;
+        Player winner = winnerActorNumber != -1 ? PhotonNetwork.CurrentRoom.GetPlayer(winnerActorNumber) : null;
+        if (winner != null)
+        {
+            int winnerQue = tileDistrubite.GetQueueNumberOfPlayer(winner);
+            finishMultiplier = PenaltySystem.FinishMultiplier(
+                scoreManager.playersWhoOpenedPairs.Contains(winnerQue),
+                isOkeyShot,
+                scoreManager.playersWhoOpened.All(q => q == winnerQue)
+            );
+        }
 
         foreach (var player in PhotonNetwork.PlayerList)
         {
@@ -491,7 +504,9 @@ public class GameManager : MonoBehaviourPunCallbacks
             int roundResult = PenaltySystem.Instance.CalculateEndGamePenalty(
                 pQue,
                 hasOpened,
-                isWinner
+                isWinner,
+                scoreManager.playersWhoOpenedPairs.Contains(pQue),
+                finishMultiplier
             );
 
             if (roundResult < 0)
@@ -512,6 +527,13 @@ public class GameManager : MonoBehaviourPunCallbacks
             listPenalties.ToArray(),
             listNetScores.ToArray()
         );
+    }
+
+    // El sonunda çift açanın taşları 2 kat sayılır; master bunu bilsin diye herkese duyurulur.
+    [PunRPC]
+    public void SyncOpenedPairsRPC(int playerQue)
+    {
+        scoreManager.playersWhoOpenedPairs.Add(playerQue);
     }
 
     [PunRPC]

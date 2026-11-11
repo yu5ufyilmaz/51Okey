@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
@@ -38,46 +39,59 @@ public class PenaltySystem : MonoBehaviourPunCallbacks
     // BÖLÜM 1: CEZA HESAPLAMA MANTIĞI (Math & Rules)
     // =================================================================================
 
+    // Kural kitabı: kazanan her zaman 600 düşer. Açmayan sabit 600. Açan: kalan taş başına 10 × renk çarpanı
+    // (çift açtıysa 2 kat), elde kalan her okey ayrıca 250. Özel bitişte kaybedenlerin cezası finishMultiplier ile çarpılır.
+    public static int EndPenalty(
+        bool isWinner,
+        bool hasOpened,
+        bool openedPairs,
+        int normalTiles,
+        int okeys,
+        int colorMultiplier,
+        int finishMultiplier
+    )
+    {
+        if (isWinner)
+            return -600;
+        int penalty = hasOpened
+            ? normalTiles * 10 * colorMultiplier * (openedPairs ? 2 : 1) + okeys * 250
+            : 600;
+        return penalty * finishMultiplier;
+    }
+
+    // Çiftten, okey atarak ya da kimse açmadan bitiş: her biri 2 kat, birbiriyle çarpılır.
+    public static int FinishMultiplier(bool pairs, bool okeyShot, bool nobodyElseOpened) =>
+        (pairs ? 2 : 1) * (okeyShot ? 2 : 1) * (nobodyElseOpened ? 2 : 1);
+
     /// <summary>
     /// Oyun sonunda bir oyuncunun yiyeceği cezayı hesaplar.
     /// </summary>
-    public int CalculateEndGamePenalty(int playerQue, bool hasOpened, bool isWinner)
+    public int CalculateEndGamePenalty(
+        int playerQue,
+        bool hasOpened,
+        bool isWinner,
+        bool openedPairs,
+        int finishMultiplier
+    )
     {
-        // Renk çarpanını GameManager'dan al (Sarı x2, Kırmızı x3 vb.)
         int multiplier = GameManager.Instance.GetCurrentColorMultiplier();
-
-        // 1. KAZANAN OYUNCU (Düşüm)
-        if (isWinner)
-        {
-            return -600; // Standart bitiş düşümü
-        }
-
-        // 2. HİÇ AÇMAMIŞ OYUNCU
-        if (!hasOpened)
-        {
-            // PDF Kuralı: Açmayana sabit ceza (Örn: 600)
-            return 600;
-        }
-
-        // 3. AÇMIŞ AMA BİTMEMİŞ OYUNCU
-        // Elindeki taşların toplam değeri veya adedi üzerinden hesaplanır.
-        // Mevcut kodunda: Taş Adedi * 10 * Çarpan
-
         TileDistrubite td = FindObjectOfType<TileDistrubite>();
-        if (td != null)
-        {
-            int remainingTileCount = td.GetPlayerHandCount(playerQue);
+        List<Tiles> hand = td != null ? td.GetPlayerTilesForBot(playerQue) : new List<Tiles>();
+        int okeys = hand.Count(t => t.type == TileType.Joker);
 
-            // Örnek: Roket (x8) ve 5 taş kaldıysa -> 5 * 10 * 8 = 400 Ceza
-            int calculatedPenalty = remainingTileCount * 10 * multiplier;
-
-            Debug.Log(
-                $"[PenaltySystem] Oyuncu {playerQue} elinde {remainingTileCount} taş kaldı. Ceza: {calculatedPenalty}"
-            );
-            return calculatedPenalty;
-        }
-
-        return 0; // Hata durumu
+        int penalty = EndPenalty(
+            isWinner,
+            hasOpened,
+            openedPairs,
+            hand.Count - okeys,
+            okeys,
+            multiplier,
+            finishMultiplier
+        );
+        Debug.Log(
+            $"[PenaltySystem] Oyuncu {playerQue}: {hand.Count - okeys} taş + {okeys} okey, çift={openedPairs}, bitiş x{finishMultiplier} -> {penalty}"
+        );
+        return penalty;
     }
 
     /// <summary>

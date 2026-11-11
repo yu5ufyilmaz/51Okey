@@ -49,6 +49,10 @@ public static class OkeyRuleEngine
         if (tiles.Count < 3)
             return false;
 
+        // Seride sadece okey renk tutmaz; gösterge kopyası normal taştır (çiftte IsSingleColor onu muaf tutar).
+        if (tiles.Where(t => t.type != TileType.Joker).Select(t => t.color).Distinct().Count() > 1)
+            return false;
+
         int[] pattern = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 };
         int[] revPattern = pattern.Reverse().ToArray();
 
@@ -61,14 +65,13 @@ public static class OkeyRuleEngine
 
     private static bool CheckPattern(List<Tiles> tiles, int[] pattern)
     {
-        for (int i = 0; i < pattern.Length; i++)
+        // Seri 13'ü (veya tersten 1'i) aşamaz: 12-13-13 ya da 1-1-1 seri değildir.
+        for (int i = 0; i + tiles.Count <= pattern.Length; i++)
         {
             bool valid = true;
             for (int j = 0; j < tiles.Count; j++)
             {
-                int expectedNumber = pattern[
-                    (i + j > pattern.Length - 1 ? pattern.Length - 1 : i + j)
-                ];
+                int expectedNumber = pattern[i + j];
 
                 if (tiles[j].type == TileType.Joker)
                 {
@@ -240,13 +243,33 @@ public static class OkeyRuleEngine
         return score;
     }
 
-    public static int CalculateDoublePerScore(List<Tiles> tiles)
+    // Kural kitabı: "6,6 çifti 12 yapar"; okey eşinin sayısını alır. Gösterge kopyası her taşla çift olur
+    // ve kendi sayısıyla sayılır ("gösterge 5 ise 13'ün yanında bile 10").
+    public static int CalculateDoublePerScore(List<Tiles> tiles, Tiles indicator)
     {
-        int score = 0;
-        foreach (var tile in tiles)
-        {
-            score += tile.number;
-        }
-        return score;
+        if (tiles.Any(t => t.type != TileType.Joker && IsIndicator(t, indicator)))
+            return indicator.number * 2;
+        var normal = tiles.FirstOrDefault(t => t.type != TileType.Joker);
+        if (normal != null)
+            return normal.number * 2;
+        return indicator != null ? (indicator.number % 13 + 1) * 2 : 0; // iki okey: okeyin sayısı
+    }
+
+    // Katlamalı mod: masada kimse açmadıysa 51 yeter, biri açtıysa yeri geçmek gerekir. Açmış oyuncuya limit yok.
+    public static bool PassesOpenLimit(int score, int tableLimit, bool anyoneOpened, bool iHaveOpened) =>
+        iHaveOpened || (anyoneOpened ? score > tableLimit : score >= tableLimit);
+
+    // Kural kitabı: bir pere aynı turda bir uçtan en fazla 2 taş işlenir (6-7-8'e 9 ve 10 olur, 11 olmaz; 5 ve 4 ayrıca olur).
+    public const int MaxSeriesProcessPerEnd = 2;
+
+    // perNumbers: perin bu turdan önceki sayıları; processedThisTurn: bu tur o pere işlenen sayılar.
+    public static bool CanProcessSeriesEnd(int number, List<int> perNumbers, List<int> processedThisTurn)
+    {
+        if (perNumbers.Count == 0)
+            return true;
+        int min = perNumbers.Min(),
+            max = perNumbers.Max();
+        bool high = number > max;
+        return processedThisTurn.Count(n => high ? n > max : n < min) < MaxSeriesProcessPerEnd;
     }
 }
