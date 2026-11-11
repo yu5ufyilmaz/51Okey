@@ -1746,7 +1746,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                         TileType.Number
                     );
             }
-            Destroy(targetPlaceholder.GetChild(0).gameObject);
+            TileUI.DestroyNow(targetPlaceholder.GetChild(0).gameObject);
         }
 
         // 4. GÖRSEL OLUŞTURMA (Aynen Kalıyor)
@@ -1893,7 +1893,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         if (lastAction.visualObject != null)
         {
             meldTileGO.Remove(lastAction.visualObject);
-            Destroy(lastAction.visualObject);
+            TileUI.DestroyNow(lastAction.visualObject);
         }
 
         // 3. TAŞI GERİ VER (Aynen)

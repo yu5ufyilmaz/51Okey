@@ -882,6 +882,15 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             );
         }
 
+        // Bitiren turda açılan/işlenen taşlar da bitişten önce herkese gitsin; aşağıdaki erken çıkış
+        // bunları göndermeden bitiriyordu, diğer ekranlarda son per/işleme eksik kalıyordu.
+        if (isGameReallyOver)
+        {
+            scoreManager.CommitAndStoreMelds();
+            scoreManager.CommitJokerTransactions();
+            scoreManager.ExecutePendingSyncs();
+        }
+
         // GameManager'a Bildir
         if (tileDistrubite != null)
         {
@@ -1034,6 +1043,13 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             if (scoreManager != null)
                 scoreManager.CheckForPer();
         }
+    }
+
+    // Destroy kare sonunu bekler; yuvadan hemen çıkarılmazsa aynı karede işlek hesabı ve kontroller eski taşı da görür.
+    public static void DestroyNow(GameObject go)
+    {
+        go.transform.SetParent(null, false);
+        Destroy(go);
     }
 
     // Yuvada başka bir taş var ve o taş başka yere gitmiyor.

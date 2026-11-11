@@ -1825,7 +1825,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
         // 3. Sadece MASADAKİ Görseli Oluştur
         if (targetPlaceholder.childCount > 0)
-            Destroy(targetPlaceholder.GetChild(0).gameObject);
+            TileUI.DestroyNow(targetPlaceholder.GetChild(0).gameObject);
 
         GameObject tileObj = Instantiate(tilePrefab, targetPlaceholder);
         tileObj.name = "PERMANENT_MELD_TILE";
@@ -2199,7 +2199,8 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 .AppendLine(string.Join(" | ", melds[i].Select(DesyncDetector.TileList)));
         }
 
-        // İşleme sonrası masa sadece UI'da tutuluyor; yerleşim farkı alarm vermesin diye sıralı.
+        // İşleme sonrası masa sadece UI'da tutuluyor. Taş@tür.yuva: işleme yuva numarasıyla senkronlandığı için
+        // yerleşim farkı da gerçek hatadır (ör. okey sahibinde başka yuvada durursa takasta silinmez).
         foreach (var player in PhotonNetwork.PlayerList.OrderBy(p => p.ActorNumber))
         {
             Transform meldContainer = GameObject.Find(player.NickName + " meld")?.transform;
@@ -2207,7 +2208,9 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 continue;
             var ids = meldContainer
                 .GetComponentsInChildren<TileUI>()
-                .Select(t => DesyncDetector.TileKey(t.tileDataInfo))
+                .Select(t =>
+                    $"{DesyncDetector.TileKey(t.tileDataInfo)}@{t.transform.parent.parent.GetSiblingIndex()}.{t.transform.parent.GetSiblingIndex()}"
+                )
                 .OrderBy(k => k, StringComparer.Ordinal);
             sb.Append($"board#{player.ActorNumber}=").AppendLine(string.Join(" ", ids));
         }
