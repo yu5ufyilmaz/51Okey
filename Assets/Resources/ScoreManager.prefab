@@ -66,6 +66,7 @@ MonoBehaviour:
   pendingMeldedTiles: []
   meldTileGO: []
   pendingSyncActions: []
+  FirstOpenThisTurn: 0
 --- !u!114 &-7472011219972581762
 MonoBehaviour:
   m_ObjectHideFlags: 0
