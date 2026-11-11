@@ -8,6 +8,7 @@
   powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -Mode smart -Seed 11       # test oyuncuları (diz, aç, işle, yandan al)
   powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -Mode smart -Mistakes 0.3 # bazen bilerek kural dışı
   powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -JoinRoom osman        # telefonda kurulan odaya 3 clone test oyuncusu olarak girer
+  powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -JoinRoom '*'          # adı bilinmiyorsa: lobide boş koltuklu ilk oda
   Tasarım (smart): docs/superpowers/specs/2026-11-11-test-oyunculari-design.md
 .NOTES
   1 el ~4 dk sürer. Claude 10 dk'lık komut sınırına takılmasın diye uzun koşuları arka planda (run_in_background) başlatır;

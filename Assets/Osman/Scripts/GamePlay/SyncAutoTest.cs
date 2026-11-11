@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Photon.Pun;
@@ -40,6 +41,8 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
     TurnManager turnManager;
     bool moving;
     readonly SyncAutoTestStatus status = new SyncAutoTestStatus();
+    readonly Dictionary<string, RoomInfo> rooms = new Dictionary<string, RoomInfo>();
+    const string AnyRoom = "*";
 
     int MyQue =>
         PhotonNetwork.LocalPlayer != null
@@ -115,6 +118,15 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
                     && PhotonNetwork.NetworkClientState == ClientState.JoinedLobby
                 )
                 {
+                    // "*": telefonda kurulan odanın adı bilinmiyor; lobide boş koltuğu olan ilk odaya gir.
+                    if (Config.roomName == AnyRoom)
+                    {
+                        var open = rooms.Values.FirstOrDefault(r => r.IsOpen && r.PlayerCount < r.MaxPlayers);
+                        if (open == null)
+                            break;
+                        Config.roomName = open.Name;
+                        Debug.LogWarning($"[AUTOTEST] açık oda bulundu: {open.Name} ({open.PlayerCount}/{open.MaxPlayers})");
+                    }
                     // Şifreli oda: aynı AppId'deki bir telefon build'i JoinRandom ile test odasına düşmesin.
                     if (Config.IsHost)
                         roomManager.CreateCustomRoom(Config.roomName, Config.runId, Config.deals, true, false);
@@ -262,6 +274,15 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
     }
 
     void Join() => roomManager.JoinRoomWithPassword(Config.roomName, Config.runId, Config.runId);
+
+    public override void OnRoomListUpdate(List<RoomInfo> roomList)
+    {
+        foreach (var r in roomList)
+            if (r.RemovedFromList)
+                rooms.Remove(r.Name);
+            else
+                rooms[r.Name] = r;
+    }
 
     public override void OnJoinRoomFailed(short returnCode, string message)
     {
