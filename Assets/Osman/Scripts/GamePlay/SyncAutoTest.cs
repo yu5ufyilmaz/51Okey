@@ -40,6 +40,8 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
     RoomManager roomManager;
     TurnManager turnManager;
     bool moving;
+    float lastSeatRequest = -10f;
+    bool seatMoved;
     readonly SyncAutoTestStatus status = new SyncAutoTestStatus();
     readonly Dictionary<string, RoomInfo> rooms = new Dictionary<string, RoomInfo>();
     const string AnyRoom = "*";
@@ -137,10 +139,29 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
                 break;
 
             case State.Joining:
-                if (
-                    SceneManager.GetActiveScene().name == "Table"
-                    && PhotonNetwork.LocalPlayer.CustomProperties.ContainsKey("SeatNumber")
-                )
+                if (SceneManager.GetActiveScene().name != "Table")
+                    break;
+                var seats = FindObjectOfType<SeatManager>();
+                if (seats == null)
+                    break;
+                // Listeden (şifreyle) giren koltuğunu kendisi seçer: ilk boş koltuğu ister, kapılırsa saniyede bir yeniden.
+                if (!seats.IsSeated(PhotonNetwork.LocalPlayer))
+                {
+                    if (Time.unscaledTime - lastSeatRequest > 1f && seats.FirstFreeSeat() > 0)
+                    {
+                        lastSeatRequest = Time.unscaledTime;
+                        seats.RequestSeat(seats.FirstFreeSeat());
+                    }
+                    break;
+                }
+                // Koltuk değiştirme de denensin: ilk misafir masa dolmadan bir kez başka boş koltuğa geçer.
+                if (Config.nickName == "AT-g1" && !seatMoved && seats.FirstFreeSeat() > 0)
+                {
+                    seatMoved = true;
+                    Debug.Log($"[AUTOTEST] koltuk değiştiriyor -> {seats.FirstFreeSeat()}");
+                    seats.RequestSeat(seats.FirstFreeSeat());
+                }
+                if (PhotonNetwork.LocalPlayer.CustomProperties.ContainsKey("SeatNumber"))
                 {
                     if (Config.IsHost && Config.seed != 0 && DesyncDetector.Instance != null)
                         DesyncDetector.Instance.forcedSeed = Config.seed;

@@ -11,11 +11,11 @@ masa dolana kadar yerini değiştirebilsin.
 2. "Katıl" (rastgele) ile gelen ilk boş koltuğa otomatik oturur.
 3. Oda listesinden odayı bilerek seçen otomatik oturmaz; bekleme ekranında boş bir koltuk seçip oturur.
 4. Masa dolana kadar oturan herkes istediği boş koltuğa geçebilir.
-5. Son oyuncu gelince oyun başlar (geri sayım); son gelen pratikte kalan koltuğa oturur, ancak biri kalkarsa seçenek olur.
+5. Geri sayımı 4 kişinin de OTURMUŞ olması başlatır (4. kişinin odaya girmesi değil; kullanıcı düzeltmesi).
+   Son gelen pratikte kalan koltuğa oturur, ancak biri yer değiştirirse seçenek olur. Geri sayım başlayınca koltuklar kilitlenir.
 
-## Kararlar (benim; düzeltilebilir)
-- Odaya 4. kişi girdiği an: henüz koltuk seçmemiş herkes ilk boş koltuklara oturtulur, geri sayım başlar,
-  koltuklar kilitlenir. Böylece seçmeyen biri oyunu kilitleyemez.
+## Kararlar (benim; kullanıcı onayladı)
+- Seçim yapmayan otomatik oturtulmaz; o oturana kadar oyun başlamaz.
 - "Botlarla oyna": 10 sn sonra önce seçmemiş insanlar oturtulur, sonra boşlar botla dolar (bugünkü gibi).
 - Seçim yeri: masadaki boş isimliklerde "OTUR" yazar; dokununca oraya geçilir. Henüz oturmamış oyuncu masayı
   1. koltuk altta olacak şekilde görür; oturunca her zamanki gibi kendisi altta olur.

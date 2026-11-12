@@ -127,6 +127,7 @@ MonoBehaviour:
   - SyncQueToSeatMapping
   - SyncOpenedPairsRPC
   - ShowPenaltyRPC
+  - RequestSeatRPC
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

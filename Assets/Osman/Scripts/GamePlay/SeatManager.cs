@@ -8,7 +8,6 @@ using UnityEngine.UIElements;
 
 public class SeatManager : MonoBehaviourPunCallbacks
 {
-    public List<int> availableSeats = new List<int> { 1, 2, 3, 4 };
     public Dictionary<int, int> playerSeatMap = new Dictionary<int, int>(); // Maps player actor number to seat number
 
     public TMP_Text[] seatTextFields; // Array of Text components to display player names
@@ -34,6 +33,9 @@ public class SeatManager : MonoBehaviourPunCallbacks
     private void Awake()
     {
         TileSerialization.RegisterCustomTypes(); // Custom serialization for TileDataInfo
+        // Alanların sahnedeki asıl adlarını sakla (ilk çağrı sadece kaydeder).
+        RestoreDefaultNames(meldTileOffsets, ref defaultMeldNames);
+        RestoreDefaultNames(tiledropOffset, ref defaultDropNames);
     }
 
     // SeatManager.cs İÇİNE EKLE (Awake'den sonra, diğer metotlardan önce bir yere):
@@ -53,11 +55,12 @@ public class SeatManager : MonoBehaviourPunCallbacks
     public override void OnJoinedRoom()
     {
         AssignPositionAndInstantiate();
-        // If the player is the first to join, assign them a seat
-        if (PhotonNetwork.IsMasterClient && availableSeats.Count > 0)
+        // Odayı kuran direkt oturur (sahne yeniden yüklendiyse koltuğunu korur).
+        int seatNumber = GetSeatNumberOfPlayer(PhotonNetwork.LocalPlayer);
+        if (seatNumber <= 0)
+            seatNumber = FirstFreeSeat();
+        if (PhotonNetwork.IsMasterClient && seatNumber > 0)
         {
-            int seatNumber = availableSeats[0];
-            availableSeats.RemoveAt(0); // Remove the assigned seat
             // Use RPC to assign the seat to the player on all clients
             GameObject tileManager = PhotonNetwork.InstantiateRoomObject(
                 tileManagerPrefab.name,
@@ -91,6 +94,13 @@ public class SeatManager : MonoBehaviourPunCallbacks
         yield return new WaitForSeconds(botFillDelay);
         if (!gameIsStart)
         {
+            // Koltuk seçmeden bekleyen insanlar önce ilk boş koltuklara oturur, kalan boşları botlar doldurur.
+            foreach (Player p in PhotonNetwork.PlayerList)
+            {
+                int seat = FirstFreeSeat();
+                if (!IsSeated(p) && seat > 0)
+                    photonView.RPC("AssignSeatToPlayer", RpcTarget.AllBuffered, p.ActorNumber, seat);
+            }
             Debug.Log(
                 $"Oda {botFillDelay} sn içinde dolmadı. Boş koltuklar botla dolduruluyor ({PhotonNetwork.PlayerList.Length} insan)."
             );
@@ -100,30 +110,24 @@ public class SeatManager : MonoBehaviourPunCallbacks
 
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
-        // Assign the smallest available seat number
-        if (availableSeats.Count > 0 && PhotonNetwork.IsMasterClient)
+        // Rastgele/"Katıl" ile gelen ilk boş koltuğa oturur; odayı listeden seçen koltuğunu kendisi seçer (RequestSeat).
+        if (
+            PhotonNetwork.IsMasterClient
+            && !gameIsStart
+            && GetSeatNumberOfPlayer(newPlayer) <= 0
+            && !WantsToPickSeat(newPlayer)
+        )
         {
-            int seatNumber = availableSeats[0];
-            for (int i = 0; i < availableSeats.Count; i++)
-            {
-                if (availableSeats[i] <= seatNumber)
-                {
-                    seatNumber = availableSeats[i];
-                    availableSeats.RemoveAt(i);
-
-                    break;
-                }
-            }
-            // Remove the assigned seat
-            // Use RPC to assign the seat to the player on all clients
-            photonView.RPC(
-                "AssignSeatToPlayer",
-                RpcTarget.AllBuffered,
-                newPlayer.ActorNumber,
-                seatNumber
-            );
+            int seatNumber = FirstFreeSeat();
+            if (seatNumber > 0)
+                photonView.RPC(
+                    "AssignSeatToPlayer",
+                    RpcTarget.AllBuffered,
+                    newPlayer.ActorNumber,
+                    seatNumber
+                );
         }
-        StartGame();
+        TryStartGame();
         UpdateSeatDisplay(); // Update the seat display for the local player
     }
 
@@ -131,14 +135,75 @@ public class SeatManager : MonoBehaviourPunCallbacks
     {
         // Free the seat that was occupied by the player who left
         int seatNumber_E = GetSeatNumberOfPlayer(otherPlayer);
-        if (seatNumber_E != -1)
+        if (seatNumber_E != -1 && PhotonNetwork.IsMasterClient)
         {
-            availableSeats.Add(seatNumber_E);
-            availableSeats.Sort(); // Keep the list sorted for the smallest seat number
             // Use RPC to remove the seat assignment from all clients
             photonView.RPC("FreeSeat", RpcTarget.AllBuffered, seatNumber_E);
         }
         UpdateSeatDisplay(); // Update the seat display for the local player
+    }
+
+    static bool WantsToPickSeat(Player p) =>
+        p.CustomProperties.TryGetValue(RoomManager.PickSeatKey, out object v) && v is bool pick && pick;
+
+    // Odadaki oyuncuların oturduğu koltuklar (except: yer değiştiren oyuncunun kendi koltuğu sayılmaz).
+    HashSet<int> TakenSeats(Player except = null)
+    {
+        var taken = new HashSet<int>();
+        foreach (Player p in PhotonNetwork.PlayerList)
+        {
+            int s = GetSeatNumberOfPlayer(p);
+            if (s > 0 && (except == null || p.ActorNumber != except.ActorNumber))
+                taken.Add(s);
+        }
+        return taken;
+    }
+
+    public int FirstFreeSeat()
+    {
+        var taken = TakenSeats();
+        for (int s = 1; s <= 4; s++)
+            if (!taken.Contains(s))
+                return s;
+        return -1;
+    }
+
+    public bool IsSeated(Player p) => GetSeatNumberOfPlayer(p) > 0;
+
+    // Masa dolana (4 kişi oturana) kadar koltuk seçilebilir / değiştirilebilir. Kararı master verir.
+    public void RequestSeat(int seat) => photonView.RPC(nameof(RequestSeatRPC), RpcTarget.MasterClient, seat);
+
+    [PunRPC]
+    private void RequestSeatRPC(int seat, PhotonMessageInfo info)
+    {
+        if (!PhotonNetwork.IsMasterClient || gameIsStart || info.Sender == null || seat < 1 || seat > 4)
+            return;
+        if (GetSeatNumberOfPlayer(info.Sender) == seat || TakenSeats(info.Sender).Contains(seat))
+            return;
+        photonView.RPC("AssignSeatToPlayer", RpcTarget.AllBuffered, info.Sender.ActorNumber, seat);
+        TryStartGame();
+    }
+
+    // Geri sayımı 4 kişinin de oturmuş olması başlatır (odaya girmiş olması değil).
+    private void TryStartGame()
+    {
+        if (PhotonNetwork.IsMasterClient && !gameIsStart && TakenSeats().Count == 4)
+            StartGame();
+    }
+
+    // Geri sayım başladı: koltuklar kilitli, "OTUR" gizli. Room property ki herkes görsün.
+    const string SeatsLockedKey = "SeatsLocked";
+
+    bool SeatsLocked =>
+        PhotonNetwork.CurrentRoom != null
+        && PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(SeatsLockedKey, out object v)
+        && v is bool locked
+        && locked;
+
+    public override void OnRoomPropertiesUpdate(ExitGames.Client.Photon.Hashtable propertiesThatChanged)
+    {
+        if (propertiesThatChanged.ContainsKey(SeatsLockedKey))
+            UpdateSeatDisplay();
     }
     #endregion
     #region  Spawn and Instantiate Players
@@ -179,10 +244,12 @@ public class SeatManager : MonoBehaviourPunCallbacks
         Player player = PhotonNetwork.CurrentRoom.GetPlayer(actorNumber);
         if (player != null)
         {
-            // Koltuk bilgisini kaydet
-            player.SetCustomProperties(
-                new ExitGames.Client.Photon.Hashtable { { "SeatNumber", seatNumber } }
-            );
+            // Koltuk bilgisini kaydet. Özelliği sadece master yazar: yer değiştirmede her client'ın eski/yeni
+            // değeri farklı sırayla göndermesi gereksiz trafik; harita herkeste bu RPC ile aynı sırada güncellenir.
+            if (PhotonNetwork.IsMasterClient)
+                player.SetCustomProperties(
+                    new ExitGames.Client.Photon.Hashtable { { "SeatNumber", seatNumber } }
+                );
             playerSeatMap[actorNumber] = seatNumber;
         }
 
@@ -262,23 +329,21 @@ public class SeatManager : MonoBehaviourPunCallbacks
             if (textField != null)
                 textField.text = "";
         }
+        // Boş kalan alanlar eski oyuncunun adıyla kalırsa "<ad> meld" araması yanlış alanı bulur.
+        RestoreDefaultNames(meldTileOffsets, ref defaultMeldNames);
+        RestoreDefaultNames(tiledropOffset, ref defaultDropNames);
 
         // 2. YEREL OYUNCUNUN (SENİN) KOLTUK NUMARASINI BUL
         int localSeatNumber = GetSeatNumberOfPlayer(PhotonNetwork.LocalPlayer);
 
-        // Eğer senin koltuk numaran henüz serverdan gelmediyse (-1 ise),
-        // En azından kendini en ortaya (0. Index) yaz ki ekran boş kalmasın.
+        // Henüz oturmamış (koltuğunu seçecek) oyuncu masayı 1. koltuk altta olacak şekilde görür.
         if (localSeatNumber == -1)
-        {
-            if (seatTextFields.Length > 0 && seatTextFields[0] != null)
-                seatTextFields[0].text = PhotonNetwork.LocalPlayer.NickName;
-
-            // Diğerlerinin yerini sen oturmadan hesaplayamayız, o yüzden çıkıyoruz.
-            return;
-        }
+            localSeatNumber = 1;
+        viewBaseSeat = localSeatNumber;
 
         // 3. TÜM OYUNCULARI GEZ VE KOLTUK NUMARASINA GÖRE YERLEŞTİR
         Player[] players = PhotonNetwork.PlayerList;
+        var occupied = new bool[4];
 
         foreach (Player p in players)
         {
@@ -298,6 +363,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
 
             if (relativeIndex < seatTextFields.Length && relativeIndex >= 0)
             {
+                occupied[relativeIndex] = true;
                 // İSMİ YAZ (Üzerine yazma işlemi yapar, temizlediğimiz için sorun olmaz)
                 if (seatTextFields[relativeIndex] != null)
                 {
@@ -315,6 +381,50 @@ public class SeatManager : MonoBehaviourPunCallbacks
                     tiledropOffset[relativeIndex].name = p.NickName;
             }
         }
+
+        // 4. BOŞ KOLTUKLAR: masa dolana kadar "OTUR"; dokunan oraya geçer (ya da ilk kez oturur).
+        bool canPick = !SeatsLocked && (GameManager.Instance == null || !GameManager.Instance.isGameReady);
+        for (int i = 0; i < seatTextFields.Length && i < 4; i++)
+        {
+            TMP_Text field = seatTextFields[i];
+            if (field == null)
+                continue;
+            bool pick = canPick && !occupied[i];
+            if (pick)
+                field.text = "OTUR";
+            field.raycastTarget = pick;
+            var button = field.GetComponent<UnityEngine.UI.Button>();
+            if (button == null && pick)
+            {
+                int rel = i;
+                button = field.gameObject.AddComponent<UnityEngine.UI.Button>();
+                button.targetGraphic = field;
+                button.onClick.AddListener(() => RequestSeat((viewBaseSeat - 1 + rel) % 4 + 1));
+            }
+            if (button != null)
+                button.enabled = pick;
+        }
+    }
+
+    // Koltuk seçerken ekranın altındaki koltuk (oturmuşsa kendi koltuğu, değilse 1).
+    int viewBaseSeat = 1;
+    string[] defaultMeldNames,
+        defaultDropNames;
+
+    static void RestoreDefaultNames(GameObject[] objects, ref string[] defaults)
+    {
+        if (objects == null)
+            return;
+        if (defaults == null)
+        {
+            defaults = new string[objects.Length];
+            for (int i = 0; i < objects.Length; i++)
+                defaults[i] = objects[i] != null ? objects[i].name : null;
+            return;
+        }
+        for (int i = 0; i < objects.Length; i++)
+            if (objects[i] != null && defaults[i] != null)
+                objects[i].name = defaults[i];
     }
 
     private List<Player> GetRelativePlayerOrder(Player localPlayer)
@@ -354,7 +464,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
     {
         if (!gameIsStart)
         {
-            if (PhotonNetwork.PlayerList.Length == 4 || fillWithBots)
+            if (TakenSeats().Count == 4 || fillWithBots)
             {
                 // Check if all players are assigned a seat
                 if (tileDistrubite != null && PhotonNetwork.IsMasterClient)
@@ -364,6 +474,9 @@ public class SeatManager : MonoBehaviourPunCallbacks
                     gameIsStart = true;
                     PhotonNetwork.CurrentRoom.IsOpen = false;
                     PhotonNetwork.CurrentRoom.IsVisible = false;
+                    PhotonNetwork.CurrentRoom.SetCustomProperties(
+                        new ExitGames.Client.Photon.Hashtable { { SeatsLockedKey, true } }
+                    );
                     StartCoroutine(CountdownAndShuffle());
                 }
             }

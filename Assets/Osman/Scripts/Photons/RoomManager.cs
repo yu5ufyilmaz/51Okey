@@ -58,8 +58,19 @@ public class RoomManager : MonoBehaviourPunCallbacks
         roomOptions.CustomRoomProperties = roomProps;
         roomOptions.CustomRoomPropertiesForLobby = new string[] { "Password", "TotalRounds" };
 
+        SetPickSeat(false);
         PhotonNetwork.CreateRoom(roomName, roomOptions, TypedLobby.Default);
     }
+
+    // Odayı listeden bilerek seçen koltuğunu bekleme ekranında kendisi seçer; kuran ve rastgele gelen ilk boş koltuğa oturur.
+    // Odaya girmeden ayarlanan özellik girişle birlikte gider; master yeni gelene buna göre koltuk verir (SeatManager).
+    public const string PickSeatKey = "PickSeat";
+
+    // Oyuncu özellikleri odadan çıkınca silinmez: önceki odanın koltuk/sıra bilgisi yeni odaya taşınmasın (null = sil).
+    static void SetPickSeat(bool pick) =>
+        PhotonNetwork.LocalPlayer.SetCustomProperties(
+            new Hashtable { { PickSeatKey, pick }, { "SeatNumber", null }, { "PlayerQue", null } }
+        );
 
     // JOIN ROOM Butonu için: Önce rastgele şifresiz oda dener, yoksa kurar
     public void JoinRandomRoomOrCreateAuto()
@@ -69,6 +80,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
         {
             { "Password", "" },
         };
+        SetPickSeat(false);
         PhotonNetwork.JoinRandomRoom(expectedProps, (byte)maxPlayers);
     }
 
@@ -98,6 +110,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
 
         if (cleanEntered == cleanActual)
         {
+            SetPickSeat(true);
             PhotonNetwork.JoinRoom(_roomName); // Artık isim ve şifre kesinlikle doğru
         }
         else
@@ -109,6 +122,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
     // Listeden tıklayarak katılma (Şifreli odalar için ileride buraya şifre sorma eklenecek)
     public void JoinRoomManual(string _roomName)
     {
+        SetPickSeat(true);
         PhotonNetwork.JoinRoom(_roomName);
     }
 
