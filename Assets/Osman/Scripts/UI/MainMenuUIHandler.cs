@@ -11,7 +11,9 @@ public class MainMenuUIHandler : MonoBehaviourPunCallbacks
 
     async void Start()
     {
-        await GameServices.InitAsync();
+        // Init hatasını PhotonManager zaten loglar; burada yutulur.
+        try { await GameServices.InitAsync(); }
+        catch (System.Exception) { }
         // Profil yüklenemediyse (Current null) isim kutusuna dokunma.
         var profile = GameServices.Profile.Current;
         if (profile != null && playerNameInput != null && string.IsNullOrEmpty(playerNameInput.text))

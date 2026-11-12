@@ -33,7 +33,9 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         PhotonNetwork.SerializationRate = 10; // OnPhotonSerializeView hızı
 
         // Yerel servisler hazır dönüyor; bu yüzden await zamanlamayı değiştirmez. Kopya nesne de bağlanma çağrısına ulaşmalı: null/erken çıkış yok.
-        await GameServices.InitAsync();
+        // Init hata verse de bağlanma çağrısına ulaşılmalı; hata görünür kalsın.
+        try { await GameServices.InitAsync(); }
+        catch (System.Exception e) { Debug.LogException(e); }
         PhotonNetwork.ConnectUsingSettings();
     }
 
