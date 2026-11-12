@@ -1,5 +1,5 @@
 ﻿# Commit öncesi gizli bilgi taraması. Bulgu satırında eşleşen metin ASLA yazılmaz.
-# Kullanım: Check-Secrets.ps1 [-Paths <dosyalar>]   (Paths yoksa commit'e hazırlanmış dosyalar)
+# Kullanım: Check-Secrets.ps1 [-Paths <dosyalar>]   (Paths yoksa commit'e hazırlanmış dosyalar, index sürümü)
 param([string[]]$Paths)
 
 $markerAllow = 'secret-scan: allow'
@@ -16,43 +16,67 @@ $rules = [ordered]@{
     'assigned-secret' = '(keystorePass|keyaliasPass|password|passwd|secret|api_key)["'']?\s*[:=]\s*["''][^"'']{6,}["'']'  # secret-scan: allow (kuralın kendisi)
 }
 
-$root = $null
-if (-not $Paths) {
-    # shortcut: tarar çalışma ağacındaki dosyayı, index'teki sürümü değil; kısmi staging'de upgrade et.
-    $root = (git rev-parse --show-toplevel).Trim()
-    $Paths = @(git -c core.quotepath=false diff --cached --name-only --diff-filter=ACM)
-}
-
+# Çıkış kodları: 0 temiz, 1 bulgu, 2 tarama çalışamadı (git hatası, eksik dosya).
+$ErrorActionPreference = 'Stop'
 $found = 0
+$errors = 0
 $scanned = 0
-foreach ($p in $Paths) {
-    if (-not $p) { continue }
-    $full = if ($root) { Join-Path $root $p } else { $p }
-    if (-not (Test-Path -LiteralPath $full -PathType Leaf)) { continue }
-    $scanned++
-
-    $name = Split-Path -Leaf $p
-    $ext  = [IO.Path]::GetExtension($name).ToLowerInvariant()
-    if ($secretNames -contains $name -or $secretExts -contains $ext) {
-        Write-Output "SECRET ${p}:0 secret-file"
-        $found++
-        continue
+try {
+    $staged = -not $Paths
+    if ($staged) {
+        $null = git rev-parse --show-toplevel
+        if ($LASTEXITCODE -ne 0) { throw 'git rev-parse failed (not a git repository?)' }
+        $Paths = @(git -c core.quotepath=false diff --cached --name-only --diff-filter=ACM)
+        if ($LASTEXITCODE -ne 0) { throw 'git diff --cached failed' }
+    } else {
+        # -File ile "a,b" tek metin gelir; var olmayan girdiyi virgülden böler (virgüllü dosya adı varsa o dosya önce denenir).
+        $Paths = @(foreach ($x in $Paths) { if (Test-Path -LiteralPath $x) { $x } else { $x -split ',' } })
     }
-    if ($binaryExts -contains $ext) { continue }
 
-    $lines = [IO.File]::ReadAllLines((Resolve-Path -LiteralPath $full).ProviderPath)
-    for ($i = 0; $i -lt $lines.Length; $i++) {
-        $line = $lines[$i]
-        if ($line.Contains($markerAllow)) { continue }
-        foreach ($rule in $rules.Keys) {
-            if ($line -match $rules[$rule]) {
-                Write-Output "SECRET ${p}:$($i + 1) $rule"
-                $found++
+    foreach ($p in $Paths) {
+        if (-not $p) { continue }
+        $name = Split-Path -Leaf $p
+        $ext  = [IO.Path]::GetExtension($name).ToLowerInvariant()
+        $isSecretName = $secretNames -contains $name -or $secretExts -contains $ext
+
+        # Staged modda içerik index'ten (commit'e girecek blob) okunur, çalışma kopyasından değil.
+        if (-not $staged -and -not (Test-Path -LiteralPath $p -PathType Leaf)) {
+            Write-Output "ERROR ${p}: file not found"
+            $errors++
+            continue
+        }
+        $scanned++
+
+        if ($isSecretName) {
+            Write-Output "SECRET ${p}:0 secret-file"
+            $found++
+            continue
+        }
+        if ($binaryExts -contains $ext) { continue }
+
+        if ($staged) {
+            $lines = @(git show ":$p")
+            if ($LASTEXITCODE -ne 0) { throw "git show failed for $p" }
+        } else {
+            $lines = [IO.File]::ReadAllLines((Resolve-Path -LiteralPath $p).ProviderPath)
+        }
+        for ($i = 0; $i -lt $lines.Length; $i++) {
+            $line = $lines[$i]
+            if ($line.Contains($markerAllow)) { continue }
+            foreach ($rule in $rules.Keys) {
+                if ($line -match $rules[$rule]) {
+                    Write-Output "SECRET ${p}:$($i + 1) $rule"
+                    $found++
+                }
             }
         }
     }
+} catch {
+    Write-Output "ERROR: $($_.Exception.Message)"
+    exit 2
 }
 
+if ($errors -gt 0) { exit 2 }
 if ($found -gt 0) { exit 1 }
 Write-Output "secrets: clean ($scanned files)"
 exit 0
