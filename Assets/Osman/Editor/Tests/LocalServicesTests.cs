@@ -192,4 +192,81 @@ public class LocalServicesTests
         Assert.IsTrue(Apply(again, "t0", 1), "200'den eski unutulur, yeniden uygulanır");
         Assert.AreEqual(afterAll + 1, again.Coins);
     }
+
+    // --- fix round 1: yazım hatası ve patlayan abone ---
+
+    static void ExpectWarning() =>
+        UnityEngine.TestTools.LogAssert.Expect(UnityEngine.LogType.Warning, new System.Text.RegularExpressions.Regex("Profil"));
+
+    // Dosyanın yerine aynı adlı klasör koyar: yazım deterministik olarak başarısız olur.
+    void BlockFile() { File.Delete(path); Directory.CreateDirectory(path); }
+    void UnblockFile() { if (Directory.Exists(path)) Directory.Delete(path); }
+
+    [Test]
+    public void Wallet_FailedWrite_RollsBackReturnsFalseAndRetryApplies()
+    {
+        var s = Loaded();
+        int fired = 0;
+        s.Changed += _ => fired++;
+        BlockFile();
+        try
+        {
+            ExpectWarning();
+            Assert.IsFalse(Apply(s, "t1", 100));
+            Assert.AreEqual(GameConfig.StarterCoins, s.Coins);
+            Assert.AreEqual(0, fired);
+        }
+        finally { UnblockFile(); }
+        Assert.IsTrue(Apply(s, "t1", 100), "aynı işlem kimliği yeniden denenince uygulanır");
+        Assert.AreEqual(GameConfig.StarterCoins + 100, s.Coins);
+        Assert.AreEqual(1, fired);
+        Assert.AreEqual(GameConfig.StarterCoins + 100, Loaded().Coins);
+    }
+
+    [Test]
+    public void Profile_FailedWrite_RollsBackXpAndName()
+    {
+        var s = Loaded();
+        BlockFile();
+        try
+        {
+            ExpectWarning();
+            s.AddXpAsync(GameConfig.XpPerLevel).GetAwaiter().GetResult();
+            ExpectWarning();
+            s.SetDisplayNameAsync("Osman").GetAwaiter().GetResult();
+            Assert.AreEqual(0, s.Current.Xp);
+            Assert.AreEqual(1, s.Current.Level);
+            Assert.AreEqual("Oyuncu0001", s.Current.DisplayName);
+        }
+        finally { UnblockFile(); }
+    }
+
+    [Test]
+    public void Profile_FailedFirstWrite_LeavesCurrentNull()
+    {
+        Directory.CreateDirectory(path);
+        try
+        {
+            ExpectWarning();
+            var s = new LocalProfileStore(path);
+            s.LoadOrCreateAsync("u1", "Oyuncu0001").GetAwaiter().GetResult();
+            Assert.IsNull(s.Current);
+            Assert.AreEqual(0, s.Coins);
+        }
+        finally { UnblockFile(); }
+    }
+
+    [Test]
+    public void Changed_ThrowingSubscriber_DoesNotBreakCallOrOtherHandlers()
+    {
+        var s = Loaded();
+        bool secondRan = false;
+        s.Changed += _ => throw new System.InvalidOperationException("abone-hatasi");
+        s.Changed += _ => secondRan = true;
+        UnityEngine.TestTools.LogAssert.Expect(UnityEngine.LogType.Exception, new System.Text.RegularExpressions.Regex("abone-hatasi"));
+        Assert.IsTrue(Apply(s, "t1", 100));
+        Assert.IsTrue(secondRan);
+        Assert.AreEqual(GameConfig.StarterCoins + 100, s.Coins);
+        Assert.AreEqual(GameConfig.StarterCoins + 100, Loaded().Coins);
+    }
 }

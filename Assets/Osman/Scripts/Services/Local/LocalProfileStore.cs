@@ -16,6 +16,8 @@ public class LocalProfileStore : IProfileStore, IWallet
     const int MaxRememberedTx = 200;
     const int MinNameLength = 2;
     const string StarterTxId = "starter";
+    const int WriteAttempts = 5;
+    const int WriteRetryDelayMs = 20;
 
     readonly string filePath;
     List<string> appliedTxIds = new List<string>();
@@ -36,14 +38,20 @@ public class LocalProfileStore : IProfileStore, IWallet
         {
             Current = loaded.profile;
             appliedTxIds = loaded.appliedTxIds ?? new List<string>();
+            Notify();
+            return Task.CompletedTask;
         }
+
+        Current = new PlayerProfile { UserId = userId, DisplayName = defaultName };
+        appliedTxIds = new List<string>();
+        Credit(new CoinTx(StarterTxId, GameConfig.StarterCoins, CoinReason.StarterGrant));
+        if (Write())
+            Notify();
         else
         {
-            Current = new PlayerProfile { UserId = userId, DisplayName = defaultName };
+            Current = null;
             appliedTxIds = new List<string>();
-            Credit(new CoinTx(StarterTxId, GameConfig.StarterCoins, CoinReason.StarterGrant));
         }
-        Commit();
         return Task.CompletedTask;
     }
 
@@ -52,8 +60,7 @@ public class LocalProfileStore : IProfileStore, IWallet
         name = name?.Trim();
         if (Current == null || name == null || name.Length < MinNameLength)
             return Task.CompletedTask;
-        Current.DisplayName = name;
-        Commit();
+        Mutate(() => Current.DisplayName = name);
         return Task.CompletedTask;
     }
 
@@ -61,9 +68,11 @@ public class LocalProfileStore : IProfileStore, IWallet
     {
         if (Current == null || xp <= 0)
             return Task.CompletedTask;
-        Current.Xp += xp;
-        Current.Level = GameConfig.LevelForXp(Current.Xp);
-        Commit();
+        Mutate(() =>
+        {
+            Current.Xp += xp;
+            Current.Level = GameConfig.LevelForXp(Current.Xp);
+        });
         return Task.CompletedTask;
     }
 
@@ -84,9 +93,7 @@ public class LocalProfileStore : IProfileStore, IWallet
             return Task.FromResult(true);
         if (Current.Coins + tx.Amount < 0)
             return Task.FromResult(false);
-        Credit(tx);
-        Commit();
-        return Task.FromResult(true);
+        return Task.FromResult(Mutate(() => Credit(tx)));
     }
 
     void Credit(CoinTx tx)
@@ -98,10 +105,32 @@ public class LocalProfileStore : IProfileStore, IWallet
             appliedTxIds.RemoveRange(0, appliedTxIds.Count - MaxRememberedTx);
     }
 
-    void Commit()
+    // Hepsi ya da hiçbiri: dosya yazılamazsa bellekteki durum geri alınır, Changed tetiklenmez.
+    bool Mutate(Action change)
     {
-        Write();
-        Changed?.Invoke(Current);
+        var before = JsonUtility.ToJson(Current);
+        var beforeIds = new List<string>(appliedTxIds);
+        change();
+        if (Write())
+        {
+            Notify();
+            return true;
+        }
+        JsonUtility.FromJsonOverwrite(before, Current);
+        appliedTxIds = beforeIds;
+        return false;
+    }
+
+    // Bir abonenin hatası diğerlerini ve çağıranı bozmaz.
+    void Notify()
+    {
+        if (Changed == null)
+            return;
+        foreach (var handler in Changed.GetInvocationList())
+        {
+            try { ((Action<PlayerProfile>)handler)(Current); }
+            catch (Exception e) { Debug.LogException(e); }
+        }
     }
 
     StoreFile TryRead(string userId)
@@ -123,7 +152,7 @@ public class LocalProfileStore : IProfileStore, IWallet
     }
 
     // Geçici dosyaya yazıp değiştirir: yazım yarıda kesilirse eski dosya sağlam kalır.
-    void Write()
+    bool Write()
     {
         var tmp = filePath + ".tmp";
         try
@@ -132,14 +161,28 @@ public class LocalProfileStore : IProfileStore, IWallet
             if (!string.IsNullOrEmpty(dir))
                 Directory.CreateDirectory(dir);
             File.WriteAllText(tmp, JsonUtility.ToJson(new StoreFile { profile = Current, appliedTxIds = appliedTxIds }));
-            if (File.Exists(filePath))
-                File.Replace(tmp, filePath, null);
-            else
-                File.Move(tmp, filePath);
+            for (int attempt = 1; ; attempt++)
+            {
+                try
+                {
+                    if (File.Exists(filePath))
+                        File.Replace(tmp, filePath, null);
+                    else
+                        File.Move(tmp, filePath);
+                    return true;
+                }
+                catch (IOException) when (attempt < WriteAttempts)
+                {
+                    // Windows'ta virüs tarayıcı/dizinleyici dosyayı anlık kilitleyebilir.
+                    System.Threading.Thread.Sleep(WriteRetryDelayMs);
+                }
+            }
         }
         catch (Exception e)
         {
             Debug.LogWarning("[Profil] dosya yazılamadı: " + e.Message);
+            try { File.Delete(tmp); } catch (Exception) { }
+            return false;
         }
     }
 }
