@@ -96,3 +96,54 @@ Describe 'Check-Secrets staged mode and failures' {
         $r.Out | Should Match 'secrets: clean \(2 files\)'
     }
 }
+
+Describe 'Check-Secrets rename in staged mode' {
+    $apiKey = 'AI' + 'za' + ('x' * 35)
+    function Commit([string]$d, [string]$msg) { & git -C $d -c user.name=t -c user.email=t@t commit -q -m $msg 2>$null }
+
+    It 'temiz dosya google-services.json adına taşınınca yakalar' {
+        $d = NewDir $true
+        Set-Content -Path (Join-Path $d 'a.txt') -Value 'plain text' -Encoding UTF8
+        & git -C $d add a.txt 2>$null
+        Commit $d 'init'
+        & git -C $d mv a.txt google-services.json 2>$null
+        $r = RunIn $d @()
+        $r.Code | Should Be 1
+        $r.Out | Should Match 'secret-file'
+    }
+    It 'taşınan dosyaya eklenen anahtarı yakalar' {
+        $d = NewDir $true
+        Set-Content -Path (Join-Path $d 'a.txt') -Value ((1..20 | ForEach-Object { "line $_" }) + 'tail') -Encoding UTF8
+        & git -C $d add a.txt 2>$null
+        Commit $d 'init'
+        & git -C $d mv a.txt b.txt 2>$null
+        Add-Content -Path (Join-Path $d 'b.txt') -Value "k = `"$apiKey`"" -Encoding UTF8
+        & git -C $d add b.txt 2>$null
+        $r = RunIn $d @()
+        $r.Code | Should Be 1
+        $r.Out | Should Match 'google-api-key'
+        $r.Out | Should Not Match $apiKey
+    }
+}
+
+Describe 'Check-Secrets unquoted passwords' {
+    function Hits($r) { ([regex]::Matches($r.Out, 'assigned-secret')).Count }
+
+    It 'gradle.properties icinde tirnaksiz storePassword yakalar' {
+        $r = Scan 'gradle.properties' ('store' + 'Password=' + 'hunter2222')
+        $r.Code | Should Be 1
+        Hits $r | Should Be 1
+        $r.Out | Should Not Match 'hunter2222'
+    }
+    It 'yaml icinde tirnaksiz keystorePass yakalar' {
+        $r = Scan 'ci.yaml' ('keystore' + 'Pass: ' + 'hunter2222')
+        $r.Code | Should Be 1
+        Hits $r | Should Be 1
+    }
+    It 'bos keystorePass degerini (.asset) yakalamaz' {
+        (Scan 'ProjectSettings.asset' ('keystore' + 'Pass:')).Code | Should Be 0
+    }
+    It '.cs icinde tirnaksiz deger yalniz tirnakli kurala tabidir' {
+        (Scan 'b.cs' ('keystore' + 'Pass: ' + 'hunter2222')).Code | Should Be 0
+    }
+}

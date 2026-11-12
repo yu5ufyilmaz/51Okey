@@ -13,8 +13,12 @@ $rules = [ordered]@{
     'private-key'     = '-----BEGIN [A-Z ]*PRIVATE KEY-----'
     'service-account' = '"type"\s*:\s*"service_account"'
     'admob-real-id'   = 'ca-app-pub-(?!3940256099942544)\d{16}'
-    'assigned-secret' = '(keystorePass|keyaliasPass|password|passwd|secret|api_key)["'']?\s*[:=]\s*["''][^"'']{6,}["'']'  # secret-scan: allow (kuralın kendisi)
+    'assigned-secret' = '(keystorePass|keyaliasPass|storePassword|keyPassword|password|passwd|secret|api_key)["'']?\s*[:=]\s*["''][^"'']{6,}["'']'  # secret-scan: allow (kuralın kendisi)
 }
+
+# Tırnaksız değer yalnız gradle/yaml/Unity dosyalarında aranır; boş değer (keystorePass:) eşleşmez.
+$unquotedExts = @('.properties', '.gradle', '.yaml', '.yml', '.asset')
+$unquotedRule = '(keystorePass|keyaliasPass|storePassword|keyPassword|password|passwd|secret|api_key)["'']?\s*[:=]\s*[^\s"'']{6,}'  # secret-scan: allow (kuralın kendisi)
 
 # Çıkış kodları: 0 temiz, 1 bulgu, 2 tarama çalışamadı (git hatası, eksik dosya).
 $ErrorActionPreference = 'Stop'
@@ -26,7 +30,7 @@ try {
     if ($staged) {
         $null = git rev-parse --show-toplevel
         if ($LASTEXITCODE -ne 0) { throw 'git rev-parse failed (not a git repository?)' }
-        $Paths = @(git -c core.quotepath=false diff --cached --name-only --diff-filter=ACM)
+        $Paths = @(git -c core.quotepath=false diff --cached --no-renames --name-only --diff-filter=ACM)
         if ($LASTEXITCODE -ne 0) { throw 'git diff --cached failed' }
     } else {
         # -File ile "a,b" tek metin gelir; var olmayan girdiyi virgülden böler (virgüllü dosya adı varsa o dosya önce denenir).
@@ -68,6 +72,10 @@ try {
                     Write-Output "SECRET ${p}:$($i + 1) $rule"
                     $found++
                 }
+            }
+            if (($unquotedExts -contains $ext) -and $line -match $unquotedRule) {
+                Write-Output "SECRET ${p}:$($i + 1) assigned-secret"
+                $found++
             }
         }
     }
