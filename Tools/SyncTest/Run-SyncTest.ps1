@@ -41,14 +41,14 @@ $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\SyncTestLib.ps1"
 if ($Bots -lt 0 -or $Bots -gt 3) { Write-Host "HATA: -Bots 1, 2 veya 3 olmalı ($Bots verildi)"; exit 1 }
 if ($Bots -and ($Solo -or $JoinRoom)) { Write-Host "HATA: -Bots, -Solo ve -JoinRoom ile birlikte verilemez"; exit 1 }
-# Host odayı kurar kurmaz bot sayacı başlar; sonradan giren her misafir ~25 sn ister.
-$botFillDelaySec = $(if ($Bots) { 20 + 25 * (3 - $Bots) } else { 0 })
+# Bot doldurma, host'un insanlar oturunca bitirdiği beklemedir (humans); 300 sn sadece güvenlik üst sınırı.
+$botFillDelaySec = $(if ($Bots) { 300 } else { 0 })
 if ($JoinRoom -and -not $PSBoundParameters.ContainsKey('Mode')) { $Mode = 'smart' }
 if ($TimeoutSec -le 0) {
     $TimeoutSec = Get-DefaultTimeoutSec $Deals
     if ($Mode -eq 'smart') { $TimeoutSec *= 2 }   # dizme ve gözlem beklemeleri turları uzatır
     if ($JoinRoom) { $TimeoutSec = 3600 * $Deals }   # insan düşünür; el başına 1 saat
-    $TimeoutSec += $botFillDelaySec   # oyun, bot doldurma beklemesi bitince başlar
+    $TimeoutSec += $botFillDelaySec   # oyun, insanlar oturunca başlar; üst sınır kadar pay
 }
 
 $Nicks = @('AT-host', 'AT-g1', 'AT-g2', 'AT-g3')
@@ -121,7 +121,7 @@ $setStart = Join-Path ([IO.Path]::GetTempPath()) "synctest_setstart_$runId.cs"
 $resetStart = Join-Path ([IO.Path]::GetTempPath()) "synctest_resetstart_$runId.cs"
 [IO.File]::WriteAllText($setStart, 'UnityEditor.SceneManagement.EditorSceneManager.playModeStartScene = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEditor.SceneAsset>("Assets/Osman/Scenes/MainMenu.unity"); UnityEditor.SceneManagement.EditorSceneManager.playModeStartScene != null')
 [IO.File]::WriteAllText($resetStart, 'UnityEditor.SceneManagement.EditorSceneManager.playModeStartScene = null; true')
-Write-Host "runId $runId | $Deals el | seed $Seed$(if ($JoinRoom) { " | '$JoinRoom' odasına katılır" })$(if ($InjectDesync) { " | AT-g1 $InjectDesync. hamlede desync enjekte eder" })$(if ($SameNames) { " | aynı isim" })$(if ($Bots) { " | $($Projects.Count) editör + $Bots bot (bekleme $botFillDelaySec sn)" })"
+Write-Host "runId $runId | $Deals el | seed $Seed$(if ($JoinRoom) { " | '$JoinRoom' odasına katılır" })$(if ($InjectDesync) { " | AT-g1 $InjectDesync. hamlede desync enjekte eder" })$(if ($SameNames) { " | aynı isim" })$(if ($Bots) { " | $($Projects.Count) editör + $Bots bot (insanlar oturunca başlar, üst sınır $botFillDelaySec sn)" })"
 try {
     # 3. Hazırlık
     for ($i = 0; $i -lt $Projects.Count; $i++) {
@@ -147,6 +147,7 @@ try {
             fillWithBots       = [bool]($Solo -or $Bots)
             displayName        = $(if ($SameNames) { 'Ayni' } else { '' })
             botFillDelaySec    = $botFillDelaySec
+            humans             = $(if ($Bots) { 4 - $Bots } else { 0 })
         }
         [IO.File]::WriteAllText((Join-Path $dir 'config.json'), ($cfg | ConvertTo-Json))
     }

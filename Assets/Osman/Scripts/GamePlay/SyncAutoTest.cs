@@ -42,6 +42,8 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
     bool moving;
     float lastSeatRequest = -10f;
     bool seatMoved;
+    bool botsReleased;
+    float humansSeatedSince = -1f;
     readonly SyncAutoTestStatus status = new SyncAutoTestStatus();
     readonly Dictionary<string, RoomInfo> rooms = new Dictionary<string, RoomInfo>();
     const string AnyRoom = "*";
@@ -132,7 +134,7 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
                     // Şifreli oda: aynı AppId'deki bir telefon build'i JoinRandom ile test odasına düşmesin.
                     if (Config.IsHost)
                     {
-                        // Diğer editörlerin yüklenip katılması için testte bot doldurma süresi uzatılır.
+                        // Bot doldurma süresi sadece üst sınır: asıl bitiş, insanlar oturunca ReleaseBotsWhenHumansSeated'dan gelir.
                         if (Config.botFillDelaySec > 0)
                             SeatManager.BotFillDelayOverride = Config.botFillDelaySec;
                         roomManager.CreateCustomRoom(Config.roomName, Config.runId, Config.deals, true, Config.fillWithBots);
@@ -176,6 +178,8 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
 
             case State.InTable:
             case State.Playing:
+                if (Config.IsHost && Config.humans > 0 && !botsReleased)
+                    ReleaseBotsWhenHumansSeated();
                 bool ready = GameManager.Instance != null && GameManager.Instance.isGameReady;
                 if (ready && !wasReady)
                 {
@@ -186,6 +190,27 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
                 if (state == State.Playing)
                     TickPlaying();
                 break;
+        }
+    }
+
+    // Beklenen insan sayısı 2 sn boyunca oturmuş kalırsa (AT-g1 koltuk değiştirmesi bitsin) botlar hemen dolsun.
+    void ReleaseBotsWhenHumansSeated()
+    {
+        var seats = FindObjectOfType<SeatManager>();
+        if (seats == null)
+            return;
+        if (PhotonNetwork.PlayerList.Count(p => seats.IsSeated(p)) < Config.humans)
+        {
+            humansSeatedSince = -1f;
+            return;
+        }
+        if (humansSeatedSince < 0f)
+            humansSeatedSince = Time.unscaledTime;
+        else if (Time.unscaledTime - humansSeatedSince >= 2f)
+        {
+            SeatManager.BotFillDelayOverride = 0f;
+            botsReleased = true;
+            Debug.Log($"[AUTOTEST] {Config.humans} insan oturdu, botlar dolduruluyor");
         }
     }
 

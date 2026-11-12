@@ -30,7 +30,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
     // "Botlarla Oyna" seçili masada başka oyuncuların katılması için beklenen süre (sn). Sonra boş koltuklar botla dolar.
     public float botFillDelay = 10f;
 
-    // Yalnız SyncAutoTest host'u atar: test editörlerinin yüklenip katılması 10 sn'den uzun sürer.
+    // Yalnız SyncAutoTest host'u atar: test editörlerinin yüklenip katılması 10 sn'den uzun sürer, insanlar oturunca 0'lanır.
     public static float? BotFillDelayOverride;
 
     private void Awake()
@@ -94,8 +94,11 @@ public class SeatManager : MonoBehaviourPunCallbacks
 
     private IEnumerator StartWithBotsAfterDelay()
     {
-        float delay = BotFillDelayOverride ?? botFillDelay;
-        yield return new WaitForSeconds(delay);
+        // Her karede okunur: test host'u insanlar oturunca override'ı 0'a çekip beklemeyi bitirir.
+        float start = Time.time;
+        while (Time.time - start < (BotFillDelayOverride ?? botFillDelay))
+            yield return null;
+        float delay = Time.time - start;
         if (!gameIsStart)
         {
             // Koltuk seçmeden bekleyen insanlar önce ilk boş koltuklara oturur, kalan boşları botlar doldurur.

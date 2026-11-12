@@ -24,7 +24,8 @@ public class SyncAutoTestConfig
     public bool fillWithBots; // tek editör: host odayı kurar, boş koltukları oyunun botları doldurur
 
     public string displayName; // boş değilse Photon takma adı bu; iç kimlik (nickName) değişmez
-    public float botFillDelaySec; // > 0: host oyunun bot doldurma bekleme süresini bununla değiştirir
+    public float botFillDelaySec; // > 0: host oyunun bot doldurma bekleme süresini bununla değiştirir (üst sınır)
+    public int humans; // > 0: bu kadar insan oturunca host bot beklemesini bitirir (0 = kullanılmaz)
 
     public string PhotonName => string.IsNullOrEmpty(displayName) ? nickName : displayName;
     public bool IsHost => role == "host";

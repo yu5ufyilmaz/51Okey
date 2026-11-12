@@ -78,6 +78,14 @@ public class SyncAutoTestDataTests
     }
 
     [Test]
+    public void Config_HumansParsesAndDefaultsToZero()
+    {
+        var c = JsonUtility.FromJson<SyncAutoTestConfig>("{\"nickName\":\"AT-host\",\"humans\":2}");
+        Assert.AreEqual(2, c.humans);
+        Assert.AreEqual(0, JsonUtility.FromJson<SyncAutoTestConfig>("{\"nickName\":\"AT-host\"}").humans);
+    }
+
+    [Test]
     public void Status_WritesCounters()
     {
         var s = new SyncAutoTestStatus { opens = 2, processes = 3, sidePicks = 1, mistakes = 4, bugs = 1, finishType = "okey" };
