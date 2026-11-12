@@ -1,7 +1,7 @@
 ﻿# Ana editörde Refresh + recompile, sonra -Filter'a uyan EditMode testlerini koşar. Derleme hatası ya da başarısız test: exit 1.
 # Örnek: powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-EditModeTests.ps1 -Filter OkeyRulesTests
 param([Parameter(Mandatory = $true)][string]$Filter)
-$u = 'C:\Users\osman\AppData\Local\Unity\bin\unity.exe'; $p = 'C:\Users\osman\Documents\51Okey'
+$u = 'C:\Users\osman\AppData\Local\Unity\bin\unity.exe'; $p = 'F:\Documents\UnityProjects\51Okey'
 function C([string[]]$a) { for ($i = 0; $i -lt 15; $i++) { $o = & $u command @a --project-path $p --result-only --no-banner 2>&1 | Out-String; if ($o -notmatch 'No Pipeline instance found') { return $o }; Start-Sleep 2 }; $o }
 C @('editor', 'invoke_menu', '--path', 'Assets/Refresh') | Out-Null
 C @('script', 'recompile') | Out-Null

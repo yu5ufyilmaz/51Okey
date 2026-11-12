@@ -31,10 +31,10 @@ param(
     [switch]$SameNames,   # tüm test oyuncuları aynı Photon adını gösterir (ad ile alan bulan kod bozulur)
     [int]$Bots = 0,   # 1..3: ilk 4-N editör (host + misafirler) + oyunun N botu
     [string[]]$Projects = @(
-        'C:\Users\osman\Documents\51Okey',
-        'C:\Users\osman\Documents\51Okey_clone_0',
-        'C:\Users\osman\Documents\51Okey_clone_1',
-        'C:\Users\osman\Documents\51Okey_clone_2'
+        'F:\Documents\UnityProjects\51Okey',
+        'F:\Documents\UnityProjects\51Okey_clone_0',
+        'F:\Documents\UnityProjects\51Okey_clone_1',
+        'F:\Documents\UnityProjects\51Okey_clone_2'
     )
 )
 $ErrorActionPreference = 'Stop'
