@@ -23,6 +23,10 @@ public class SyncAutoTestConfig
     public int injectOracleBugAtMove; // öz-test: bu hamlede beklenen değeri bilerek boz
     public bool fillWithBots; // tek editör: host odayı kurar, boş koltukları oyunun botları doldurur
 
+    public string displayName; // boş değilse Photon takma adı bu; iç kimlik (nickName) değişmez
+    public float botFillDelaySec; // > 0: host oyunun bot doldurma bekleme süresini bununla değiştirir
+
+    public string PhotonName => string.IsNullOrEmpty(displayName) ? nickName : displayName;
     public bool IsHost => role == "host";
     public bool IsSmart => mode == "smart";
 }

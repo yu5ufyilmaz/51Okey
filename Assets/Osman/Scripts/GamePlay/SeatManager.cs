@@ -30,6 +30,9 @@ public class SeatManager : MonoBehaviourPunCallbacks
     // "Botlarla Oyna" seçili masada başka oyuncuların katılması için beklenen süre (sn). Sonra boş koltuklar botla dolar.
     public float botFillDelay = 10f;
 
+    // Yalnız SyncAutoTest host'u atar: test editörlerinin yüklenip katılması 10 sn'den uzun sürer.
+    public static float? BotFillDelayOverride;
+
     private void Awake()
     {
         TileSerialization.RegisterCustomTypes(); // Custom serialization for TileDataInfo
@@ -91,7 +94,8 @@ public class SeatManager : MonoBehaviourPunCallbacks
 
     private IEnumerator StartWithBotsAfterDelay()
     {
-        yield return new WaitForSeconds(botFillDelay);
+        float delay = BotFillDelayOverride ?? botFillDelay;
+        yield return new WaitForSeconds(delay);
         if (!gameIsStart)
         {
             // Koltuk seçmeden bekleyen insanlar önce ilk boş koltuklara oturur, kalan boşları botlar doldurur.
@@ -102,7 +106,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
                     photonView.RPC("AssignSeatToPlayer", RpcTarget.AllBuffered, p.ActorNumber, seat);
             }
             Debug.Log(
-                $"Oda {botFillDelay} sn içinde dolmadı. Boş koltuklar botla dolduruluyor ({PhotonNetwork.PlayerList.Length} insan)."
+                $"Oda {delay} sn içinde dolmadı. Boş koltuklar botla dolduruluyor ({PhotonNetwork.PlayerList.Length} insan)."
             );
             StartGame(true);
         }

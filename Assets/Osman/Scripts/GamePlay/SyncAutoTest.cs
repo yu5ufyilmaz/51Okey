@@ -105,7 +105,7 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
             case State.Connecting:
                 if (PhotonNetwork.InLobby)
                 {
-                    PhotonNetwork.NickName = Config.nickName;
+                    PhotonNetwork.NickName = Config.PhotonName;
                     SceneChangeManager.Instance.ChangeScene("LobbyMenu");
                     SetState(State.Lobby);
                 }
@@ -131,7 +131,12 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
                     }
                     // Şifreli oda: aynı AppId'deki bir telefon build'i JoinRandom ile test odasına düşmesin.
                     if (Config.IsHost)
+                    {
+                        // Diğer editörlerin yüklenip katılması için testte bot doldurma süresi uzatılır.
+                        if (Config.botFillDelaySec > 0)
+                            SeatManager.BotFillDelayOverride = Config.botFillDelaySec;
                         roomManager.CreateCustomRoom(Config.roomName, Config.runId, Config.deals, true, Config.fillWithBots);
+                    }
                     else
                         Join();
                     SetState(State.Joining);

@@ -10,6 +10,8 @@
   powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -JoinRoom osman        # telefonda kurulan odaya 3 clone test oyuncusu olarak girer
   powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -JoinRoom '*'          # adı bilinmiyorsa: lobide boş koltuklu ilk oda
   powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -Solo -Mode smart        # clone'lar kapalı: tek test oyuncusu + oyunun botları
+  powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -Mode smart -SameNames  # 4 test oyuncusu da aynı Photon adını gösterir (iç kimlik AT-host/AT-g1.. aynı kalır)
+  powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -Mode smart -Bots 2     # 2 editör (host + 1 misafir) + oyunun 2 botu; -Bots 1..3, -Solo/-JoinRoom ile birlikte olmaz
   Tasarım (smart): docs/superpowers/specs/2026-11-11-test-oyunculari-design.md
 .NOTES
   1 el ~4 dk sürer. Claude 10 dk'lık komut sınırına takılmasın diye uzun koşuları arka planda (run_in_background) başlatır;
@@ -26,6 +28,8 @@ param(
     [switch]$KeepPlaying,
     [string]$JoinRoom = '',   # insana karşı: odayı telefon kurar (master o), 3 clone bu ada katılır
     [switch]$Solo,   # sadece ana editör: test oyuncusu + oyunun 3 botu (clone'lar kapalıyken)
+    [switch]$SameNames,   # tüm test oyuncuları aynı Photon adını gösterir (ad ile alan bulan kod bozulur)
+    [int]$Bots = 0,   # 1..3: ilk 4-N editör (host + misafirler) + oyunun N botu
     [string[]]$Projects = @(
         'C:\Users\osman\Documents\51Okey',
         'C:\Users\osman\Documents\51Okey_clone_0',
@@ -35,11 +39,16 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\SyncTestLib.ps1"
+if ($Bots -lt 0 -or $Bots -gt 3) { Write-Host "HATA: -Bots 1, 2 veya 3 olmalı ($Bots verildi)"; exit 1 }
+if ($Bots -and ($Solo -or $JoinRoom)) { Write-Host "HATA: -Bots, -Solo ve -JoinRoom ile birlikte verilemez"; exit 1 }
+# Host odayı kurar kurmaz bot sayacı başlar; sonradan giren her misafir ~25 sn ister.
+$botFillDelaySec = $(if ($Bots) { 20 + 25 * (3 - $Bots) } else { 0 })
 if ($JoinRoom -and -not $PSBoundParameters.ContainsKey('Mode')) { $Mode = 'smart' }
 if ($TimeoutSec -le 0) {
     $TimeoutSec = Get-DefaultTimeoutSec $Deals
     if ($Mode -eq 'smart') { $TimeoutSec *= 2 }   # dizme ve gözlem beklemeleri turları uzatır
     if ($JoinRoom) { $TimeoutSec = 3600 * $Deals }   # insan düşünür; el başına 1 saat
+    $TimeoutSec += $botFillDelaySec   # oyun, bot doldurma beklemesi bitince başlar
 }
 
 $Nicks = @('AT-host', 'AT-g1', 'AT-g2', 'AT-g3')
@@ -52,6 +61,10 @@ if ($Projects.Count -ne $Nicks.Count) { Write-Host "HATA: -Projects $($Nicks.Cou
 if ($JoinRoom) { $Projects = $Projects[1..3]; $Nicks = $Nicks[1..3] }
 # Tek insan: kıyaslanacak başka client yok, sync sayacı boş kalır; hüküm hata ve [BUG]'a bakar.
 if ($Solo) { $Projects = @($Projects[0]); $Nicks = @($Nicks[0]) }
+# Eksik koltukları oyunun botları doldurur: ilk 4-N proje (host + misafirler) kullanılır.
+if ($Bots) { $Projects = @($Projects[0..(3 - $Bots)]); $Nicks = @($Nicks[0..(3 - $Bots)]) }
+# -Bots 3'te tek editör kalır (-Solo gibi): kıyaslanacak başka client yok.
+$noHost = [bool]$JoinRoom -or $Solo -or $Projects.Count -eq 1
 
 function Read-All {
     $all = New-Object object[] $Projects.Count
@@ -108,7 +121,7 @@ $setStart = Join-Path ([IO.Path]::GetTempPath()) "synctest_setstart_$runId.cs"
 $resetStart = Join-Path ([IO.Path]::GetTempPath()) "synctest_resetstart_$runId.cs"
 [IO.File]::WriteAllText($setStart, 'UnityEditor.SceneManagement.EditorSceneManager.playModeStartScene = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEditor.SceneAsset>("Assets/Osman/Scenes/MainMenu.unity"); UnityEditor.SceneManagement.EditorSceneManager.playModeStartScene != null')
 [IO.File]::WriteAllText($resetStart, 'UnityEditor.SceneManagement.EditorSceneManager.playModeStartScene = null; true')
-Write-Host "runId $runId | $Deals el | seed $Seed$(if ($JoinRoom) { " | '$JoinRoom' odasına katılır" })$(if ($InjectDesync) { " | AT-g1 $InjectDesync. hamlede desync enjekte eder" })"
+Write-Host "runId $runId | $Deals el | seed $Seed$(if ($JoinRoom) { " | '$JoinRoom' odasına katılır" })$(if ($InjectDesync) { " | AT-g1 $InjectDesync. hamlede desync enjekte eder" })$(if ($SameNames) { " | aynı isim" })$(if ($Bots) { " | $($Projects.Count) editör + $Bots bot (bekleme $botFillDelaySec sn)" })"
 try {
     # 3. Hazırlık
     for ($i = 0; $i -lt $Projects.Count; $i++) {
@@ -131,7 +144,9 @@ try {
             mode               = $Mode
             mistakeRate        = $Mistakes
             injectOracleBugAtMove = $(if ($i -eq 1) { $InjectOracleBug } else { 0 })
-            fillWithBots       = [bool]$Solo
+            fillWithBots       = [bool]($Solo -or $Bots)
+            displayName        = $(if ($SameNames) { 'Ayni' } else { '' })
+            botFillDelaySec    = $botFillDelaySec
         }
         [IO.File]::WriteAllText((Join-Path $dir 'config.json'), ($cfg | ConvertTo-Json))
     }
@@ -213,7 +228,7 @@ if ($Mode -eq 'smart') {
     }
 }
 
-$v = Get-SyncTestVerdict -Statuses $final -Nicks $Nicks -TimedOut $timedOut -NoHost:([bool]$JoinRoom -or $Solo)
+$v = Get-SyncTestVerdict -Statuses $final -Nicks $Nicks -TimedOut $timedOut -NoHost:$noHost
 $elapsed = [int]((Get-Date) - $started).TotalSeconds
 if ($v.Pass) { Write-Host "PASS: $($v.Reason) ($elapsed sn)"; exit 0 }
 Write-Host "FAIL: $($v.Reason) ($elapsed sn)"

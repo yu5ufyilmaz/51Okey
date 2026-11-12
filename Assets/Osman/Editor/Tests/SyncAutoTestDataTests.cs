@@ -62,6 +62,22 @@ public class SyncAutoTestDataTests
     }
 
     [Test]
+    public void Config_PhotonNameIsDisplayNameWhenGiven()
+    {
+        var c = JsonUtility.FromJson<SyncAutoTestConfig>("{\"nickName\":\"AT-g1\",\"displayName\":\"Ayni\"}");
+        Assert.AreEqual("Ayni", c.PhotonName);
+        Assert.AreEqual("AT-g1", c.nickName);
+    }
+
+    [Test]
+    public void Config_PhotonNameFallsBackToNickName()
+    {
+        var c = JsonUtility.FromJson<SyncAutoTestConfig>("{\"nickName\":\"AT-host\"}");
+        Assert.AreEqual("AT-host", c.PhotonName);
+        Assert.AreEqual(0f, c.botFillDelaySec);
+    }
+
+    [Test]
     public void Status_WritesCounters()
     {
         var s = new SyncAutoTestStatus { opens = 2, processes = 3, sidePicks = 1, mistakes = 4, bugs = 1, finishType = "okey" };
