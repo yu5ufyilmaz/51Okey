@@ -562,11 +562,9 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
         if (visualTarget != null)
         {
-            // Mesafe içindeyiz, küçül
-            if (_targetScale != shrinkScale)
-            {
-                _targetScale = shrinkScale;
-            }
+            // Mesafe içindeyiz: gideceği yuvanın gerçek boyuna küçül (işleme yardımı alanı büyüttüyse büyük yuvaya).
+            // Sabit 0.3 ölçek yuvanın ~yarısı kalıyordu; işlenen taş masadakilerden küçük görünüyordu.
+            _targetScale = ScaleToFit(visualTarget.transform, out Vector3 fit) ? fit : shrinkScale;
         }
         else
         {
@@ -913,18 +911,9 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         // Önceden yenisi 0.05 sn'de çıkıyor, bu taş yarı yoldayken siliniyordu.
         GameObject dropSpot = FindObjectOfType<SeatManager>()?.tiledropOffset[0];
         Transform target = dropSpot != null ? dropSpot.transform : rightTileContainer;
-        if (target is RectTransform to && transform is RectTransform me && me.localScale.x > 0 && me.localScale.y > 0)
-        {
-            // Kayarken atma yerinin boyuna küçülsün ki yer değişiminde boyut zıplamasın (Update ölçeği _targetScale'e taşır).
-            float unitW = me.rect.width * me.lossyScale.x / me.localScale.x;
-            float unitH = me.rect.height * me.lossyScale.y / me.localScale.y;
-            if (unitW > 0 && unitH > 0)
-                _targetScale = new Vector3(
-                    to.rect.width * to.lossyScale.x / unitW,
-                    to.rect.height * to.lossyScale.y / unitH,
-                    1f
-                );
-        }
+        // Kayarken atma yerinin boyuna küçülsün ki yer değişiminde boyut zıplamasın (Update ölçeği _targetScale'e taşır).
+        if (ScaleToFit(target, out Vector3 fit))
+            _targetScale = fit;
         yield return Slide(transform, target.position);
 
         // --- [DÜZELTME 2] VERİTABANINDAN SİLME (ATILAN TAŞ) ---
@@ -1047,6 +1036,20 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             if (scoreManager != null)
                 scoreManager.CheckForPer();
         }
+    }
+
+    // Bu taşı hedef yuvayla aynı ekran boyuna getiren localScale (taşın kendi ölçeği 1 iken boyu esas alınır).
+    bool ScaleToFit(Transform target, out Vector3 scale)
+    {
+        scale = Vector3.one;
+        if (!(target is RectTransform to) || !(transform is RectTransform me) || me.localScale.x <= 0 || me.localScale.y <= 0)
+            return false;
+        float unitW = me.rect.width * me.lossyScale.x / me.localScale.x;
+        float unitH = me.rect.height * me.lossyScale.y / me.localScale.y;
+        if (unitW <= 0 || unitH <= 0)
+            return false;
+        scale = new Vector3(to.rect.width * to.lossyScale.x / unitW, to.rect.height * to.lossyScale.y / unitH, 1f);
+        return true;
     }
 
     // Destroy kare sonunu bekler; yuvadan hemen çıkarılmazsa aynı karede işlek hesabı ve kontroller eski taşı da görür.
