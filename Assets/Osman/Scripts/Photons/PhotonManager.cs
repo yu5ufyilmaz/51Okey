@@ -7,7 +7,7 @@ public class PhotonManager : MonoBehaviourPunCallbacks
 {
     static PhotonManager instance = null;
 
-    void Start()
+    async void Start()
     {
         if (instance == null)
         {
@@ -32,6 +32,8 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         PhotonNetwork.SendRate = 20; // Saniyede 20 paket (Varsayılan 30 olabilir)
         PhotonNetwork.SerializationRate = 10; // OnPhotonSerializeView hızı
 
+        // Yerel servisler hazır dönüyor; bu yüzden await zamanlamayı değiştirmez. Kopya nesne de bağlanma çağrısına ulaşmalı: null/erken çıkış yok.
+        await GameServices.InitAsync();
         PhotonNetwork.ConnectUsingSettings();
     }
 

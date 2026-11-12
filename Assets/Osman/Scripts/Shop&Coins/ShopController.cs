@@ -17,6 +17,22 @@ public class ShopController : MonoBehaviour
     void Start()
     {
         shopPanel.SetActive(false);
+        GameServices.Profile.Changed += ShowProfile;
+        ShowProfile(GameServices.Profile.Current);
+    }
+
+    void OnDestroy()
+    {
+        // Store sahneden uzun yaşar; yok olmuş coinText'e dokunulmasın.
+        GameServices.Profile.Changed -= ShowProfile;
+    }
+
+    void ShowProfile(PlayerProfile profile)
+    {
+        if (profile != null && coinText != null)
+        {
+            coinText.text = profile.Coins.ToString();
+        }
     }
 
     public void OpenShop()
@@ -41,12 +57,7 @@ public class ShopController : MonoBehaviour
 
     public void AddCoins(int coinAmount)
     {
-        int currentValue;
-        if (int.TryParse(coinText.text, out currentValue))
-        {
-            currentValue += coinAmount;
-            coinText.text = currentValue.ToString();
-        }
+        _ = GameServices.Wallet.ApplyAsync(new CoinTx(System.Guid.NewGuid().ToString("N"), coinAmount, CoinReason.Purchase));
     }
 
 }

@@ -9,6 +9,17 @@ public class MainMenuUIHandler : MonoBehaviourPunCallbacks
     public TMP_InputField playerNameInput;
     public TextMeshProUGUI buttonText;
 
+    async void Start()
+    {
+        await GameServices.InitAsync();
+        // Profil yüklenemediyse (Current null) isim kutusuna dokunma.
+        var profile = GameServices.Profile.Current;
+        if (profile != null && playerNameInput != null && string.IsNullOrEmpty(playerNameInput.text))
+        {
+            playerNameInput.text = profile.DisplayName;
+        }
+    }
+
     //Main menü kısmındaki kodların Manager Scripti.
     // Bu kısıma Google Hesaplarını, Facebook hesaplarını bağlama eklenecek.
     public void ConnectLobby()
@@ -18,6 +29,7 @@ public class MainMenuUIHandler : MonoBehaviourPunCallbacks
             if (playerNameInput.text.Length > 1)
             {
                 PhotonNetwork.NickName = playerNameInput.text;
+                _ = GameServices.Profile.SetDisplayNameAsync(playerNameInput.text);
 
                 buttonText.text = "Connecting...";
                 SceneChangeManager.Instance.ChangeScene("LobbyMenu");
