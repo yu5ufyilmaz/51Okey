@@ -219,7 +219,45 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             transform.localScale = Vector3.one;
             transform.localRotation = Quaternion.identity;
             transform.localPosition = Vector3.zero;
+
+            // Per yuvaları türe göre farklı ve kesirli (seri 31x43, grup/çift 32-33x44): yuvaya gerilen taşlar
+            // 1-2 px farklı görünüyordu. Per taşı, yuvanın ortasında perin seri yuvası boyunda, tam piksel olur.
+            if (MeldTileWorldSize(transform.parent, out Vector2 world, out Transform meld))
+            {
+                // İşleme yardımı alanı büyütmüşken yerleşen taş, alan küçülünce de standart boyda kalsın.
+                Vector3 s = transform.parent.lossyScale;
+                Vector3 zoom = meld.localScale;
+                rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+                rt.sizeDelta = new Vector2(world.x * zoom.x / s.x, world.y * zoom.y / s.y);
+                rt.anchoredPosition = Vector2.zero;
+            }
         }
+    }
+
+    // Yuva bir per alanındaysa (TileMeldPlace/<per alanı>/<tür>/<yuva>) masadaki standart per taşının büyütmesiz ekran boyu:
+    // ilk per alanının seri yuvası. Alanların yuvaları da birbirinden 1 px farklı; hepsine aynı boy uygulanır.
+    static bool MeldTileWorldSize(Transform slot, out Vector2 world, out Transform meld)
+    {
+        world = default;
+        meld = slot != null && slot.parent != null ? slot.parent.parent : null;
+        if (meld == null || meld.parent == null || meld.parent.name != "TileMeldPlace")
+            return false;
+        RectTransform std = null;
+        foreach (Transform area in meld.parent)
+            if (area.childCount > 0 && area.GetChild(0).childCount > 0 && area.GetChild(0).GetChild(0).GetComponent<Placeholder>() != null)
+            {
+                std = area.GetChild(0).GetChild(0) as RectTransform;
+                break;
+            }
+        if (std == null || slot.lossyScale.x <= 0 || slot.lossyScale.y <= 0)
+            return false;
+        // İşleme yardımı alanları geçici büyütür (localScale); standart, büyütmesiz boydur.
+        Vector3 area0 = std.parent.parent.localScale;
+        world = new Vector2(
+            Mathf.Round(std.rect.width * std.lossyScale.x / area0.x),
+            Mathf.Round(std.rect.height * std.lossyScale.y / area0.y)
+        );
+        return world.x > 0 && world.y > 0;
     }
     #endregion
 
@@ -1048,7 +1086,12 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         float unitH = me.rect.height * me.lossyScale.y / me.localScale.y;
         if (unitW <= 0 || unitH <= 0)
             return false;
-        scale = new Vector3(to.rect.width * to.lossyScale.x / unitW, to.rect.height * to.lossyScale.y / unitH, 1f);
+        // Per yuvasında: standart boy, alan o an büyütülmüşse büyütülmüş haliyle.
+        if (MeldTileWorldSize(target, out Vector2 world, out Transform meld))
+            world = Vector2.Scale(world, meld.localScale);
+        else
+            world = new Vector2(to.rect.width * to.lossyScale.x, to.rect.height * to.lossyScale.y);
+        scale = new Vector3(world.x / unitW, world.y / unitH, 1f);
         return true;
     }
 
