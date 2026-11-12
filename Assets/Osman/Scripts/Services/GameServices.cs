@@ -40,6 +40,6 @@ public static class GameServices
         await Ads.InitializeAsync();
         var p = store.Current;
         if (p != null)
-            Debug.Log("[SERVICES] " + p.UserId + " " + p.DisplayName + " coins=" + p.Coins);
+            Debug.Log("[SERVICES] " + p.UserId + " coins=" + p.Coins);
     }
 }

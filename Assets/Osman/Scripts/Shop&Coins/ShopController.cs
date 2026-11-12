@@ -57,7 +57,28 @@ public class ShopController : MonoBehaviour
 
     public void AddCoins(int coinAmount)
     {
-        _ = GameServices.Wallet.ApplyAsync(new CoinTx(System.Guid.NewGuid().ToString("N"), coinAmount, CoinReason.Purchase));
+        Apply(new CoinTx(System.Guid.NewGuid().ToString("N"), coinAmount, CoinReason.Purchase), coinAmount);
+    }
+
+    // Mağaza işlem kimliği tekrarlanan callback'in iki kez kredilenmesini engeller.
+    public void GrantPurchase(int coinAmount, string transactionId)
+    {
+        var id = string.IsNullOrEmpty(transactionId) ? System.Guid.NewGuid().ToString("N") : transactionId;
+        Apply(new CoinTx(id, coinAmount, CoinReason.Purchase), coinAmount);
+    }
+
+    // async void: sonuç gerçek async çağrıya dönünce de bloklamadan okunur; hata yutulmaz, uyarıya yazılır.
+    static async void Apply(CoinTx tx, int coinAmount)
+    {
+        try
+        {
+            if (!await GameServices.Wallet.ApplyAsync(tx))
+                Debug.LogWarning("[SHOP] coin credit not applied, amount=" + coinAmount);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning("[SHOP] coin credit failed (" + e.GetType().Name + "), amount=" + coinAmount);
+        }
     }
 
 }

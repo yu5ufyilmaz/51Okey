@@ -18,19 +18,19 @@ public class IAPManager : MonoBehaviour
     {
         if (product.definition.id == coins100)
         {
-            _shopController.CoinPurchaseButton(100);
+            _shopController.GrantPurchase(100, product.transactionID);
         }
         else if (product.definition.id == coins200)
         {
-            _shopController.CoinPurchaseButton(200);
+            _shopController.GrantPurchase(200, product.transactionID);
         }
         else if (product.definition.id == coins500)
         {
-            _shopController.CoinPurchaseButton(500);
+            _shopController.GrantPurchase(500, product.transactionID);
         }
         else if (product.definition.id == coins1000)
         {
-            _shopController.CoinPurchaseButton(1000);
+            _shopController.GrantPurchase(1000, product.transactionID);
         }
         else if (product.definition.id == removeAds)
         {
