@@ -690,7 +690,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             }
 
             // 4. SeatManager'ın kullandığı sihirli formül ile hedef konteyneri (Offset) bul
-            int relativeIndex = (targetSeat - localSeatNumber + 4) % 4;
+            int relativeIndex = SeatMath.RelativeIndex(targetSeat, localSeatNumber);
 
             if (relativeIndex >= 0 && relativeIndex < seatManager.tiledropOffset.Length)
             {

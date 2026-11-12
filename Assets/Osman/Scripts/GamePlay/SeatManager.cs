@@ -33,8 +33,12 @@ public class SeatManager : MonoBehaviourPunCallbacks
     // Yalnız SyncAutoTest host'u atar: test editörlerinin yüklenip katılması 10 sn'den uzun sürer, insanlar oturunca 0'lanır.
     public static float? BotFillDelayOverride;
 
+    // Table sahnesinde tek SeatManager var; sahne her elde yeniden yüklenir, yeni örnek eskisinin yerine geçer.
+    public static SeatManager Instance;
+
     private void Awake()
     {
+        Instance = this;
         TileSerialization.RegisterCustomTypes(); // Custom serialization for TileDataInfo
         // Alanların sahnedeki asıl adlarını sakla (ilk çağrı sadece kaydeder).
         RestoreDefaultNames(meldTileOffsets, ref defaultMeldNames);
@@ -412,6 +416,59 @@ public class SeatManager : MonoBehaviourPunCallbacks
                 button.enabled = pick;
         }
     }
+
+    #region Queue to Meld Area
+    // Yerel oyuncunun koltuğu; oturmamışsa 1 (InstatiateSideTiles'ın varsayılanıyla aynı).
+    public int LocalSeat =>
+        PhotonNetwork.LocalPlayer != null
+        && PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("SeatNumber", out object seat)
+        && seat is int s
+            ? s
+            : 1;
+
+    public Transform LocalMeldArea => meldTileOffsets[0].transform;
+
+    // Sıra -> koltuk eşlemesi (SyncQueToSeatMapping); GameManager henüz yoksa ya da TileDistrubite gelmediyse null.
+    static int[] SeatOfQue => GameManager.Instance != null ? GameManager.Instance.tileDistrubite?.seatOfQue : null;
+
+    // Sıra numarasının meld alanı; eşleme/koltuk/alan yoksa null (oyuncu adına bakmaz).
+    public Transform MeldAreaOfQue(int que)
+    {
+        int seat = SeatMath.MeldSeat(SeatOfQue, que);
+        if (seat < 0 || meldTileOffsets == null)
+            return null;
+        int rel = SeatMath.RelativeIndex(seat, LocalSeat);
+        return rel < meldTileOffsets.Length && meldTileOffsets[rel] != null ? meldTileOffsets[rel].transform : null;
+    }
+
+    // Meld alanının (meldTileOffsets içindeki kendi transform'u) sıra numarası; bulunamazsa -1.
+    public int QueOfMeldArea(Transform area)
+    {
+        if (area == null || meldTileOffsets == null)
+            return -1;
+        for (int rel = 0; rel < meldTileOffsets.Length && rel < 4; rel++)
+            if (meldTileOffsets[rel] != null && meldTileOffsets[rel].transform == area)
+                return SeatMath.QueOfSeat(SeatOfQue, SeatMath.SeatAtRelativeIndex(rel, LocalSeat));
+        return -1;
+    }
+
+    // Önce PlayerList sırasıyla oyuncuların sıraları, sonra kalan sıralar artan; her zaman 1..4'ün hepsi bir kez.
+    public IEnumerable<int> QuesInTableOrder()
+    {
+        var seen = new bool[5];
+        foreach (Player p in PhotonNetwork.PlayerList)
+        {
+            if (p.CustomProperties.TryGetValue("PlayerQue", out object q) && q is int que && que >= 1 && que <= 4 && !seen[que])
+            {
+                seen[que] = true;
+                yield return que;
+            }
+        }
+        for (int que = 1; que <= 4; que++)
+            if (!seen[que])
+                yield return que;
+    }
+    #endregion
 
     // Koltuk seçerken ekranın altındaki koltuk (oturmuşsa kendi koltuğu, değilse 1).
     int viewBaseSeat = 1;
