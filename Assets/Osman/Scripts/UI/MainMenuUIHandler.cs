@@ -104,6 +104,7 @@ public class MainMenuUIHandler : MonoBehaviourPunCallbacks
     public async void LinkGoogle()
     {
         googleButton.interactable = false;
+        accountStatusText.text = "Google'a bağlanıyor...";
         var result = await GameServices.Auth.LinkGoogleAsync();
         if (this == null)
             return;
@@ -111,6 +112,8 @@ public class MainMenuUIHandler : MonoBehaviourPunCallbacks
         RefreshAccount();
         if (result == LinkResult.Failed)
             accountStatusText.text = "Google'a bağlanılamadı";
+        else if (result == LinkResult.Cancelled)
+            accountStatusText.text = "Google girişi tamamlanmadı";
     }
 
     Task<bool> AskSwitchAsync()
