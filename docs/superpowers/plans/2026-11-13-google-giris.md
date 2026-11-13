@@ -94,3 +94,30 @@ Bağlı: İP2 ve konsol işleri (aşağıda). Sahne `Assets/Osman/Scenes/MainMen
 ### Son kapı (ana oturum)
 EditMode testleri, senkron testi (`Run-SyncTest.ps1 -Mode smart -Seed 11`; klonlar kapalıysa `-Solo`), dev APK telefonda:
 isimle giriş → Firestore'da `users/{uid}` oluşur; Google ile giriş → hesap bağlanır.
+
+## İP1 sonucu (2026-11-13)
+
+- **Sürümler:** Firebase Unity SDK 14.1.0 (`dl.google.com/firebase/sdk/unity/firebase_unity_sdk_14.1.0.zip`), yalnız
+  `FirebaseAuth` + `FirebaseFirestore`. Play Games Plugin for Unity 2.3.0 (GitHub sürümü; `package.json` 2.3.0, ama
+  `PluginVersion.cs` ve `ProjectSettings/GooglePlayGameSettings.txt` "2.1.0" yazar: eklentinin kendi tutarsızlığı).
+- **Çözücü:** eski EDM4U 1.2.181 silindi; Firebase'in getirdiği **EDM4U 1.2.190** tek çözücü. Play Games paketi kendi
+  EDM 1.2.182 kopyasıyla gelir; o kısım çıkarılarak içe aktarıldı (paket yeniden kurulursa EDM'i hariç tut).
+- **Android çözümleme:** Force Resolve `True`. EDM `mainTemplate.gradle`, `gradleTemplate.properties`,
+  `settingsTemplate.gradle` dosyalarını `Assets/Plugins/Android`'e kopyaladı (AndroidX + Jetifier açık). Bağımlılıklar:
+  firebase-auth 25.0.0, firebase-firestore 26.6.0, play-services-games-v2 22.1.0, play-services-nearby 18.5.0.
+  Firestore paketi **firebase-analytics 24.0.0**'ı da çekiyor (Analytics kodu yok, ama Veri güvenliği formu için not).
+- **Hedef API 36**, `minSdk` 25. APK doğrulandı: `aapt` → `targetSdkVersion:'36'`, `sdkVersion:'25'`.
+- **Bilinen hatalar değişti:** `Google.IOSResolver.dll` ve `Unable to copy 'mainTemplate.gradle'` hataları artık yok
+  (Plugins/Android var, yeni EDM iOS modülü yokken hata basmıyor). Konsolda hata yok; uyarılar: Play Games
+  `CS0618` (Social API eskidi), MainMenu'de eksik reklam betikleri (eski, Faz 4).
+- **GI Cache:** F:'ye taşımadan sonra varsayılan `LocalLow\Unity\Caches\GiCache` junction'ı Unity'de
+  "Failed to create GICache directory" döngüsüne giriyordu ve build bitmiyordu. Editör tercihi (GI Cache özel yol)
+  `F:/Unity/Cache/LocalLow-Unity-Caches/GiCache` yapıldı. Klonlar aynı kullanıcı tercihini paylaşır.
+- **Commit'lenmeyen (50 MB üstü, yalnız masaüstü editörü):** `Assets/Firebase/Plugins/x86_64/FirebaseCppApp-14_1_0.bundle`
+  (macOS, 100 316 448 bayt) ve `FirebaseCppApp-14_1_0.so` (Linux, 78 851 080 bayt) + `.meta`'ları. Windows ve Android
+  için gerekmez; diskte izlenmeyen dosya olarak duruyorlar. Karar ana oturumun: gitignore, LFS ya da silme.
+- **İP3 için:** Play Games kurulum sihirbazı yapılmadı. `GooglePlayGamesManifest.androidlib/AndroidManifest.xml` içinde
+  `APP_ID` boş, `Assets/GooglePlayGames/Resources/PlayGamesSettings.asset` boş; build bunlarla geçiyor.
+- `Assets/StreamingAssets/google-services-desktop.json` ve `Assets/Plugins/Android/FirebaseApp.androidlib/` üretildi,
+  gitignore'da (doğrulandı). Klasör `.meta`'sı `Assets/StreamingAssets.meta` commit edilmedi.
+- Manifest değişmedi; klonlara kopya gerekmedi (SDK'lar `Assets` altında, junction ile görünür).
