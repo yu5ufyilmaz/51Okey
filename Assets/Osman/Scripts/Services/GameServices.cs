@@ -5,7 +5,8 @@ using UnityEngine;
 
 public static class GameServices
 {
-    public const int InitTimeoutMs = 10000;
+    // Editörde Firebase soğuk açılışı 9-12 sn ölçüldü (İP2, İP3): 10 sn sınırı ilk açılışta düşüyordu.
+    public const int InitTimeoutMs = 20000;
     public const string UseFirebaseInEditorPref = "Okey.UseFirebaseInEditor";
 
     // Nesneler beklemeden ve süreç boyunca bir kez kurulur: arayüz InitAsync bitmeden Profile.Changed'a abone olabilir.
@@ -18,6 +19,9 @@ public static class GameServices
     public static IAdsService Ads { get; }
     public static string InstanceTag { get; }
     public static bool UsesFirebase { get; }
+
+    // Google hesabı başka profile bağlıysa oyuncuya sorulur (MainMenu atar). Atanmamışsa misafir kalınır.
+    public static Func<Task<bool>> ConfirmAccountSwitch { get; set; }
 
     // "Bağlanılamadı, tekrar dene" paneli için: InitFailed paneli açar, düğme PhotonManager.ConnectWhenReadyAsync'i çağırır.
     public static bool IsReady => init.IsReady;
@@ -42,7 +46,10 @@ public static class GameServices
         if (UsesFirebase)
         {
             var boot = new FirebaseBoot(InstanceTag, Application.isEditor);
-            Auth = new FirebaseAuthService(boot);
+            Auth = new FirebaseAuthService(
+                boot,
+                () => Profile.DeleteAsync(),
+                () => ConfirmAccountSwitch != null ? ConfirmAccountSwitch() : Task.FromResult(false));
             var store = new FirestoreProfileStore(boot);
             Profile = store;
             Wallet = store;

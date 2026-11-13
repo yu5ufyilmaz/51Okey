@@ -92,3 +92,11 @@ GoogleService-Info.plist
 /Assets/Firebase/Plugins/x86_64/FirebaseCppApp-*.bundle.meta
 /Assets/Firebase/Plugins/x86_64/FirebaseCppApp-*.so
 /Assets/Firebase/Plugins/x86_64/FirebaseCppApp-*.so.meta
+
+# Play Games kurulumunun ürettiği, uygulama ve web istemci kimliğini tutan dosyalar (tasarım bölüm 13).
+# Temiz checkout derlenir (kod bunlara başvurmaz); kurulum yeniden yapılınca geri gelirler (plan: İP3 sonucu).
+/ProjectSettings/GooglePlayGameSettings.txt
+/Assets/GooglePlayGames/Resources/
+/Assets/GooglePlayGames/Resources.meta
+/Assets/Plugins/Android/GooglePlayGamesManifest.androidlib/
+/Assets/Plugins/Android/GooglePlayGamesManifest.androidlib.meta

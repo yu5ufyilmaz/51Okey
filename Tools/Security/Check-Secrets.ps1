@@ -13,6 +13,7 @@ $rules = [ordered]@{
     'private-key'     = '-----BEGIN [A-Z ]*PRIVATE KEY-----'
     'service-account' = '"type"\s*:\s*"service_account"'
     'admob-real-id'   = 'ca-app-pub-(?!3940256099942544)\d{16}'
+    'oauth-client-id' = '\d{6,}-[0-9a-z]{32}\.apps\.googleusercontent\.com'
     'assigned-secret' = '(keystorePass|keyaliasPass|storePassword|keyPassword|password|passwd|secret|api_key)["'']?\s*[:=]\s*["''][^"'']{6,}["'']'  # secret-scan: allow (kuralın kendisi)
 }
 

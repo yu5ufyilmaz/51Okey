@@ -1,3 +1,4 @@
+using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.Build;
@@ -11,6 +12,9 @@ public static class AndroidDevBuild
 {
     public const string ApkPath = "Builds/Android/51Okey-dev.apk";
 
+    // EDM bu iki dosyayı build'in ABI'sine (yalnız ARM64) göre yeniden yazar; commit'li hali ARMv7 + ARM64.
+    static readonly string[] AbiFiles = { "Assets/Plugins/Android/mainTemplate.gradle", "ProjectSettings/AndroidResolverDependencies.xml" };
+
     [MenuItem("51Okey/Android Test Build")]
     public static void Build()
     {
@@ -20,6 +24,7 @@ public static class AndroidDevBuild
         var android = NamedBuildTarget.Android;
         Il2CppCompilerConfiguration compilerConfig = PlayerSettings.GetIl2CppCompilerConfiguration(android);
         Il2CppCodeGeneration codeGeneration = PlayerSettings.GetIl2CppCodeGeneration(android);
+        byte[][] abiFileBytes = AbiFiles.Select(f => File.Exists(f) ? File.ReadAllBytes(f) : null).ToArray();
         try
         {
             PlayerSettings.Android.useCustomKeystore = false;
@@ -54,6 +59,9 @@ public static class AndroidDevBuild
             PlayerSettings.SetIl2CppCompilerConfiguration(android, compilerConfig);
             PlayerSettings.SetIl2CppCodeGeneration(android, codeGeneration);
             AssetDatabase.SaveAssets(); // Unity build sırasında ProjectSettings'i geçici değerle diske yazıyor, gerçek değeri geri kaydet
+            for (int i = 0; i < AbiFiles.Length; i++)
+                if (abiFileBytes[i] != null && !File.ReadAllBytes(AbiFiles[i]).SequenceEqual(abiFileBytes[i]))
+                    File.WriteAllBytes(AbiFiles[i], abiFileBytes[i]);
         }
     }
 }
