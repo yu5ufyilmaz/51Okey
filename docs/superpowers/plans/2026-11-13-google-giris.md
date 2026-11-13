@@ -174,3 +174,55 @@ isimle giriş → Firestore'da `users/{uid}` oluşur; Google ile giriş → hesa
   `Run-SyncTest.ps1 -Solo -Mode smart -Seed 11` → `PASS: 1 el, test oyuncularında hata yok (203 sn)`, desync 0, backend=local.
 - **Telefon:** `adb devices` boş, mdns servis yok: cihazda giriş doğrulanmadı. Son kapıda dev APK ile
   `adb logcat -d -s Unity | grep SERVICES` → `backend=firebase` satırı ve init süresi bakılmalı.
+
+## İP3 sonucu (2026-11-13)
+
+- **Commit:** `c174f32`. Yeni: `Services/GoogleLinkFlow.cs` (karar mantığı), `Editor/Tests/GoogleLinkFlowTests.cs` (8 test).
+  Değişen: `FirebaseAuthService`, `GameServices`, `MainMenuUIHandler`, `MainMenu.unity`, `AndroidDevBuild`, `Check-Secrets.ps1`,
+  `.gitignore`, `mainTemplate.gradle`, `AndroidResolverDependencies.xml`, `GvhProjectSettings.xml`.
+- **Akış:** `LinkGoogleAsync` → `PlayGamesPlatform.Instance.ManuallyAuthenticate` (zaten girişliyse atlanır) →
+  `RequestServerSideAccess(false)` → `PlayGamesAuthProvider.GetCredential` → `LinkWithCredentialAsync`. Kimlik başka
+  kullanıcıda (`FirebaseAccountLinkException` ya da `AuthError.CredentialAlreadyInUse`): `GameServices.ConfirmAccountSwitch`
+  (MainMenu'nün onay paneli) sorulur. Evet: yeni sunucu kodu → misafir profil belgesi (`Profile.DeleteAsync`) → misafir Auth
+  kullanıcısı → `SignInWithCredentialAsync` → `UserChanged` → profil yeniden yüklenir. Hayır: misafir kalır (`Cancelled`).
+  Play Games kodu yalnız `#if UNITY_ANDROID && !UNITY_EDITOR` içinde; Editörde ve diğer platformlarda uyarı + `Failed`.
+  Bizim kodumuz açılışta Play Games çağırmaz (`Activate`/`Authenticate` yok).
+- **MainMenu:** isim kutusunun sağında "Google ile gir" (`btn_teal`), altında durum ("Misafir hesap" / "Google hesabı bağlı" /
+  "Google'a bağlanılamadı"); `RetryPanel` (Bağlanılamadı + Tekrar dene, `GameServices.InitFailed` açar, düğme
+  `PhotonManager.ConnectWhenReadyAsync`), `ConfirmSwitchPanel` (Evet/Hayır). Yerel arka uçta düğme ve durum gizli, panel açılmaz.
+  İsim kutusu `Profile.Changed` ile de dolar (tekrar dene / hesap geçişi sonrası); oyuncunun yazdığı isim ezilmez.
+  Var olan `InputField (TMP)`, `ConnectButton`, `Canvas.MainMenuUIHandler.ConnectLobby` değişmedi. Türkçe ğ/ş/İ ChangaOne'da
+  yok: düğme etiketleri ChangaOne (bu harfler yok), başlık/mesaj/durum LiberationSans. Dört eksik reklam betiği duruyor (Faz 4).
+- **Kimlikler repoda değil:** Play Games kurulumu (`GPGSAndroidSetupUI.PerformSetup`, kaynak XML: app_id + package_name,
+  web istemci kimliği) şu üç yeri yazar; hepsi `.gitignore`'da ve takipten çıkarıldı (geçmişte hep boştu):
+  - `ProjectSettings/GooglePlayGameSettings.txt` (app id, web istemci kimliği, kaynak XML, `android.SetupDone`)
+  - `Assets/GooglePlayGames/Resources/PlayGamesSettings.asset` (+ `.meta`, klasör `.meta`)
+  - `Assets/Plugins/Android/GooglePlayGamesManifest.androidlib/` (`AndroidManifest.xml` içinde `APP_ID`)
+  Kod bu dosyalara başvurmaz: temiz checkout derlenir ve APK çıkar, ama Play Games girişi çalışmaz ve build sonrası
+  "Google Play Games not configured!" penceresi döner. Geri getirmek: Window > Google Play Games > Setup > Android setup
+  (kaynak XML + web istemci kimliği; değerler hafıza dosyasında ve konsolda) ya da aynı değerlerle `PerformSetup`.
+  **Kullanıcının yedeklemesi gerekenler:** yukarıdaki üç yol + `Assets/google-services.json`.
+  `Check-Secrets.ps1` artık `<numara>-<32 karakter>.apps.googleusercontent.com` kalıbını da yakalar (yukarıdaki iki dosyada denendi: bulur).
+- **ABI dosyaları:** kurulumun EDM çözümü ikisini ARMv7 + ARM64 yazdı, commit'lendi. `AndroidDevBuild` build öncesi bu iki
+  dosyanın baytlarını alıp `finally`'de geri yazar; build sonrası `ProjectSettings.asset` dahil çalışma ağacında değişiklik kalmadı.
+- **Zaman aşımı 20 sn:** Editörde Firebase soğuk açılışı bu sefer ~12 sn (10 sn sınırında panel açıldı, tekrar dene geçti);
+  telefonda Unity süreci başlangıcından `[SERVICES] ... backend=firebase` satırına 10,2 sn (`23:52:51.64` → `23:53:01.89`).
+- **Kapı:** Check-Secrets `clean (14 files)`; EditMode `passed 130/130`; konsolda bu işten hata yok (yalnız Unity Remote/adb);
+  `AndroidDevBuild` → `Succeeded (155 sn, 0 hata)`, pencere çıkmadı, APK `APP_ID` içeriyor;
+  `Run-SyncTest.ps1 -Solo -Mode smart -Seed 11` → `PASS: 1 el, test oyuncularında hata yok (181 sn)`, desync 0.
+- **Editör denemeleri:** yerel: düğme/durum gizli, isim dolu, lobiye geçti. Tercih açık: durum "Misafir hesap", Google
+  düğmesi → `[AUTH] Google girişi yalnızca Android cihazda çalışır` uyarısı, hata logu yok. Tekrar dene: geçici 300 ms
+  zaman aşımıyla panel açıldı, iş sürerken basınca açık kaldı, bitince basınca kapandı ve lobiye bağlandı (geçici değer geri alındı).
+  Tercih kapatıldı.
+- **Telefon (Redmi, `com.modiacgames.okey51`):** kuruldu, açıldı, `backend=firebase` satırı geldi (anonim uid). Kullanıcının
+  ilk dokunuşunda `[AUTH] Google: Cancelled` loglandı (Play Games girişi iptal/başarısız döndü; sebep logda yok).
+- **Bilinen sınırlar:**
+  - Play Games v2 SDK'sı uygulama açılınca kendi otomatik girişini dener (logcat `GamesConnectSrv signIn`, `GamesResolutionActivity`);
+    bu bizim çağrımız değil, SDK davranışı. Firebase'e bir şey gitmez.
+  - Misafir Auth kullanıcısı silinemezse (misafir belgesi silindikten sonra) misafir profilsiz kalır; uygulama yeniden açılınca
+    profil yeniden oluşur (kodda shortcut notu).
+  - Hesaba geçiş ve "zaten bağlı" yolu cihazda denenmedi (iki Google hesabı/yeniden kurulum gerekir).
+  - OAuth izin ekranı test modunda: yalnızca test kullanıcıları girebilir. Yayın için Play App Signing SHA-1'li ikinci Android istemcisi gerekir.
+- **Telefonda Google girişini denemek için kullanıcı:** uygulamayı aç, menü gelince (durum "Misafir hesap") "Google ile gir"e dokun,
+  Play Games hesap seçiminde `osmansisman433@gmail.com`'u seç / izin ver. Beklenen: durum "Google hesabı bağlı", düğme kaybolur,
+  logcat `[AUTH] Google: Linked uid=<aynı uid>`; Firebase konsolunda kullanıcıya Play Games sağlayıcısı eklenir.
