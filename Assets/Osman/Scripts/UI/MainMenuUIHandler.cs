@@ -31,7 +31,9 @@ public class MainMenuUIHandler : MonoBehaviourPunCallbacks
             if (playerNameInput.text.Length > 1)
             {
                 PhotonNetwork.NickName = playerNameInput.text;
-                _ = GameServices.Profile.SetDisplayNameAsync(playerNameInput.text);
+                // Her lobi girişinde değil, yalnızca isim değiştiyse yaz (Firestore'da her yazım ağ isteği).
+                if (GameServices.Profile.Current?.DisplayName != playerNameInput.text.Trim())
+                    _ = GameServices.Profile.SetDisplayNameAsync(playerNameInput.text);
 
                 buttonText.text = "Connecting...";
                 SceneChangeManager.Instance.ChangeScene("LobbyMenu");

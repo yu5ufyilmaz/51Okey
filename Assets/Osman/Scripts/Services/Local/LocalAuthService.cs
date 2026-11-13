@@ -1,11 +1,24 @@
+using System;
 using System.Threading.Tasks;
 
 public class LocalAuthService : IAuthService
 {
     readonly string instanceTag;
+    string userId;
 
-    public string UserId { get; private set; }
+    public string UserId
+    {
+        get => userId;
+        private set
+        {
+            if (userId == value)
+                return;
+            userId = value;
+            UserChanged?.Invoke();
+        }
+    }
     public bool IsGuest => true;
+    public event Action UserChanged;
 
     public LocalAuthService(string instanceTag) => this.instanceTag = instanceTag;
 

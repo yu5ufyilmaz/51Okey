@@ -33,10 +33,24 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         PhotonNetwork.SerializationRate = 10; // OnPhotonSerializeView hızı
 
         // Yerel servisler hazır dönüyor; bu yüzden await zamanlamayı değiştirmez. Kopya nesne de bağlanma çağrısına ulaşmalı: null/erken çıkış yok.
-        // Init hata verse de bağlanma çağrısına ulaşılmalı; hata görünür kalsın.
+        await ConnectWhenReadyAsync();
+    }
+
+    // "Bağlanılamadı, tekrar dene" düğmesi de bunu çağırır: init başarısızsa yeniden dener (GameServices.InitFailed paneli açar).
+    // true = bağlanma çağrısına ulaşıldı.
+    public static async System.Threading.Tasks.Task<bool> ConnectWhenReadyAsync()
+    {
         try { await GameServices.InitAsync(); }
-        catch (System.Exception e) { Debug.LogException(e); }
+        catch (System.Exception e)
+        {
+            // Beklenen durum (çevrimdışı, zaman aşımı): uyarı. Senkron test koşucusu hata logunu FAIL sayar.
+            Debug.LogWarning("[SERVICES] başlatılamadı: " + e.GetType().Name + " " + e.Message);
+            // Firebase'de profilsiz bağlanılmaz. Yerel arka uçta eski davranış: hata olsa da bağlan.
+            if (GameServices.UsesFirebase)
+                return false;
+        }
         PhotonNetwork.ConnectUsingSettings();
+        return true;
     }
 
     public override void OnConnectedToMaster()

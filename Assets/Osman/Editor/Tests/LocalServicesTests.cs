@@ -269,4 +269,32 @@ public class LocalServicesTests
         Assert.AreEqual(GameConfig.StarterCoins + 100, s.Coins);
         Assert.AreEqual(GameConfig.StarterCoins + 100, Loaded().Coins);
     }
+
+    // --- İP2: silme ve kullanıcı değişti olayları ---
+
+    [Test]
+    public void Profile_Delete_FiresChangedWithNull()
+    {
+        var s = Loaded();
+        PlayerProfile seen = s.Current;
+        int fired = 0;
+        s.Changed += p => { fired++; seen = p; };
+        s.DeleteAsync().GetAwaiter().GetResult();
+        Assert.AreEqual(1, fired);
+        Assert.IsNull(seen);
+    }
+
+    [Test]
+    public void Auth_UserChanged_FiresOnSignInAndDeleteOnly()
+    {
+        var auth = new LocalAuthService("51Okey");
+        int fired = 0;
+        auth.UserChanged += () => fired++;
+        auth.SignInAsync().GetAwaiter().GetResult();
+        auth.SignInAsync().GetAwaiter().GetResult();
+        Assert.AreEqual(1, fired, "aynı kullanıcıyla tekrar giriş olay üretmez");
+        auth.DeleteAccountAsync().GetAwaiter().GetResult();
+        Assert.AreEqual(2, fired);
+        Assert.IsNull(auth.UserId);
+    }
 }

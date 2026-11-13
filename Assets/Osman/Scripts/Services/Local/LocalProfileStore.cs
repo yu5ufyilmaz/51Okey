@@ -82,6 +82,7 @@ public class LocalProfileStore : IProfileStore, IWallet
         catch (Exception e) { Debug.LogWarning("[Profil] dosya silinemedi: " + e.Message); }
         Current = null;
         appliedTxIds = new List<string>();
+        Notify();
         return Task.CompletedTask;
     }
 
@@ -121,17 +122,7 @@ public class LocalProfileStore : IProfileStore, IWallet
         return false;
     }
 
-    // Bir abonenin hatası diğerlerini ve çağıranı bozmaz.
-    void Notify()
-    {
-        if (Changed == null)
-            return;
-        foreach (var handler in Changed.GetInvocationList())
-        {
-            try { ((Action<PlayerProfile>)handler)(Current); }
-            catch (Exception e) { Debug.LogException(e); }
-        }
-    }
+    void Notify() => ProfileEvents.Raise(Changed, Current);
 
     StoreFile TryRead(string userId)
     {
