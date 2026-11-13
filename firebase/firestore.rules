@@ -1,0 +1,19 @@
+rules_version = '2';
+
+// Tasarım: docs/superpowers/specs/2026-11-12-google-play-yayin-design.md bölüm 5.2 (v1, istemci yazar).
+// Burada eşleşmeyen her yol kapalıdır.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+                            && request.resource.data.coins is int
+                            && request.resource.data.coins >= 0;
+
+      match /ledger/{txId} {
+        // update yok: yazılan kayıt değişmez. delete yalnızca hesap silme akışı için açık.
+        allow read, create, delete: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+  }
+}
