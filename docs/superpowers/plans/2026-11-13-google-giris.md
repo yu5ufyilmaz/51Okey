@@ -121,3 +121,56 @@ isimle giriş → Firestore'da `users/{uid}` oluşur; Google ile giriş → hesa
 - `Assets/StreamingAssets/google-services-desktop.json` ve `Assets/Plugins/Android/FirebaseApp.androidlib/` üretildi,
   gitignore'da (doğrulandı). Klasör `.meta`'sı `Assets/StreamingAssets.meta` commit edilmedi.
 - Manifest değişmedi; klonlara kopya gerekmedi (SDK'lar `Assets` altında, junction ile görünür).
+
+## İP2 sonucu (2026-11-13)
+
+- **Commit:** `68f8379`. Yeni: `Services/InitGate.cs`, `Services/Firebase/{FirebaseBoot,FirebaseAuthService,FirestoreProfileStore}.cs`,
+  `Editor/Tests/InitGateTests.cs`. Değişen: `GameServices`, `IAuthService`, `LocalAuthService`, `LocalProfileStore`,
+  `PlayerProfile` (`ProfileEvents.Raise`), `PhotonManager`, `MainMenuUIHandler`, `LocalServicesTests`.
+- **Arka uç seçimi** statik kurucuda bir kez (`GameServices.ChooseFirebase`): cihaz Firebase; Editör yerel, yalnız
+  `EditorPrefs` `Okey.UseFirebaseInEditor` açık **ve** play modundaysa Firebase (EditMode testleri hep yerel);
+  `Temp/SyncAutoTest/config.json` varsa hep yerel. Kurucu `BeforeSceneLoad`'da ana iş parçacığında tetiklenir.
+  Hangi arka uç: `GameServices.UsesFirebase`; log satırı `[SERVICES] <uid> coins=N backend=firebase|local`.
+- **İP3 tekrar dene paneli için API:**
+  - `GameServices.InitFailed` (`event Action<Exception>`): init hata verdi ya da 10 sn'de bitmedi → paneli aç.
+  - `GameServices.IsReady`: init başarıyla bitti mi.
+  - Düğme: `await PhotonManager.ConnectWhenReadyAsync()` (static, `Task<bool>`; init'i yeniden dener, başarılıysa
+    `ConnectUsingSettings` çağırır; `false` = yine olmadı, panel açık kalır). Hata/zaman aşımı önbelleğe alınmaz;
+    zaman aşımına uğrayan iş sürüyorsa ya da geç bittiyse yeniden başlatılmaz, onun sonucu kullanılır.
+  - Firebase'de init başarısızsa Photon'a bağlanılmaz (uyarı logu: `[SERVICES] başlatılamadı: ...`). Yerel modda eski
+    davranış (hata olsa da bağlanır, aynı karede).
+  - Not: `MainMenuUIHandler.Start` isim kutusunu yalnızca ilk `InitAsync` başarılıysa doldurur; tekrar dene sonrası
+    kutuyu panel doldurmalı (`GameServices.Profile.Current.DisplayName`) ya da `Profile.Changed`'a abone olunmalı.
+- **Kullanıcı değişti olayı:** `IAuthService.UserChanged` (`event Action`, ana iş parçacığında, `UserId` değişince).
+  `GameServices` buna abone: init bittikten sonra kullanıcı değişirse profili yeniden yükler (`Profile.Changed` tetiklenir).
+  Durum yazısı (misafir / Google bağlı) için `Auth.UserChanged` + `Auth.IsGuest` yeter. `Profile.DeleteAsync`
+  artık `Changed(null)` tetikler (yerel ve Firestore).
+- **`LinkGoogleAsync` burada doldurulacak:** `Services/Firebase/FirebaseAuthService.cs`, şimdi `LinkResult.Failed` döner.
+  Başarılı bağlama/geçişten sonra `SetUser(auth.CurrentUser)` çağrılmalı: bu `UserChanged`'ı ve profil yeniden yüklemesini
+  tetikler. Hesaba geçişte misafir profil silinecekse sıra: `Profile.DeleteAsync()` (misafir kimliğiyle) → giriş/geçiş.
+  `DeleteAccountAsync` Firebase kullanıcısını siler (yeniden giriş isteyebilir; istisna çağırana gider).
+- **Cüzdan:** istisna = sonuç bilinmiyor, aynı `Id` ile tekrar dene; `false` = uygulanmadı (yetersiz bakiye, profil yok,
+  0 miktar, boş Id). Defter kaydı zaten varsa transaction yalnızca bakiyeyi okur, `true` döner. Başlangıç coin'i yeni
+  profille aynı transaction'da `ledger/starter` kaydıyla yazılır (yerel depodaki `starter` ile aynı anlam). Id'deki `/` → `_`.
+  `AddXpAsync` bellekteki değerden yazar (shortcut, kodda not var).
+- **Editörde gerçek arka uç denendi (okey51-dev):** anonim kullanıcı `FhzJeXW1nfQzpryTQ5t0DUD8eYH2` (editör `51Okey`),
+  `users/{uid}` coins 1000 + `ledger/starter` yazıldı, sunucudan geri okundu. `ip2-check-1` (+5) iki kez → ilk `true`
+  coins 1005, ikinci `true` coins 1005; sunucuda coins 1005, defter `starter`, `ip2-check-1`. Aşırı harcama `false`.
+  İkinci play modunda aynı uid geri geldi (Editör kalıcılığı uygulama adı = klasör adı ile çalışıyor).
+  Bu belge temizlenebilir (Firebase konsolu → Auth kullanıcısı + `users/FhzJeXW1nfQzpryTQ5t0DUD8eYH2`).
+- **Firebase tuhaflıkları:**
+  - Editörde soğuk açılış yavaş: ilk play modunda init ~10,0 sn sürdü (zaman aşımı 65 ms önce düştü, iş sonra bitti;
+    tekrar dene anında geçti). İkinci play modunda 9,3 sn. Sıcak istekler 0,3–0,5 sn. Cihaz süresi ölçülmedi.
+  - Editörde Firebase kullanıldıktan sonra play modundan çıkınca bir kez `NullReferenceException` at
+    `Firebase.Platform.FirebaseEditorDispatcher.Update` (SDK içi; yalnız tercih açıkken). Senkron testine etkisi yok (orada hep yerel).
+  - `Database URL not set in the Firebase config.` uyarısı (Realtime DB kullanılmıyor; zararsız).
+  - Android build sonrası Play Games eklentisi modal "Google Play Games not configured!" penceresi açıyor ve editörün
+    CLI komutlarını kilitliyor (ESC ile kapatıldı). Sihirbaz İP3'te yapılınca kalkmalı.
+  - Build `ProjectSettings.asset`'i build değerleriyle (ARM64, debug imza) diske yazıp bellekte geri alıyor;
+    `AssetDatabase.SaveAssets()` diski HEAD'e döndürdü. EDM `mainTemplate.gradle` ve `AndroidResolverDependencies.xml`'i
+    ABI'ye göre yeniden yazıyor (armeabi-v7a satırı); bu iki dosya commit edilmedi.
+- **Kapı:** Check-Secrets temiz (19 dosya); EditMode `passed 122/122`; play modunda bu işten hata yok (yalnız Unity
+  Remote/adb ve yukarıdaki SDK NRE); `AndroidDevBuild` → `Succeeded (447 sn, 0 hata)`;
+  `Run-SyncTest.ps1 -Solo -Mode smart -Seed 11` → `PASS: 1 el, test oyuncularında hata yok (203 sn)`, desync 0, backend=local.
+- **Telefon:** `adb devices` boş, mdns servis yok: cihazda giriş doğrulanmadı. Son kapıda dev APK ile
+  `adb logcat -d -s Unity | grep SERVICES` → `backend=firebase` satırı ve init süresi bakılmalı.
