@@ -107,6 +107,7 @@ public static partial class UiKitBuilder
         var chipButton = chip.AddComponent<Button>();
         chipButton.targetGraphic = Sliced(chip, "row_slate");
         chip.AddComponent<UiPressScale>();
+        Sound(chip, SfxId.UiClick);
         var chipInitial = Avatar(chip.transform, 96, 52);
         var chipText = Text(chip.transform, "ChipText", "", 36, bold);
         chipText.alignment = TextAlignmentOptions.MidlineLeft;
@@ -132,6 +133,7 @@ public static partial class UiKitBuilder
         ShrinkToFit(coinText, 26);
         var plus = RoundButton(closeBtn, coin.transform, "Plus", "btn_green", "+");
         Anchor(plus, right, right, right, Vector2.zero, new Vector2(120, 120));
+        Sound(plus, SfxId.UiClick);
 
         var settingsButton = ChoiceButton(teal, top.transform, "SettingsButton", "lobby.settings", 220, 120, 40);
         Anchor(settingsButton, right, right, right, new Vector2(-30, 0), new Vector2(220, 120));
@@ -180,6 +182,9 @@ public static partial class UiKitBuilder
         var play = ChoiceButton(green, bottom.transform, "PlayNowButton", "lobby.play_now", 620, 150, 52);
         var create = ChoiceButton(orange, bottom.transform, "CreateButton", "lobby.create_table", 420, 150, 48);
         var bots = ChoiceButton(teal, bottom.transform, "BotsButton", "lobby.play_bots", 420, 150, 44);
+        Sound(play, SfxId.UiPlayNow);
+        Sound(create, SfxId.UiCreateTable);
+        Sound(bots, SfxId.UiPlayBots);
 
         // --- masa açma penceresi: ad, el sayısı (- / +), şifre anahtarı + şifre ---
         var createWin = KitWindow(window, canvas, "CreateRoomPanel", "room.create_title", new Vector2(1100, 760));
@@ -202,6 +207,7 @@ public static partial class UiKitBuilder
         Anchor(pwInput.gameObject, right, right, right, Vector2.zero, new Vector2(560, 120));
         var createOk = Nested(green, createWin.transform.Find("Body/Buttons"), "CreateConfirmButton");
         SetLabel(createOk.GetComponentInChildren<TMP_Text>(true), "room.confirm_create");
+        Sound(createOk, SfxId.UiEnterRoom);
 
         // --- şifre penceresi ---
         var pwWin = KitWindow(window, canvas, "PasswordPanel", "room.password", new Vector2(1100, 560));
@@ -209,6 +215,7 @@ public static partial class UiKitBuilder
         ((RectTransform)pwCheck.transform).anchoredPosition = new Vector2(0, -40);
         var pwOk = Nested(green, pwWin.transform.Find("Body/Buttons"), "PasswordConfirmButton");
         SetLabel(pwOk.GetComponentInChildren<TMP_Text>(true), "room.enter");
+        Sound(pwOk, SfxId.UiEnterRoom);
 
         // --- bağlantılar ---
         handler.roomCardPrefab = cardPrefab.GetComponent<RoomCard>();
@@ -408,6 +415,7 @@ public static partial class UiKitBuilder
             taken[i] = t;
             var b = ChoiceButton(green, slot.transform, "Sit", "room.sit", 220, 120, 48);
             sit[i] = b.GetComponent<Button>();
+            Sound(b, SfxId.UiEnterRoom);
         }
         var so = new SerializedObject(g.AddComponent<RoomCard>());
         so.FindProperty("nameText").objectReferenceValue = name;
@@ -441,6 +449,8 @@ public static partial class UiKitBuilder
         Anchor(minus, right, right, right, new Vector2(-320, 0), new Vector2(120, 120));
         more = RoundButton(closePrefab, row.transform, "Plus", "btn_teal", plusGlyph);
         Anchor(more, right, right, right, Vector2.zero, new Vector2(120, 120));
+        Sound(minus, SfxId.UiToggle);
+        Sound(more, SfxId.UiToggle);
         return value;
     }
 

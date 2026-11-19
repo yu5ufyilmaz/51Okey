@@ -22726,6 +22726,7 @@ GameObject:
   - component: {fileID: 928860766}
   - component: {fileID: 928860765}
   - component: {fileID: 928860764}
+  - component: {fileID: 928860767}
   m_Layer: 5
   m_Name: "\xC7\u0131k\u0131\u015F Butonu"
   m_TagString: Untagged
@@ -22847,6 +22848,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 928860762}
   m_CullTransparentMesh: 1
+--- !u!114 &928860767
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 928860762}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e596cca28e2344a47a89a7b02c707f1a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UiSfx
+  id: 21
 --- !u!1 &930380871
 GameObject:
   m_ObjectHideFlags: 0
@@ -33659,6 +33673,7 @@ GameObject:
   - component: {fileID: 1333435552}
   - component: {fileID: 1333435551}
   - component: {fileID: 1333435550}
+  - component: {fileID: 1333435553}
   m_Layer: 5
   m_Name: CurrentScoreButton
   m_TagString: Untagged
@@ -33780,6 +33795,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1333435548}
   m_CullTransparentMesh: 1
+--- !u!114 &1333435553
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1333435548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e596cca28e2344a47a89a7b02c707f1a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UiSfx
+  id: 21
 --- !u!1 &1340683058
 GameObject:
   m_ObjectHideFlags: 0

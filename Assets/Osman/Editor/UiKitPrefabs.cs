@@ -60,6 +60,7 @@ public static partial class UiKitBuilder
         var img = Sliced(g, sprite);
         g.AddComponent<Button>().targetGraphic = img;
         g.AddComponent<UiPressScale>();
+        Sound(g, SfxId.UiClick);
         var t = Text(g.transform, "Label", label, 48, extraBold);
         t.fontSharedMaterial = outline; // renkli butonda okunurluk için
         Fill(t.gameObject, 16, 14, -16, 0); // alttaki gölge payı kadar yukarıda
@@ -78,6 +79,7 @@ public static partial class UiKitBuilder
         img.raycastTarget = false;
         g.AddComponent<Button>().targetGraphic = img;
         g.AddComponent<UiPressScale>();
+        Sound(g, SfxId.UiClose);
         var t = Text(v.transform, "Label", "X", 48, extraBold);
         t.fontSharedMaterial = outline;
         Fill(t.gameObject, 16, 14, -16, 0);
@@ -149,6 +151,7 @@ public static partial class UiKitBuilder
         var tg = g.AddComponent<Toggle>();
         tg.targetGraphic = bg;
         tg.isOn = false;
+        Sound(g, SfxId.UiToggle);
         var view = new SerializedObject(g.AddComponent<UiToggleView>());
         view.FindProperty("on").objectReferenceValue = on;
         view.ApplyModifiedPropertiesWithoutUndo();
@@ -185,6 +188,7 @@ public static partial class UiKitBuilder
         var yesRed = Nested(red, buttons, "YesDestructive");
         var no = Nested(teal, buttons, "No");
         SetLabel(no.GetComponentInChildren<TMP_Text>(), "common.cancel");
+        Sound(no, SfxId.UiClose);
         confirm.SetActive(false);
 
         // Yükleme onayın üstünde: onay açıkken yükleme başlarsa butonları tıklanmasın
@@ -232,6 +236,17 @@ public static partial class UiKitBuilder
     }
 
     // --- yardımcılar ---
+
+    // Düğmenin (kök ya da ilk Button'lu çocuk) UiSfx'ini ekler ya da id'sini değiştirir; prefab örneğinde değişiklik kaydedilir
+    static void Sound(GameObject button, SfxId id)
+    {
+        var host = button.TryGetComponent<Selectable>(out _) ? button : button.GetComponentInChildren<Selectable>(true)?.gameObject;
+        if (host == null) { Debug.LogError("[UiKitBuilder] Düğme bulunamadı: " + button.name); return; }
+        if (!host.TryGetComponent<UiSfx>(out var s)) s = host.AddComponent<UiSfx>();
+        s.id = id;
+        EditorUtility.SetDirty(s);
+        if (PrefabUtility.IsPartOfPrefabInstance(s)) PrefabUtility.RecordPrefabInstancePropertyModifications(s);
+    }
 
     static bool deleting;
 

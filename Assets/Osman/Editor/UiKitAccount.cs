@@ -315,6 +315,7 @@ public static partial class UiKitBuilder
         var r = KitRow(row, parent, name, labelKey);
         r.transform.Find("Value").GetComponent<TMP_Text>().text = ">";
         r.AddComponent<Button>().targetGraphic = r.GetComponent<Image>();
+        Sound(r, SfxId.UiClick);
         return r;
     }
 }

@@ -150,6 +150,7 @@ GameObject:
   - component: {fileID: 2834900780192251017}
   - component: {fileID: 3273291485348204849}
   - component: {fileID: 9009465056497456608}
+  - component: {fileID: 2675409528388275900}
   m_Layer: 0
   m_Name: Btn_Orange
   m_TagString: Untagged
@@ -271,3 +272,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6777f37b715eab8458d09840e6f18974, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UiPressScale
+--- !u!114 &2675409528388275900
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6729489460283363882}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e596cca28e2344a47a89a7b02c707f1a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UiSfx
+  id: 21

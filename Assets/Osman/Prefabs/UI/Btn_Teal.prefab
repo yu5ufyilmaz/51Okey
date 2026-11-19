@@ -150,6 +150,7 @@ GameObject:
   - component: {fileID: 7415497349197340062}
   - component: {fileID: 7282356274478098921}
   - component: {fileID: 1999608840306153902}
+  - component: {fileID: 2528492699114429245}
   m_Layer: 0
   m_Name: Btn_Teal
   m_TagString: Untagged
@@ -271,3 +272,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6777f37b715eab8458d09840e6f18974, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UiPressScale
+--- !u!114 &2528492699114429245
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8434417922862254135}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e596cca28e2344a47a89a7b02c707f1a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UiSfx
+  id: 21

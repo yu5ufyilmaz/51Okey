@@ -70,6 +70,16 @@ public static partial class UiKitBuilder
             if (found < count) Debug.LogError($"[UiKitBuilder] Masada metin bulunamadı: \"{old}\" ({key}) bulunan {found}/{count}");
         }
 
+        // Çıkış ve TABLO düğmeleri tıklama sesi alır; eylem düğmeleri almaz (sesleri sonuçtan gelir)
+        foreach (var btnName in new[] { "Çıkış Butonu", "CurrentScoreButton" })
+        {
+            UnityEngine.UI.Button found = null;
+            foreach (var b in Object.FindObjectsByType<UnityEngine.UI.Button>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                if (b.gameObject.name == btnName) { found = b; break; }
+            if (found == null) { Debug.LogError("[UiKitBuilder] Masada düğme bulunamadı: " + btnName); continue; }
+            Sound(found.gameObject, SfxId.UiClick);
+        }
+
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
         Debug.Log("[UiKitBuilder] Masa metinleri bağlandı: " + TablePath);

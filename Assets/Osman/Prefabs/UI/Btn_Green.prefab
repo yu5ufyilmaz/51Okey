@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 4661555133809948080}
   - component: {fileID: 2348088568267317536}
   - component: {fileID: 9052200884191466696}
+  - component: {fileID: 7620253219994181039}
   m_Layer: 0
   m_Name: Btn_Green
   m_TagString: Untagged
@@ -134,6 +135,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6777f37b715eab8458d09840e6f18974, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UiPressScale
+--- !u!114 &7620253219994181039
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1069438932482094919}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e596cca28e2344a47a89a7b02c707f1a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UiSfx
+  id: 21
 --- !u!1 &5261135739849098421
 GameObject:
   m_ObjectHideFlags: 0
