@@ -98,6 +98,35 @@ public class SfxTests
         Assert.IsEmpty(Sfx.Recent);
         UnityEngine.Object.DestroyImmediate(go);
     }
+    [Test] public void UiSfx_Plays_When_Button_Disables_Itself_In_OnClick()
+    {
+        Sfx.UseLibrary(AllIds()); Sfx.ClearRecent();
+        var go = ButtonWith(true); var u = go.GetComponent<UiSfx>(); var e = new UnityEngine.EventSystems.PointerEventData(null);
+        u.OnPointerDown(e);
+        go.GetComponent<UnityEngine.UI.Button>().interactable = false; // onClick önce çalıp düğmeyi kapattı
+        u.OnPointerClick(e);
+        CollectionAssert.AreEqual(new[] { SfxId.UiClick }, Sfx.Recent);
+        UnityEngine.Object.DestroyImmediate(go);
+    }
+    [Test] public void UiSfx_Is_Silent_When_Pressed_While_Disabled()
+    {
+        Sfx.UseLibrary(AllIds()); Sfx.ClearRecent();
+        var go = ButtonWith(false); var u = go.GetComponent<UiSfx>(); var e = new UnityEngine.EventSystems.PointerEventData(null);
+        u.OnPointerDown(e);
+        go.GetComponent<UnityEngine.UI.Button>().interactable = true;
+        u.OnPointerClick(e);
+        Assert.IsEmpty(Sfx.Recent);
+        UnityEngine.Object.DestroyImmediate(go);
+    }
+    [Test] public void UiSfx_Ignores_Right_Click()
+    {
+        Sfx.UseLibrary(AllIds()); Sfx.ClearRecent();
+        var go = ButtonWith(true); var u = go.GetComponent<UiSfx>();
+        var e = new UnityEngine.EventSystems.PointerEventData(null) { button = UnityEngine.EventSystems.PointerEventData.InputButton.Right };
+        u.OnPointerDown(e); u.OnPointerClick(e);
+        Assert.IsEmpty(Sfx.Recent);
+        UnityEngine.Object.DestroyImmediate(go);
+    }
     [TestCase("Btn_Green", SfxId.UiClick)] [TestCase("Btn_Orange", SfxId.UiClick)] [TestCase("Btn_Teal", SfxId.UiClick)]
     [TestCase("Btn_Red", SfxId.UiClick)] [TestCase("Btn_Close", SfxId.UiClose)] [TestCase("Toggle", SfxId.UiToggle)]
     public void Kit_Prefab_Has_UiSfx(string prefab, SfxId expected)
