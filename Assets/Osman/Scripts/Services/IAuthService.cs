@@ -8,4 +8,5 @@ public interface IAuthService
     System.Threading.Tasks.Task<LinkResult> LinkGoogleAsync();   // kullanıcı yoksa doğrudan Google kimliğiyle girer, varsa bağlar
     System.Threading.Tasks.Task SignOutAsync();
     System.Threading.Tasks.Task DeleteAccountAsync();   // yalnızca kimlik; profil IProfileStore.DeleteAsync ile silinir
+    bool IsRecentLoginError(System.Exception e);        // DeleteAccountAsync "yakın zamanda giriş gerekli" ile mi düştü
 }

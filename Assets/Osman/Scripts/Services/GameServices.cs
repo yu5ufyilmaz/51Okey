@@ -149,6 +149,24 @@ public static class GameServices
         return result;
     }
 
+    // Kimlik silinemezse hesap profilsiz kalır: profil hemen yeniden yüklenir (başlangıç profiliyle devam).
+    public static Task<DeleteResult> DeleteAccountAsync() => Exclusive(DeleteAccountCoreAsync);
+
+    static async Task<DeleteResult> DeleteAccountCoreAsync()
+    {
+        var result = await AccountDeletion.RunAsync(HasSession, Profile.DeleteAsync, Auth.DeleteAccountAsync, Auth.IsRecentLoginError, DropProfile);
+        if (result != DeleteResult.Ok && Auth.UserId != null && !HasSession)
+        {
+            ForgetProfileLoad();
+            try { await ProfileLoadAsync(); }
+            catch (Exception)
+            {
+                Debug.LogWarning("[SERVICES] silme sonrası profil yeniden yüklenemedi: " + Auth.UserId);
+            }
+        }
+        return result;
+    }
+
     public static Task SignOutAsync() => Exclusive(SignOutCoreAsync);
 
     static async Task SignOutCoreAsync()

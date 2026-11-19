@@ -50,4 +50,7 @@ public class LocalAuthService : IAuthService
         UserId = null;
         return Task.CompletedTask;
     }
+
+    // Yerel kimlik yeniden giriş istemez.
+    public bool IsRecentLoginError(Exception e) => false;
 }

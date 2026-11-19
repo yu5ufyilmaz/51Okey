@@ -171,6 +171,15 @@ public class FirebaseAuthService : IAuthService
         SetUser(null);
     }
 
+    // Firebase görevleri istisnayı AggregateException içinde verebilir.
+    public bool IsRecentLoginError(Exception e)
+    {
+        for (var x = e; x != null; x = x.InnerException)
+            if (x is Firebase.FirebaseException f && (AuthError)f.ErrorCode == AuthError.RequiresRecentLogin)
+                return true;
+        return false;
+    }
+
     // shortcut: oturumun Firebase tarafında düşmesi (token iptali) izlenmiyor; gerekirse auth.StateChanged dinlenir.
     void SetUser(FirebaseUser next)
     {

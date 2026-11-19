@@ -13,6 +13,7 @@ public class PlayerProfile
 public enum CoinReason { StarterGrant, RewardedAd, Purchase, TableFee, TablePayout }
 public enum LinkResult { Linked, SwitchedToExistingAccount, Cancelled, Failed }
 public enum NameResult { Ok, Invalid, Taken, Failed }
+public enum DeleteResult { Ok, NeedsRecentLogin, Failed }
 
 public readonly struct CoinTx
 {
