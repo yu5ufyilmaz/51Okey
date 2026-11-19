@@ -20,6 +20,8 @@ public partial class SyncAutoTest
     bool firstOpenThisTurn;
     int openScoreThisTurn;
     bool processedThisTurn;
+    string arrangedSig; // bu turda sürücünün son dizdiği per kümesi
+    bool arrangeComplete; // o dizme bütün taşları yerleştirdi mi
     readonly Dictionary<int, int> pendingProcessPenalty = new Dictionary<int, int>();
     string finishKind;
 
@@ -60,6 +62,8 @@ public partial class SyncAutoTest
         else
             brain.NewTurn();
         firstOpenThisTurn = processedThisTurn = false;
+        arrangedSig = null;
+        arrangeComplete = false;
         openScoreThisTurn = 0;
         pendingProcessPenalty.Clear();
         if (brain.TurnMistake != Mistake.None)
@@ -102,10 +106,11 @@ public partial class SyncAutoTest
         }
         // İnsan host'lu oyunda bırakıp gitme: en güvenli atışla turu bitir, sonraki turlarda devam et.
         DriverNote(guardMsg);
+        status.guardTrips++;
         if (!turnManager.canDrop && turnManager.currentTurnPlayer == que && !GameManager.Instance.isGameEnded)
         {
             TableView dv = BuildTableView();
-            yield return StartCoroutine(Execute(brain.PlanDraw(dv), dv));
+            yield return StartCoroutine(Execute(new PlanStep { Kind = StepKind.DrawMiddle, Reason = "adım koruması: ortadan çekiyorum" }, dv));
         }
         if (turnManager.canDrop && turnManager.currentTurnPlayer == que && !GameManager.Instance.isGameEnded && state != State.Error)
         {
@@ -344,6 +349,7 @@ public partial class SyncAutoTest
             }
 
             case StepKind.Arrange:
+                arrangedSig = step.MeldSig;
                 yield return StartCoroutine(Arrange(step.Layout));
                 break;
 
@@ -368,8 +374,13 @@ public partial class SyncAutoTest
                 // Oyunun saydığı geçerli per yoksa (ıstaka dizilimi kayması) bu oyun hatası değil, sürücü sorunu.
                 var sm = Sm;
                 bool noPers = pairs ? sm.pairTotalPerCount < 1 : sm.totalPerCount - sm.pairTotalPerCount < 1;
-                if (allowed && !opened && noPers)
-                    DriverNote($"{step.Kind}: oyun ıstakada geçerli per görmedi (dizilim kaydı), açılamadı");
+                // Yalnızca dizme tamamlanmadıysa (ya da bu küme için hiç dizilmediyse) sürücü sorunu; yoksa oyun hatası olabilir.
+                bool layoutSlip = arrangedSig != TestPlayerBrain.MeldSig(best) || !arrangeComplete;
+                if (allowed && !opened && noPers && layoutSlip)
+                    DriverNote(
+                        $"{step.Kind}: oyun ıstakada geçerli per görmedi (dizilim kaydı), açılamadı | "
+                            + $"per: {string.Join(" | ", best.Melds.Select(m => string.Join(" ", m.Select(TestPlayerBrain.Name))))} puan {best.Score}"
+                    );
                 else
                     Check(
                         $"{step.Kind} ({best.Score}, limit {v.TableLimit})",
@@ -479,6 +490,7 @@ public partial class SyncAutoTest
         }
         yield return new WaitForSeconds(0.3f);
         int wrong = layout.Count(kv => HandSlotOf(kv.Key) != kv.Value);
+        arrangeComplete = wrong == 0;
         if (wrong > 0)
             DriverNote($"dizilim tamamlanamadı, {wrong} taş yerinde değil");
         else

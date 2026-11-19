@@ -256,4 +256,32 @@ public class TestPlayerBrainTests
         brain.NextAction(PairsView(h15, false));
         Assert.AreEqual(StepKind.OpenPairs, brain.NextAction(PairsView(h15, false)).Kind);
     }
+
+    [Test]
+    public void Brain_SameMeldsInOtherHandOrderDoNotArrangeAgain()
+    {
+        var brain = new TestPlayerBrain(1, 0);
+        brain.NewDeal();
+        var h15 = Hand15();
+        Assert.AreEqual(StepKind.Arrange, brain.NextAction(PairsView(h15, false)).Kind);
+        var shuffled = Enumerable.Reverse(h15).ToList();
+        Assert.AreEqual(StepKind.OpenPairs, brain.NextAction(PairsView(shuffled, false)).Kind);
+    }
+
+    [Test]
+    public void Brain_RefusedSlotDoesNotHideOtherSlotsForSameTile()
+    {
+        var hand = new List<Tiles> { T(TileColor.red, 9), Okey(), T(TileColor.black, 3) };
+        var v = View(hand, true);
+        v.IOpenedSeries = true;
+        v.Slots.Add(SeriesSlot(T(TileColor.red, 9), "1:0:0", true));
+        v.Slots.Add(SeriesSlot(T(TileColor.red, 9), "2:0:0", true));
+        var brain = new TestPlayerBrain(1, 0);
+        var first = brain.NextAction(v);
+        Assert.AreEqual(StepKind.Process, first.Kind);
+        brain.NoteRefused(first);
+        var second = brain.NextAction(v);
+        Assert.AreEqual(StepKind.Process, second.Kind);
+        Assert.AreNotEqual(first.SlotKey, second.SlotKey);
+    }
 }

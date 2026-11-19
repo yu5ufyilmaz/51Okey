@@ -65,6 +65,7 @@ public class PlanStep
     public string SlotKey;
     public Dictionary<string, int> Layout;
     public string Reason;
+    public string MeldSig; // Arrange: dizilen per kümesinin imzası
     public Mistake Mistake;
 }
 
@@ -149,9 +150,14 @@ public class TestPlayerBrain
             && RuleOracle.OpenAllowed(best.Score, v.TableLimit, v.AnyoneElseOpened, Opened(v));
     }
 
-    SlotView MatchingSlot(TableView v, Tiles tile, bool respectEndLimit) =>
+    // Per kümesinin imzası: per içi ve perler arası sırasız.
+    public static string MeldSig(MeldSet best) =>
+        string.Join("/", best.Melds.Select(m => string.Join(",", m.Select(t => t.id).OrderBy(i => i))).OrderBy(x => x));
+
+    SlotView MatchingSlot(TableView v, Tiles tile, bool respectEndLimit, bool skipRefused = false) =>
         v.Slots.FirstOrDefault(s =>
             s.Needed != null
+            && !(skipRefused && refusedThisTurn.Contains($"P|{tile.id}|{s.Key}"))
             && s.Needed.color == tile.color
             && s.Needed.number == tile.number
             && (!respectEndLimit || s.MeldType != 0 || EndCount(s) < 2)
@@ -235,7 +241,7 @@ public class TestPlayerBrain
             && !refusedThisTurn.Contains((PathIsPairs ? StepKind.OpenPairs : StepKind.OpenSeries).ToString());
 
         // Açılacak per kümesi son dizilenden farklıysa yeniden diz (ilk açıştan sonra el değişir).
-        string sig = string.Join("/", best.Melds.Select(m => string.Join(",", m.Select(t => t.id))));
+        string sig = MeldSig(best);
         if (canOpen && sig != arrangedSig)
         {
             arrangedSig = sig;
@@ -246,6 +252,7 @@ public class TestPlayerBrain
                 {
                     Kind = StepKind.Arrange,
                     Layout = layout,
+                    MeldSig = sig,
                     Reason = $"{PathName()} {best.Score}: {string.Join(" | ", best.Melds.Select(m => string.Join(" ", m.Select(Name))))}",
                 };
         }
@@ -265,14 +272,12 @@ public class TestPlayerBrain
         {
             foreach (var tile in hand.Where(t => !IsOkey(t)))
             {
-                var exact = MatchingSlot(v, tile, true);
-                if (exact != null && refusedThisTurn.Contains($"P|{tile.id}|{exact.Key}"))
-                    exact = null;
+                var exact = MatchingSlot(v, tile, true, true);
                 if (exact != null && Opened(v))
                     return Process(exact, tile, $"{Name(tile)} işlek, işliyorum", Mistake.None);
                 if (exact != null && !Opened(v) && TakeMistake(Mistake.ProcessBeforeOpen))
                     return Process(exact, tile, $"açmadan {Name(tile)} işlemeyi deniyorum", Mistake.ProcessBeforeOpen);
-                var blocked = MatchingSlot(v, tile, false);
+                var blocked = MatchingSlot(v, tile, false, true);
                 if (blocked != null && Opened(v) && blocked.MeldType == 0 && TakeMistake(Mistake.ThirdOnSeriesEnd))
                     return Process(blocked, tile, $"aynı uca 3. taşı ({Name(tile)}) deniyorum", Mistake.ThirdOnSeriesEnd);
             }

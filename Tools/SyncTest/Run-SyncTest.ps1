@@ -189,15 +189,22 @@ try {
 finally {
     # 6. Kapat: kalmış config, kullanıcının sonraki elle Play'ini otopilotla açardı.
     # -JoinRoom: hata/zaman aşımıyla bittiyse insanın oyunu sürüyor olabilir; test oyuncularını durdurma.
-    $leaveForHuman = [bool]$JoinRoom -and -not $allDone -and ($null -ne $final)
-    if ($leaveForHuman) {
-        Write-Host "UYARI: -JoinRoom koşusu tamamlanmadan bitti; test oyuncuları Play'de kalıyor ve oynamaya devam ediyor."
+    $stillPlaying = @()
+    if ([bool]$JoinRoom -and -not $allDone -and ($null -ne $final)) {
+        for ($i = 0; $i -lt $Projects.Count; $i++) { if ($final[$i] -and $final[$i].state -eq 'Playing') { $stillPlaying += $Projects[$i] } }
+    }
+    if ($stillPlaying.Count -gt 0) {
+        Write-Host "UYARI: -JoinRoom koşusu tamamlanmadan bitti; hâlâ oynayan test oyuncuları: $(($stillPlaying | ForEach-Object { Leaf $_ }) -join ', '). Hata durumundakiler zaten oynamıyor."
         Write-Host "Durdurmak için her clone'da: unity command editor.playmode stop --project-path <clone yolu>"
     }
     foreach ($p in $Projects) {
-        if (-not $KeepPlaying -and -not $leaveForHuman) {
+        $leave = $stillPlaying -contains $p
+        if (-not $KeepPlaying -and -not $leave) {
             try { Invoke-UnityCmd $p @('editor.playmode', 'stop') -Retries 10 | Out-Null }
             catch { Write-Host "UYARI: $(Leaf $p) Play'den çıkarılamadı: $($_.Exception.Message)" }
+        }
+        if (-not $KeepPlaying) {
+            # playModeStartScene yalnız sonraki Play'i etkiler; oynarken sıfırlamak güvenli.
             try { Invoke-UnityCmd $p @('script', 'eval', '--file', $resetStart) -Retries 10 | Out-Null }
             catch { Write-Host "UYARI: $(Leaf $p) Play başlangıç sahnesi sıfırlanamadı: $($_.Exception.Message)" }
         }
@@ -228,7 +235,7 @@ if ($Mode -eq 'smart') {
     for ($i = 0; $i -lt $Projects.Count; $i++) {
         $s = $final[$i]
         if (-not $s) { continue }
-        Write-Host ("{0}: açma {1}, işleme {2}, yandan {3}, bilerek hata {4}, bug {5}, bitiş {6} | günlük: {7}" -f `
+        Write-Host ("{0}: açma {1}, işleme {2}, yandan {3}, bilerek hata {4}, bug {5}, bitiş {6} | günlük: {7}$(if ($s.guardTrips -gt 0) { " | adım koruması tıkandı: $($s.guardTrips)" })" -f `
                 $Nicks[$i], $s.opens, $s.processes, $s.sidePicks, $s.mistakes, $s.bugs, $(if ($s.finishType) { $s.finishType } else { '-' }), $s.journal)
     }
     $bugKey = Get-FirstBugKey -Statuses $final

@@ -57,7 +57,8 @@ public class SyncAutoTestStatus
         processes,
         sidePicks,
         mistakes,
-        bugs;
+        bugs,
+        guardTrips; // insan host'lu koşuda adım koruması tıkanma sayısı
     public string finishType;
     public string journal;
     public List<string> errors = new List<string>();
