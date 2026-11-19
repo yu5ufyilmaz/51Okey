@@ -11,7 +11,7 @@ public class LobbyAccountUI : MonoBehaviour
 {
     [Header("Üst çubuk")]
     public TextMeshProUGUI chipText;
-    // Lobideki coin yazısı ShopController'a ait ama market ilk açılana dek abone olmaz: burada da yazılır.
+    // Lobideki coin yazısı ShopController'a da ait (sahne açılınca abone olur); profil değişince burada da yazılır.
     public TextMeshProUGUI lobbyCoinText;
 
     [Header("Profil")]
@@ -26,16 +26,17 @@ public class LobbyAccountUI : MonoBehaviour
     public TextMeshProUGUI levelText;
     public TextMeshProUGUI xpText;
     public TextMeshProUGUI coinText;
+    public Image xpBar;
     public Button linkGoogleButton;
-    public TextMeshProUGUI linkStatus;
     public Button signOutButton;
-    public TextMeshProUGUI signOutStatus;
 
     [Header("Ayarlar")]
     public GameObject settingsPanel;
     public Toggle soundToggle;
     public Toggle musicToggle;
     public TextMeshProUGUI versionText;
+    // Adres boşsa bağlantı satırı gizli; silme satırı oturum varken görünür.
+    public GameObject privacyRow, termsRow, supportRow, deleteRow;
 
     void Awake()
     {
@@ -45,8 +46,6 @@ public class LobbyAccountUI : MonoBehaviour
 
         nameInput.characterLimit = GameConfig.NameMax;
         nameError.text = "";
-        linkStatus.text = "";
-        signOutStatus.text = "";
         versionText.text = "Sürüm " + Application.version;
         SyncToggles();
         RefreshCurrent();
@@ -78,11 +77,12 @@ public class LobbyAccountUI : MonoBehaviour
             return;
         chipText.text = profile.DisplayName + " · Seviye " + profile.Level;
         nameText.text = profile.DisplayName;
-        levelText.text = "Seviye: " + profile.Level;
-        xpText.text = "XP: " + profile.Xp % GameConfig.XpPerLevel + " / " + GameConfig.XpPerLevel;
-        coinText.text = "Coin: " + profile.Coins;
+        levelText.text = "Seviye " + profile.Level;
+        xpText.text = profile.Xp % GameConfig.XpPerLevel + " / " + GameConfig.XpPerLevel + " XP";
+        xpBar.fillAmount = profile.Xp % GameConfig.XpPerLevel / (float)GameConfig.XpPerLevel;
+        coinText.text = profile.Coins.ToString();
         lobbyCoinText.text = profile.Coins.ToString();
-        accountText.text = GameServices.Auth.IsGuest ? "Hesap: Misafir" : "Hesap: Google";
+        accountText.text = GameServices.Auth.IsGuest ? "Misafir hesap" : "Google hesabı";
         // Yazılırken (ör. Changed başka sebeple gelince) kutudaki metin ezilmesin.
         if (!nameInput.isFocused)
             nameInput.text = profile.DisplayName;
@@ -105,8 +105,6 @@ public class LobbyAccountUI : MonoBehaviour
     public void OpenProfile()
     {
         nameError.text = "";
-        linkStatus.text = "";
-        signOutStatus.text = "";
         nameInput.text = GameServices.Profile.Current?.DisplayName ?? "";
         RefreshCurrent();
         profilePanel.SetActive(true);
@@ -142,13 +140,12 @@ public class LobbyAccountUI : MonoBehaviour
         }
     }
 
-    // Düğme iş sürerken kapalı; iptal ya da hata profilde yazıyla gösterilir, oturum değişmez.
+    // Düğme iş sürerken kapalı; iptal ya da hata bildirimle gösterilir, oturum değişmez.
     public async void LinkGoogle()
     {
         try
         {
             linkGoogleButton.interactable = false;
-            linkStatus.text = "";
             LinkResult result;
             try { result = await GameServices.EnterWithGoogleAsync(); }
             catch (Exception e)
@@ -161,13 +158,13 @@ public class LobbyAccountUI : MonoBehaviour
                 return;
             linkGoogleButton.interactable = true;
             if (result == LinkResult.Cancelled)
-                linkStatus.text = "Google girişi tamamlanmadı";
+                UIRoot.Toast("Google girişi tamamlanmadı");
             else if (result == LinkResult.Failed)
-                linkStatus.text = "Google'a bağlanılamadı";
+                UIRoot.Toast("Google'a bağlanılamadı");
             // Google hesabına geçildi (bağlandı ya da var olan hesaba geçti) ve isim gerekiyor: isim kutusu açılır
             // (RefreshCurrent), sonraki açılışta da sorulur.
             else if (GameServices.NeedsName)
-                linkStatus.text = "İsmini seçebilirsin";
+                UIRoot.Toast("İsmini seçebilirsin");
             // Geçiş yarıda kalınca yeni misafire düşülebilir: Photon adı her sonuçta profille eşitlenir.
             SyncNickName();
             RefreshCurrent();
@@ -189,6 +186,10 @@ public class LobbyAccountUI : MonoBehaviour
     {
         SyncToggles();
         RefreshCurrent();
+        privacyRow.SetActive(GameConfig.PrivacyUrl.Length > 0);
+        termsRow.SetActive(GameConfig.TermsUrl.Length > 0);
+        supportRow.SetActive(GameConfig.SupportEmail.Length > 0);
+        deleteRow.SetActive(GameServices.HasSession);
         settingsPanel.SetActive(true);
     }
 
@@ -197,6 +198,72 @@ public class LobbyAccountUI : MonoBehaviour
     public void OnSoundToggle(bool on) => GameSettings.SoundOn = on;
 
     public void OnMusicToggle(bool on) => GameSettings.MusicOn = on;
+
+    public void OpenPrivacy() => OpenUrl(GameConfig.LegalUrl("privacy"));
+
+    public void OpenTerms() => OpenUrl(GameConfig.LegalUrl("terms"));
+
+    public void OpenSupport()
+    {
+        if (GameConfig.SupportEmail.Length > 0)
+            Application.OpenURL("mailto:" + GameConfig.SupportEmail);
+    }
+
+    static void OpenUrl(string url)
+    {
+        if (!string.IsNullOrEmpty(url))
+            Application.OpenURL(url);
+    }
+
+    // İki onay; yükleme katmanı (tam ekran, zaman aşımsız) iş bitene dek lobiye dokunulmasını engeller ve her yolda kapanır.
+    public async void DeleteAccount()
+    {
+        try
+        {
+            if (!await UIRoot.Confirm("Hesabımı Sil",
+                    "Hesabın, ismin, seviyen ve coinlerin kalıcı olarak silinir. Satın aldıkların da gider. Geri alınamaz.",
+                    "Devam", true) || this == null)
+                return;
+            if (!await UIRoot.Confirm("Emin misin?", "Hesabın şimdi silinecek.", "Hesabı Sil", true) || this == null)
+                return;
+            UIRoot.ShowLoading("Hesap siliniyor...", false);
+            DeleteResult result;
+            // Başka hesap işlemi sürerken çağrı Task dönmeden fırlatır
+            try { result = await GameServices.DeleteAccountAsync(); }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[SERVICES] hesap silinemedi: " + e.GetType().Name);
+                result = DeleteResult.Failed;
+            }
+            UIRoot.HideLoading();
+            if (this == null)
+                return;
+            switch (result)
+            {
+                case DeleteResult.Ok:
+                    SceneChangeManager.Instance.ChangeScene("MainMenu");
+                    break;
+                case DeleteResult.NeedsRecentLogin:
+                    UIRoot.Toast("Güvenlik için çıkış yapıp tekrar giriş yap, sonra yeniden dene");
+                    break;
+                case DeleteResult.DataDeletedAccountRemains:
+                    // Servis yeni başlangıç profilini yükledi, oturum sürüyor: lobi onu göstersin
+                    UIRoot.Toast("Verilerin silindi ama hesap kapatılamadı. Tekrar giriş yapıp yeniden dene");
+                    CloseSettings();
+                    SyncNickName();
+                    RefreshCurrent();
+                    break;
+                default:
+                    UIRoot.Toast("Hesap silinemedi, tekrar dene");
+                    break;
+            }
+        }
+        catch (Exception e)
+        {
+            UIRoot.HideLoading();
+            Debug.LogWarning("[SERVICES] hesap silme hata: " + e.GetType().Name);
+        }
+    }
 
     public async void SignOut()
     {
@@ -208,7 +275,6 @@ public class LobbyAccountUI : MonoBehaviour
             if (!await UIRoot.Confirm("Çıkış yap", body, "Çıkış yap", true) || this == null)
                 return;
             signOutButton.interactable = false;
-            signOutStatus.text = "";
             try { await GameServices.SignOutAsync(); }
             catch (Exception e)
             {
@@ -216,7 +282,7 @@ public class LobbyAccountUI : MonoBehaviour
                 if (this == null)
                     return;
                 signOutButton.interactable = true;
-                signOutStatus.text = "Çıkış yapılamadı";
+                UIRoot.Toast("Çıkış yapılamadı");
                 return;
             }
             if (this == null)

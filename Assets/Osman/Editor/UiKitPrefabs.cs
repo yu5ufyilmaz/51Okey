@@ -207,6 +207,11 @@ public static partial class UiKitBuilder
         var toastText = Text(toast.transform, "Text", "", 40, extraBold); // dış çizgi materyali ExtraBold atlasına ait
         toastText.fontSharedMaterial = outline;
         Fill(toastText.gameObject, 30, 12, -30, 0);
+        // Uzun bildirim küçülüp iki satıra iner; 24'te iki satır kutuya sığar, kısa bildirim 40'ta tek satır kalır
+        toastText.textWrappingMode = TextWrappingModes.Normal;
+        toastText.fontSizeMax = 40;
+        toastText.fontSizeMin = 24;
+        toastText.enableAutoSizing = true;
         toast.SetActive(false);
 
         var so = new SerializedObject(root);
