@@ -8,15 +8,15 @@ using UnityEngine;
 using UnityEngine.UI;
 
 // Giriş ekranı: kayıtlı oturum yoksa Misafir / Google seçimi, isim gerekiyorsa isim paneli, sonra lobi.
+// Yükleme ve bildirimler kalıcı UIRoot katmanında; sahne yalnız seçim ekranını ve iki pencereyi tutar.
 public class MainMenuUIHandler : MonoBehaviour
 {
-    public TextMeshProUGUI loadingText;
+    public TextMeshProUGUI versionText;
 
     [Header("Seçim")]
     public GameObject choicePanel;
     public Button guestButton;
     public Button googleButton;
-    public TextMeshProUGUI statusText;
 
     [Header("İsim")]
     public GameObject namePanel;
@@ -30,15 +30,15 @@ public class MainMenuUIHandler : MonoBehaviour
 
     bool initDone, initFailed, autoTest, enteringLobby, photonDropped;
 
-    // Paneller sahnede açık durur (Editör'de görünsün); açılışta yalnız "Yükleniyor..." görünür.
+    // Seçim paneli sahnede açık, pencereler kapalı kayıtlıdır; açılışta yalnız "Bağlanıyor..." katmanı görünür.
     void Awake()
     {
         Show(EntryFlow.Screen.Loading);
         // Editör'de Google girişi yok (yerel arka uç): düğme yalnız Firebase'de.
         googleButton.gameObject.SetActive(GameServices.UsesFirebase);
         nameInput.characterLimit = GameConfig.NameMax;
-        statusText.text = "";
         nameError.text = "";
+        versionText.text = "v" + Application.version;
     }
 
     async void Start()
@@ -65,7 +65,6 @@ public class MainMenuUIHandler : MonoBehaviour
         if (autoTest && (screen == EntryFlow.Screen.AskName || screen == EntryFlow.Screen.Lobby))
         {
             Show(EntryFlow.Screen.Loading);
-            loadingText.text = "Bağlanıyor...";
             return;
         }
         Show(screen);
@@ -75,7 +74,10 @@ public class MainMenuUIHandler : MonoBehaviour
 
     void Show(EntryFlow.Screen screen)
     {
-        loadingText.gameObject.SetActive(screen == EntryFlow.Screen.Loading || screen == EntryFlow.Screen.Lobby);
+        if (screen == EntryFlow.Screen.Loading || screen == EntryFlow.Screen.Lobby)
+            UIRoot.ShowLoading("Bağlanıyor...", false);
+        else
+            UIRoot.HideLoading();
         retryPanel.SetActive(screen == EntryFlow.Screen.Retry);
         choicePanel.SetActive(screen == EntryFlow.Screen.Choose);
         namePanel.SetActive(screen == EntryFlow.Screen.AskName);
@@ -85,7 +87,6 @@ public class MainMenuUIHandler : MonoBehaviour
     IEnumerator EnterLobby()
     {
         enteringLobby = true;
-        loadingText.text = "Bağlanıyor...";
         while (!PhotonNetwork.InLobby)
         {
             // Önce bir kare: aynı karede PhotonManager.Start bağlanmayı başlatmış olsun (ilk durum PeerCreated, Disconnected değil).
@@ -108,13 +109,12 @@ public class MainMenuUIHandler : MonoBehaviour
     {
         guestButton.interactable = !busy;
         googleButton.interactable = !busy;
-        if (busy)
-            statusText.text = "";
     }
 
     public async void PlayAsGuest()
     {
         SetEntryBusy(true);
+        UIRoot.ShowLoading("Giriş yapılıyor...", false);
         try { await GameServices.EnterAsGuestAsync(); }
         catch (Exception e)
         {
@@ -122,12 +122,14 @@ public class MainMenuUIHandler : MonoBehaviour
             if (this == null)
                 return;
             SetEntryBusy(false);
-            statusText.text = "Bağlanılamadı";
+            UIRoot.HideLoading();
+            UIRoot.Toast("Bağlanılamadı");
             return;
         }
         if (this == null)
             return;
         SetEntryBusy(false);
+        UIRoot.HideLoading();
         Refresh();
     }
 
@@ -135,6 +137,7 @@ public class MainMenuUIHandler : MonoBehaviour
     public async void PlayWithGoogle()
     {
         SetEntryBusy(true);
+        UIRoot.ShowLoading("Giriş yapılıyor...", false);
         LinkResult result;
         try { result = await GameServices.EnterWithGoogleAsync(); }
         catch (Exception e)
@@ -146,10 +149,11 @@ public class MainMenuUIHandler : MonoBehaviour
         if (this == null)
             return;
         SetEntryBusy(false);
+        UIRoot.HideLoading();
         if (result == LinkResult.Cancelled)
-            statusText.text = "Google girişi tamamlanmadı";
+            UIRoot.Toast("Google girişi tamamlanmadı");
         else if (result == LinkResult.Failed)
-            statusText.text = "Google'a bağlanılamadı";
+            UIRoot.Toast("Google'a bağlanılamadı");
         Refresh();
     }
 
