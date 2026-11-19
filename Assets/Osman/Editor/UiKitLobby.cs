@@ -13,6 +13,7 @@ public static partial class UiKitBuilder
 {
     const string LobbyPath = "Assets/Osman/Scenes/LobbyMenu.unity";
     const string RoomCardPath = PrefabDir + "RoomCard.prefab";
+    const float TopMargin = 20f; // üst bar ekran kenarına yapışmasın
     static readonly Color32 AvatarColor = new Color32(0xE0, 0x8A, 0x2E, 0xFF);
     static readonly Color32 SoftText = new Color32(0xCF, 0xD6, 0xDE, 0xFF);
 
@@ -21,7 +22,9 @@ public static partial class UiKitBuilder
     static readonly Vector2[] SeatPos = { new Vector2(0, -175), new Vector2(322, -68), new Vector2(0, 40), new Vector2(-322, -68) };
 
     [MenuItem("Okey/UI Kit/Lobiyi Kur")]
-    public static void BuildLobbyScreen()
+    public static void BuildLobbyScreen() => Guarded(LobbyPath, BuildLobby);
+
+    static void BuildLobby()
     {
         if (EditorApplication.isPlaying) { Debug.LogWarning("[UiKitBuilder] Play modunda lobi kurulmaz."); return; }
         bold = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(BoldPath);
@@ -69,6 +72,7 @@ public static partial class UiKitBuilder
         try { cardPrefab = SaveAt(BuildRoomCard(green), RoomCardPath); }
         finally { EditorSceneManager.ClosePreviewScene(preview); }
 
+        deleting = true;
         for (int i = canvas.childCount - 1; i >= 0; i--)
         {
             var c = canvas.GetChild(i);
@@ -94,7 +98,7 @@ public static partial class UiKitBuilder
 
         // --- üst bar ---
         var top = Child("TopBar", safe.transform);
-        Anchor(top, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), Vector2.zero, new Vector2(0, 130));
+        Anchor(top, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -TopMargin), new Vector2(0, 130));
         var left = new Vector2(0, 0.5f);
         var right = new Vector2(1, 0.5f);
 
@@ -126,18 +130,15 @@ public static partial class UiKitBuilder
         coinText.alignment = TextAlignmentOptions.MidlineLeft;
         Fill(coinText.gameObject, 112, 0, -124, 0);
         ShrinkToFit(coinText, 26);
-        // Kapatma butonunun kalıbı (96 görsel, 120 dokunma) yeşil ve "+" ile
-        var plus = Nested(closeBtn, coin.transform, "Plus");
+        var plus = RoundButton(closeBtn, coin.transform, "Plus", "btn_green", "+");
         Anchor(plus, right, right, right, Vector2.zero, new Vector2(120, 120));
-        plus.transform.Find("Visual").GetComponent<Image>().sprite = LoadSprite("btn_green");
-        plus.GetComponentInChildren<TMP_Text>(true).text = "+";
 
         var settingsButton = ChoiceButton(teal, top.transform, "SettingsButton", "Ayarlar", 220, 120, 40);
         Anchor(settingsButton, right, right, right, new Vector2(-30, 0), new Vector2(220, 120));
 
         // --- masa kartları ---
         var cards = Child("Cards", safe.transform);
-        Fill(cards, 0, 170, 0, -130);
+        Fill(cards, 0, 170, 0, -(130 + TopMargin));
         var viewport = Child("Viewport", cards.transform);
         Fill(viewport, 0, 0, 0, 0);
         viewport.AddComponent<RectMask2D>();
@@ -183,25 +184,28 @@ public static partial class UiKitBuilder
         // --- masa açma penceresi: ad, el sayısı (- / +), şifre anahtarı + şifre ---
         var createWin = KitWindow(window, canvas, "CreateRoomPanel", "Masa Aç", new Vector2(1100, 760));
         var createContent = createWin.transform.Find("Body/Content");
-        var roomName = TextInput(createContent, "RoomNameInput", "Masa adı", new Vector2(980, 120));
+        FormLabel(createContent, "RoomNameLabel", "Masa adı", 0, 240);
+        var roomName = TextInput(createContent, "RoomNameInput", "Masa adı", new Vector2(740, 120));
+        Anchor(roomName.gameObject, new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1), Vector2.zero, new Vector2(740, 120));
         roomName.characterLimit = 24;
         var roundsRow = Nested(row, createContent, "RoundsRow");
         Anchor(roundsRow, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -140), new Vector2(980, 120));
         roundsRow.transform.Find("Label").GetComponent<TMP_Text>().text = "El sayısı";
         var roundsText = roundsRow.transform.Find("Value").GetComponent<TMP_Text>();
-        Anchor(roundsText.gameObject, right, right, right, new Vector2(-108, 0), new Vector2(200, 120));
+        Anchor(roundsText.gameObject, right, right, right, new Vector2(-120, 0), new Vector2(200, 120));
         roundsText.alignment = TextAlignmentOptions.Center;
         roundsText.text = rounds[0] + " el";
-        var minus = ChoiceButton(teal, roundsRow.transform, "Minus", "-", 96, 96, 64);
-        Anchor(minus, right, right, right, new Vector2(-308, 0), new Vector2(96, 96));
-        var more = ChoiceButton(teal, roundsRow.transform, "Plus", "+", 96, 96, 48);
-        Anchor(more, right, right, right, new Vector2(-12, 0), new Vector2(96, 96));
+        var minus = RoundButton(closeBtn, roundsRow.transform, "Minus", "btn_teal", "−"); // "-" Changa'da çok küçük; eksi işareti "+" ile aynı ağırlıkta
+        Anchor(minus, right, right, right, new Vector2(-320, 0), new Vector2(120, 120));
+        var more = RoundButton(closeBtn, roundsRow.transform, "Plus", "btn_teal", "+");
+        Anchor(more, right, right, right, Vector2.zero, new Vector2(120, 120));
         var pwRow = Child("PasswordRow", createContent);
         Anchor(pwRow, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -280), new Vector2(980, 120));
         var pwToggle = Nested(toggle, pwRow.transform, "PasswordToggle").GetComponent<Toggle>();
         Anchor(pwToggle.gameObject, left, left, left, Vector2.zero, new Vector2(150, 120));
-        var pwInput = TextInput(pwRow.transform, "PasswordInput", "Şifre", new Vector2(800, 120));
-        Anchor(pwInput.gameObject, right, right, right, Vector2.zero, new Vector2(800, 120));
+        FormLabel(pwRow.transform, "PasswordLabel", "Şifreli masa", 160, 250);
+        var pwInput = TextInput(pwRow.transform, "PasswordInput", "Şifre", new Vector2(560, 120));
+        Anchor(pwInput.gameObject, right, right, right, Vector2.zero, new Vector2(560, 120));
         var createOk = Nested(green, createWin.transform.Find("Body/Buttons"), "CreateConfirmButton");
         createOk.GetComponentInChildren<TMP_Text>(true).text = "MASAYI KUR";
 
@@ -216,6 +220,8 @@ public static partial class UiKitBuilder
         handler.roomCardPrefab = cardPrefab.GetComponent<RoomCard>();
         handler.cardContent = (RectTransform)content.transform;
         handler.emptyCard = empty;
+        handler.emptyTitle = emptyTitle;
+        handler.emptyBody = emptyBody.gameObject;
         handler.snapScroll = snap;
         handler.createRoomPanel = createWin;
         handler.roomNameInput = roomName;
@@ -350,6 +356,23 @@ public static partial class UiKitBuilder
         SetArray(so.FindProperty("sit"), sit);
         so.ApplyModifiedPropertiesWithoutUndo();
         return g;
+    }
+
+    // Kapatma butonunun kalıbı: 96 görsel, 120 dokunma alanı; renk ve işaret değişir
+    static GameObject RoundButton(GameObject closePrefab, Transform parent, string name, string sprite, string label)
+    {
+        var b = Nested(closePrefab, parent, name);
+        b.transform.Find("Visual").GetComponent<Image>().sprite = LoadSprite(sprite);
+        b.GetComponentInChildren<TMP_Text>(true).text = label;
+        return b;
+    }
+
+    // Pencere içi satır etiketi (Row/Label ile aynı: Bold 40, sola yaslı); üstte, x'ten başlar
+    static void FormLabel(Transform parent, string name, string text, float x, float width)
+    {
+        var t = Text(parent, name, text, 40, bold);
+        t.alignment = TextAlignmentOptions.MidlineLeft;
+        Anchor(t.gameObject, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(x, 0), new Vector2(width, 120));
     }
 
     static void SetArray(SerializedProperty p, Object[] values)

@@ -10,11 +10,14 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
 {
     const float RedrawInterval = 0.5f;
     const string WaitMessage = "Bağlantı bekleniyor, tekrar dene";
+    const float ListWaitSeconds = 2f; // boş lobide sunucu liste göndermeyebilir: bu süreden sonra "masa yok" denir
 
     [Header("Masa kartları")]
     public RoomCard roomCardPrefab;
     public RectTransform cardContent;
     public GameObject emptyCard;
+    public TMP_Text emptyTitle;
+    public GameObject emptyBody;
     public UiSnapScroll snapScroll;
 
     [Header("Create Room Panel UI")]
@@ -36,6 +39,8 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
     readonly Dictionary<string, RoomCard> cards = new Dictionary<string, RoomCard>();
     float nextRedraw;
     bool redrawPending = true;
+    bool listArrived; // lobiye girdikten sonra ilk liste geldi mi (gelmeden "masa yok" denmez)
+    float listWaitUntil = float.MaxValue;
     int roundIndex;
     LobbyRoom selectedRoom; // şifre penceresi açıkken seçilen masa ve koltuk
     int selectedSeat;
@@ -51,6 +56,8 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
     void Update()
     {
         // Çizim en çok yarım saniyede bir; arada gelen güncelleme bekler, kaybolmaz.
+        if (!listArrived && Time.unscaledTime >= listWaitUntil)
+            ListArrived();
         if (redrawPending && Time.unscaledTime >= nextRedraw)
             Redraw();
     }
@@ -76,13 +83,21 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
     {
         Debug.Log("Joined Lobby");
         ClearRooms();
+        listWaitUntil = Time.unscaledTime + ListWaitSeconds;
     }
 
-    public override void OnLeftLobby() => ClearRooms();
+    public override void OnLeftLobby()
+    {
+        ClearRooms();
+        listWaitUntil = float.MaxValue;
+    }
 
     // Lobide değilken Photon çağrıları reddedilir: oyuncuya söylenir, başka bir şey yapılmaz.
+    // Giriş sürerken (yükleme açık) istemci lobiden çıkmış sayılır; ikinci dokunuş sessizce yok sayılır.
     bool InLobby()
     {
+        if (UIRoot.IsLoading)
+            return false;
         if (PhotonNetwork.InLobby)
             return true;
         UIRoot.Toast(WaitMessage);
@@ -123,6 +138,8 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
 
     public void ChangeRounds(int step)
     {
+        if (roundOptions.Length == 0)
+            return;
         roundIndex = Mathf.Clamp(roundIndex + step, 0, roundOptions.Length - 1);
         ShowRounds();
     }
@@ -203,6 +220,13 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
         foreach (RoomInfo info in roomList)
             delta.Add(ToLobbyRoom(info));
         ApplyRooms(delta);
+        ListArrived();
+    }
+
+    void ListArrived()
+    {
+        listArrived = true;
+        redrawPending = true;
     }
 
     void ApplyRooms(List<LobbyRoom> delta)
@@ -214,14 +238,20 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
     void ClearRooms()
     {
         rooms.Clear();
+        listArrived = false;
         redrawPending = true;
     }
 
-    // Kartlar ada göre yeniden kullanılır; sıra Visible() sırasıdır.
+    // Kartlar ada göre yeniden kullanılır; sıra Visible() sırasıdır. Ortadaki masa çizimden sonra yine ortadadır.
     void Redraw()
     {
         redrawPending = false;
         nextRedraw = Time.unscaledTime + RedrawInterval;
+        Transform centred = snapScroll.Centred();
+        string centredName = null;
+        foreach (var kv in cards)
+            if (kv.Value.transform == centred)
+                centredName = kv.Key;
         List<LobbyRoom> visible = rooms.Visible();
         var keep = new HashSet<string>();
         for (int i = 0; i < visible.Count; i++)
@@ -242,7 +272,9 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
             cards.Remove(name);
         }
         emptyCard.SetActive(visible.Count == 0);
-        snapScroll.Settle();
+        emptyTitle.text = listArrived ? "Açık masa yok" : "Masalar yükleniyor...";
+        emptyBody.SetActive(listArrived);
+        snapScroll.Settle(centredName != null && cards.TryGetValue(centredName, out RoomCard kept) ? kept.transform : null);
     }
 
     // Oda özellikleri başka istemciden gelir: eksik ya da bozuk değer varsayılana döner.

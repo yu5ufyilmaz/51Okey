@@ -11,7 +11,7 @@ public class ChipInitial : MonoBehaviour
 
     void LateUpdate()
     {
-        if (source.text == last)
+        if (source == null || target == null || source.text == last)
             return;
         last = source.text;
         target.text = RoomCard.Initial(last);

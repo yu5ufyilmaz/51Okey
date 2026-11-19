@@ -228,6 +228,20 @@ public static partial class UiKitBuilder
 
     // --- yardımcılar ---
 
+    static bool deleting;
+
+    // Sahne kurucuları: silme başladıktan sonra hata çıkarsa açık sahne yarım kalmasın, kaydedilmeden diskten yeniden açılır.
+    static void Guarded(string scenePath, System.Action build)
+    {
+        deleting = false;
+        try { build(); }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning("[UiKitBuilder] Kurulum yarıda kaldı: " + e);
+            if (deleting) EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+        }
+    }
+
     static GameObject Root(string name)
     {
         var g = new GameObject(name, typeof(RectTransform));

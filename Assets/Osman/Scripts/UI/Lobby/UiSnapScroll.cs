@@ -50,13 +50,45 @@ public class UiSnapScroll : MonoBehaviour, IBeginDragHandler, IEndDragHandler
         Settle();
     }
 
-    // Kart listesi değişince ya da sürükleme bitince çağrılır; yerleşim bir kare sonra hesaplanır.
-    public void Settle()
+    // Kart listesi değişince ya da sürükleme bitince çağrılır. keep verilirse o kart beklemeden ortaya konur
+    // (önüne kart girip çıkınca parmağın altındaki masa değişmesin); yoksa en yakın kart yumuşakça ortaya gelir.
+    public void Settle(Transform keep = null)
     {
         if (!isActiveAndEnabled || dragging)
             return;
         Stop();
-        snap = StartCoroutine(SnapNextFrame());
+        RectTransform content = scroll.content;
+        LayoutRebuilder.ForceRebuildLayoutImmediate(content); // kaldırılan kartlar kapatıldı, bu karede sayılmaz
+        int count = 0;
+        foreach (Transform c in content)
+            if (c.gameObject.activeSelf)
+                count++;
+        scroll.horizontal = count > 1;
+        scroll.StopMovement();
+        if (count <= 1)
+            SetX(0f);
+        else if (keep != null && keep.gameObject.activeSelf)
+            SetX(Clamp(Target(keep)));
+        else
+            snap = StartCoroutine(Ease(content.anchoredPosition.x, Nearest(content.anchoredPosition.x)));
+    }
+
+    // Görünüm ortasına en yakın kart (yoksa null).
+    public Transform Centred()
+    {
+        if (scroll == null)
+            return null;
+        Transform best = null;
+        float bestDist = float.MaxValue;
+        float x = scroll.content.anchoredPosition.x;
+        foreach (Transform c in scroll.content)
+        {
+            if (!c.gameObject.activeSelf)
+                continue;
+            float d = Mathf.Abs(Target(c) - x);
+            if (d < bestDist) { bestDist = d; best = c; }
+        }
+        return best;
     }
 
     void Stop()
@@ -66,43 +98,28 @@ public class UiSnapScroll : MonoBehaviour, IBeginDragHandler, IEndDragHandler
         snap = null;
     }
 
-    IEnumerator SnapNextFrame()
+    IEnumerator Ease(float from, float to)
     {
-        yield return null;
-        RectTransform content = scroll.content;
-        LayoutRebuilder.ForceRebuildLayoutImmediate(content);
-        int count = 0;
-        foreach (Transform c in content)
-            if (c.gameObject.activeSelf)
-                count++;
-        scroll.horizontal = count > 1;
-        scroll.StopMovement();
-        float from = content.anchoredPosition.x;
-        float to = count <= 1 ? 0f : Nearest(content, from);
         for (float t = 0f; t < Duration; t += Time.unscaledDeltaTime)
         {
             float k = 1f - (1f - t / Duration) * (1f - t / Duration);
-            content.anchoredPosition = new Vector2(Mathf.Lerp(from, to, k), content.anchoredPosition.y);
+            SetX(Mathf.Lerp(from, to, k));
             yield return null;
         }
-        content.anchoredPosition = new Vector2(to, content.anchoredPosition.y);
+        SetX(to);
         snap = null;
     }
 
+    void SetX(float x) => scroll.content.anchoredPosition = new Vector2(x, scroll.content.anchoredPosition.y);
+
     // Kart merkezi görünüm ortasına gelince içeriğin x konumu: yarım genişlik - kartın içerikteki x'i.
-    float Nearest(RectTransform content, float x)
+    float Target(Transform card) => scroll.viewport.rect.width / 2f - card.localPosition.x;
+
+    float Clamp(float x) => Mathf.Clamp(x, Mathf.Min(0f, scroll.viewport.rect.width - scroll.content.rect.width), 0f);
+
+    float Nearest(float x)
     {
-        float half = scroll.viewport.rect.width / 2f;
-        float best = x, bestDist = float.MaxValue;
-        foreach (Transform c in content)
-        {
-            if (!c.gameObject.activeSelf)
-                continue;
-            float target = half - c.localPosition.x;
-            float d = Mathf.Abs(target - x);
-            if (d < bestDist) { bestDist = d; best = target; }
-        }
-        float min = Mathf.Min(0f, scroll.viewport.rect.width - content.rect.width);
-        return Mathf.Clamp(best, min, 0f);
+        Transform c = Centred();
+        return c == null ? x : Clamp(Target(c));
     }
 }

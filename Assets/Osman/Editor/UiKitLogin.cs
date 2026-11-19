@@ -13,7 +13,9 @@ public static partial class UiKitBuilder
     const string LegalTextValue = "Devam ederek <link=\"terms\"><u>Kullanım Şartları</u></link> ve <link=\"privacy\"><u>Gizlilik Politikası</u></link>'nı kabul edersin";
 
     [MenuItem("Okey/UI Kit/Giriş Ekranını Kur")]
-    public static void BuildLoginScreen()
+    public static void BuildLoginScreen() => Guarded(MainMenuPath, BuildLogin);
+
+    static void BuildLogin()
     {
         if (EditorApplication.isPlaying) { Debug.LogWarning("[UiKitBuilder] Play modunda giriş ekranı kurulmaz."); return; }
         bold = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(BoldPath);
@@ -43,6 +45,7 @@ public static partial class UiKitBuilder
         var titleText = oldTitleText != null ? oldTitleText.text : null;
         if (string.IsNullOrEmpty(titleText)) { Debug.LogWarning("[UiKitBuilder] Başlık metni bulunamadı (GameName / Safe/Title); sahneye dokunulmadı."); return; }
 
+        deleting = true;
         for (int i = canvas.childCount - 1; i >= 0; i--)
             Object.DestroyImmediate(canvas.GetChild(i).gameObject);
 
