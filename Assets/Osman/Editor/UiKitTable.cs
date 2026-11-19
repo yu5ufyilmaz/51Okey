@@ -25,6 +25,50 @@ public static partial class UiKitBuilder
 
     static string Norm(string s) => Regex.Replace(s ?? "", @"\s+", " ").Trim();
 
+    static void BindOpenBadges()
+    {
+        var ui = Object.FindFirstObjectByType<UIManager>(FindObjectsInactive.Include);
+        if (ui == null || ui.turnIndicators == null || ui.turnIndicators.Length < 4) { Debug.LogError("[UiKitBuilder] UIManager.turnIndicators eksik, açış etiketleri eklenemedi."); return; }
+        var labels = new TMP_Text[4];
+        for (int i = 0; i < 4; i++)
+        {
+            var plate = ui.turnIndicators[i].transform.parent;
+            TMP_Text name = null;
+            foreach (var t in plate.GetComponentsInChildren<TMP_Text>(true)) if (t.gameObject.name != "OpenBadge") { name = t; break; }
+            if (name == null) { Debug.LogError("[UiKitBuilder] İsimlikte ad yazısı yok: " + plate.name); return; }
+            var existing = plate.Find("OpenBadge");
+            if (existing != null) { labels[i] = existing.GetComponent<TMP_Text>(); continue; }
+            var go = new GameObject("OpenBadge", typeof(RectTransform));
+            go.transform.SetParent(plate, false);
+            var rt = (RectTransform)go.transform;
+            rt.anchorMin = rt.anchorMax = new Vector2(1f, 0.5f);
+            rt.pivot = new Vector2(1f, 0.5f);
+            rt.anchoredPosition = new Vector2(-10f, 5.7f);
+            rt.sizeDelta = new Vector2(130f, 26f);
+            var tx = go.AddComponent<TextMeshProUGUI>();
+            float max = name.enableAutoSizing ? name.fontSizeMax : name.fontSize;
+            tx.font = name.font;
+            tx.fontSharedMaterial = name.fontSharedMaterial;
+            tx.fontStyle = name.fontStyle;
+            tx.color = name.color;
+            tx.alignment = TextAlignmentOptions.MidlineRight;
+            tx.enableAutoSizing = true;
+            tx.fontSizeMax = max;
+            tx.fontSizeMin = Mathf.Round(max * 0.6f);
+            tx.fontSize = max;
+            tx.textWrappingMode = TextWrappingModes.NoWrap;
+            tx.overflowMode = TextOverflowModes.Ellipsis;
+            tx.raycastTarget = false;
+            tx.text = "";
+            labels[i] = tx;
+        }
+        var host = ui.turnIndicators[0].transform.parent.parent.gameObject;
+        var badges = host.GetComponent<OpenBadges>() ?? host.AddComponent<OpenBadges>();
+        bool same = badges.labels != null && badges.labels.Length == 4;
+        for (int i = 0; same && i < 4; i++) same = badges.labels[i] == labels[i];
+        if (!same) { badges.labels = labels; EditorUtility.SetDirty(badges); }
+    }
+
     [MenuItem("Okey/UI Kit/Masa Metinlerini Bağla")]
     public static void BindTableTexts()
     {
@@ -84,6 +128,8 @@ public static partial class UiKitBuilder
         var gm = Object.FindFirstObjectByType<GameManager>(FindObjectsInactive.Include);
         if (gm == null) Debug.LogError("[UiKitBuilder] Masada GameManager yok, MatchScores eklenemedi.");
         else if (Object.FindFirstObjectByType<MatchScores>(FindObjectsInactive.Include) == null) gm.gameObject.AddComponent<MatchScores>();
+
+        BindOpenBadges();
 
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);

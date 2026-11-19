@@ -120,4 +120,9 @@ public class ScoreTests
         CollectionAssert.AreEqual(new[] { "Bot 1", "X", "Bot 2", "Bot 3" }, SeatNaming.Names(new[] { " ", "X" }, null));
         CollectionAssert.AreEqual(new[] { "A (bot)", "Bot 1", "Bot 2", "Bot 3" }, SeatNaming.Names(new[] { "A", "", null, null, "Z" }, new[] { true }));
     }
+    [Test] public void OpenValue_First_Placement_Wins() {
+        Assert.AreEqual(68, OpenValue.Pick(0, 68));
+        Assert.AreEqual(68, OpenValue.Pick(68, 24));     // aynı turda sonradan eklenen değeri bozmaz
+        Assert.AreEqual(0, OpenValue.Pick(0, 0));
+    }
 }

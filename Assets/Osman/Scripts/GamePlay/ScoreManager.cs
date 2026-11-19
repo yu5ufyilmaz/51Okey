@@ -143,6 +143,8 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         playersWhoOpened.Clear();
         playersWhoOpenedPairs.Clear();
         FirstOpenThisTurn = false;
+        OpenedValueThisTurn = 0;
+        OpenedPairsThisTurn = false;
 
         // El içi cezalar (okey/işlek atma, işleme) o elin sonucuna yazıldı; yeni ele taşınmasın.
         // Sıra (que) her el değiştiği için eski cezalar yoksa başka oyuncunun hanesine geçerdi.
@@ -757,6 +759,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     {
         List<Vector2Int> positions = new List<Vector2Int>();
         bool hasOpenedAnyMeld = false;
+        int openScore = totalScore; // yerleştirme taşları oynatmadan önceki seri puanı
 
         // Kural motoru için göstergeyi al
         Tiles indicator = tileDistrubite.GetIndicatorTile();
@@ -1011,6 +1014,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         if (hasOpenedAnyMeld)
         {
             turnManager.hasOpenedThisTurn = true;
+            OpenedValueThisTurn = OpenValue.Pick(OpenedValueThisTurn, openScore);
             if (!HasPlayerOpened(GetPlayerQue()))
                 FirstOpenThisTurn = true;
             GameManager.Instance.photonView.RPC(
@@ -1030,6 +1034,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     {
         List<Vector2Int> positions = new List<Vector2Int>();
         bool hasOpenedAnyPair = false;
+        int openScore = pairTotalScore; // yerleştirme taşları oynatmadan önceki çift puanı
         Tiles indicator = tileDistrubite.GetIndicatorTile();
 
         foreach (var pair in validPairs)
@@ -1174,6 +1179,9 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         if (hasOpenedAnyPair)
         {
             turnManager.hasOpenedThisTurn = true;
+            if (OpenedValueThisTurn == 0)
+                OpenedPairsThisTurn = true;
+            OpenedValueThisTurn = OpenValue.Pick(OpenedValueThisTurn, openScore);
             if (!HasPlayerOpened(GetPlayerQue()))
                 FirstOpenThisTurn = true;
             GameManager.Instance.photonView.RPC(
@@ -1247,6 +1255,8 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         pendingMeldInfos.Clear();
         turnManager.hasOpenedThisTurn = false;
         FirstOpenThisTurn = false;
+        OpenedValueThisTurn = 0;
+        OpenedPairsThisTurn = false;
 
         // [DÜZELTME 2]: Açma durumunu sadece "Geçmişte hiç açmamışsak" iptal et.
         // Eğer committedMelds doluysa, demek ki önceki turlarda açmışız, o yüzden hasOpenedSeries TRUE kalmalı.
@@ -2269,6 +2279,10 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
     private int tempOpenedScore = 0;
 
+    // Bu turda gerçekten yerleşen ilk açışın puanı (düğmeye basmak değil); açış yoksa 0.
+    public int OpenedValueThisTurn { get; private set; }
+    public bool OpenedPairsThisTurn { get; private set; }
+
     // Bu tur ilk kez açtı mı? Limiti sadece ilk açılış yükseltir; kafa bitişi de buna bakar.
     public bool FirstOpenThisTurn;
 
@@ -2280,18 +2294,30 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         else if (hasOpenedSeries)
         {
             // Hafızadaki (açarkenki) puanı kullan!
-            GameManager.Instance.TryUpdateTableLimit(tempOpenedScore);
-            Debug.Log($"Tur bitti, Seri limiti güncellendi. Açılan Puan: {tempOpenedScore}");
+            GameManager.Instance.TryUpdateTableLimit(OpenedValueThisTurn);
+            Debug.Log($"Tur bitti, Seri limiti güncellendi. Açılan Puan: {OpenedValueThisTurn}");
         }
         // Eğer oyuncu bu tur Çift açmışsa
         else if (hasOpenedPairs)
         {
-            GameManager.Instance.TryUpdateTableLimit(tempOpenedScore);
-            Debug.Log($"Tur bitti, Çift limiti güncellendi. Açılan Puan: {tempOpenedScore}");
+            GameManager.Instance.TryUpdateTableLimit(OpenedValueThisTurn);
+            Debug.Log($"Tur bitti, Çift limiti güncellendi. Açılan Puan: {OpenedValueThisTurn}");
         }
+
+        // Açış puanı yalnızca gösterim için herkese bildirilir.
+        if (FirstOpenThisTurn && OpenedValueThisTurn > 0)
+            GameManager.Instance.photonView.RPC(
+                "OpenValueRPC",
+                RpcTarget.All,
+                GetPlayerQue(),
+                OpenedValueThisTurn,
+                OpenedPairsThisTurn
+            );
 
         // İşlem bitince hafızayı sıfırla ki sonraki tura sarkmasın
         tempOpenedScore = 0;
+        OpenedValueThisTurn = 0;
+        OpenedPairsThisTurn = false;
     }
 
     #region Bot Controls

@@ -614,6 +614,17 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
     }
 
+    // Açış puanı yalnızca isimlikte gösterilir; baraj, puan ve senkron kontrolüne dokunmaz.
+    public static event System.Action<int, int, bool> OpenValueShown;
+    public readonly Dictionary<int, (int value, bool pairs)> OpenValues = new Dictionary<int, (int, bool)>();
+
+    [PunRPC]
+    public void OpenValueRPC(int que, int value, bool isPairs)
+    {
+        OpenValues[que] = (value, isPairs);
+        OpenValueShown?.Invoke(que, value, isPairs);
+    }
+
     // Test oyuncusu (SyncAutoTest) el sonucunu kendi beklentisiyle karşılaştırmak için dinler; abonesi yoksa etkisiz.
     public static event System.Action<int[], int[], int[], int[]> HandResult;
 
@@ -704,6 +715,8 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         isGameEnded = false;
         isGameReady = false;
+        OpenValues.Clear();
+        OpenValueShown?.Invoke(0, 0, false); // yeni el: etiketleri boşalt
 
         if (UIManager.Instance != null)
             UIManager.Instance.gameOverPanel.SetActive(false);

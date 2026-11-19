@@ -75,6 +75,8 @@ table.leave_body,Masadan ayrılmak istiyor musun?,Do you want to leave the table
 table.leave_yes,Ayrıl,Leave,
 table.seat_taken,"Koltuk doldu, başka bir yer seç","Seat taken, pick another one",
 table.play_again,TEKRAR OYNA,PLAY AGAIN,
+table.opened_runs,Açtı {0},Opened {0},
+table.opened_pairs,Çift {0},Pairs {0},
 table.collect_tiles,TAŞLARI TOPLA,COLLECT TILES,
 table.add_tile,TAŞ İŞLE,ADD TILE,
 table.scoreboard,TABLO,SCORES,
