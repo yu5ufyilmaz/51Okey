@@ -148,3 +148,7 @@ Commit'ler: `d851d00` (çıkış Profil'de), `5be090d` (benzersiz isim), `858f60
   "Bu isim alınmış" reddi, Profil'den isim değiştirme, yeni Google hesabında isim sorma.
 - Bırakılan küçük bulgular: `Mısafir-` (noktasız ı) benzeri önek engellenmiyor; `Misafir-` ile başlayan isim için hata
   yazısı uzunluk yazısıyla aynı.
+- 05:28: misafir ismi cihazda kanıtlandı. Kullanıcı çıkış → Misafir yaptı; Firestore'da yeni profil `displayName: "Misafir-28524"`,
+  `nameClaimed: true` (oluşturma 05:28:09, isim 05:28:10) ve `names/Misafir-28524` aynı kullanıcıya bağlı. Önceki misafirden
+  geriye isim kaydı kalmamış (`names` içinde yalnız `Duzz` ve `Misafir-28524`): geçişte isim + profil birlikte silinmiş.
+  Hâlâ denenmedi: "Bu isim alınmış" reddi, Profil'den isim değiştirme, yeni Google hesabında isim sorma.
