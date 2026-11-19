@@ -309,7 +309,8 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
 
     bool DragTo(TileUI tile, Transform target) => TileUI.SimulateDrag(tile, target);
 
-    void Join() => roomManager.JoinRoomWithPassword(Config.roomName, Config.runId, Config.runId);
+    void Join() =>
+        roomManager.JoinRoomWithPassword(Config.roomName, Config.runId, RoomPassword.Hash(Config.roomName, Config.runId));
 
     public override void OnRoomListUpdate(List<RoomInfo> roomList)
     {

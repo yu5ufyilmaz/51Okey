@@ -36,7 +36,7 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
     public GameObject passwordPopupPanel;
     public TMP_InputField passwordCheckInput;
     private string selectedRoomName;
-    private string selectedRoomPassword;
+    private string selectedRoomPassword; // Şifrenin kendisi değil, odanın PwHash özeti
 
     [Header("References")]
     public RoomManager roomManager;
@@ -205,14 +205,14 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
 
             RoomItem newRoom = Instantiate(roomItemPrefab, _content);
 
-            // Odadaki "Password" bilgisini CustomProperties üzerinden al
+            // Odanın şifre özetini CustomProperties üzerinden al (şifresizse boş)
             string pass = "";
-            if (room.CustomProperties.ContainsKey("Password"))
+            if (room.CustomProperties.ContainsKey(RoomManager.PwHashKey))
             {
-                pass = room.CustomProperties["Password"].ToString();
+                pass = room.CustomProperties[RoomManager.PwHashKey].ToString();
             }
 
-            // RoomItem'a gerçek oda adı, oyuncu sayısı ve şifreyi gönder
+            // RoomItem'a gerçek oda adı, oyuncu sayısı ve şifre özetini gönder
             newRoom.SetRoomName(room.Name, room.PlayerCount, pass);
 
             roomItemsList.Add(newRoom);

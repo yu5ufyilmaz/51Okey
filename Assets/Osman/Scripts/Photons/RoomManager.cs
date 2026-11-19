@@ -43,12 +43,14 @@ public class RoomManager : MonoBehaviourPunCallbacks
         string password,
         int totalRounds,
         bool isPasswordProtected,
-        bool fillWithBots = false
+        bool fillWithBots = false,
+        bool hidden = false
     )
     {
         RoomOptions roomOptions = new RoomOptions
         {
             MaxPlayers = (byte)maxPlayers,
+            IsVisible = !hidden, // Bot masası lobi listesinde ve rastgele katılmada görünmez
             CleanupCacheOnLeave = cleanupCacheOnLeave,
             EmptyRoomTtl = emptyRoomTtl,
             PlayerTtl =
@@ -57,13 +59,16 @@ public class RoomManager : MonoBehaviourPunCallbacks
         };
 
         Hashtable roomProps = new Hashtable();
-        roomProps.Add("Password", isPasswordProtected ? password : "");
+        // Şifrenin kendisi hiçbir oda özelliğine yazılmaz; lobi yalnız özeti görür.
+        roomProps.Add(PwHashKey, isPasswordProtected ? RoomPassword.Hash(roomName, password) : "");
         roomProps.Add("TotalRounds", totalRounds);
         roomProps.Add("CurrentRound", 1);
         roomProps.Add("FillWithBots", fillWithBots); // SeatManager okur: boş koltuklar botla dolar
+        // Lobiye yalnız kurulurken var olan anahtarlar gider; koltukları SeatManager (master) günceller.
+        roomProps.Add(SeatsKey, new[] { "", "", "", "" });
 
         roomOptions.CustomRoomProperties = roomProps;
-        roomOptions.CustomRoomPropertiesForLobby = new string[] { "Password", "TotalRounds" };
+        roomOptions.CustomRoomPropertiesForLobby = new string[] { PwHashKey, "TotalRounds", SeatsKey };
 
         SetPickSeat(false);
         UIRoot.ShowLoading("Masa kuruluyor...");
@@ -74,11 +79,32 @@ public class RoomManager : MonoBehaviourPunCallbacks
     // Odaya girmeden ayarlanan özellik girişle birlikte gider; master yeni gelene buna göre koltuk verir (SeatManager).
     public const string PickSeatKey = "PickSeat";
 
+    // Lobiden koltuğa dokunarak gelenin istediği koltuk (oyuncu özelliği); SeatManager masada bir kez okur ve siler.
+    public const string WantedSeatKey = "WantedSeat";
+
+    // Oda özellikleri: şifre özeti (şifresizse "") ve koltuk -> ad dizisi (string[4], boş koltuk "").
+    public const string PwHashKey = "PwHash";
+    public const string SeatsKey = "Seats";
+
     // Oyuncu özellikleri odadan çıkınca silinmez: önceki odanın koltuk/sıra bilgisi yeni odaya taşınmasın (null = sil).
-    static void SetPickSeat(bool pick) =>
+    static void SetPickSeat(bool pick, int wantedSeat = 0) =>
         PhotonNetwork.LocalPlayer.SetCustomProperties(
-            new Hashtable { { PickSeatKey, pick }, { "SeatNumber", null }, { "PlayerQue", null } }
+            new Hashtable
+            {
+                { PickSeatKey, pick },
+                { "SeatNumber", null },
+                { "PlayerQue", null },
+                { WantedSeatKey, wantedSeat > 0 ? (object)wantedSeat : null },
+            }
         );
+
+    // Aynı adda masa varken kurma reddedilmesin: ada dört rakam eklenir.
+    public static string UniqueRoomName(string baseName) =>
+        baseName + "-" + Random.Range(0, 10000).ToString("D4");
+
+    // "Botlarla oyna": şifresiz, 1 el, listede görünmez; boş koltuklar botla dolar.
+    public void CreateBotRoom() =>
+        CreateCustomRoom(UniqueRoomName(PhotonNetwork.NickName), "", 1, false, fillWithBots: true, hidden: true);
 
     // JOIN ROOM Butonu için: Önce rastgele şifresiz oda dener, yoksa kurar
     public void JoinRandomRoomOrCreateAuto()
@@ -86,7 +112,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
         // Sadece şifresi boş ("") olan odaları filtreliyoruz
         ExitGames.Client.Photon.Hashtable expectedProps = new ExitGames.Client.Photon.Hashtable
         {
-            { "Password", "" },
+            { PwHashKey, "" },
         };
         SetPickSeat(false);
         UIRoot.ShowLoading("Masaya giriliyor...");
@@ -98,7 +124,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
     {
         Debug.Log("Uygun şifresiz oda bulunamadı, varsayılan oda kuruluyor...");
         // Kural: Oyuncu adı, şifresiz, 1 el
-        CreateCustomRoom(PhotonNetwork.NickName, "", 1, false);
+        CreateCustomRoom(UniqueRoomName(PhotonNetwork.NickName), "", 1, false);
     }
 
     // Scripts/Photons/RoomManager.cs
@@ -106,18 +132,14 @@ public class RoomManager : MonoBehaviourPunCallbacks
     public bool JoinRoomWithPassword(
         string _roomName,
         string enteredPassword,
-        string actualPassword
+        string passwordHash,
+        int seat = 0
     )
     {
-        // Boşlukları temizleyerek karşılaştırıyoruz
-        string cleanEntered = enteredPassword.Trim();
-        string cleanActual = actualPassword.Trim();
-
-        if (cleanEntered == cleanActual)
+        // Girilen şifrenin özeti odanınkiyle karşılaştırılır (boşluklar temizlenir)
+        if (RoomPassword.Matches(_roomName, enteredPassword, passwordHash))
         {
-            SetPickSeat(true);
-            UIRoot.ShowLoading("Masaya giriliyor...");
-            if (!PhotonNetwork.JoinRoom(_roomName)) Refused(); // Artık isim ve şifre kesinlikle doğru
+            JoinRoomAtSeat(_roomName, seat); // Artık isim ve şifre kesinlikle doğru
             return true;
         }
         UIRoot.Toast("Şifre yanlış");
@@ -125,11 +147,14 @@ public class RoomManager : MonoBehaviourPunCallbacks
     }
 
     // Listeden tıklayarak katılma (Şifreli odalar için ileride buraya şifre sorma eklenecek)
-    public void JoinRoomManual(string _roomName)
+    public void JoinRoomManual(string _roomName) => JoinRoomAtSeat(_roomName, 0);
+
+    // Odayı seçen oturmadan gelir; seat > 0 ise masada o koltuğu ister (SeatManager).
+    public void JoinRoomAtSeat(string roomName, int seat)
     {
-        SetPickSeat(true);
+        SetPickSeat(true, seat);
         UIRoot.ShowLoading("Masaya giriliyor...");
-        if (!PhotonNetwork.JoinRoom(_roomName)) Refused();
+        if (!PhotonNetwork.JoinRoom(roomName)) Refused();
     }
 
     public override void OnJoinedRoom()
