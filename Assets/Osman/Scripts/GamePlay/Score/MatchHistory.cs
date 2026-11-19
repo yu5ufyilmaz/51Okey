@@ -5,12 +5,18 @@ public sealed class MatchHistory
 {
     readonly SortedDictionary<int, HandResultData> hands = new SortedDictionary<int, HandResultData>();
 
-    public void Set(HandResultData d) { if (d != null) hands[d.handIndex] = d; }   // aynı el yerine yazılır
+    public void Set(HandResultData d) { if (d == null) return; if (d.rows == null) d.rows = new List<HandRow>(); hands[d.handIndex] = d; }   // aynı el yerine yazılır
     public IReadOnlyList<HandResultData> Hands => hands.Values.ToList();
     public HandResultData Last => hands.Count == 0 ? null : hands.Values.Last();
     public void Clear() => hands.Clear();
 
-    public int Total(int seat) => hands.Values.Sum(h => h.rows.Where(r => r.seat == seat).Sum(r => r.handTotal));
+    // long'da topla, int aralığına kırp: bozuk veri OverflowException atmasın
+    public int Total(int seat)
+    {
+        long t = 0;
+        foreach (var h in hands.Values) foreach (var r in h.rows) if (r.seat == seat) t += r.handTotal;
+        return (int)System.Math.Max(int.MinValue, System.Math.Min(int.MaxValue, t));
+    }
 
     // en düşük toplam; eşitlikte küçük koltuk; el yoksa 0
     public int LeaderSeat

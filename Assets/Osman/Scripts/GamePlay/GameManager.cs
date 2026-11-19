@@ -219,6 +219,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     [PunRPC]
     void ShowPenaltyRPC(int playerQue, int amount, byte reason)
     {
+        MatchScores.Instance?.RecordPenalty(playerQue, amount, (PenaltyReason)reason); // ceza kaydı (yalnız gösterim)
         if (UIManager.Instance != null)
             UIManager.Instance.ShowPenaltyFloat(playerQue, amount, PenaltyReasonText.Of((PenaltyReason)reason));
     }
@@ -498,6 +499,8 @@ public class GameManager : MonoBehaviourPunCallbacks
             );
         }
 
+        WriteHandBreakdown(winner, finishMultiplier, isOkeyShot, isKafa);
+
         foreach (var player in PhotonNetwork.PlayerList)
         {
             actors.Add(player.ActorNumber);
@@ -543,6 +546,56 @@ public class GameManager : MonoBehaviourPunCallbacks
             listNetScores.ToArray()
         );
     }
+
+    // Gösterim: el dökümünü (koltuk 1-4, botlar dahil) oda özelliğine yazar. Hata olursa loglar, akışı durdurmaz.
+    private void WriteHandBreakdown(Player winner, int finishMultiplier, bool isOkeyShot, bool isKafa)
+    {
+        try
+        {
+            if (MatchScores.Instance == null)
+                return;
+            int[] seatOfQue = tileDistrubite.seatOfQue;
+            int colorMultiplier = GetCurrentColorMultiplier();
+            int winnerSeat = 0;
+            bool pairsFinish = false;
+            if (winner != null)
+            {
+                int winnerQue = tileDistrubite.GetQueueNumberOfPlayer(winner);
+                winnerSeat = Mathf.Max(0, SeatMath.MeldSeat(seatOfQue, winnerQue));
+                pairsFinish = scoreManager.playersWhoOpenedPairs.Contains(winnerQue);
+            }
+            var seats = new List<SeatInput>();
+            for (int seat = 1; seat <= 4; seat++)
+            {
+                int que = SeatMath.QueOfSeat(seatOfQue, seat);
+                if (que < 1)
+                    continue;
+                List<Tiles> hand = tileDistrubite.GetPlayerTilesForBot(que);
+                int okeys = hand.Count(t => t.type == TileType.Joker);
+                seats.Add(new SeatInput
+                {
+                    seat = seat,
+                    opened = scoreManager.HasPlayerOpened(que),
+                    openedPairs = scoreManager.playersWhoOpenedPairs.Contains(que),
+                    normalTiles = hand.Count - okeys,
+                    okeys = okeys,
+                    inHandPenalty = scoreManager.playerScores.TryGetValue(que, out int pen) ? pen : 0,
+                });
+            }
+            int round = (int)PhotonNetwork.CurrentRoom.CustomProperties["CurrentRound"];
+            var data = HandBreakdown.Build(round, winnerSeat, finishMultiplier, isOkeyShot, pairsFinish, isKafa, seats,
+                (s, win) => EndPenaltyOf(s, win, colorMultiplier, finishMultiplier));
+            MatchScores.Instance.WriteHand(data);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[SKOR] el dökümü yazılamadı: {e}");
+        }
+    }
+
+    // Mevcut döngüyle aynı kural: PenaltySystem.EndPenalty, aynı taş sayımı (okey = Joker).
+    private int EndPenaltyOf(SeatInput s, bool win, int colorMultiplier, int finishMultiplier) =>
+        PenaltySystem.EndPenalty(win, s.opened, s.openedPairs, s.normalTiles, s.okeys, colorMultiplier, finishMultiplier);
 
     // El sonunda çift açanın taşları 2 kat sayılır; master bunu bilsin diye herkese duyurulur.
     [PunRPC]
@@ -643,6 +696,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         cp.Add("CurrentRound", nextRoundValue);
         PhotonNetwork.CurrentRoom.SetCustomProperties(cp);
         photonView.RPC("RPC_PrepareNextRound", RpcTarget.All);
+        SeatManager.Instance?.PublishSeatNames(); // yeni elin başında koltuk adları (gösterim)
     }
 
     [PunRPC]

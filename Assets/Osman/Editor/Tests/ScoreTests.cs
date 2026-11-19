@@ -74,6 +74,47 @@ public class ScoreTests
             SeatNaming.Names(new[] { null, "Ayşe", null, "Can" }, new[] { true, false, true, true }));
         CollectionAssert.AreEqual(new[] { "A", "B", "C", "D" }, SeatNaming.Names(new[] { "A", "B", "C", "D" }, new bool[4]));
     }
+    [Test] public void History_Total_Clamps_Instead_Of_Overflow() {
+        var h = new MatchHistory();
+        for (int i = 1; i <= 2; i++) {
+            var d = new HandResultData { handIndex = i };
+            d.rows.Add(new HandRow { seat = 1, handTotal = int.MaxValue }); d.rows.Add(new HandRow { seat = 2, handTotal = int.MinValue });
+            h.Set(d);
+        }
+        Assert.AreEqual(int.MaxValue, h.Total(1)); Assert.AreEqual(int.MinValue, h.Total(2));
+        Assert.DoesNotThrow(() => { var _ = h.LeaderSeat; }); Assert.AreEqual(2, h.LeaderSeat);
+    }
+    [Test] public void Build_Sorts_Rows_By_Seat_And_Null_Seats_Is_Empty() {
+        var d = HandBreakdown.Build(1, 0, 1, false, false, false, new[] { S(4, true, false, 1, 0, 0), S(2, true, false, 1, 0, 0), S(3, true, false, 1, 0, 0) }, Fake);
+        CollectionAssert.AreEqual(new[] { 2, 3, 4 }, d.rows.Select(r => r.seat));
+        Assert.AreEqual(0, HandBreakdown.Build(1, 0, 1, false, false, false, null, Fake).rows.Count);
+    }
+    [Test] public void Encode_Null_And_Null_Rows_Tolerated() {
+        Assert.IsNull(HandBreakdown.Encode(null));
+        var d = new HandResultData { handIndex = 3, rows = null };
+        Assert.AreEqual(4, HandBreakdown.Encode(d).Length);
+        Assert.DoesNotThrow(() => new MatchHistory().Set(d));
+        var h = new MatchHistory(); h.Set(d);
+        Assert.AreEqual(0, h.Total(1)); Assert.AreEqual(0, h.LeaderSeat);
+    }
+    // Gerçek PenaltySystem.EndPenalty; renk çarpanı 4. Beklenenler elle yazılmış sabitler.
+    static int Real(SeatInput s, bool win, int fm) => PenaltySystem.EndPenalty(win, s.opened, s.openedPairs, s.normalTiles, s.okeys, 4, fm);
+    [Test] public void HandTotal_Equals_Todays_Net_With_Real_Penalty_Rules() {
+        var d = HandBreakdown.Build(1, 1, 2, false, true, false,
+            new[] { S(1, true, false, 0, 0, 0), S(2, true, false, 6, 0, 250), S(3, false, false, 14, 0, 0), S(4, true, true, 4, 1, 70) },
+            (s, w) => Real(s, w, 2));
+        Assert.AreEqual(-400, d.rows[0].finishReward); Assert.AreEqual(-400, d.rows[0].handTotal);     // -100*4, çarpansız
+        Assert.AreEqual(480, d.rows[1].handPoints); Assert.AreEqual(730, d.rows[1].handTotal);          // 6*10*4*2 + 250
+        Assert.AreEqual(1200, d.rows[2].handTotal);                                                     // açmamış 600*2
+        Assert.AreEqual(1140, d.rows[3].handPoints); Assert.AreEqual(1210, d.rows[3].handTotal);        // (4*10*4*2 + 250)*2 + 70
+        Assert.AreEqual(5, d.rows[3].tilesLeft);
+    }
+    [Test] public void Draw_With_Real_Rules_Everyone_Pays_Loser_Formula() {
+        var d = HandBreakdown.Build(1, 0, 1, false, false, false,
+            new[] { S(1, true, false, 3, 0, 0), S(2, false, false, 14, 0, 0), S(3, true, true, 2, 1, 30) }, (s, w) => Real(s, w, 1));
+        Assert.IsTrue(d.rows.All(r => r.finishReward == 0));
+        Assert.AreEqual(120, d.rows[0].handTotal); Assert.AreEqual(600, d.rows[1].handTotal); Assert.AreEqual(440, d.rows[2].handTotal);
+    }
     [Test] public void Names_Bad_Input_Never_Throws() {
         CollectionAssert.AreEqual(new[] { "Bot 1", "Bot 2", "Bot 3", "Bot 4" }, SeatNaming.Names(null, null));
         CollectionAssert.AreEqual(new[] { "Bot 1", "X", "Bot 2", "Bot 3" }, SeatNaming.Names(new[] { " ", "X" }, null));

@@ -80,6 +80,11 @@ public static partial class UiKitBuilder
             Sound(found.gameObject, SfxId.UiClick);
         }
 
+        // Skor geçmişi: GameManager nesnesinde bir kez (ikinci çalıştırmada çoğalmaz)
+        var gm = Object.FindFirstObjectByType<GameManager>(FindObjectsInactive.Include);
+        if (gm == null) Debug.LogError("[UiKitBuilder] Masada GameManager yok, MatchScores eklenemedi.");
+        else if (Object.FindFirstObjectByType<MatchScores>(FindObjectsInactive.Include) == null) gm.gameObject.AddComponent<MatchScores>();
+
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
         Debug.Log("[UiKitBuilder] Masa metinleri bağlandı: " + TablePath);

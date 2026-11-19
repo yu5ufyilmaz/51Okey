@@ -50,6 +50,8 @@ public class SeatManager : MonoBehaviourPunCallbacks
 
     private void Start()
     {
+        if (MatchScores.Instance != null)
+            MatchScores.Instance.Changed += UpdateSeatDisplay; // bot adları değişince isimlikler yenilenir
         // Eğer sahne açıldığında zaten bir odadaysak (Yani oyun yeniden başladıysa)
         // OnJoinedRoom otomatik çalışmaz, biz manuel tetiklemeliyiz.
         if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
@@ -57,6 +59,12 @@ public class SeatManager : MonoBehaviourPunCallbacks
             Debug.Log("Sahne yenilendi (Restart), oyun tekrar kuruluyor...");
             OnJoinedRoom();
         }
+    }
+
+    private void OnDestroy()
+    {
+        if (MatchScores.Instance != null)
+            MatchScores.Instance.Changed -= UpdateSeatDisplay;
     }
 
     #region Player Join and Left Functions
@@ -133,6 +141,45 @@ public class SeatManager : MonoBehaviourPunCallbacks
             UIRoot.Toast(Loc.T("table.seat_taken"));
     }
 
+    // Master: koltuğa oturmuş son insanın adı (ayrılsa da kalır); yalnız gösterim için.
+    readonly string[] rememberedNames = new string[4];
+
+    // Master: koltuk adlarını hesaplar, MatchScores ile oda özelliğine yazar (aynıysa yazmaz).
+    public void PublishSeatNames()
+    {
+        try
+        {
+            if (!PhotonNetwork.IsMasterClient || MatchScores.Instance == null)
+                return;
+            var botNow = new bool[] { true, true, true, true };
+            foreach (Player p in PhotonNetwork.PlayerList)
+            {
+                int s = GetSeatNumberOfPlayer(p);
+                if (s < 1 || s > 4)
+                    continue;
+                rememberedNames[s - 1] = p.NickName;
+                botNow[s - 1] = false;
+            }
+            string[] prev = MatchScores.Instance.SeatNames;
+            var humans = new string[4];
+            for (int i = 0; i < 4; i++)
+            {
+                humans[i] = rememberedNames[i];
+                if (humans[i] == null && botNow[i] && !string.IsNullOrEmpty(prev[i]))
+                {
+                    // master değişti: önceki adı devral ("Can (bot)" -> "Can", "Bot k" -> insan yok)
+                    string n = prev[i].EndsWith(" (bot)") ? prev[i].Substring(0, prev[i].Length - 6) : prev[i];
+                    humans[i] = System.Text.RegularExpressions.Regex.IsMatch(n, @"^Bot \d+$") ? null : n;
+                }
+            }
+            MatchScores.Instance.WriteSeatNames(SeatNaming.Names(humans, botNow));
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[SKOR] koltuk adları yazılamadı: {e}");
+        }
+    }
+
     // Lobideki oda satırı koltukları bu özellikten okur. Yalnız master yazar; oyun başlayınca yazılmaz.
     void PublishSeats()
     {
@@ -156,7 +203,11 @@ public class SeatManager : MonoBehaviourPunCallbacks
     {
         lastPublished = null; // yeni master bir kez yazar
         if (newMasterClient.IsLocal)
+        {
             PublishSeats();
+            if (SeatsLocked)
+                PublishSeatNames(); // eski master'ın adları yok: oda özelliğinden devralınır
+        }
     }
 
     private IEnumerator StartWithBotsAfterDelay()
@@ -209,6 +260,10 @@ public class SeatManager : MonoBehaviourPunCallbacks
     {
         // Free the seat that was occupied by the player who left
         int seatNumber_E = GetSeatNumberOfPlayer(otherPlayer);
+        if (seatNumber_E >= 1 && seatNumber_E <= 4)
+            rememberedNames[seatNumber_E - 1] = otherPlayer.NickName; // ayrılsa da adı kalır
+        if (PhotonNetwork.IsMasterClient && SeatsLocked)
+            PublishSeatNames();
         if (seatNumber_E != -1 && PhotonNetwork.IsMasterClient)
         {
             // Use RPC to remove the seat assignment from all clients
@@ -469,6 +524,14 @@ public class SeatManager : MonoBehaviourPunCallbacks
             bool pick = canPick && !occupied[i];
             if (pick)
                 field.text = Loc.T("table.sit");
+            else if (!occupied[i] && !canPick && MatchScores.Instance != null)
+            {
+                // oyun başladı, koltukta insan yok: bot adı (oyuncusu ayrılmışsa "ad (bot)")
+                string[] names = MatchScores.Instance.SeatNames;
+                int seat = SeatMath.SeatAtRelativeIndex(i, viewBaseSeat) - 1;
+                if (seat >= 0 && seat < names.Length)
+                    field.text = names[seat];
+            }
             field.raycastTarget = pick;
             var button = field.GetComponent<UnityEngine.UI.Button>();
             if (button == null && pick)
@@ -607,6 +670,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
                     PhotonNetwork.CurrentRoom.SetCustomProperties(
                         new ExitGames.Client.Photon.Hashtable { { SeatsLockedKey, true } }
                     );
+                    PublishSeatNames();
                     StartCoroutine(CountdownAndShuffle());
                 }
             }

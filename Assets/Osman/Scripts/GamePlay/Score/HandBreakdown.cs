@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 public struct HandRow { public int seat, tilesLeft, handPoints, inHandPenalty, finishReward, handTotal; public bool opened; }
 
@@ -22,7 +23,8 @@ public static class HandBreakdown
     {
         var d = new HandResultData { handIndex = handIndex, winnerSeat = winnerSeat, finishMultiplier = finishMultiplier,
                                      okeyFinish = okeyFinish, pairsFinish = pairsFinish, kafa = kafa };
-        foreach (var s in seats)
+        // kablo biçimi koltuk sırası ister; null = boş
+        foreach (var s in (seats ?? new SeatInput[0]).OrderBy(x => x.seat))
         {
             bool win = winnerSeat != 0 && s.seat == winnerSeat;
             var r = new HandRow { seat = s.seat, opened = s.opened, tilesLeft = s.normalTiles + s.okeys, inHandPenalty = s.inHandPenalty };
@@ -35,6 +37,8 @@ public static class HandBreakdown
 
     public static int[] Encode(HandResultData d)
     {
+        if (d == null) return null;
+        if (d.rows == null) d.rows = new List<HandRow>();
         var a = new int[Head + Per * d.rows.Count];
         a[0] = d.handIndex; a[1] = d.winnerSeat; a[2] = d.finishMultiplier;
         a[3] = (d.okeyFinish ? 1 : 0) | (d.pairsFinish ? 2 : 0) | (d.kafa ? 4 : 0);
