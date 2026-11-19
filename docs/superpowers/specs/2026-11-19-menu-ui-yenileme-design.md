@@ -242,3 +242,36 @@ Paket 1 (ortak UI kiti) bitti; son incelemede çıkan ve sonraki paketlerin plan
 - Skor tablosundaki 16 metin (`PlayerColumn_1..4`) yer tutucu metinle kutusundan geniş ölçülüyor; gerçek içerikle bakılmalı.
 - `UIRoot`, masadaki çıkış butonunu `FindFirstObjectByType<ExitButton>()` ile buluyor; buton gizlenirse geri tuşu masada işlemez.
 - Yeni Changa materyalleri `TMP_SDF-Mobile` shader'ını kullanıyor (eski font tam `TMP_SDF` idi). Dış çizgi telefonda gözle kontrol edilmeli.
+
+## Paket 2'den devreden notlar (2026-11-19)
+
+Paket 2 (giriş ekranı) bitti: `207ef38..3afb223`. Sonraki paketlerin bilmesi gerekenler:
+
+### API ekleri
+
+- `UIRoot.ShowLoading(metin, timeout)`: `timeout: false` kendiliğinden kapanmaz. Yalnızca beklenen işin kendi sınırı varsa kullanılır. Bu durumda geri tuşu çıkış onayı açar; zaman aşımlı yüklemede geri tuşu yutulur.
+- `ShowLoading(null)` açık yüklemenin metnini korur.
+- `UiWindow.closable = false`: geri tuşu pencereyi kapatmaz, çıkış onayı açar. X butonu `closable`'a bakmaz; böyle pencerelerde kurucu X'i gizlemelidir.
+- `GameConfig.PrivacyUrl`, `TermsUrl`, `AccountDeletionUrl`, `SupportEmail` (şimdilik boş), `HasLegalLinks`, `LegalUrl(id)`.
+- Giriş ekranı yalnızca `Okey/UI Kit/Giriş Ekranını Kur` ile kurulur. Her kurulum sahnedeki tüm kimlikleri yeniden üretir (büyük fark); gerekmedikçe yeniden çalıştırılmaz. Sahne diskte değişince açık klon editörler "modified externally" penceresi açar ve testten önce `Reload` ile kapatılmalıdır.
+
+### Paket 3 — lobi
+
+- Yükleme katmanı tek ve sahipsiz: son `ShowLoading` zaman aşımı kipini belirler, herhangi bir `HideLoading` hepsini kapatır. `SceneChangeManager.ChangeScene` içindeki `ShowLoading()` girişteki zaman aşımsız "Bağlanıyor..."u 15 sn'lik kipe çevirir; LobbyMenu 15 sn'de yüklenmezse yanlış "zaman aşımı" çıkar. `ChangeScene` açık yüklemenin kipini korumalı.
+- "Tekrar dene" penceresinde `RetryConnect` 20 sn'ye kadar yalnızca butonu soluklaştırıyor; yükleme göstergesi ve başarısızlık bildirimi yok.
+
+### Paket 4 — ayarlar ve profil
+
+- Şartlar satırının dokunma yüksekliği yaklaşık 50 birim (kural 120); adresler geldiğinde büyütülür.
+- Masa sahnesinde `closable = false` pencere açılırsa geri tuşu masadan ayrılma onayını açar.
+
+### Osman'ın kararı bekleyenler
+
+- Google butonu şu an yeşil kit butonu, Misafir turuncu. Google'ın marka kuralı beyaz ya da koyu butonu "G" logosuyla ister; yayın öncesi logo görseli gerekir.
+- Misafir oyuncu isim penceresini hiç görmez (`NeedsName`, misafir değilken geçerli): otomatik "Misafir-12345" ile lobiye girer.
+
+### Telefonda bakılacaklar
+
+- Gerçek geri tuşu: giriş ekranında, isim penceresinde, klavye açıkken.
+- 20:9'da başlık ile butonlar arası boşluk (Editörde ölçüldü: 42 birim).
+- Google hesap seçici açıkken arkadaki yükleme katmanı; iptalde bildirimin çıkması.
