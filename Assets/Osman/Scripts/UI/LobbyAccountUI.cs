@@ -11,6 +11,8 @@ public class LobbyAccountUI : MonoBehaviour
 {
     [Header("Üst çubuk")]
     public TextMeshProUGUI chipText;
+    // Lobideki coin yazısı ShopController'a ait ama market ilk açılana dek abone olmaz: burada da yazılır.
+    public TextMeshProUGUI lobbyCoinText;
 
     [Header("Profil")]
     public GameObject profilePanel;
@@ -76,6 +78,7 @@ public class LobbyAccountUI : MonoBehaviour
         levelText.text = "Seviye: " + profile.Level;
         xpText.text = "XP: " + profile.Xp % GameConfig.XpPerLevel + " / " + GameConfig.XpPerLevel;
         coinText.text = "Coin: " + profile.Coins;
+        lobbyCoinText.text = profile.Coins.ToString();
         accountText.text = GameServices.Auth.IsGuest ? "Hesap: Misafir" : "Hesap: Google";
         // Yazılırken (ör. Changed başka sebeple gelince) kutudaki metin ezilmesin.
         if (!nameInput.isFocused)
@@ -162,8 +165,8 @@ public class LobbyAccountUI : MonoBehaviour
                 linkStatus.text = "Google girişi tamamlanmadı";
             else if (result == LinkResult.Failed)
                 linkStatus.text = "Google'a bağlanılamadı";
-            else
-                SyncNickName();
+            // Geçiş yarıda kalınca yeni misafire düşülebilir: Photon adı her sonuçta profille eşitlenir.
+            SyncNickName();
             RefreshCurrent();
         }
         catch (Exception e)

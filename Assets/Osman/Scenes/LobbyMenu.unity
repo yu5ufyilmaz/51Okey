@@ -16030,6 +16030,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LobbyAccountUI
   chipText: {fileID: 737295027}
+  lobbyCoinText: {fileID: 957362764}
   profilePanel: {fileID: 571910113}
   nameInput: {fileID: 1836592943}
   nameSaveButton: {fileID: 2070740805}

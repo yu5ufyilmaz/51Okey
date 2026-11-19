@@ -121,8 +121,21 @@ public static class GameServices
     static async Task<LinkResult> EnterWithGoogleCoreAsync()
     {
         var result = await Auth.LinkGoogleAsync();
+        // Geçiş yarıda kalınca misafir profili silinmiş olabilir ama yükleme kaydı "bitti" görünür: kayıt sıfırlanır, profil yeniden yüklenir.
+        bool reload = Auth.UserId != null && !HasSession;
+        if (reload && profileLoad.IsCompleted)
+            ForgetProfileLoad();
         if (result == LinkResult.Linked || result == LinkResult.SwitchedToExistingAccount)
             await ProfileLoadAsync();
+        else if (reload)
+        {
+            // Kurtarma yüklemesi düşerse asıl sonuç (iptal/hata) istisnaya dönüşmesin.
+            try { await ProfileLoadAsync(); }
+            catch (Exception)
+            {
+                Debug.LogWarning("[SERVICES] Google sonrası profil yeniden yüklenemedi: " + Auth.UserId);
+            }
+        }
         return result;
     }
 
@@ -139,9 +152,14 @@ public static class GameServices
     // Aynı kimlikle yeniden girişte profil yeniden yüklensin: yükleme kaydı da sıfırlanır.
     static void DropProfile()
     {
+        ForgetProfileLoad();
+        Profile.Clear();
+    }
+
+    static void ForgetProfileLoad()
+    {
         profileUser = null;
         profileLoad = Task.CompletedTask;
-        Profile.Clear();
     }
 
     // Aynı işlem sürerken gelen çağrı onun Task'ını alır; başka bir işlem sürerken fırlatır (iki hesap işlemi iç içe koşmasın).

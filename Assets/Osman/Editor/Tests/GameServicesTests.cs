@@ -78,6 +78,35 @@ public class GameServicesTests
         finally { GameServices.EnterAsGuestAsync().GetAwaiter().GetResult(); }
     }
 
+    // Son gözden geçirme: hesap geçişi yarıda kalınca (misafir profili silindi) profil yeniden yüklenmeli, oturum bozuk kalmamalı.
+    [Test]
+    public void EnterWithGoogle_Failed_ReloadsDroppedProfile()
+    {
+        GameServices.InitAsync().GetAwaiter().GetResult();
+        string name = GameServices.Profile.Current.DisplayName;
+        long coins = GameServices.Profile.Current.Coins;
+        try
+        {
+            // Kimlik durur, profil düşer: geçişteki bozuk durumun aynısı (dosya diskte kalır).
+            GameServices.Profile.Clear();
+            Assert.IsFalse(GameServices.HasSession);
+            Assert.AreEqual(LinkResult.Failed, GameServices.EnterWithGoogleAsync().GetAwaiter().GetResult());
+            Assert.IsTrue(GameServices.HasSession);
+            Assert.AreEqual(GameServices.Auth.UserId, GameServices.Profile.Current.UserId);
+            Assert.AreEqual(name, GameServices.Profile.Current.DisplayName);
+            Assert.AreEqual(coins, GameServices.Profile.Current.Coins);
+        }
+        finally
+        {
+            // Düzeltme yokken bile sonraki testler oturumla başlasın: çıkış yükleme kaydını sıfırlar.
+            if (!GameServices.HasSession)
+            {
+                GameServices.SignOutAsync().GetAwaiter().GetResult();
+                GameServices.EnterAsGuestAsync().GetAwaiter().GetResult();
+            }
+        }
+    }
+
     [Test]
     public void SignOut_DropsSessionAndProfile()
     {
