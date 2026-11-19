@@ -210,3 +210,81 @@ Notlar:
   HEMEN OYNA, MASA AÇ, X, anahtar ve dil oklarına basılıp doğru olayın çaldığı okunur.
 - Çok editörlü senkron testi (`Run-SyncTest.ps1 -Deals 1`) geçer ve test sırasında `Sfx.Recent` boş kalır.
 - Kulakla dinleme Osman'dadır: Editor'de ve telefonda. Claude seslerin nasıl duyulduğunu doğrulayamaz.
+
+## Uygulamadan devreden notlar
+
+Son durum: commit `3c707e8`, dal `MDC-001-firebase`, push yok.
+
+Ne kuruldu:
+
+- 28 olay, 35 ses dosyası (`Assets/Osman/Audio/Sfx/`, toplam 364 KB). Hangi olaya hangi dosyanın
+  gittiği `Assets/Resources/SfxLibrary.asset` içinde; dosyaların geldiği paket ve özgün adları
+  `Assets/Osman/Audio/KAYNAK.md` içinde. Hepsi Kenney, CC0; her dosya paketteki özgün dosyayla
+  bayt bayt aynı (sha1 ile karşılaştırıldı).
+- Menüler: `Okey/Ses/Ses Listesini Kur` (yalnızca eksik satırı ekler, var olan satıra dokunmaz),
+  `Okey/Ses/Ses Listesini Denetle`, `Okey/Ses/Ses Düzeylerini Ölç`.
+- Ses değiştirmek: `SfxLibrary` dosyasını Inspector'da aç, satırın `clips` alanına başka dosya
+  sürükle. Bir olayı susturmak: `clips` alanını boşalt. Yüksekliği `volume` ile ayarla.
+
+Ne, nasıl doğrulandı:
+
+- EditMode: 337 test geçti, 0 başarısız.
+- Ses ve dil denetimleri: hata yok (sesi olmayan olay 0, kullanılmayan olay 0, sahipsiz dosya 0).
+- Tek başına masa testi (`Run-SyncTest.ps1 -Solo -Mode smart -Seed 11`) son commit üzerinde: PASS.
+- Play modunda otomatik test olmadan botlarla bir el: koltuk, sıra, dağıtım, 24. saniyede süre uyarısı,
+  otomatik atış, bot çekme ve atışları, ceza yeme, ceza yedirme, "yapılamadı" olay kaydından okundu;
+  ses kaynağının çaldığı (`isPlaying`) okundu. Menü düğmelerinin her birinin doğru olayı çaldığı okundu.
+- Oyun dosyalarındaki değişiklik iki ayrı incelemede satır satır sayıldı: ses çağrısı dışındaki her
+  satır salt okumadır; koşul, dönüş, ağ mesajı ve sıra değişmedi.
+
+Yapılmayanlar:
+
+- **Hiçbir ses kulakla dinlenmedi.** Dosyalar ada ve süreye göre seçildi; yükseklikler Unity'de
+  ölçülen ses düzeyinden hesaplandı.
+- **Çok editörlü senkron testi koşmadı** (klon editörler Osman'ın isteğiyle kapalı). Otomatik testte
+  her ses çağrısı ilk satırda döndüğü için risk düşük; klonlar açılınca bir kez koşulmalı.
+- Telefonda hiçbir şey denenmedi.
+
+Tasarıma göre değişenler:
+
+- Düğme, basıldığı anda etkin olup olmadığını hatırlar; kendini pasifleyen giriş ve isim düğmeleri
+  de tık çalar.
+- İki ses kaynağı var: perdesi oynayan taş sesleri ile jingle'lar ayrı çalar.
+- Ses kodu kendi rastgele sayı üretecini kullanır; taş dağıtımının üretecine dokunmaz.
+- "Yapılamadı" sesi tasarımdakinden fazla yerde: açma düğmelerinde yerleşecek per çıkmadığında ve
+  sıra bende değilken TAŞLARI TOPLA'da da çalar. Toplam 20 ret noktası.
+- Kazanma/kaybetme sesi el başına yalnızca ilk bitiş mesajında çalar.
+- `tile_drop` için iki çeşit kaldı (üçüncüsü diğerlerinden 5 dB kısıktı).
+- Hata sesi dosyası `error_1.ogg` adını taşır.
+
+Kulağa bırakılanlar (bilerek karar verilmedi):
+
+- Jingle seçimleri: seri açma, çift açma, kazanma, kaybetme, ceza yeme. Yalnızca çalgı türünden seçildi.
+- "Sıra bende" çanı fazla büyük olabilir.
+- Dağıtım ve taşları toplama sesleri en yüksek ayarda bile taş tıklarından 3-8 dB kısık.
+- Geri dönen taşın sesi en düşük ayarda bile hedeften biraz yüksek.
+- El başında birinci oyuncu önce "sıra bende" çanını, yarım saniye sonra dağıtım sesini duyar.
+- Eli bitiren atışta atış sesi kazanma jingle'ının başını örter.
+- Rakip açıp attığında beş ses 0,2 saniyede üst üste gelir (tasarımda kabul edildi).
+- Yandan alıp açamayınca art arda dört ses: yapılamadı, geri bırakma, çekme, ceza.
+
+Bilinen açıklar:
+
+- Berabere biten elde (taş bitince) herkes kaybetme sesini duyar.
+- Masadaki OTUR düğmesi basınca tık çalmaz; oturunca "koltuk" sesi gelir.
+- Masadaki "tekrar oyna" düğmesinin işlevi yok (ses işinden önce de yoktu).
+- Oyuna yeniden katılma eklenirse birikmiş mesajlar toplu ses çalar; bugün yeniden katılma yok.
+- Mağaza, bildirim, yükleniyor ekranı sessiz; müzik ve titreşim yok (kapsam dışı).
+- Bir doğrulama turunda, yerel oyuncunun sırasında 12 saniye boyunca "ele alma / bırakma" olayları
+  kimse dokunmadan kaydedildi. Kodda bu sesleri gerçek fare ya da dokunma girdisi olmadan çalan bir
+  yol yok; o sırada Game penceresinde biri taş oynatmış olmalı. Doğrulanmadı.
+
+Osman'ın kulakla dinleyeceği liste:
+
+- Editor'de `SfxLibrary` Inspector'ında 28 satırı tek tek dinle; beğenmediğini değiştir.
+- Telefonda bir el: çekme, yandan alma, atma, sürükleme, dağıtım, seri açma, çift açma, işleme,
+  taşları toplama, geri bırakma, yapılamadı, ceza yeme, ceza yedirme, sıra, süre, kazanma, kaybetme.
+- Bütün menü düğmeleri: HEMEN OYNA, MASA AÇ, BOTLARLA OYNA, MASAYI KUR, GİR, karttaki OTUR, X, anahtarlar, oklar.
+- Ayarlardan Ses kapalıyken tam sessizlik.
+- Dokunmayla ses arasında gecikme hissedilirse söyle (ses arabelleği ayarı küçültülebilir).
+
