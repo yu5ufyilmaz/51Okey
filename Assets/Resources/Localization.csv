@@ -2,8 +2,8 @@
 # Dil
 lang.name,Türkçe,English,Dil seçicide görünen ad
 # Ceza
-penalty.took_side_could_not_open,"Yandan aldı, açamadı","Took from the side, could not open",
-penalty.side_tile_taken,Taşı yandan alındı,Tile taken from the side,
+penalty.took_side_could_not_open,"Yandan aldı, açamadı","Took a discard, couldn't open",
+penalty.side_tile_taken,Taşı yandan alındı,Their discard was taken,
 penalty.discarded_okey,Okey attı,Discarded the okey,
 penalty.discarded_indicator,Gösterge attı,Discarded the indicator,
 penalty.discarded_islek,İşlek attı,Discarded a playable tile,
@@ -30,7 +30,7 @@ login.signing_in,Giriş yapılıyor...,Signing in...,
 # Lobi
 lobby.settings,Ayarlar,Settings,
 lobby.no_open_table,Açık masa yok,No open tables,
-lobby.create_first,İlk masayı sen aç.,Be the first to open one.,
+lobby.create_first,İlk masayı sen aç.,Be the first to create one.,
 lobby.play_now,HEMEN OYNA,PLAY NOW,
 lobby.create_table,MASA AÇ,CREATE TABLE,
 lobby.play_bots,BOTLARLA OYNA,PLAY WITH BOTS,
@@ -46,6 +46,7 @@ room.table_password,Masanın şifresi,Table password,
 room.enter,GİR,JOIN,
 room.sit,OTUR,SIT,
 room.rounds_count,{0} el,Rounds: {0},
+room.rounds_value,{0} el,{0},
 room.locked_suffix,   ·   Şifreli,   ·   Locked,Baştaki boşluklar korunmalı
 room.creating,Masa kuruluyor...,Creating table...,
 room.joining,Masaya giriliyor...,Joining table...,
@@ -83,7 +84,6 @@ table.open_pairs,ÇİFT AÇ,OPEN PAIRS,
 table.open_runs,"SERİ
 AÇ","OPEN
 RUNS",
-table.waiting_player,Oyuncu Bekleniyor,Waiting for player,
 table.live_penalties,ANLIK CEZA PUANLARI,LIVE PENALTY POINTS,
 table.run_score,Seri Puan: <color={0}>{1}</color>,Run points: <color={0}>{1}</color>,
 table.pair_score,Çift Puan: <color={0}>{1}</color>,Pair points: <color={0}>{1}</color>,

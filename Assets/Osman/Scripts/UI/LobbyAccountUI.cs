@@ -219,8 +219,9 @@ public class LobbyAccountUI : MonoBehaviour
 
     void ChangeLanguage(int step)
     {
-        Loc.Language = Loc.Next(step);
-        GameSettings.Language = Loc.Language;
+        string next = Loc.Next(step);
+        GameSettings.Language = next; // Changed dinleyicisi atsa da seçim kaybolmasın
+        Loc.Language = next;
     }
 
     public void OpenPrivacy() => OpenUrl(GameConfig.LegalUrl("privacy"));

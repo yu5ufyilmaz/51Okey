@@ -1,3 +1,4 @@
+using System.Linq;
 using NUnit.Framework;
 
 public class LocalizationTests
@@ -42,4 +43,41 @@ public class LocalizationTests
         Assert.AreEqual(1, l.Count);
         StringAssert.StartsWith("A.cs:3:", l[0]);
     }
+
+    static LocAudit.Report RunAssets(string csv, string asset) =>
+        LocAudit.Check(csv, new[] { ("A.cs", "") }, new[] { ("A.unity", asset) });
+    const string Table1 = "key,tr,en\nlobby.a,A,B\n";
+
+    [Test] public void Asset_Key_In_Table_Is_No_Error() =>
+        Assert.IsEmpty(RunAssets(Table1, "  - component: {fileID: 1}\n  key: lobby.a\n").Errors);
+    [Test] public void Asset_Typo_Key_Is_Error()
+    {
+        var r = RunAssets(Table1, "  key: table.typo\n");
+        Assert.IsTrue(r.Errors.Any(e => e.Contains("table.typo")));
+    }
+    [Test] public void Asset_Non_Key_Looking_Value_Is_Error() =>
+        Assert.IsTrue(RunAssets(Table1, "  key: Oyna\n").Errors.Any(e => e.Contains("Oyna")));
+    [Test] public void Prefab_Override_Pair_Is_Detected()
+    {
+        var r = RunAssets(Table1, "    - target: {fileID: 5}\n      propertyPath: key\n      value: lobby.gone\n      objectReference: {fileID: 0}\n");
+        Assert.IsTrue(r.Errors.Any(e => e.Contains("lobby.gone")));
+    }
+    [Test] public void Question_Mark_Encoding_Damage_Is_Error() =>
+        Assert.IsNotEmpty(Run("key,tr,en\nlobby.a,?ifre yanl??,Wrong password\n").Errors);
+    [TestCase("Emin misin?", "Are you sure?")]
+    [TestCase("Oyundan çıkılsın mı?", "Quit the game?")]
+    public void Real_Question_Marks_Are_Fine(string tr, string en) =>
+        Assert.IsEmpty(Run("key,tr,en\nlobby.a," + tr + "," + en + "\n", "\"lobby.a\"").Errors);
+    [Test] public void Ansi_Saved_Csv_Is_Error()
+    {
+        // Windows-1254: ş = 0xFE, ı = 0xFD
+        var bytes = new byte[] { 0x6B,0x65,0x79,0x2C,0x74,0x72,0x2C,0x65,0x6E,0x0A, 0x6C,0x6F,0x62,0x62,0x79,0x2E,0x61,0x2C, 0xFE,0x69,0x66,0x72,0x65,0x20,0x6B,0x61,0x70,0xFD,0x2C, 0x57,0x0A };
+        Assert.IsNotEmpty(Run(System.Text.Encoding.UTF8.GetString(bytes)).Errors);
+    }
+    [Test] public void Bad_Language_Header_Is_Error([Values("Deutsch", "Notes", "açıklama")] string h) =>
+        Assert.IsTrue(Run("key,tr,en," + h + "\nlobby.a,A,B,C\n").Errors.Any(e => e.Contains(h.ToLowerInvariant())));
+    [Test] public void Regional_Language_Header_Is_Fine() =>
+        Assert.IsEmpty(Run("key,tr,en,pt-br\nlobby.a,A,B,C\n", "\"lobby.a\"").Errors);
+    [Test] public void Duplicate_Language_Column_Is_Error() =>
+        Assert.IsTrue(Run("key,tr,en,en\nlobby.a,A,B,C\n", "\"lobby.a\"").Errors.Any(e => e.Contains("en")));
 }

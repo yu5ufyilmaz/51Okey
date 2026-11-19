@@ -7,11 +7,13 @@ public sealed class LocTable
     readonly List<string> languages = new List<string>();
     readonly List<string> keys = new List<string>();
     readonly List<string> duplicateKeys = new List<string>();
+    readonly List<string> duplicateLanguages = new List<string>();
     readonly Dictionary<string, Dictionary<string, string>> cells = new Dictionary<string, Dictionary<string, string>>();
 
     public IReadOnlyList<string> Languages => languages;
     public IReadOnlyList<string> Keys => keys;
     public IReadOnlyList<string> DuplicateKeys => duplicateKeys;
+    public IReadOnlyList<string> DuplicateLanguages => duplicateLanguages;
 
     public string Get(string lang, string key)
     {
@@ -33,6 +35,11 @@ public sealed class LocTable
         {
             var name = header[c].Trim().ToLowerInvariant();
             if (name.Length == 0 || name == "note") continue;
+            if (t.languages.Contains(name))
+            {
+                if (!t.duplicateLanguages.Contains(name)) t.duplicateLanguages.Add(name);
+                continue; // ilk sütun geçerli
+            }
             t.languages.Add(name);
             langCols.Add(c);
         }

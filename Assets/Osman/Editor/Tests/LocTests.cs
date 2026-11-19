@@ -54,6 +54,9 @@ public class LocTests
         Assert.AreEqual("tr", Loc.CodeOf(SystemLanguage.Turkish));
         Assert.AreEqual("en", Loc.CodeOf(SystemLanguage.English));
         Assert.AreEqual("de", Loc.CodeOf(SystemLanguage.German));
+        Assert.AreEqual("nl", Loc.CodeOf(SystemLanguage.Dutch));
+        Assert.AreEqual("pl", Loc.CodeOf(SystemLanguage.Polish));
+        Assert.AreEqual("", Loc.CodeOf(SystemLanguage.Unknown));
     }
 
     [Test] public void Profile_Chip_Starts_With_The_Name_In_Every_Language() {

@@ -1,12 +1,13 @@
 // Ceza nedeni ağda numara olarak gider; metne her istemci kendi dilinde çevirir.
+// Değerler ağ üzerinden gider: yalnızca sona ekle, sırayı değiştirme, numara yeniden kullanma.
 public enum PenaltyReason : byte
 {
-    TookSideCouldNotOpen,
-    SideTileTaken,
-    DiscardedOkey,
-    DiscardedIndicator,
-    DiscardedIslek,
-    ProcessedOnMeld,
+    TookSideCouldNotOpen = 0,
+    SideTileTaken = 1,
+    DiscardedOkey = 2,
+    DiscardedIndicator = 3,
+    DiscardedIslek = 4,
+    ProcessedOnMeld = 5,
 }
 
 public static class PenaltyReasonText

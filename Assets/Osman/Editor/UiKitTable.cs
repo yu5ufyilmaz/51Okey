@@ -21,7 +21,6 @@ public static partial class UiKitBuilder
         ("table.exit", "Çıkıs", 1),
         ("table.open_pairs", "ÇIFT AÇ", 1),
         ("table.open_runs", "SERI AÇ", 1),
-        ("table.waiting_player", "Oyuncu Bekleniyor", 4),
     };
 
     static string Norm(string s) => Regex.Replace(s ?? "", @"\s+", " ").Trim();

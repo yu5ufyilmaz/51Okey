@@ -53,9 +53,8 @@ public class ShopController : MonoBehaviour
     {
         adsBuyButton.GetComponent<Button>().interactable = false;
         var label = adsBuyButton.GetComponentInChildren<TextMeshProUGUI>();
-        var lt = label.GetComponent<LocText>();
-        if (lt != null) lt.SetKey("shop.active"); // etiketi LocText yazıyor
-        else label.text = Loc.T("shop.active");
+        if (!label.TryGetComponent<LocText>(out var lt)) lt = label.gameObject.AddComponent<LocText>();
+        lt.SetKey("shop.active"); // LocText dil değişince de yeniler
     }
 
     public void AddCoins(int coinAmount)

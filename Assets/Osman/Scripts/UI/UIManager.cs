@@ -60,6 +60,7 @@ public class UIManager : MonoBehaviourPunCallbacks
 
     private void Start()
     {
+        ShowRackScores(0, 0, 0);
         // Oyun başlar başlamaz "Anlık Puan" tablosundaki eski yazıları sil.
         // ScoreManager'dan puanlar 0'lanıp gelene kadar boş dursun veya temiz gözüksün.
         if (liveScoreContentText != null)
@@ -145,7 +146,8 @@ public class UIManager : MonoBehaviourPunCallbacks
             tileCountText.text = count.ToString();
     }
 
-    public void UpdatePlayerStats(int myScore, int myPairsScore, int currentLimit)
+    // Raf yazıları ilk güncellemeden önce sahnedeki Türkçe metinle kalmasın diye Start de çağırır.
+    void ShowRackScores(int myScore, int myPairsScore, int currentLimit)
     {
         // 1. Seri Puanı
         if (currentScoreText != null)
@@ -161,6 +163,11 @@ public class UIManager : MonoBehaviourPunCallbacks
             // İstersen burada "Çift Puanı" yazabilirsin
             currentPairText.text = Loc.T("table.pair_score", colorHex, myPairsScore);
         }
+    }
+
+    public void UpdatePlayerStats(int myScore, int myPairsScore, int currentLimit)
+    {
+        ShowRackScores(myScore, myPairsScore, currentLimit);
 
         // 3. Ortak Baraj
         if (tableLimitText != null)

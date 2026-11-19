@@ -16,6 +16,7 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
     public RectTransform cardContent;
     public GameObject emptyCard;
     public TMP_Text emptyTitle;
+    LocText emptyTitleLoc;
     public GameObject emptyBody;
     public UiSnapScroll snapScroll;
 
@@ -163,7 +164,7 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
         ShowRounds();
     }
 
-    void ShowRounds() => roundsText.text = Loc.T("room.rounds_count", Rounds);
+    void ShowRounds() => roundsText.text = Loc.T("room.rounds_value", Rounds);
 
     int Rounds => roundOptions.Length > 0 ? roundOptions[Mathf.Clamp(roundIndex, 0, roundOptions.Length - 1)] : 1;
 
@@ -291,7 +292,8 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
             cards.Remove(name);
         }
         emptyCard.SetActive(visible.Count == 0);
-        emptyTitle.GetComponent<LocText>().SetKey(listArrived ? "lobby.no_open_table" : "lobby.tables_loading");
+        if (emptyTitleLoc == null) emptyTitleLoc = emptyTitle.GetComponent<LocText>();
+        if (emptyTitleLoc != null) emptyTitleLoc.SetKey(listArrived ? "lobby.no_open_table" : "lobby.tables_loading");
         emptyBody.SetActive(listArrived);
         snapScroll.Settle(centredName != null && cards.TryGetValue(centredName, out RoomCard kept) ? kept.transform : null);
     }

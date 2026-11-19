@@ -391,7 +391,7 @@ public static partial class UiKitBuilder
     // Var olan metne anahtar bağlar; anahtar tabloda yoksa hata basar
     static void SetLabel(TMP_Text target, string key)
     {
-        var lt = target.GetComponent<LocText>() ?? target.gameObject.AddComponent<LocText>();
+        if (!target.TryGetComponent<LocText>(out var lt)) lt = target.gameObject.AddComponent<LocText>();
         lt.key = key;
         var csv = AssetDatabase.LoadAssetAtPath<TextAsset>("Assets/Resources/Localization.csv");
         var tr = LocTable.Parse(csv != null ? csv.text : null).Get("tr", key);

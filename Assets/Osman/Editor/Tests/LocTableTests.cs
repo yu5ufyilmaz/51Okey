@@ -59,4 +59,12 @@ public class LocTableTests
         Assert.AreEqual(0, LocTable.Parse("").Keys.Count);
         Assert.AreEqual(0, LocTable.Parse(null).Languages.Count);
     }
+
+    [Test] public void Duplicate_Language_Column_Is_Reported_First_Wins()
+    {
+        var t = LocTable.Parse("key,tr,en,en\na.b,A,B,C\n");
+        CollectionAssert.AreEqual(new[] { "tr", "en" }, t.Languages);
+        CollectionAssert.AreEqual(new[] { "en" }, t.DuplicateLanguages);
+        Assert.AreEqual("B", t.Get("en", "a.b"));
+    }
 }
