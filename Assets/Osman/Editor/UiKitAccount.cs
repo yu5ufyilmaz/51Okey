@@ -12,7 +12,7 @@ public static partial class UiKitBuilder
 {
     static readonly Color32 MutedText = new Color32(0xA9, 0xB3, 0xBD, 0xFF);
     static readonly Color32 DangerText = new Color32(0xFF, 0x8F, 0x85, 0xFF);
-    const float SettingsBodyHeight = 900f; // 20:9'da mantıksal yükseklik ~966; beş satır, başlık ve sürüm kaydırmasız sığar
+    const float SettingsBodyHeight = 1034f; // altı satır (6x120 + 5x14 = 790), başlık ve sürüm kaydırmasız sığar; eski 900 + bir satır (120 + 14)
 
     [MenuItem("Okey/UI Kit/Hesap Pencerelerini Kur")]
     public static void BuildAccountWindows() => Guarded(LobbyPath, BuildAccount);
@@ -28,8 +28,9 @@ public static partial class UiKitBuilder
         var window = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + "Window.prefab");
         var row = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + "Row.prefab");
         var toggle = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + "Toggle.prefab");
+        var closeBtn = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + "Btn_Close.prefab");
         if (bold == null || extraBold == null || outline == null || green == null || red == null || window == null || row == null
-            || toggle == null || toggle.GetComponent<Toggle>() == null)
+            || toggle == null || toggle.GetComponent<Toggle>() == null || closeBtn == null || closeBtn.transform.Find("Visual") == null)
         { Debug.LogWarning("[UiKitBuilder] Hesap pencereleri için font ya da prefab eksik; sahneye dokunulmadı."); return; }
         foreach (var n in new[] { "row_slate", "panel_slate", "coin" })
             if (LoadSprite(n) == null) { Debug.LogWarning("[UiKitBuilder] Görsel yok: " + SpriteDir + n + ".png; sahneye dokunulmadı."); return; }
@@ -59,7 +60,7 @@ public static partial class UiKitBuilder
         Object.DestroyImmediate(oldSettings.gameObject);
 
         var profile = BuildProfile(window, green, red, canvas, account);
-        var settings = BuildSettings(window, row, toggle, canvas, account);
+        var settings = BuildSettings(window, row, toggle, closeBtn, canvas, account);
         account.profilePanel = profile;
         account.settingsPanel = settings;
         EditorUtility.SetDirty(account);
@@ -217,7 +218,7 @@ public static partial class UiKitBuilder
         return win;
     }
 
-    static GameObject BuildSettings(GameObject window, GameObject row, GameObject toggle, Transform canvas, LobbyAccountUI account)
+    static GameObject BuildSettings(GameObject window, GameObject row, GameObject toggle, GameObject closeBtn, Transform canvas, LobbyAccountUI account)
     {
         var win = KitWindow(window, canvas, "SettingsPanel", "settings.title", new Vector2(1100, SettingsBodyHeight));
         var uw = win.GetComponent<UiWindow>();
@@ -245,6 +246,8 @@ public static partial class UiKitBuilder
         hl.childControlHeight = hl.childForceExpandHeight = false;
         var sound = ToggleRow(row, toggle, audio.transform, "SoundRow", "settings.sound");
         var music = ToggleRow(row, toggle, audio.transform, "MusicRow", "settings.music");
+        var language = KitRow(row, list.transform, "LanguageRow", "settings.language");
+        var languageValue = Stepper(language, closeBtn, "<", ">", out var prev, out var next);
         var privacy = LinkRow(row, list.transform, "PrivacyRow", "settings.privacy");
         var terms = LinkRow(row, list.transform, "TermsRow", "settings.terms");
         var support = LinkRow(row, list.transform, "SupportRow", "settings.support");
@@ -257,6 +260,7 @@ public static partial class UiKitBuilder
 
         account.soundToggle = sound;
         account.musicToggle = music;
+        account.languageValue = languageValue;
         account.versionText = version;
         account.privacyRow = privacy;
         account.termsRow = terms;
@@ -264,6 +268,8 @@ public static partial class UiKitBuilder
         account.deleteRow = delete;
         UnityEventTools.AddPersistentListener(sound.onValueChanged, account.OnSoundToggle);
         UnityEventTools.AddPersistentListener(music.onValueChanged, account.OnMusicToggle);
+        UnityEventTools.AddPersistentListener(prev.GetComponent<Button>().onClick, account.LanguagePrev);
+        UnityEventTools.AddPersistentListener(next.GetComponent<Button>().onClick, account.LanguageNext);
         UnityEventTools.AddPersistentListener(privacy.GetComponent<Button>().onClick, account.OpenPrivacy);
         UnityEventTools.AddPersistentListener(terms.GetComponent<Button>().onClick, account.OpenTerms);
         UnityEventTools.AddPersistentListener(support.GetComponent<Button>().onClick, account.OpenSupport);

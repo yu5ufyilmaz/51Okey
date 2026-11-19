@@ -28,6 +28,15 @@ public static class Loc
         }
     }
 
+    // Seçili dilden step kadar ilerideki dil kodu; baştan sona ve sondan başa sarar.
+    public static string Next(int step)
+    {
+        var l = Table.Languages;
+        int i = 0;
+        while (i < l.Count - 1 && l[i] != language) i++;
+        return l.Count == 0 ? language : l[((i + step) % l.Count + l.Count) % l.Count];
+    }
+
     public static CultureInfo Culture { get { _ = Table; return culture; } }
 
     static LocTable Table

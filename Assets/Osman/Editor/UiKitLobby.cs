@@ -191,14 +191,8 @@ public static partial class UiKitBuilder
         var roundsRow = Nested(row, createContent, "RoundsRow");
         Anchor(roundsRow, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -140), new Vector2(980, 120));
         SetLabel(roundsRow.transform.Find("Label").GetComponent<TMP_Text>(), "room.rounds");
-        var roundsText = roundsRow.transform.Find("Value").GetComponent<TMP_Text>();
-        Anchor(roundsText.gameObject, right, right, right, new Vector2(-120, 0), new Vector2(200, 120));
-        roundsText.alignment = TextAlignmentOptions.Center;
-        roundsText.text = ""; // çalışırken dolar
-        var minus = RoundButton(closeBtn, roundsRow.transform, "Minus", "btn_teal", "−"); // "-" Changa'da çok küçük; eksi işareti "+" ile aynı ağırlıkta
-        Anchor(minus, right, right, right, new Vector2(-320, 0), new Vector2(120, 120));
-        var more = RoundButton(closeBtn, roundsRow.transform, "Plus", "btn_teal", "+");
-        Anchor(more, right, right, right, Vector2.zero, new Vector2(120, 120));
+        // "-" Changa'da çok küçük; eksi işareti "+" ile aynı ağırlıkta
+        var roundsText = Stepper(roundsRow, closeBtn, "−", "+", out var minus, out var more);
         var pwRow = Child("PasswordRow", createContent);
         Anchor(pwRow, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -280), new Vector2(980, 120));
         var pwToggle = Nested(toggle, pwRow.transform, "PasswordToggle").GetComponent<Toggle>();
@@ -426,6 +420,21 @@ public static partial class UiKitBuilder
         b.transform.Find("Visual").GetComponent<Image>().sprite = LoadSprite(sprite);
         b.GetComponentInChildren<TMP_Text>(true).text = label;
         return b;
+    }
+
+    // Satırın sağında "düğme değer düğme" seçici (lobi el sayısı, ayarlar dili); değer yazısını döndürür, boş bırakır
+    static TMP_Text Stepper(GameObject row, GameObject closePrefab, string minusGlyph, string plusGlyph, out GameObject minus, out GameObject more)
+    {
+        var right = new Vector2(1, 0.5f);
+        var value = row.transform.Find("Value").GetComponent<TMP_Text>();
+        Anchor(value.gameObject, right, right, right, new Vector2(-120, 0), new Vector2(200, 120));
+        value.alignment = TextAlignmentOptions.Center;
+        value.text = ""; // çalışırken dolar
+        minus = RoundButton(closePrefab, row.transform, "Minus", "btn_teal", minusGlyph);
+        Anchor(minus, right, right, right, new Vector2(-320, 0), new Vector2(120, 120));
+        more = RoundButton(closePrefab, row.transform, "Plus", "btn_teal", plusGlyph);
+        Anchor(more, right, right, right, Vector2.zero, new Vector2(120, 120));
+        return value;
     }
 
     // Pencere içi satır etiketi (Row/Label ile aynı: Bold 40, sola yaslı); üstte, x'ten başlar

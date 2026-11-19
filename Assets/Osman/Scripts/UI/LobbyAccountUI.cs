@@ -34,6 +34,7 @@ public class LobbyAccountUI : MonoBehaviour
     public GameObject settingsPanel;
     public Toggle soundToggle;
     public Toggle musicToggle;
+    public TMP_Text languageValue;
     public TextMeshProUGUI versionText;
     // Adres boşsa bağlantı satırı gizli; silme satırı oturum varken görünür.
     public GameObject privacyRow, termsRow, supportRow, deleteRow;
@@ -48,8 +49,15 @@ public class LobbyAccountUI : MonoBehaviour
         nameError.text = "";
         versionText.text = "Sürüm " + Application.version;
         SyncToggles();
+        RefreshLanguage();
         RefreshCurrent();
     }
+
+    void OnEnable() => Loc.Changed += RefreshLanguage;
+
+    void OnDisable() => Loc.Changed -= RefreshLanguage;
+
+    void RefreshLanguage() => languageValue.text = Loc.NameOf(Loc.Language);
 
     void OnDestroy()
     {
@@ -198,6 +206,16 @@ public class LobbyAccountUI : MonoBehaviour
     public void OnSoundToggle(bool on) => GameSettings.SoundOn = on;
 
     public void OnMusicToggle(bool on) => GameSettings.MusicOn = on;
+
+    public void LanguagePrev() => ChangeLanguage(-1);
+
+    public void LanguageNext() => ChangeLanguage(1);
+
+    void ChangeLanguage(int step)
+    {
+        Loc.Language = Loc.Next(step);
+        GameSettings.Language = Loc.Language;
+    }
 
     public void OpenPrivacy() => OpenUrl(GameConfig.LegalUrl("privacy"));
 

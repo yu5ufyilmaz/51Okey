@@ -34,6 +34,13 @@ public class LocTests
     [Test] public void NameOf_Reads_Lang_Name_Row() { Loc.Load(Csv, "tr"); Assert.AreEqual("Deutsch", Loc.NameOf("de")); }
     [Test] public void Culture_Follows_Language() { Loc.Load(Csv, "tr"); Assert.AreEqual("İ", "i".ToUpper(Loc.Culture)); Loc.Language = "en"; Assert.AreEqual("I", "i".ToUpper(Loc.Culture)); }
 
+    [Test] public void Next_Wraps_Both_Ways()
+    {
+        Loc.Load("key,tr,en,de\nlang.name,Türkçe,English,Deutsch\n", "tr");
+        Assert.AreEqual("en", Loc.Next(1)); Assert.AreEqual("de", Loc.Next(-1));
+        Loc.Language = "de"; Assert.AreEqual("tr", Loc.Next(1));
+    }
+
     static readonly string[] TrEn = { "tr", "en" };
     [TestCase("en", "tr", "en")]
     [TestCase("", "tr", "tr")]
