@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.IO;
 using Photon.Pun;
+using Photon.Realtime;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -27,7 +28,7 @@ public class MainMenuUIHandler : MonoBehaviour
     public GameObject retryPanel;
     public Button retryButton;
 
-    bool initDone, initFailed, autoTest, enteringLobby;
+    bool initDone, initFailed, autoTest, enteringLobby, photonDropped;
 
     // Paneller sahnede açık durur (Editör'de görünsün); açılışta yalnız "Yükleniyor..." görünür.
     void Awake()
@@ -58,6 +59,9 @@ public class MainMenuUIHandler : MonoBehaviour
     void Refresh()
     {
         var screen = EntryFlow.Next(initDone, initFailed, GameServices.HasSession, GameServices.NeedsName);
+        // Init başarılı olsa da Photon koptuysa Next "Lobby" der; panel RetryConnect'e kadar kalır.
+        if (photonDropped)
+            screen = EntryFlow.Screen.Retry;
         if (autoTest && (screen == EntryFlow.Screen.AskName || screen == EntryFlow.Screen.Lobby))
         {
             Show(EntryFlow.Screen.Loading);
@@ -83,7 +87,18 @@ public class MainMenuUIHandler : MonoBehaviour
         enteringLobby = true;
         loadingText.text = "Bağlanıyor...";
         while (!PhotonNetwork.InLobby)
+        {
+            // Önce bir kare: aynı karede PhotonManager.Start bağlanmayı başlatmış olsun (ilk durum PeerCreated, Disconnected değil).
             yield return null;
+            // Photon koptu ya da bağlanamadı: süresiz beklenmez, Tekrar dene paneli açılır ve basılana kadar kalır.
+            if (!PhotonNetwork.IsConnected && PhotonNetwork.NetworkClientState == ClientState.Disconnected)
+            {
+                enteringLobby = false;
+                photonDropped = true;
+                Show(EntryFlow.Screen.Retry);
+                yield break;
+            }
+        }
         PhotonNetwork.NickName = GameServices.Profile.Current.DisplayName;
         SceneChangeManager.Instance.ChangeScene("LobbyMenu");
     }
@@ -171,6 +186,7 @@ public class MainMenuUIHandler : MonoBehaviour
             return;
         retryButton.interactable = true;
         initFailed = !GameServices.IsReady;
+        photonDropped = false;
         Refresh();
     }
 }
