@@ -14,6 +14,15 @@ public static class OkeyRuleEngine
         return tile.color == indicator.color && tile.number == indicator.number;
     }
 
+    // Perden sökülüp alınabilir mi? Okey her perde alınır. Gösterge kopyası seri/grupta alınır (eskisi gibi);
+    // ÇİFTTE alınamaz, eşi de işlek sayılmaz (sahibin kararı).
+    public static bool IsSwappable(Tiles tile, Tiles indicator, bool inPair)
+    {
+        if (tile == null)
+            return false;
+        return tile.type == TileType.Joker || (!inPair && IsIndicator(tile, indicator));
+    }
+
     // --- 1. TEK RENK (SERİ) KONTROLLERİ ---
     public static bool IsSingleColor(List<Tiles> tiles, Tiles indicator)
     {

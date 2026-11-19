@@ -138,7 +138,7 @@ public class ProcessAssist : MonoBehaviour
         if (occupied)
         {
             var existing = ph.transform.GetChild(0).GetComponent<TileUI>();
-            if (existing == null || !sm.IsSwappable(existing.tileDataInfo))
+            if (existing == null || !sm.IsSwappable(existing.tileDataInfo, type == ScoreManager.MeldType.Pair))
                 return false;
             if (t.type == TileType.Joker)
                 return false; // okey verip okey almak yok

@@ -1305,12 +1305,8 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     }
 
     // Bu taş yerden sökülüp alınabilir mi? (Joker veya Gösterge ise EVET)
-    public bool IsSwappable(Tiles tile)
-    {
-        if (tile == null)
-            return false;
-        return tile.type == TileType.Joker || IsIndicator(tile);
-    }
+    public bool IsSwappable(Tiles tile, bool inPair = false) =>
+        OkeyRuleEngine.IsSwappable(tile, tileDistrubite.GetIndicatorTile(), inPair);
     #endregion
     #region Taş işleme on locale
     private List<ActiveTilePlacementInfo> pendingActivePlacements =
@@ -1532,9 +1528,9 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             && OkeyRuleEngine.IsSingleColor(per, indicator)
         )
         {
-            if (per.Any(tile => IsSwappable(tile)))
+            if (per.Any(tile => IsSwappable(tile, true)))
             {
-                var refTile = per.FirstOrDefault(t => !IsSwappable(t));
+                var refTile = per.FirstOrDefault(t => !IsSwappable(t, true));
                 if (refTile == null)
                     refTile = per[0];
 
@@ -1550,7 +1546,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                         if (phTransform.childCount > 0)
                         {
                             TileUI tile = phTransform.GetChild(0).GetComponent<TileUI>();
-                            if (tile != null && IsSwappable(tile.tileDataInfo))
+                            if (tile != null && IsSwappable(tile.tileDataInfo, true))
                             {
                                 Placeholder jokerPh = phTransform.GetComponent<Placeholder>();
                                 if (jokerPh != null)
@@ -1662,7 +1658,10 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                                 {
                                     var existing = phTransform.GetChild(0).GetComponent<TileUI>();
 
-                                    if (existing != null && IsSwappable(existing.tileDataInfo))
+                                    if (
+                                        existing != null
+                                        && IsSwappable(existing.tileDataInfo, meldType == MeldType.Pair)
+                                    )
                                         isSwap = true;
                                 }
 
@@ -2117,11 +2116,12 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
         // Normal modda yandan alınan taş o tur işlenebilir (yasak sadece Hardcore modda).
 
+        MeldType meldType = (MeldType)targetPlaceholder.parent.GetSiblingIndex();
         bool isJokerSwapTarget = false;
         if (targetPlaceholder.childCount > 0)
         {
             TileUI existingTile = targetPlaceholder.GetChild(0).GetComponent<TileUI>();
-            if (existingTile != null && IsSwappable(existingTile.tileDataInfo))
+            if (existingTile != null && IsSwappable(existingTile.tileDataInfo, meldType == MeldType.Pair))
                 isJokerSwapTarget = true;
         }
 
@@ -2132,7 +2132,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         // 2. TAŞ EŞLEŞME KONTROLÜ
         Tiles req = ph.AvailableTileInfo;
         bool isMatch = false;
-        MeldType meldType = (MeldType)targetPlaceholder.parent.GetSiblingIndex();
 
         // A) Oyuncu doğrudan bir Joker işliyorsa her yere uyar
         if (tileData.type == TileType.Joker)

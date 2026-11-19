@@ -179,6 +179,49 @@ public class OkeyRulesTests
         Assert.IsNull(GameManager.DiscardPenaltyReason(T(TileColor.red, 8), ind, false, islek));
     }
 
+    // --- Çiftte gösterge kopyası alınamaz, okey alınır; seri/grupta eskisi gibi ---
+
+    [Test]
+    public void Swappable_PairTakesOnlyOkey_SeriesKeepsIndicatorCopy()
+    {
+        var ind = T(TileColor.blue, 7);
+        Assert.IsTrue(OkeyRuleEngine.IsSwappable(Okey(), ind, true));
+        Assert.IsFalse(OkeyRuleEngine.IsSwappable(T(TileColor.blue, 7), ind, true));
+        Assert.IsFalse(OkeyRuleEngine.IsSwappable(T(TileColor.red, 1), ind, true));
+        Assert.IsTrue(OkeyRuleEngine.IsSwappable(Okey(), ind, false));
+        Assert.IsTrue(OkeyRuleEngine.IsSwappable(T(TileColor.blue, 7), ind, false)); // seri/grup: değişmedi
+        Assert.IsFalse(OkeyRuleEngine.IsSwappable(T(TileColor.red, 1), ind, false));
+        Assert.IsFalse(OkeyRuleEngine.IsSwappable(null, ind, true));
+    }
+
+    [Test]
+    public void PairWithIndicatorCopy_PartnerIsNotIslek_NoDiscardPenalty()
+    {
+        var ind = T(TileColor.blue, 7);
+        var islek = RuleOracle.Islek(new[] { (2, new[] { T(TileColor.red, 1), T(TileColor.blue, 7) }) });
+        Assert.AreEqual(0, islek.Count);
+        Assert.IsNull(GameManager.DiscardPenaltyReason(T(TileColor.red, 1), ind, true, islek));
+    }
+
+    [Test]
+    public void PairWithOkey_PartnerIsIslek_DiscardPenalised()
+    {
+        var ind = T(TileColor.blue, 7);
+        var islek = RuleOracle.Islek(new[] { (2, new[] { T(TileColor.blue, 12), Okey() }) });
+        Assert.AreEqual(1, islek.Count);
+        Assert.AreEqual(PenaltyReason.DiscardedIslek, GameManager.DiscardPenaltyReason(T(TileColor.blue, 12), ind, false, islek));
+        Assert.IsTrue(OkeyRuleEngine.CheckForDoublePer(L(T(TileColor.blue, 12), Okey()), ind));
+    }
+
+    [Test]
+    public void PairOfTwoOkeysOrTwinTiles_GivesNoIslek()
+    {
+        var islek = RuleOracle.Islek(
+            new[] { (2, new[] { Okey(), Okey() }), (2, new[] { T(TileColor.red, 4), T(TileColor.red, 4) }) }
+        );
+        Assert.AreEqual(0, islek.Count);
+    }
+
     [Test]
     public void FinishMultiplier_Multiplies()
     {
