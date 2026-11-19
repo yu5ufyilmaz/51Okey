@@ -84,8 +84,9 @@ public class LocalProfileStore : IProfileStore, IWallet
 
     public Task DeleteAsync()
     {
+        // Dosya kalırsa silme başarılı sayılmaz: hata çağırana gider, profil yerinde kalır.
         try { if (File.Exists(filePath)) File.Delete(filePath); }
-        catch (Exception e) { Debug.LogWarning("[Profil] dosya silinemedi: " + e.Message); }
+        catch (Exception e) { return Task.FromException(e); }
         Current = null;
         appliedTxIds = new List<string>();
         Notify();

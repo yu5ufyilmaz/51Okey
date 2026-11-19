@@ -10,6 +10,7 @@ public static class GameServices
     public const string UseFirebaseInEditorPref = "Okey.UseFirebaseInEditor";
     // Misafir ismi çakışırsa yeni rastgele numarayla en çok bu kadar denenir; olmazsa sonraki açılışta yeniden.
     public const int GuestNameAttempts = 5;
+    public const int DeleteStepTimeoutMs = 20000;
 
     // Nesneler beklemeden ve süreç boyunca bir kez kurulur: arayüz InitAsync bitmeden Profile.Changed'a abone olabilir.
     static readonly InitGate init;
@@ -156,8 +157,8 @@ public static class GameServices
     {
         // Profil silindikten sonra sahipsiz kalan anonim kimlik veri taşımaz: misafirde bırakılması yeterli.
         var abandon = Auth.IsGuest ? (Func<Task>)Auth.AbandonGuestAsync : null;
-        var result = await AccountDeletion.RunAsync(HasSession, Auth.NeedsRecentLoginToDelete, Profile.DeleteAsync,
-            Auth.DeleteAccountAsync, abandon, DropProfile);
+        var result = await AccountDeletion.RunAsync(HasSession, Auth.NeedsRecentLoginToDelete,
+            Limited(Profile.DeleteAsync), Limited(Auth.DeleteAccountAsync), abandon != null ? Limited(abandon) : null, DropProfile);
         if (result == DeleteResult.DataDeletedAccountRemains && Auth.UserId != null && !HasSession)
         {
             ForgetProfileLoad();
@@ -169,6 +170,9 @@ public static class GameServices
         }
         return result;
     }
+
+    // Asılı kalan silme adımı (çevrimdışı Firestore yazımı) akışı kilitlemesin.
+    static Func<Task> Limited(Func<Task> step) => () => AccountDeletion.WithTimeoutAsync(step(), DeleteStepTimeoutMs);
 
     public static Task SignOutAsync() => Exclusive(SignOutCoreAsync);
 

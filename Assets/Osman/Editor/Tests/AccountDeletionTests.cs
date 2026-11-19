@@ -65,15 +65,15 @@ public class AccountDeletionTests
     [Test]
     public void DeleteAccount_NoSession_IsFailed()
     {
-        Assert.AreEqual(DeleteResult.Failed, Run(hasSession: false));
-        Assert.AreEqual(0, profiles + identities + drops, "oturum yoksa hiçbir adım çağrılmaz");
+        Assert.AreEqual(DeleteResult.Failed, Run(hasSession: false, guest: true));
+        Assert.AreEqual(0, profiles + identities + abandons + drops, "oturum yoksa hiçbir adım çağrılmaz");
     }
 
     [Test]
     public void DeleteAccount_NeedsRecentLogin_DeletesNothing()
     {
-        Assert.AreEqual(DeleteResult.NeedsRecentLogin, Run(needsRecentLogin: true));
-        Assert.AreEqual(0, profiles + identities + drops, "yakın giriş yoksa hiçbir şey silinmez");
+        Assert.AreEqual(DeleteResult.NeedsRecentLogin, Run(needsRecentLogin: true, guest: true));
+        Assert.AreEqual(0, profiles + identities + abandons + drops, "yakın giriş yoksa hiçbir şey silinmez");
     }
 
     [Test]
@@ -85,10 +85,35 @@ public class AccountDeletionTests
     }
 
     [Test]
+    public void DeleteAccount_ProfileFails_Guest_DoesNotAbandon()
+    {
+        Assert.AreEqual(DeleteResult.Failed, Run(profileFails: true, guest: true));
+        Assert.AreEqual(0, identities + abandons + drops);
+    }
+
+    // Dosya silinemezse (kilitli) hesap silinmiş sayılmaz: hiçbir şey kaybolmaz.
+    [Test]
+    public void DeleteAccount_LocalFileLocked_IsFailedAndKeepsSession()
+    {
+        var (auth, store) = SignedIn("51Okey");
+        using (new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None))
+            Assert.AreEqual(DeleteResult.Failed, Delete(auth, store));
+        Assert.IsNotNull(auth.UserId);
+        Assert.IsNotNull(store.Current);
+        Assert.IsTrue(File.Exists(path));
+    }
+
+    [Test]
+    public void WithTimeout_NeverCompletes_ThrowsTimeout() =>
+        Assert.Throws<TimeoutException>(() =>
+            AccountDeletion.WithTimeoutAsync(new TaskCompletionSource<bool>().Task, 50).GetAwaiter().GetResult());
+
+    [Test]
     public void DeleteAccount_IdentityFails_NonGuest_ReportsDataDeleted()
     {
         Assert.AreEqual(DeleteResult.DataDeletedAccountRemains, Run(identityFails: true));
         Assert.AreEqual(1, profiles, "kimlikten önce profil silinir");
+        Assert.AreEqual(1, identities);
         Assert.AreEqual(0, drops, "kimlik duruyorsa yerel durum düşmez");
     }
 

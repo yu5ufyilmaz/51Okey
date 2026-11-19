@@ -24,23 +24,31 @@ public static class AccountDeletion
         try { await deleteProfile(); }
         catch (Exception e)
         {
-            Debug.LogWarning("[SERVICES] profil silinemedi: " + e.GetType().Name + " " + e.Message);
+            Debug.LogWarning("[SERVICES] profil silinemedi: " + e.GetType().Name);
             return DeleteResult.Failed;
         }
         try { await deleteIdentity(); }
         catch (Exception e)
         {
-            Debug.LogWarning("[SERVICES] kimlik silinemedi: " + e.GetType().Name + " " + e.Message);
+            Debug.LogWarning("[SERVICES] kimlik silinemedi: " + e.GetType().Name);
             if (abandonIdentity == null)
                 return DeleteResult.DataDeletedAccountRemains;
             try { await abandonIdentity(); }
             catch (Exception x)
             {
-                Debug.LogWarning("[SERVICES] misafir kimliği bırakılamadı: " + x.GetType().Name + " " + x.Message);
+                Debug.LogWarning("[SERVICES] misafir kimliği bırakılamadı: " + x.GetType().Name);
                 return DeleteResult.DataDeletedAccountRemains;
             }
         }
         dropLocal();
         return DeleteResult.Ok;
+    }
+
+    // Süre dolunca sonuç bilinmez: Firestore'a verilmiş bir yazım sonradan sunucuya ulaşabilir (sunucudan okuma çevrimdışını yazımdan önce yakalar).
+    public static async Task WithTimeoutAsync(Task task, int ms)
+    {
+        if (await Task.WhenAny(task, Task.Delay(ms)).ConfigureAwait(false) != task)
+            throw new TimeoutException();
+        await task.ConfigureAwait(false);
     }
 }

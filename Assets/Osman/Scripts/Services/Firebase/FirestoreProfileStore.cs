@@ -11,6 +11,9 @@ using UnityEngine;
 public class FirestoreProfileStore : IProfileStore, IWallet
 {
     const string StarterTxId = "starter";
+    // Firestore batch'i en çok 500 işlem alır: son batch'te isim ve kullanıcı belgesine 2 yer kalır.
+    const int MaxLedgerInFinalBatch = 498;
+    const int LedgerBatchSize = 450;
 
     readonly FirebaseBoot boot;
 
@@ -153,7 +156,8 @@ public class FirestoreProfileStore : IProfileStore, IWallet
         Notify();
     }
 
-    // Hesap silme akışı: önce defter (kural defteri yalnızca silmeye açar), sonra isim kaydı ve kullanıcı belgesi birlikte.
+    // Hesap silme akışı: okumalar sunucudan (çevrimdışıysa hiçbir yazımdan önce düşer), silmeler toplu yazımla.
+    // Tekrar çağrılabilir: olmayan belgeyi silmek hata değildir.
     public async Task DeleteAsync()
     {
         if (Current != null)
@@ -161,13 +165,10 @@ public class FirestoreProfileStore : IProfileStore, IWallet
             var uid = Current.UserId;
             var db = await boot.FirestoreAsync();
             var userRef = db.Collection("users").Document(uid);
-            var ledger = await userRef.Collection("ledger").GetSnapshotAsync();
-            foreach (var entry in ledger.Documents)
-                await entry.Reference.DeleteAsync();
-            // Tek batch: isim silinip kullanıcı belgesi kalırsa misafir sahibi olmadığı ismi "kayıtlı" sanır ve hiç onarılmaz.
+            var ledger = new List<DocumentSnapshot>((await userRef.Collection("ledger").GetSnapshotAsync(Source.Server)).Documents);
             // İsim sunucudaki belgeden okunur (bellek eski olabilir); kayıt varsa ve bizimse silinir.
-            var batch = db.StartBatch();
-            var user = await userRef.GetSnapshotAsync();
+            DocumentReference ownedName = null;
+            var user = await userRef.GetSnapshotAsync(Source.Server);
             if (user.Exists)
             {
                 var fields = user.ToDictionary();
@@ -175,11 +176,26 @@ public class FirestoreProfileStore : IProfileStore, IWallet
                 if (fields.TryGetValue("nameClaimed", out var c) && c is bool claimed && claimed && !string.IsNullOrEmpty(serverName))
                 {
                     var nameRef = db.Collection("names").Document(serverName);
-                    var name = await nameRef.GetSnapshotAsync();
+                    var name = await nameRef.GetSnapshotAsync(Source.Server);
                     if (name.Exists && name.GetValue<string>("uid") == uid)
-                        batch.Delete(nameRef);
+                        ownedName = nameRef;
                 }
             }
+            // 498 kayıttan fazlasında ara batch'ler arasında düşerse geçmişin bir kısmı silinip coin/isim/seviye kalabilir; yeniden deneme tamamlar.
+            int next = 0;
+            for (; ledger.Count - next > MaxLedgerInFinalBatch; next += LedgerBatchSize)
+            {
+                var part = db.StartBatch();
+                for (int i = next; i < next + LedgerBatchSize; i++)
+                    part.Delete(ledger[i].Reference);
+                await part.CommitAsync();
+            }
+            // Tek batch: isim silinip kullanıcı belgesi kalırsa misafir sahibi olmadığı ismi "kayıtlı" sanır ve hiç onarılmaz.
+            var batch = db.StartBatch();
+            for (; next < ledger.Count; next++)
+                batch.Delete(ledger[next].Reference);
+            if (ownedName != null)
+                batch.Delete(ownedName);
             batch.Delete(userRef);
             await batch.CommitAsync();
         }

@@ -166,8 +166,18 @@ public class FirebaseAuthService : IAuthService
     public async Task DeleteAccountAsync()
     {
         var auth = await boot.AuthAsync();
-        if (auth.CurrentUser != null)
-            await auth.CurrentUser.DeleteAsync();
+        var current = auth.CurrentUser;
+        if (current != null)
+        {
+            bool google = !current.IsAnonymous;
+            await current.DeleteAsync();
+            // Sonraki "Google ile gir" silinen hesabı sessizce seçmesin; düşerse silme yine başarılı.
+            if (google)
+            {
+                try { GoogleSignIn.SignOut(); }
+                catch (Exception e) { Debug.LogWarning("[AUTH] Google oturumu kapatılamadı: " + e.GetType().Name); }
+            }
+        }
         SetUser(null);
     }
 
