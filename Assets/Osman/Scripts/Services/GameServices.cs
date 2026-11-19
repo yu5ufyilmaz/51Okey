@@ -12,6 +12,12 @@ public static class GameServices
     // Nesneler beklemeden ve süreç boyunca bir kez kurulur: arayüz InitAsync bitmeden Profile.Changed'a abone olabilir.
     static readonly InitGate init;
     static bool adsStarted;
+    // Profil yükleme tek yoldan: kullanıcı başına tek Task (başlangıç coini iki kez yazılmasın).
+    static Task profileLoad = Task.CompletedTask;
+    static string profileUser;
+    // Süren giriş/çıkış: çift dokunuş yeni işlem başlatmaz, aynı Task'ı alır.
+    static Task pending = Task.CompletedTask;
+    static System.Reflection.MethodInfo pendingOp;
 
     public static IAuthService Auth { get; }
     public static IProfileStore Profile { get; }
@@ -25,6 +31,12 @@ public static class GameServices
 
     // "Bağlanılamadı, tekrar dene" paneli için: InitFailed paneli açar, düğme PhotonManager.ConnectWhenReadyAsync'i çağırır.
     public static bool IsReady => init.IsReady;
+
+    public static bool HasSession => Auth.UserId != null && Profile.Current?.UserId == Auth.UserId;
+    // Ayrı "isim seçildi" alanı yok: varsayılan isim duruyorsa sorulur.
+    public static bool NeedsName => HasSession && Profile.Current.DisplayName == GameConfig.DefaultName(Auth.UserId);
+    // Firebase misafiri çıkarsa anonim hesaba geri dönemez; yerel kimlik sabit, kayıp yok.
+    public static bool CanSignOut => HasSession && (!Auth.IsGuest || !UsesFirebase);
     public static event Action<Exception> InitFailed
     {
         add => init.Failed += value;
@@ -78,6 +90,7 @@ public static class GameServices
         Path.Combine(Application.persistentDataPath, "local-profile-" + instanceTag + ".json");
 
     // Hata ya da zaman aşımı önbelleğe alınmaz: sonraki çağrı yeniden dener. Reklam başlatması bunu bekletmez.
+    // Yalnız kayıtlı oturumu geri yükler; oturum yoksa hata değildir, hesap açılmaz (oyuncu giriş ekranında seçer).
     public static Task InitAsync()
     {
         StartAds();
@@ -86,9 +99,76 @@ public static class GameServices
 
     static async Task RunInitAsync()
     {
-        await Auth.SignInAsync();
-        await Profile.LoadOrCreateAsync(Auth.UserId, GameConfig.DefaultName(Auth.UserId));
-        if (Profile.Current == null)
+        if (await Auth.RestoreAsync())
+            await ProfileLoadAsync();
+    }
+
+    // Oturum varsa yeniden giriş yapılmaz, yalnız profil beklenir.
+    public static Task EnterAsGuestAsync() => Exclusive(EnterAsGuestCoreAsync);
+
+    static async Task EnterAsGuestCoreAsync()
+    {
+        if (Auth.UserId == null)
+            await Auth.SignInGuestAsync();
+        await ProfileLoadAsync();
+        if (!HasSession)
+            throw new InvalidOperationException("misafir girişi tamamlanmadı");
+    }
+
+    // İptal ya da hata: oturum değişmez (giriş ekranında misafir açılmaz).
+    public static Task<LinkResult> EnterWithGoogleAsync() => Exclusive(EnterWithGoogleCoreAsync);
+
+    static async Task<LinkResult> EnterWithGoogleCoreAsync()
+    {
+        var result = await Auth.LinkGoogleAsync();
+        if (result == LinkResult.Linked || result == LinkResult.SwitchedToExistingAccount)
+            await ProfileLoadAsync();
+        return result;
+    }
+
+    public static Task SignOutAsync() => Exclusive(SignOutCoreAsync);
+
+    static async Task SignOutCoreAsync()
+    {
+        await Auth.SignOutAsync();
+        // Kimlik zaten yoksa UserChanged gelmez: profil yine de düşer.
+        if (Profile.Current != null)
+            Profile.Clear();
+    }
+
+    // Aynı işlem sürerken gelen çağrı onun Task'ını alır; başka bir işlem sürerken fırlatır (iki hesap işlemi iç içe koşmasın).
+    static T Exclusive<T>(Func<T> start) where T : Task
+    {
+        if (!pending.IsCompleted)
+        {
+            if (pendingOp == start.Method)
+                return (T)pending;
+            throw new InvalidOperationException("başka bir hesap işlemi sürüyor");
+        }
+        var task = start();
+        pending = task;
+        pendingOp = start.Method;
+        return task;
+    }
+
+    // Hata önbelleğe alınmaz: aynı kullanıcı için sonraki çağrı yeniden dener (yükleme kendi içinde tekrar güvenlidir).
+    static Task ProfileLoadAsync()
+    {
+        var uid = Auth.UserId;
+        if (uid == null)
+            return Task.CompletedTask;
+        if (profileUser != uid || profileLoad.IsFaulted || profileLoad.IsCanceled)
+        {
+            profileUser = uid;
+            profileLoad = LoadProfileAsync(uid);
+        }
+        return profileLoad;
+    }
+
+    static async Task LoadProfileAsync(string uid)
+    {
+        await Profile.LoadOrCreateAsync(uid, GameConfig.DefaultName(uid));
+        if (Profile.Current?.UserId != uid)
             throw new InvalidOperationException("profil yüklenemedi");
         LogProfile();
     }
@@ -106,16 +186,17 @@ public static class GameServices
         }
     }
 
-    // Hesap değişince (Google hesabına geçiş, silme sonrası yeni misafir) profil yeniden yüklenir; ilk giriş init'in işi.
+    // Hesap değişince (giriş, Google hesabına geçiş, çıkış) profil yüklenir ya da düşer; Init ve Enter* aynı Task'ı bekler.
     static async void OnUserChanged()
     {
-        if (!init.IsReady || Auth.UserId == null)
-            return;
-        try
+        if (Auth.UserId == null)
         {
-            await Profile.LoadOrCreateAsync(Auth.UserId, GameConfig.DefaultName(Auth.UserId));
-            LogProfile();
+            profileUser = null;
+            profileLoad = Task.CompletedTask;
+            Profile.Clear();
+            return;
         }
+        try { await ProfileLoadAsync(); }
         catch (Exception e)
         {
             Debug.LogWarning("[SERVICES] yeni hesabın profili yüklenemedi: " + e.GetType().Name + " " + e.Message);

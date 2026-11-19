@@ -6,4 +6,5 @@ public interface IProfileStore
     System.Threading.Tasks.Task SetDisplayNameAsync(string name);
     System.Threading.Tasks.Task AddXpAsync(int xp);
     System.Threading.Tasks.Task DeleteAsync();
+    void Clear();                       // çıkışta: Current = null, Changed(null); kayıtlı profil silinmez
 }

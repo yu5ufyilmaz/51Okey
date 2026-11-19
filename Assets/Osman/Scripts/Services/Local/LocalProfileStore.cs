@@ -14,7 +14,6 @@ public class LocalProfileStore : IProfileStore, IWallet
     }
 
     const int MaxRememberedTx = 200;
-    const int MinNameLength = 2;
     const string StarterTxId = "starter";
     const int WriteAttempts = 5;
     const int WriteRetryDelayMs = 20;
@@ -58,7 +57,7 @@ public class LocalProfileStore : IProfileStore, IWallet
     public Task SetDisplayNameAsync(string name)
     {
         name = name?.Trim();
-        if (Current == null || name == null || name.Length < MinNameLength)
+        if (Current == null || !GameConfig.IsValidName(name))
             return Task.CompletedTask;
         Mutate(() => Current.DisplayName = name);
         return Task.CompletedTask;
@@ -84,6 +83,13 @@ public class LocalProfileStore : IProfileStore, IWallet
         appliedTxIds = new List<string>();
         Notify();
         return Task.CompletedTask;
+    }
+
+    public void Clear()
+    {
+        Current = null;
+        appliedTxIds = new List<string>();
+        Notify();
     }
 
     public Task<bool> ApplyAsync(CoinTx tx)

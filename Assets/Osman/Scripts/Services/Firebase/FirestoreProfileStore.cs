@@ -10,7 +10,6 @@ using UnityEngine;
 public class FirestoreProfileStore : IProfileStore, IWallet
 {
     const string StarterTxId = "starter";
-    const int MinNameLength = 2;
 
     readonly FirebaseBoot boot;
 
@@ -61,7 +60,7 @@ public class FirestoreProfileStore : IProfileStore, IWallet
     public async Task SetDisplayNameAsync(string name)
     {
         name = name?.Trim();
-        if (Current == null || name == null || name.Length < MinNameLength || name == Current.DisplayName)
+        if (Current == null || !GameConfig.IsValidName(name) || name == Current.DisplayName)
             return;
         await Update(p => p.DisplayName = name, new Dictionary<string, object> { { "displayName", name } });
     }
@@ -103,6 +102,13 @@ public class FirestoreProfileStore : IProfileStore, IWallet
                 await entry.Reference.DeleteAsync();
             await userRef.DeleteAsync();
         }
+        Current = null;
+        Notify();
+    }
+
+    // Çıkış: yalnız bellekteki profil düşer; belge yerinde kalır.
+    public void Clear()
+    {
         Current = null;
         Notify();
     }

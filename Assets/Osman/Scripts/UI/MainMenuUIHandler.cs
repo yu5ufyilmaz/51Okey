@@ -43,8 +43,19 @@ public class MainMenuUIHandler : MonoBehaviourPunCallbacks
     async void Start()
     {
         // Init hatasını PhotonManager zaten loglar; burada yutulur.
-        try { await GameServices.InitAsync(); }
-        catch (System.Exception) { }
+        try
+        {
+            await GameServices.InitAsync();
+            // Köprü (giriş ekranı İP2'de gelir): oturum yoksa eski davranış, misafir hesap açılır.
+            if (!GameServices.HasSession)
+                await GameServices.EnterAsGuestAsync();
+        }
+        catch (System.Exception e)
+        {
+            // Init hazırsa hata misafir girişinden gelmiştir: onu PhotonManager loglamaz.
+            if (GameServices.IsReady)
+                Debug.LogWarning("[SERVICES] misafir girişi olmadı: " + e.GetType().Name + " " + e.Message);
+        }
         // Profil yüklenemediyse (Current null) isim kutusuna dokunma.
         var profile = GameServices.Profile.Current;
         if (profile != null && playerNameInput != null && string.IsNullOrEmpty(playerNameInput.text))

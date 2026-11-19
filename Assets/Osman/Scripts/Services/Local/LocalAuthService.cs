@@ -22,9 +22,23 @@ public class LocalAuthService : IAuthService
 
     public LocalAuthService(string instanceTag) => this.instanceTag = instanceTag;
 
-    public Task SignInAsync()
+    // Yerel kimlik sabittir: kayıtlı oturum hep vardır, Editör doğrudan lobiye düşer.
+    public Task<bool> RestoreAsync()
     {
         UserId = "local-" + instanceTag;
+        return Task.FromResult(true);
+    }
+
+    public Task SignInGuestAsync()
+    {
+        UserId = "local-" + instanceTag;
+        return Task.CompletedTask;
+    }
+
+    // Profil dosyası silinmez: yeniden girişte aynı kimlik aynı profili bulur.
+    public Task SignOutAsync()
+    {
+        UserId = null;
         return Task.CompletedTask;
     }
 

@@ -31,7 +31,7 @@ public class LocalServicesTests
     {
         var auth = new LocalAuthService("51Okey_clone_0");
         Assert.IsNull(auth.UserId);
-        auth.SignInAsync().GetAwaiter().GetResult();
+        auth.SignInGuestAsync().GetAwaiter().GetResult();
         Assert.AreEqual("local-51Okey_clone_0", auth.UserId);
         Assert.IsTrue(auth.IsGuest);
     }
@@ -290,11 +290,81 @@ public class LocalServicesTests
         var auth = new LocalAuthService("51Okey");
         int fired = 0;
         auth.UserChanged += () => fired++;
-        auth.SignInAsync().GetAwaiter().GetResult();
-        auth.SignInAsync().GetAwaiter().GetResult();
+        auth.SignInGuestAsync().GetAwaiter().GetResult();
+        auth.SignInGuestAsync().GetAwaiter().GetResult();
         Assert.AreEqual(1, fired, "aynı kullanıcıyla tekrar giriş olay üretmez");
         auth.DeleteAccountAsync().GetAwaiter().GetResult();
         Assert.AreEqual(2, fired);
         Assert.IsNull(auth.UserId);
+    }
+
+    // --- giriş/lobi İP1: oturum geri yükleme, çıkış, profil temizleme ---
+
+    [Test]
+    public void Restore_SignsInAndReturnsTrue()
+    {
+        var auth = new LocalAuthService("51Okey");
+        int fired = 0;
+        auth.UserChanged += () => fired++;
+        Assert.IsTrue(auth.RestoreAsync().GetAwaiter().GetResult());
+        Assert.AreEqual("local-51Okey", auth.UserId);
+        Assert.AreEqual(1, fired);
+    }
+
+    [Test]
+    public void SignOut_ClearsUserAndFiresUserChanged()
+    {
+        var auth = new LocalAuthService("51Okey");
+        auth.SignInGuestAsync().GetAwaiter().GetResult();
+        int fired = 0;
+        auth.UserChanged += () => fired++;
+        auth.SignOutAsync().GetAwaiter().GetResult();
+        Assert.IsNull(auth.UserId);
+        Assert.AreEqual(1, fired);
+    }
+
+    [Test]
+    public void SignOutThenGuest_GivesSameLocalId()
+    {
+        var auth = new LocalAuthService("51Okey_clone_1");
+        auth.SignInGuestAsync().GetAwaiter().GetResult();
+        var first = auth.UserId;
+        auth.SignOutAsync().GetAwaiter().GetResult();
+        auth.SignInGuestAsync().GetAwaiter().GetResult();
+        Assert.AreEqual(first, auth.UserId);
+    }
+
+    [Test]
+    public void Clear_NullsCurrentAndNotifiesNull()
+    {
+        var s = Loaded();
+        PlayerProfile seen = s.Current;
+        int fired = 0;
+        s.Changed += p => { fired++; seen = p; };
+        s.Clear();
+        Assert.IsNull(s.Current);
+        Assert.AreEqual(0, s.Coins);
+        Assert.AreEqual(1, fired);
+        Assert.IsNull(seen);
+    }
+
+    [Test]
+    public void Clear_KeepsFileOnDisk()
+    {
+        var s = Loaded();
+        Apply(s, "t1", 300);
+        s.Clear();
+        Assert.IsTrue(File.Exists(path));
+        Assert.AreEqual(GameConfig.StarterCoins + 300, Loaded().Coins, "yeniden girişte aynı profil gelir");
+    }
+
+    [Test]
+    public void SetDisplayName_Rejects17Chars()
+    {
+        var s = Loaded();
+        s.SetDisplayNameAsync(new string('a', 17)).GetAwaiter().GetResult();
+        Assert.AreEqual("Oyuncu0001", s.Current.DisplayName);
+        s.SetDisplayNameAsync(new string('a', 16)).GetAwaiter().GetResult();
+        Assert.AreEqual(new string('a', 16), s.Current.DisplayName);
     }
 }
