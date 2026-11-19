@@ -19,8 +19,8 @@ public static class LocAudit
 
     const string Sections = "common|login|lobby|room|settings|profile|account|shop|table|penalty|toast|error|lang";
     static readonly Regex KeyFormat = new Regex("^(?:" + Sections + @")\.[a-z0-9_]+$");
-    static readonly Regex UsedKey = new Regex("\"((?:" + Sections + ")\\.[a-z0-9_]+)\"");
-    static readonly Regex Placeholder = new Regex(@"\{\d+\}");
+    static readonly Regex UsedKey = new Regex("\"((?:" + Sections + ")\\.(?!(?:cs|json|csv|txt|png|jpg|prefab|asset|unity|meta|log|xml|dat)\")[a-z0-9_]+)\"");
+    static readonly Regex Placeholder = new Regex(@"\{(\d+)(?::[^}]*)?\}");
     static readonly Regex TurkishLiteral = new Regex("\"[^\"]*[çğıöşüÇĞİÖŞÜ][^\"]*\"");
 
     // Saf: dosya ya da Unity erişimi yok.
@@ -62,7 +62,7 @@ public static class LocAudit
     }
 
     static string PlaceholderSet(string v) =>
-        v == null ? null : string.Join(",", Placeholder.Matches(v).Cast<Match>().Select(m => m.Value).Distinct().OrderBy(x => x));
+        v == null ? null : string.Join(",", Placeholder.Matches(v).Cast<Match>().Select(m => m.Groups[1].Value).Distinct().OrderBy(x => x));
 
     public static Report CheckProject()
     {

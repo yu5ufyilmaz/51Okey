@@ -8,6 +8,14 @@ public class LocalizationTests
         Assert.IsEmpty(Run("key,tr,en\nlang.name,Türkçe,English\nlobby.a,A,B\n", "Loc.T(\"lobby.a\")").Errors);
     [Test] public void Missing_English_Is_Error() => StringAssert.Contains("lobby.a", Run("key,tr,en\nlobby.a,A,\n").Errors[0]);
     [Test] public void Placeholder_Mismatch_Is_Error() => Assert.IsNotEmpty(Run("key,tr,en\nlobby.a,{0} el,rounds\n").Errors);
+    [Test] public void Formatted_Placeholder_Dropped_Is_Error() => Assert.IsNotEmpty(Run("key,tr,en\nlobby.a,{0:D2} el,rounds\n").Errors);
+    [Test] public void Formatted_Placeholder_Matches_Plain_One() => Assert.IsEmpty(Run("key,tr,en\nlobby.a,{0:D2} el,{0} rounds\n", "\"lobby.a\"").Errors);
+    [Test] public void File_Name_Is_Not_A_Used_Key()
+    {
+        const string table = "key,tr,en\nlobby.a,A,B\n";
+        Assert.IsEmpty(Run(table, "\"common.cs\" \"lobby.a\"").Errors);
+        Assert.IsNotEmpty(Run(table, "\"common.missing_key\"").Errors);
+    }
     [Test] public void Replacement_Char_Is_Error() => Assert.IsNotEmpty(Run("key,tr,en\nlobby.a,Ta\uFFFD,Tile\n").Errors);
     [Test] public void Duplicate_Key_Is_Error() => Assert.IsNotEmpty(Run("key,tr,en\nlobby.a,A,B\nlobby.a,C,D\n").Errors);
     [Test] public void Bad_Key_Format_Is_Error() => Assert.IsNotEmpty(Run("key,tr,en\nLobby.PlayNow,A,B\n").Errors);
