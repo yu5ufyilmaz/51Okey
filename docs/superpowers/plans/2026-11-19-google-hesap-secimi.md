@@ -98,3 +98,23 @@ R8/IL2CPP: köprü sınıfı ve `Callback` arayüzü için koruma kuralı gereki
 
 Konsol işleri, yeni `google-services.json` ile APK, telefonda: "Google ile gir" hesap listesini açar; seçilen hesapla girilir;
 çıkıştan sonra yine sorar; iptal → "Google girişi tamamlanmadı"; misafir → "Google'a bağla" → aynı pencere.
+
+## Sonuç (2026-11-19)
+
+Commit: `ea39df5` (Java köprüsü `GoogleSignInBridge`, `GoogleSignIn.cs`, `FirebaseAuthService`, EDM bağımlılıkları). Push yok.
+
+- EditMode 195/195. Bağımsız gözden geçirme: kritik/önemli kod bulgusu yok.
+- Konsol: Firebase Auth'ta Google sağlayıcısı açıldı; SHA-1 zaten ekliydi. `google-services.json` otomatik sekmeden inmedi;
+  web istemcisi (`client_type: 3`) gitignore'daki dosyaya elle eklendi, `default_web_client_id` kaynağı üretildi.
+  OAuth test kullanıcıları: `osmansisman433`, `osmansisman1453`.
+- İlk kurulumda açılışta çöktü: `FirebaseInitProvider ... Resources$NotFoundException: Unable to find resource ID #0x7f0a001b`.
+  Neden: artımlı Gradle derlemesi kaynak tablosunu yeniledi (aynı kaynak `0x7f0c001b` oldu) ama eski numaralarla derlenmiş
+  kodu yeniden kullandı. Çözüm: `Library/Bee/Android/Prj/IL2CPP/Gradle/{launcher,unityLibrary}/build` silinip temiz derleme.
+  Android bağımlılığı ya da kaynağı değişince artımlı derlemeye güvenme.
+- Telefonda doğrulandı (log): çıkış → "Google ile gir" → hesap seçme → giriş, iki farklı Google hesabıyla, üç kez; her çıkıştan
+  sonra yeniden soruldu; yeni hesaplara isim soruldu ve isimler kaydedildi (`Duzz`, `Duzz48`).
+- Eski Play Games kimlikli hesap (`Duzz41`) yeni yöntemle erişilemez kaldığı için ismi dolu kalıyordu; kullanıcının onayıyla
+  `users/i1DW…` (defteriyle) ve `names/Duzz41` Firestore'dan silindi. Firebase Auth'taki eski kullanıcı kaydı duruyor.
+- Denenmedi: pencerede iptal, misafir → "Google'a bağla" (yeni yöntemle), test kullanıcısı olmayan hesap, hesapsız cihaz.
+- Bırakılan küçük bulgular: iptal loglanmıyor; Credential Manager hiç geri dönmezse zaman aşımı yok; sürüm derlemesinde
+  (R8) `@Keep` yeterliliği denenmedi; Play uygulama imzası SHA-1'i için ayrı Android istemcisi gerekecek.
