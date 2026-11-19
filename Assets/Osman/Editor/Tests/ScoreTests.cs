@@ -146,8 +146,22 @@ public class ScoreTests
         Assert.AreEqual("+490", ScoreboardText.Signed(490)); Assert.AreEqual("-600", ScoreboardText.Signed(-600)); Assert.AreEqual("0", ScoreboardText.Signed(0));
         Assert.AreEqual("-", ScoreboardText.Dash(0)); Assert.AreEqual("+70", ScoreboardText.Dash(70));
     }
-    [Test] public void Countdown_Clamps_At_Zero() {
-        Assert.AreEqual(10, ScoreboardText.Countdown(100f, 100f, 10)); Assert.AreEqual(7, ScoreboardText.Countdown(100f, 102.5f, 10));
-        Assert.AreEqual(0, ScoreboardText.Countdown(100f, 130f, 10));
+    [Test] public void Countdown_Counts_Down_And_Stays_At_Zero() {
+        Assert.AreEqual(10, ScoreboardText.Countdown(100f, 100f, 10)); Assert.AreEqual(8, ScoreboardText.Countdown(100f, 102.5f, 10));
+        Assert.AreEqual(1, ScoreboardText.Countdown(100f, 109.5f, 10)); Assert.AreEqual(0, ScoreboardText.Countdown(100f, 110f, 10));
+        Assert.AreEqual(0, ScoreboardText.Countdown(100f, 130f, 10)); Assert.AreEqual(10, ScoreboardText.Countdown(100f, 99f, 10));
+    }
+    static string Tr(string k, object[] a) => a.Length == 0 ? k : k + ":" + string.Join(",", a);
+    [Test] public void Header_Winner_With_Okey_And_Multiplier() =>
+        Assert.AreEqual("table.hand_over:3 · table.finished_by:Ayşe (table.with_okey, x2)", ScoreboardText.Header(3, 5, "Ayşe", true, false, false, 2, "Ayşe", Tr));
+    [Test] public void Header_Winner_Without_Extras_Has_No_Parentheses() =>
+        Assert.AreEqual("table.hand_over:2 · table.finished_by:Can", ScoreboardText.Header(2, 5, "Can", false, false, false, 1, "Can", Tr));
+    [Test] public void Header_Draw() =>
+        Assert.AreEqual("table.hand_over:3 · table.pile_empty", ScoreboardText.Header(3, 5, null, false, false, false, 1, "Can", Tr));
+    [Test] public void Header_Last_Hand_Is_Match_Over() =>
+        Assert.AreEqual("table.match_over:Bot 1", ScoreboardText.Header(5, 5, "Ayşe", true, false, false, 2, "Bot 1", Tr));
+    [Test] public void Header_Multiplier_One_Not_Shown_And_Parts_Joined() {
+        Assert.AreEqual("table.hand_over:1 · table.finished_by:A (table.from_pairs, table.kafa)", ScoreboardText.Header(1, 5, "A", false, true, true, 1, "A", Tr));
+        Assert.AreEqual("table.hand_over:1 · table.pile_empty", ScoreboardText.Header(1, 0, null, false, false, false, 1, "A", Tr));
     }
 }

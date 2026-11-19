@@ -228,11 +228,11 @@ public static partial class UiKitBuilder
     // --- skor tablosu ---
 
     static readonly Color Mute = new Color(0.62f, 0.70f, 0.78f);
-    const float RowH = 58f, HeadH = 44f, Pad = 50f;
+    const float RowH = 58f, HeadH = 52f, Pad = 50f;
 
     class RowBuild { public GameObject root; public Image bg; public TMP_Text[] cells; public TMP_Text marker; }
 
-    // Eski paneller silinir; skor tablosu yoksa kurulur (varsa elle değiştirilmiş olabilir, dokunulmaz)
+    // Eski paneller silinir; skor tablosu her çalışmada baştan kurulur
     static ScoreboardView BindScoreboard()
     {
         Transform safe = null;
@@ -244,8 +244,18 @@ public static partial class UiKitBuilder
             foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
                 if (t != null && t.name == n && t.IsChildOf(safe)) Object.DestroyImmediate(t.gameObject);
 
+        // Yeni sahne nesnelerine Unity her kayıtta rastgele fileID verir; sil-yeniden-kur her çalışmada dosyayı değiştirirdi.
+        // Bu yüzden yalnız bu kaynak dosyası değiştiyse (imza) aynı sıra konumuna yeniden kurulur, yoksa dokunulmaz.
+        string sig = SourceSignature();
         var existing = safe.Find("Scoreboard");
-        if (existing != null) return existing.GetComponent<ScoreboardView>();
+        int sibling = -1;
+        if (existing != null)
+        {
+            var old = existing.GetComponent<ScoreboardView>();
+            if (old != null && old.LayoutSignature == sig) return old;
+            sibling = existing.GetSiblingIndex();
+            Object.DestroyImmediate(existing.gameObject);
+        }
 
         bold = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(BoldPath);
         extraBold = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(ExtraBoldPath);
@@ -256,12 +266,13 @@ public static partial class UiKitBuilder
         var root = Child("Scoreboard", safe);
         Fill(root, 0, 0, 0, 0);
         var win = Child("Window", root.transform);   // karartma + gövde; kapalı başlar
-        Fill(win, -DimBleed, -DimBleed, DimBleed, DimBleed);
+        // SafeArea'nın boyu ekrandan küçük olabilir: karartma Fill ile değil, ortadan büyük bir kareyle ekranı örter (ayarlar penceresi gibi)
+        Anchor(win, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(6000, 6000));
         Dim(win);
         var uw = win.AddComponent<UiWindow>();
 
         var body = Child("Body", win.transform);
-        Size(body, 1640, 870);
+        Size(body, 1640, 900);
         Sliced(body, "panel_slate");
 
         var close = Nested(closePrefab, body.transform, "Close");
@@ -277,63 +288,65 @@ public static partial class UiKitBuilder
         var L = TextAlignmentOptions.CaplineLeft;
         var R = TextAlignmentOptions.CaplineRight;
         var topHead = RowObj(body.transform, "TopHead", 108, HeadH, false);
-        Title(topHead, "col_player", "table.col_player", 360, 0, L);
-        Title(topHead, "col_left", "table.col_left", 420, 1, R);
-        Title(topHead, "col_penalties", "table.col_penalties", 220, 0, R);
-        Title(topHead, "col_finish", "table.col_finish", 220, 0, R);
-        Title(topHead, "col_hand", "table.col_hand", 220, 0, R);
+        Title(topHead, "col_player", "table.col_player", 330, 0, L);
+        Title(topHead, "col_left", "table.col_left", 400, 1, R);
+        Title(topHead, "col_penalties", "table.col_penalties", 250, 0, R);
+        Title(topHead, "col_finish", "table.col_finish", 250, 0, R);
+        Title(topHead, "col_hand", "table.col_hand", 250, 0, R);
         var top = new List<RowBuild>();
         for (int i = 0; i < 4; i++)
         {
-            var r = DataRow(body.transform, "TopRow" + (i + 1), 156 + i * (RowH + 4));
+            var r = DataRow(body.transform, "TopRow" + (i + 1), 164 + i * (RowH + 4));
             r.cells = new TMP_Text[]
             {
-                DataCell(r.root.transform, "Name", L, 360, 0), DataCell(r.root.transform, "Left", R, 420, 1), DataCell(r.root.transform, "Penalty", R, 220, 0),
-                DataCell(r.root.transform, "Finish", R, 220, 0), DataCell(r.root.transform, "Total", R, 220, 0),
+                DataCell(r.root.transform, "Name", L, 330, 0), DataCell(r.root.transform, "Left", R, 400, 1), DataCell(r.root.transform, "Penalty", R, 250, 0),
+                DataCell(r.root.transform, "Finish", R, 250, 0), DataCell(r.root.transform, "Total", R, 250, 0),
             };
             top.Add(r);
         }
 
-        var pen = Text(Band(body.transform, "PenaltyLine", 408, 44, Pad).transform, "Text", "", 30, bold);
+        var pen = Text(Band(body.transform, "PenaltyLine", 414, 52, Pad).transform, "Text", "", 32, bold);
         Fill(pen.gameObject, 12, 0, -12, 0);
         pen.alignment = L;
         pen.color = new Color(1f, 0.78f, 0.38f);
         pen.richText = false;
-        AutoSize(pen, 30, 20);
+        AutoSize(pen, 32, 28);
 
-        var sep = Band(body.transform, "Separator", 462, 3, Pad);
+        var sep = Band(body.transform, "Separator", 474, 3, Pad);
         var sepImg = sep.AddComponent<Image>();
         sepImg.color = new Color(1, 1, 1, 0.15f);
         sepImg.raycastTarget = false;
 
         // alt tablo: eller ve toplam
-        var botHead = RowObj(body.transform, "BotHead", 480, HeadH, false);
-        Title(botHead, "col_player", "table.col_player", 360, 0, L);
+        var botHead = RowObj(body.transform, "BotHead", 488, HeadH, false);
+        Title(botHead, "col_player", "table.col_player", 330, 0, L);
         var handHeaders = new TMP_Text[7];
         for (int n = 0; n < 7; n++)
         {
             var h = DataCell(botHead.transform, "Hand" + (n + 1), R, 100, 1);
-            h.font = extraBold; h.fontSizeMax = 28; h.fontSizeMin = 18; h.fontSize = 28; h.color = Mute;
+            h.font = extraBold; h.fontSizeMax = 32; h.fontSizeMin = 28; h.fontSize = 32; h.color = Mute;
+            h.margin = new Vector4(4, 0, 4, 0);
+            h.overflowMode = TextOverflowModes.Overflow;   // başlık satırı alçak: üç nokta metni silmesin
             handHeaders[n] = h;
         }
-        Title(botHead, "col_total", "table.col_total", 170, 0, R);
-        Spacer(botHead.transform, 130);
+        Title(botHead, "col_total", "table.col_total", 160, 0, R);
+        Spacer(botHead.transform, 150);
         var bot = new List<RowBuild>();
         for (int i = 0; i < 4; i++)
         {
-            var r = DataRow(body.transform, "BotRow" + (i + 1), 528 + i * (RowH + 4));
-            var cells = new List<TMP_Text> { DataCell(r.root.transform, "Name", L, 360, 0) };
+            var r = DataRow(body.transform, "BotRow" + (i + 1), 546 + i * (RowH + 4));
+            var cells = new List<TMP_Text> { DataCell(r.root.transform, "Name", L, 330, 0) };
             for (int n = 0; n < 7; n++) cells.Add(DataCell(r.root.transform, "Hand" + (n + 1), R, 100, 1));
-            cells.Add(DataCell(r.root.transform, "Total", R, 170, 0));
+            cells.Add(DataCell(r.root.transform, "Total", R, 160, 0));
             r.cells = cells.ToArray();
-            var mk = DataCell(r.root.transform, "Leading", L, 130, 0);
-            mk.font = extraBold; mk.fontSizeMax = 26; mk.fontSizeMin = 18; mk.fontSize = 26; mk.color = new Color(1f, 0.82f, 0.30f);
+            var mk = DataCell(r.root.transform, "Leading", L, 150, 0);
+            mk.font = extraBold; mk.fontSizeMax = 32; mk.fontSizeMin = 28; mk.fontSize = 32; mk.color = new Color(1f, 0.82f, 0.30f);
             mk.margin = new Vector4(18, 0, 0, 0);
             r.marker = mk;
             bot.Add(r);
         }
 
-        var foot = Text(Band(body.transform, "Footer", 794, 50, Pad).transform, "Text", "", 36, bold);
+        var foot = Text(Band(body.transform, "Footer", 818, 56, Pad).transform, "Text", "", 36, bold);
         Fill(foot.gameObject, 0, 0, 0, 0);
         foot.richText = false;
 
@@ -345,6 +358,7 @@ public static partial class UiKitBuilder
         so.FindProperty("header").objectReferenceValue = header;
         so.FindProperty("penaltyLine").objectReferenceValue = pen;
         so.FindProperty("footer").objectReferenceValue = foot;
+        so.FindProperty("layoutSignature").stringValue = sig;
         var hh = so.FindProperty("handHeaders");
         hh.arraySize = 7;
         for (int n = 0; n < 7; n++) hh.GetArrayElementAtIndex(n).objectReferenceValue = handHeaders[n];
@@ -354,8 +368,15 @@ public static partial class UiKitBuilder
 
         win.SetActive(false);
         SameLayerAll(root, safe.gameObject.layer);
-        root.transform.SetAsLastSibling();
+        if (sibling >= 0) root.transform.SetSiblingIndex(sibling); else root.transform.SetAsLastSibling();
         return view;
+    }
+
+    static string SourceSignature()
+    {
+        var text = System.IO.File.ReadAllText("Assets/Osman/Editor/UiKitTable.cs").Replace("\r\n", "\n");
+        using (var md5 = System.Security.Cryptography.MD5.Create())
+            return System.BitConverter.ToString(md5.ComputeHash(System.Text.Encoding.UTF8.GetBytes(text))).Replace("-", "");
     }
 
     static void SetRows(SerializedProperty arr, List<RowBuild> rows)
@@ -439,12 +460,12 @@ public static partial class UiKitBuilder
     // Sabit sütun başlığı: LocText'li
     static void Title(GameObject row, string name, string key, float pref, float flex, TextAlignmentOptions al)
     {
-        var t = Label(row.transform, name, key, 26, extraBold);
+        var t = Label(row.transform, name, key, 32, extraBold);
         t.alignment = al;
         t.color = Mute;
         t.richText = false;
         t.margin = new Vector4(10, 0, 10, 0);
-        AutoSize(t, 26, 16);
+        AutoSize(t, 32, 28);
         Layout(t.gameObject, pref, flex);
     }
 

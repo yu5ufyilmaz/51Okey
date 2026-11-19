@@ -12,8 +12,24 @@ public static class ScoreboardText
 {
     public static string Signed(int v) => v > 0 ? "+" + v.ToString(CultureInfo.InvariantCulture) : v.ToString(CultureInfo.InvariantCulture);
     public static string Dash(int v) => v == 0 ? "-" : Signed(v);
-    // from'dan 0'a; eksiye düşmez
-    public static int Countdown(float startedAt, float now, int from) => Math.Max(0, (int)Math.Floor(from - (now - startedAt)));
+    // from'dan 0'a, kalan sürenin tavanı: başta from, 0'da durur
+    public static int Countdown(float startedAt, float now, int from) =>
+        Math.Min(from, Math.Max(0, (int)Math.Ceiling(from - (now - startedAt))));
+
+    // Başlık satırı; t anahtarı çevirir (Loc.T). Berabere: winner null.
+    public static string Header(int handIndex, int totalRounds, string winner, bool okey, bool pairs, bool kafa, int mult, string leader, Func<string, object[], string> t)
+    {
+        if (totalRounds > 0 && handIndex >= totalRounds) return t("table.match_over", new object[] { leader });
+        string s = t("table.hand_over", new object[] { handIndex });
+        if (winner == null) return s + " · " + t("table.pile_empty", new object[0]);
+        s += " · " + t("table.finished_by", new object[] { winner });
+        var parts = new List<string>();
+        if (okey) parts.Add(t("table.with_okey", new object[0]));
+        if (pairs) parts.Add(t("table.from_pairs", new object[0]));
+        if (kafa) parts.Add(t("table.kafa", new object[0]));
+        if (mult > 1) parts.Add("x" + mult);
+        return parts.Count > 0 ? s + " (" + string.Join(", ", parts) + ")" : s;
+    }
 }
 
 // Masa skor tablosu: el bitince kendiliğinden (kapatılamaz, geri sayım), el içinde TABLO düğmesiyle (aç/kapa).
@@ -43,7 +59,9 @@ public class ScoreboardView : MonoBehaviour
     [SerializeField] RowRefs[] topRows;        // 4, koltuk sırası
     [SerializeField] RowRefs[] botRows;        // 4
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     [NonSerialized] public int previewLocalSeat;   // yalnız ekran görüntüsü doğrulaması
+#endif
 
     MatchScores hooked;
     HandResultData shown;      // el sonu gösterilen el
@@ -54,6 +72,9 @@ public class ScoreboardView : MonoBehaviour
     bool Open => window != null && window.activeSelf;
 
     public bool IsShown => Open;
+
+    [SerializeField, HideInInspector] string layoutSignature;   // builder kaynağının imzası (yeniden kurulum gerekir mi)
+    public string LayoutSignature => layoutSignature;
 
     void Awake() => Instance = this;
     void OnDestroy() { if (Instance == this) Instance = null; }
@@ -141,16 +162,18 @@ public class ScoreboardView : MonoBehaviour
         if (s != lastSecs) { lastSecs = s; footer.text = FooterText(s); }
     }
 
-    bool IsLast(int hand, MatchScores m) => m.TotalRounds > 0 && hand >= m.TotalRounds;
+    static bool IsLast(int hand, MatchScores m) => m != null && m.TotalRounds > 0 && hand >= m.TotalRounds;
 
     string FooterText(int secs) =>
         shown != null && IsLast(shown.handIndex, MatchScores.Instance)
             ? Loc.T("table.back_to_lobby_in", secs)
             : Loc.T("table.next_hand_in", secs);
 
-    static int LocalSeat(int preview)
+    int LocalSeat()
     {
-        if (preview > 0) return preview;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (previewLocalSeat > 0) return previewLocalSeat;
+#endif
         try
         {
             var p = PhotonNetwork.LocalPlayer;
@@ -171,7 +194,7 @@ public class ScoreboardView : MonoBehaviour
         if (!Open || m == null) return;
         var hist = m.History;
         var hands = hist.Hands;
-        int me = LocalSeat(previewLocalSeat);
+        int me = LocalSeat();
         int rounds = Mathf.Clamp(m.TotalRounds > 0 ? m.TotalRounds : Mathf.Max(1, hands.Count), 1, MaxHands);
 
         var present = new bool[5];
@@ -208,10 +231,12 @@ public class ScoreboardView : MonoBehaviour
             if (!present[seat]) continue;
             Paint(row, seat == me, seat == me ? Loc.T("table.you") : NameOf(seat, m));
             var c = row.cells;
-            for (int k = 1; k < c.Length; k++) { c[k].text = "-"; c[k].color = Color.white; }
+            // el içinde yalnız CEZALAR dolu, öbür sütunlar boş
+            for (int k = 1; k < c.Length; k++) { c[k].text = shown == null ? "" : "-"; c[k].color = Color.white; }
             if (shown == null)
             {
                 c[2].text = ScoreboardText.Dash(running[seat]);
+                c[2].color = TotalColor(running[seat]);
             }
             else
             {
@@ -224,7 +249,9 @@ public class ScoreboardView : MonoBehaviour
                         : r.opened ? Loc.T("table.tiles_left", r.tilesLeft, ScoreboardText.Signed(r.handPoints))
                         : Loc.T("table.not_opened", ScoreboardText.Signed(r.handPoints));
                     c[2].text = ScoreboardText.Dash(r.inHandPenalty);
+                    c[2].color = TotalColor(r.inHandPenalty);
                     c[3].text = ScoreboardText.Dash(r.finishReward);
+                    c[3].color = TotalColor(r.finishReward);
                     c[4].text = ScoreboardText.Signed(r.handTotal);
                     c[4].color = TotalColor(r.handTotal);
                 }
@@ -274,16 +301,8 @@ public class ScoreboardView : MonoBehaviour
     {
         if (shown == null) return Loc.T("table.scoreboard_title");
         var d = shown;
-        if (IsLast(d.handIndex, m)) return Loc.T("table.match_over", NameOf(hist.LeaderSeat, m));
-        string s = Loc.T("table.hand_over", d.handIndex);
-        if (d.winnerSeat == 0) return s + " · " + Loc.T("table.pile_empty");
-        s += " · " + Loc.T("table.finished_by", NameOf(d.winnerSeat, m));
-        var parts = new List<string>();
-        if (d.okeyFinish) parts.Add(Loc.T("table.with_okey"));
-        if (d.pairsFinish) parts.Add(Loc.T("table.from_pairs"));
-        if (d.kafa) parts.Add(Loc.T("table.kafa"));
-        if (d.finishMultiplier > 1) parts.Add("x" + d.finishMultiplier);
-        return parts.Count > 0 ? s + " (" + string.Join(", ", parts) + ")" : s;
+        return ScoreboardText.Header(d.handIndex, m.TotalRounds, d.winnerSeat == 0 ? null : NameOf(d.winnerSeat, m), d.okeyFinish, d.pairsFinish, d.kafa,
+            d.finishMultiplier, NameOf(hist.LeaderSeat, m), (k, a) => Loc.T(k, a));
     }
 
     static string PenaltyLine(MatchScores.PenaltyEntry e) => PenaltyReasonText.Of(e.reason) + " " + ScoreboardText.Signed(e.amount);
@@ -304,9 +323,9 @@ public class ScoreboardView : MonoBehaviour
         for (int k = 1; k <= 4; k++) FitGroup(Col(topRows, k), 36f, 22f);
         var handCells = new List<TMP_Text>();
         for (int k = 1; k <= MaxHands; k++) handCells.AddRange(Col(botRows, k));
-        FitGroup(handCells, 36f, 20f);
+        FitGroup(handCells, 36f, 22f);
         FitGroup(Col(botRows, MaxHands + 1), 36f, 22f);
-        FitGroup(handHeaders.Where(h => h.gameObject.activeSelf).ToList(), 28f, 18f);
+        FitGroup(handHeaders.Where(h => h.gameObject.activeSelf).ToList(), 32f, 28f);
     }
 
     // görünen satırların k. sütun hücreleri

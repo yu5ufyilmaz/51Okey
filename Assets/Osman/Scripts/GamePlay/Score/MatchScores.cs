@@ -18,9 +18,19 @@ public class MatchScores : MonoBehaviourPunCallbacks
 
     public MatchHistory History { get; } = new MatchHistory();
     public string[] SeatNames { get; private set; } = new string[] { "", "", "", "" };
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     int previewRounds;
-    public int TotalRounds => previewRounds > 0 ? previewRounds :
-        PhotonNetwork.CurrentRoom != null && PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue("TotalRounds", out object v) && v is int n ? n : 0;
+#endif
+    public int TotalRounds
+    {
+        get
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (previewRounds > 0) return previewRounds;
+#endif
+            return PhotonNetwork.CurrentRoom != null && PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue("TotalRounds", out object v) && v is int n ? n : 0;
+        }
+    }
 
     public event Action Changed;
     public event Action<HandResultData> HandArrived;
@@ -121,6 +131,7 @@ public class MatchScores : MonoBehaviourPunCallbacks
         catch (Exception e) { Debug.LogException(e); }
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     // Yalnız ekran görüntüsü doğrulaması: sahte oda verisi (oyun akışı kullanmaz)
     public void PreviewSetRounds(int n) => previewRounds = n;
     public void PreviewSetSeatNames(string[] names) => SeatNames = names;
@@ -131,6 +142,7 @@ public class MatchScores : MonoBehaviourPunCallbacks
         if (!byHand.TryGetValue(handIndex, out var l)) byHand[handIndex] = l = new List<PenaltyEntry>();
         l.Add(e);
     }
+#endif
 
     // master
     public void WriteHand(HandResultData d)
