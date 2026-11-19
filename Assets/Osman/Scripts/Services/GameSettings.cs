@@ -5,6 +5,7 @@ public static class GameSettings
 {
     const string SoundKey = "Okey.Sound";
     const string MusicKey = "Okey.Music";
+    const string LanguageKey = "Okey.Language";
 
     public static bool SoundOn
     {
@@ -20,6 +21,16 @@ public static class GameSettings
     {
         get => PlayerPrefs.GetInt(MusicKey, 1) == 1;
         set => Save(MusicKey, value);
+    }
+
+    public static string Language
+    {
+        get => PlayerPrefs.GetString(LanguageKey, "");
+        set
+        {
+            PlayerPrefs.SetString(LanguageKey, value ?? "");
+            PlayerPrefs.Save();
+        }
     }
 
     // Açılışta kendiliğinden koşar; ayar sahne yüklenince geçerli olsun.
