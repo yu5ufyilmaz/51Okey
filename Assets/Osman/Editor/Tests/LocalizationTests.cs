@@ -28,4 +28,10 @@ public class LocalizationTests
         var r = LocAudit.CheckProject();
         Assert.IsEmpty(r.Errors, string.Join("\n", r.Errors));
     }
+    [Test] public void Leftover_Skips_Multiline_Log_But_Lists_Plain_Literal()
+    {
+        var l = LocAudit.LeftoverIn("A.cs", string.Join("\n","Debug.Log(", "  \"Şifre yanlış\");", "UIRoot.Toast(\"Şifre yanlış\");"));
+        Assert.AreEqual(1, l.Count);
+        StringAssert.StartsWith("A.cs:3:", l[0]);
+    }
 }

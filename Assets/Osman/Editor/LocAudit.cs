@@ -74,15 +74,38 @@ public static class LocAudit
         var r = Check(csv, files.Select(p => (p, File.ReadAllText(root + p.Substring("Assets".Length)))));
         foreach (var p in files.Where(IsMigratable))
         {
-            var lines = File.ReadAllLines(root + p.Substring("Assets".Length));
-            for (int i = 0; i < lines.Length; i++)
-            {
-                var l = lines[i].Trim();
-                if (l.StartsWith("//") || l.Contains("Debug.Log") || l.Contains("throw") || l.StartsWith("[MenuItem")) continue;
-                if (TurkishLiteral.IsMatch(l)) r.LeftoverLiterals.Add($"{p}:{i + 1}: {l}");
-            }
+            r.LeftoverLiterals.AddRange(LeftoverIn(p, File.ReadAllText(root + p.Substring("Assets".Length))));
         }
         return r;
+    }
+
+    // Log/throw ifadeleri `;` satırına kadar (çok satırlı olanlar dahil) atlanır.
+    internal static List<string> LeftoverIn(string path, string text)
+    {
+        var found = new List<string>();
+        var lines = text.Split((char)10);
+        bool skipping = false;
+        for (int i = 0; i < lines.Length; i++)
+        {
+            var l = lines[i].Trim();
+            if (l.StartsWith("//") || l.StartsWith("[MenuItem")) continue;
+            if (l.Contains("Debug.Log") || l.Contains("throw")) skipping = true;
+            if (skipping) { if (l.Contains(";")) skipping = false; continue; }
+            if (TurkishLiteral.IsMatch(l)) found.Add($"{path}:{i + 1}: {l}");
+        }
+        return found;
+    }
+
+    // Kaynak fontta olmayan harfler; <...> etiketleri, {n} ve boşluk/kontrol karakterleri sayılmaz.
+    internal static string MissingChars(TMP_FontAsset font, string v)
+    {
+        v = Regex.Replace(Regex.Replace(v, "<[^>]*>", ""), @"\{\d+\}", "");
+        var chars = v.Distinct().Where(c => !char.IsWhiteSpace(c) && !char.IsControl(c));
+        var src = font.sourceFontFile;
+        // Font.HasCharacter her harf için true döner; gerçek yüze FontEngine ile bakılır.
+        if (src != null && UnityEngine.TextCore.LowLevel.FontEngine.LoadFontFace(src, 90) == UnityEngine.TextCore.LowLevel.FontEngineError.Success)
+            return new string(chars.Where(c => !UnityEngine.TextCore.LowLevel.FontEngine.TryGetGlyphIndex(c, out _)).ToArray());
+        return font.HasCharacters(v, out List<char> missing) ? "" : new string(missing.Distinct().ToArray());
     }
 
     // Çevrilmeyen dosyalar (test, otomatik test, denetçi) ve Dil altyapısı hariç.
@@ -105,8 +128,8 @@ public static class LocAudit
                 foreach (var lang in t.Languages)
                 {
                     var v = t.Get(lang, key);
-                    if (v != null && !font.HasCharacters(v, out List<char> missing))
-                        r.MissingGlyphs.Add($"{key} ({lang}): {new string(missing.Distinct().ToArray())}");
+                    var miss = v == null ? "" : MissingChars(font, v);
+                    if (miss.Length > 0) r.MissingGlyphs.Add($"{key} ({lang}): {miss}");
                 }
         foreach (var e in r.Errors) Debug.LogError("[Dil] " + e);
         foreach (var w in r.Warnings) Debug.LogWarning("[Dil] " + w);
