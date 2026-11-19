@@ -264,7 +264,23 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     #region DRAG_HANDLERS
     // Sürükle-bırakı koddan yapar (süre dolunca otomatik hamle, test oyuncuları); insanla aynı kural yolundan geçer.
     // Overlay canvas: ekran noktası için kamera yok. OnBeginDrag hamleyi reddederse pointerDrag'i null yapar.
+    // Koddan sürüklerken sürükleme sesleri susar (yalnız Sfx çağrıları okur); finally ile her çıkışta kapanır.
+    static bool simulating;
+
     public static bool SimulateDrag(TileUI tile, Transform target)
+    {
+        simulating = true;
+        try
+        {
+            return SimulateDragCore(tile, target);
+        }
+        finally
+        {
+            simulating = false;
+        }
+    }
+
+    static bool SimulateDragCore(TileUI tile, Transform target)
     {
         var e = new PointerEventData(EventSystem.current)
         {
@@ -519,6 +535,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         _targetRotationZ = 0f;
         // --- SÜRÜKLEME BAŞLATILIYOR ---
         held = this;
+        if (!simulating) Sfx.Play(SfxId.TilePickUp);
         originalParent = transform.parent;
         canvasGroup.blocksRaycasts = false;
         transform.SetParent(transform.root, true);
@@ -681,6 +698,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         // Hedef yoksa eve dön
         if (bestTarget == null)
         {
+            if (!simulating) Sfx.Play(SfxId.TileSnapBack);
             _targetScale = _originalScale;
             StartCoroutine(SmoothMove(transform, originalParent));
             return;
@@ -712,6 +730,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                 }
 
                 // Atma cezası (okey/işlek) NextTurnRoutine'de: bitiren atış cezalanmaz.
+                Sfx.Play(SfxId.TileDiscard);
                 ExecuteNextTurn();
             }
             else
@@ -726,11 +745,13 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             // Ortadaki/yandaki taş ancak gerçekten çekilebiliyorsa ıstakaya girer; yoksa verisiz hayalet taş olurdu.
             if ((inMiddle || fromLeftContainer) && !(turnManager.IsPlayerTurn() && !turnManager.canDrop))
             {
+                if (!simulating) Sfx.Play(SfxId.TileSnapBack);
                 _targetScale = _originalScale;
                 StartCoroutine(SmoothMove(transform, originalParent));
                 return;
             }
 
+            bool fromPile = inMiddle || fromLeftContainer; // çekilen taşa TileDrop çalmaz
             // -- Taş Çekme Kontrolleri --
             if (turnManager.IsPlayerTurn() && !turnManager.canDrop)
             {
@@ -770,6 +791,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                 // Gösterge taşı kilitlidir, yerinden oynatılamaz.
                 if (residentUI != null && residentUI.isIndicatorTile)
                 {
+                    if (!simulating) Sfx.Play(SfxId.TileSnapBack);
                     _targetScale = _originalScale;
                     StartCoroutine(SmoothMove(transform, originalParent));
                     return;
@@ -784,6 +806,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                 // Eğer uygun ve güvenli bir boşluk bulunduysa oraya kaydır
                 if (smartEmptySpot != null)
                 {
+                    if (!simulating && !fromPile) Sfx.Play(SfxId.TileDrop);
                     residentUI.StartCoroutine(residentUI.SmoothMove(residentTile, smartEmptySpot.transform));
                     _targetScale = _originalScale;
                     StartCoroutine(SmoothMove(transform, bestTarget.transform));
@@ -791,6 +814,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                 // Boşluk yoksa mecburen TAKAS (SWAP) yap
                 else
                 {
+                    if (!simulating && !fromPile) Sfx.Play(SfxId.TileDrop);
                     residentUI.StartCoroutine(residentUI.SmoothMove(residentTile, originalParent));
                     _targetScale = _originalScale;
                     StartCoroutine(SmoothMove(transform, bestTarget.transform));
@@ -799,6 +823,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             // Bıraktığımız yer BOŞSA -> Direkt yerleş
             else
             {
+                if (!simulating && !fromPile) Sfx.Play(SfxId.TileDrop);
                 _targetScale = _originalScale;
                 StartCoroutine(SmoothMove(transform, bestTarget.transform));
             }

@@ -438,6 +438,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
     public void DistributeTilesToAllPlayers()
     {
+        Sfx.Play(SfxId.TilesDeal);
         playerNamesByQueue.Clear();
         foreach (var p in PhotonNetwork.PlayerList)
         {
@@ -584,6 +585,10 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             return;
         }
 
+        PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object sfxQue);
+        if (!(sfxQue is int sfxMine && sfxMine == playerNumber))
+            Sfx.Play(SfxId.TileDiscard, Sfx.OtherVolume);
+
         // A. Yana Atılan Görseli Oluştur (Side Tile)
         // Bu, hem atan kişide hem de rakiplerde çalışır. Böylece herkes atılan taşı görür.
         InstatiateSideTiles(playerNumber, hand[tileIndex]);
@@ -602,6 +607,8 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void AddTileFromMiddlePlayerList(int playerNumber)
     {
+        PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object sfxQue);
+        Sfx.Play(SfxId.TileDraw, sfxQue is int sfxMine && sfxMine == playerNumber ? 1f : Sfx.OtherVolume);
         switch (playerNumber)
         {
             case 1:
@@ -633,6 +640,8 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void AddTileFromDropPlayerList(int playerNumber)
     {
+        PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object sfxQue);
+        Sfx.Play(SfxId.TileTakeSide, sfxQue is int sfxMine && sfxMine == playerNumber ? 1f : Sfx.OtherVolume);
         switch (playerNumber)
         {
             case 1:
@@ -1885,6 +1894,8 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void ReturnTileToSide(int returningPlayerQue, Tiles tileToReturn)
     {
+        PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object sfxQue);
+        Sfx.Play(SfxId.PutBack, sfxQue is int sfxMine && sfxMine == returningPlayerQue ? 1f : Sfx.OtherVolume);
         // Taş, onu atan (bir önceki) oyuncunun atma yerine, ilk atıldığı yola geri döner.
         // Eskiden isimle aranan bir kutuya konuyor ve droppedTiles'a eklenmiyordu: sonra biri alınca
         // diğer ekranlarda yanlış görsel siliniyor, iade edilen taş masada hayalet gibi kalıyordu.
@@ -2093,6 +2104,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 $"[BOT-MOVE] Bot (P{playerQue}) {tileToDiscard.color} {tileToDiscard.number} taşını attı."
             );
 
+            Sfx.Play(SfxId.TileDiscard, Sfx.OtherVolume);
             // C) Listeden Sil
             hand.Remove(tileToDiscard);
 
