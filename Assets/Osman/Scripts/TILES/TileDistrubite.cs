@@ -904,6 +904,8 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     public void MeldTiles(int playerNumber, Tiles tileToRemove)
     {
         // 1. Masadaki görselleri oluştur (Tüm oyuncular için)
+        if (!(PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object sfxQue) && sfxQue is int q && q == playerNumber))
+            Sfx.Play(SfxId.MeldShown, Sfx.OtherVolume);
         InstatiateMeldTiles(playerNumber);
 
         // 2. İşlem yapılacak doğru listeyi seç
@@ -1821,6 +1823,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         );
         if (targetPlayer == null)
             return;
+        Sfx.Play(SfxId.TileProcess, Sfx.OtherVolume);
 
         GameObject meldContainer = GameObject.Find(targetPlayer.NickName + " meld");
         if (meldContainer == null)

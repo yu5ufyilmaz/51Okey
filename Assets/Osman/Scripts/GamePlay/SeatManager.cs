@@ -315,6 +315,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
     [PunRPC]
     private void AssignSeatToPlayer(int actorNumber, int seatNumber)
     {
+        Sfx.Play(SfxId.SeatTaken);
         Player player = PhotonNetwork.CurrentRoom.GetPlayer(actorNumber);
         if (player != null)
         {

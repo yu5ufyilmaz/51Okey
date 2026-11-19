@@ -551,6 +551,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         if (hasOpenedPairs && !hasOpenedSeries)
         {
             Debug.LogWarning("Sadece Çift açtığınız için Seri açamazsınız!");
+            Sfx.Play(SfxId.Error);
             return;
         }
 
@@ -567,6 +568,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 Debug.LogWarning(
                     "HATA: Tüm taşları açamazsınız! Oyunu bitirmek için elinizde en az 1 taş kalmalı."
                 );
+                Sfx.Play(SfxId.Error);
                 return;
             }
 
@@ -589,12 +591,14 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             }
             else
             {
+                Sfx.Play(SfxId.Error);
                 ShowLimitMessage(myCurrentScore, currentLimit);
             }
         }
         else
         {
             Debug.Log("Sıra sizde değil.");
+            Sfx.Play(SfxId.Error);
         }
     }
 
@@ -610,6 +614,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 Debug.LogWarning(
                     "Seri açtınız! Masada başkası Çift açmadığı sürece Çift açamazsınız."
                 );
+                Sfx.Play(SfxId.Error);
                 return;
             }
 
@@ -622,6 +627,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             if (currentHandCount - tilesToMeldCount < 1)
             {
                 Debug.LogWarning("HATA: Çift açarsanız atacak taşınız kalmaz!");
+                Sfx.Play(SfxId.Error);
                 return;
             }
 
@@ -643,6 +649,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 if (pairTotalPerCount < 1)
                 {
                     Debug.LogWarning("Elinizde geçerli bir çift per yok!");
+                    Sfx.Play(SfxId.Error);
                     return;
                 }
 
@@ -657,12 +664,14 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             }
             else
             {
+                Sfx.Play(SfxId.Error);
                 ShowLimitMessage(myPairScore, currentLimit);
             }
         }
         else
         {
             Debug.Log("Sıra sizde değil.");
+            Sfx.Play(SfxId.Error);
         }
     }
 
@@ -685,6 +694,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             && pendingMeldedTiles.Any(t => t.id == actionHistory.Peek().tileTaken.id)
         )
         {
+            Sfx.Play(SfxId.TilesCollect);
             TakeBackPers();
             return;
         }
@@ -692,6 +702,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         if (actionHistory.Count > 0)
         {
             Debug.Log("Akıllı Buton: Son işleme geri alınıyor...");
+            Sfx.Play(SfxId.TilesCollect);
             UndoLastProcess(); // Tekil işlemi geri al
             return; // Fonksiyondan çık, bir sonraki basışta diğerine bakar
         }
@@ -701,11 +712,13 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         if (pendingMeldedTiles.Count > 0)
         {
             Debug.Log("Akıllı Buton: Açılan perler geri toplanıyor...");
+            Sfx.Play(SfxId.TilesCollect);
             TakeBackPers(); // Tüm açılanları geri topla
             return;
         }
 
         Debug.Log("Geri alınacak herhangi bir işlem bulunamadı.");
+        Sfx.Play(SfxId.Error);
     }
 
     public void OnActiveButtonClick()
@@ -717,6 +730,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         else
         {
             Debug.Log("Oyuncunun sırası degil.");
+            Sfx.Play(SfxId.Error);
         }
     }
     #endregion
@@ -789,6 +803,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 if (rowIndex != -1)
                 {
                     hasOpenedAnyMeld = true;
+                    Sfx.Play(SfxId.OpenRuns);
                     isPlaced = true; // İŞARETLE: Bu per işlendi!
 
                     foreach (var tile in per)
@@ -906,6 +921,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 if (rowIndex != -1)
                 {
                     hasOpenedAnyMeld = true;
+                    Sfx.Play(SfxId.OpenRuns);
                     isPlaced = true;
 
                     foreach (var tile in per)
@@ -1070,6 +1086,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 if (rowIndex != -1)
                 {
                     hasOpenedAnyPair = true;
+                    Sfx.Play(SfxId.OpenPairs);
 
                     foreach (var tile in pair)
                     {
@@ -1575,9 +1592,11 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         if (!hasOpenedSeries && !hasOpenedPairs)
         {
             Debug.LogWarning("Taş işlemek için önce elinizi açmalısınız!");
+            Sfx.Play(SfxId.Error);
             return;
         }
 
+        int sfxHistoryBefore = actionHistory.Count; // yalnızca ses için
         bool actionTaken;
         int safetyLoop = 0;
 
@@ -1692,6 +1711,8 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 }
             }
         } while (actionTaken);
+        if (actionHistory.Count == sfxHistoryBefore)
+            Sfx.Play(SfxId.Error);
     }
 
     private void PerformTileProcessing(
@@ -1793,6 +1814,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 visualObject = tempGO,
             };
             actionHistory.Push(action);
+            Sfx.Play(SfxId.TileProcess);
             // Yandan alan, açmak yerine işleyerek de turu bitirebilir (TurnManager.CanFinishTurn).
             turnManager.hasProcessedThisTurn = true;
         }

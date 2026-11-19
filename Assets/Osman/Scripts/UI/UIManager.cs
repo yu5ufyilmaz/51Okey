@@ -203,6 +203,7 @@ public class UIManager : MonoBehaviourPunCallbacks
     private static readonly Color barGreen = new Color(0.03f, 1f, 0f);
     private static readonly Color barYellow = new Color(1f, 0.85f, 0f);
     private static readonly Color barRed = new Color(1f, 0.2f, 0.15f);
+    private float sfxPrevRemaining; // TimeLow kenar algılama
 
     private void Update()
     {
@@ -220,6 +221,10 @@ public class UIManager : MonoBehaviourPunCallbacks
         bool running = gm.isGameReady && !gm.isGameEnded && turnManager.TurnStartTime > 0;
         int active = (turnManager.currentTurnPlayer - myQue + 4) % 4;
         float left = running ? turnManager.TurnRemaining / turnManager.TurnSeconds : 0f;
+        float sfxRemaining = running ? turnManager.TurnRemaining : 0f;
+        if (running && active == 0 && Sfx.CrossedBelow(sfxPrevRemaining, sfxRemaining, 5f))
+            Sfx.Play(SfxId.TimeLow);
+        sfxPrevRemaining = sfxRemaining;
         for (int i = 0; i < turnIndicators.Length; i++)
         {
             var bar = TimerBar(i);
@@ -313,6 +318,7 @@ public class UIManager : MonoBehaviourPunCallbacks
             myQue = (int)val;
         if (myQue == 0 || playerQue < 1 || playerQue > 4)
             return;
+        Sfx.Play(Sfx.PenaltyFor(playerQue, myQue));
         // turnIndicators sıraya göre dizili (UpdateTurnIndicators ile aynı formül); isimlik onun ebeveyni.
         int idx = (playerQue - myQue + 4) % 4;
         if (idx >= turnIndicators.Length || turnIndicators[idx] == null)

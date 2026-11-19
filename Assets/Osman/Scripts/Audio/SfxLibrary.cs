@@ -18,6 +18,7 @@ public class SfxLibrary : ScriptableObject
 
     public Entry Find(SfxId id)
     {
+        if (entries == null) return null;
         foreach (var e in entries) if (e.id == id) return e;
         return null;
     }

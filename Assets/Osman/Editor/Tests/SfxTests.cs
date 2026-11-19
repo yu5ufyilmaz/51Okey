@@ -135,5 +135,42 @@ public class SfxTests
         var s = go.GetComponentInChildren<UiSfx>(true);
         Assert.IsNotNull(s, prefab); Assert.AreEqual(expected, s.id);
     }
+    [Test] public void PenaltyFor_Mine_And_Others()
+    {
+        Assert.AreEqual(SfxId.PenaltyTaken, Sfx.PenaltyFor(2, 2));
+        Assert.AreEqual(SfxId.PenaltyGiven, Sfx.PenaltyFor(3, 2));
+    }
+    [Test] public void FinishFor_Win_Lose_Draw()
+    {
+        Assert.AreEqual(SfxId.Win, Sfx.FinishFor(7, 7));
+        Assert.AreEqual(SfxId.Lose, Sfx.FinishFor(4, 7));
+        Assert.AreEqual(SfxId.Lose, Sfx.FinishFor(-1, 7));
+    }
+    [Test] public void CrossedBelow_Fires_Once_At_The_Edge()
+    {
+        Assert.IsTrue(Sfx.CrossedBelow(5.2f, 4.9f, 5f));
+        Assert.IsFalse(Sfx.CrossedBelow(4.9f, 4.5f, 5f));
+        Assert.IsFalse(Sfx.CrossedBelow(30f, 29f, 5f));
+        Assert.IsFalse(Sfx.CrossedBelow(0.2f, 30f, 5f));
+    }
+    [Test] public void Burst_Of_Same_Event_Plays_Once()
+    {
+        Sfx.UseLibrary(AllIds()); Sfx.ClearRecent();
+        for (int i = 0; i < 14; i++) Sfx.PlayAt(SfxId.MeldShown, 12.5f, Sfx.OtherVolume);
+        Assert.AreEqual(1, Sfx.Recent.Count);
+    }
+    [Test] public void Gate_Allows_When_Time_Goes_Backwards()
+    {
+        var g = new SfxGate();
+        Assert.IsTrue(g.Allow(1, 100f, 5f));
+        Assert.IsTrue(g.Allow(1, 1f, 5f));
+    }
+    [Test] public void Play_Does_Not_Throw_With_Null_Entries()
+    {
+        var lib = ScriptableObject.CreateInstance<SfxLibrary>(); lib.entries = null;
+        Sfx.UseLibrary(lib); LogAssert.ignoreFailingMessages = true;
+        Assert.DoesNotThrow(() => Sfx.Play(SfxId.MeldShown));
+        UnityEngine.Object.DestroyImmediate(lib);
+    }
     [TearDown] public void Restore() { Sfx.UseLibrary(null); Sfx.ClearRecent(); LogAssert.ignoreFailingMessages = false; }
 }

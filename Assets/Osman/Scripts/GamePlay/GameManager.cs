@@ -467,6 +467,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (!isGameReady)
             return;
         isGameEnded = true;
+        Sfx.Play(Sfx.FinishFor(winnerActorNumber, PhotonNetwork.LocalPlayer.ActorNumber));
 
         DesyncDetector.Report("Finish");
 

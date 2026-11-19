@@ -7,7 +7,7 @@ public sealed class SfxGate
 
     public bool Allow(int id, float now, float minInterval)
     {
-        if (last.TryGetValue(id, out var t) && now - t <= minInterval) return false;
+        if (last.TryGetValue(id, out var t) && now >= t && now - t <= minInterval) return false;
         last[id] = now;
         return true;
     }

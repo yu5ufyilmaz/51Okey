@@ -348,6 +348,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
         )
         {
             ResetTurnFlags();
+            Sfx.Play(SfxId.MyTurn);
         }
 
         if (UIManager.Instance != null)
@@ -544,6 +545,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
             {
                 canDrop = true; // Sadece sırası gelene atma izni ver
                 Debug.Log("Sıra bende, butonlar aktif.");
+                Sfx.Play(SfxId.MyTurn);
             }
         }
     }

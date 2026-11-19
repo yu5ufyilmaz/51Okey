@@ -717,6 +717,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                     Debug.LogWarning("KURAL HATASI: Açmadan bitiremezsiniz.");
                     Tiles returned = GameManager.Instance.CurrentSidePickTile ?? tileDataInfo;
                     GameManager.Instance.HandleFailedSidePick(this.tileDataInfo);
+                    if (!simulating) Sfx.Play(SfxId.Error);
                     // Atılmaya çalışılan taş yandan alınanın kendisiyse yana iade edildi (yeni görseli orada);
                     // bu görsel ıstakaya geri dönerse verisi olmayan hayalet taş olur.
                     if (returned.id == tileDataInfo.id)
@@ -735,6 +736,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             }
             else
             {
+                if (!simulating) Sfx.Play(SfxId.Error);
                 _targetScale = _originalScale;
                 StartCoroutine(SmoothMove(transform, originalParent));
             }
@@ -839,6 +841,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             {
                 if (!turnManager.canDrop)
                     Debug.LogWarning("Önce taş çekmelisiniz!");
+                if (!simulating) Sfx.Play(SfxId.Error);
                 _targetScale = _originalScale;
                 StartCoroutine(SmoothMove(transform, originalParent));
                 return;
@@ -854,6 +857,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                 gameObject.SetActive(false);
             else
             {
+                if (!simulating) Sfx.Play(SfxId.Error);
                 _targetScale = _originalScale;
                 StartCoroutine(SmoothMove(transform, originalParent));
             }

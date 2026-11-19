@@ -11,10 +11,19 @@ public static class Sfx
     static readonly HashSet<SfxId> warned = new HashSet<SfxId>();
     static SfxLibrary library;
     static AudioSource source;
+    static bool quitting, quitHooked;
+    // UnityEngine.Random dağıtım/koltuk tohumunu paylaşır; ses ayrı üreteç kullanır.
+    static readonly System.Random rng = new System.Random();
 
     public static IReadOnlyList<SfxId> Recent => recent;
 
     public static void ClearRecent() => recent.Clear();
+
+    public static SfxId PenaltyFor(int playerQue, int myQue) => playerQue == myQue ? SfxId.PenaltyTaken : SfxId.PenaltyGiven;
+
+    public static SfxId FinishFor(int winnerActor, int myActor) => winnerActor == myActor ? SfxId.Win : SfxId.Lose;
+
+    public static bool CrossedBelow(float previous, float current, float threshold) => previous > threshold && current <= threshold;
 
     // null: elle verilen listeyi unut, Resources'tan yeniden yükle.
     public static void UseLibrary(SfxLibrary lib)
@@ -28,6 +37,8 @@ public static class Sfx
     public static void PlayAt(SfxId id, float now, float volumeScale = 1f)
     {
         if (SyncAutoTest.Instance != null) return;
+        if (!quitHooked) { quitHooked = true; Application.quitting += () => quitting = true; }
+        if (quitting) return;
         if (library == null) library = Resources.Load<SfxLibrary>("SfxLibrary");
         var entry = library != null ? library.Find(id) : null;
         if (entry == null)
@@ -46,8 +57,8 @@ public static class Sfx
         if (clip == null || !Application.isPlaying) return;
 
         var src = GetSource();
-        src.pitch = 1f + Random.Range(-entry.pitchJitter, entry.pitchJitter);
-        src.PlayOneShot(clip, entry.volume * volumeScale);
+        src.pitch = 1f + (float)(rng.NextDouble() * 2 - 1) * entry.pitchJitter;
+        src.PlayOneShot(clip, Mathf.Clamp01(entry.volume * volumeScale));
     }
 
     static AudioClip PickClip(AudioClip[] clips)
@@ -56,7 +67,7 @@ public static class Sfx
         int n = 0;
         foreach (var c in clips) if (c != null) n++;
         if (n == 0) return null;
-        int k = Random.Range(0, n);
+        int k = rng.Next(n);
         foreach (var c in clips) if (c != null && k-- == 0) return c;
         return null;
     }
