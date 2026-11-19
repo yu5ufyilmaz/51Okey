@@ -315,12 +315,16 @@ public static partial class UiKitBuilder
         var old = win.Find("Close Shop Button");
         if (old != null)
         {
-            var rt = (RectTransform)old;
-            var pos = rt.anchoredPosition;
             Object.DestroyImmediate(old.gameObject);
-            var close = Nested(AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + "Btn_Close.prefab"), win, "Btn_Close");
-            Anchor(close, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), pos, new Vector2(120, 120));
-            UnityEventTools.AddPersistentListener(close.GetComponent<Button>().onClick, uw.Close);
+            var created = Nested(AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + "Btn_Close.prefab"), win, "Btn_Close");
+            UnityEventTools.AddPersistentListener(created.GetComponent<Button>().onClick, uw.Close);
+        }
+        // X panelin sağ üst köşesinde: görsel sağa 28 taşar, üstten 8 içeride (geniş ekranda üst çubuğa değmez, kart başlığına binmez); kartların üstünde
+        var close = win.Find("Btn_Close");
+        if (close != null)
+        {
+            Anchor(close.gameObject, Vector2.one, Vector2.one, Vector2.one, new Vector2(40, 4), new Vector2(120, 120));
+            close.SetAsLastSibling();
         }
         win.gameObject.SetActive(false);
         EditorUtility.SetDirty(shop);

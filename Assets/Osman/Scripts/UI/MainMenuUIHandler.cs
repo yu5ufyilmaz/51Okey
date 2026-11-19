@@ -29,7 +29,7 @@ public class MainMenuUIHandler : MonoBehaviour
     public GameObject retryPanel;
     public Button retryButton;
 
-    bool initDone, initFailed, autoTest, enteringLobby, photonDropped;
+    bool initDone, initFailed, autoTest, enteringLobby, photonDropped, retrying;
 
     // Seçim paneli sahnede açık, pencereler kapalı kayıtlıdır; açılışta yalnız "Bağlanıyor..." katmanı görünür.
     void Awake()
@@ -99,10 +99,17 @@ public class MainMenuUIHandler : MonoBehaviour
             {
                 enteringLobby = false;
                 photonDropped = true;
+                // Tekrar dene'ye basıldıktan sonra yine kopma: bildirim burada
+                if (retrying)
+                {
+                    retrying = false;
+                    UIRoot.Toast("Bağlanılamadı");
+                }
                 Show(EntryFlow.Screen.Retry);
                 yield break;
             }
         }
+        retrying = false;
         PhotonNetwork.NickName = GameServices.Profile.Current.DisplayName;
         SceneChangeManager.Instance.ChangeScene("LobbyMenu");
     }
@@ -183,6 +190,7 @@ public class MainMenuUIHandler : MonoBehaviour
     {
         retryButton.interactable = false;
         UIRoot.ShowLoading("Bağlanıyor...", false);
+        retrying = true;
         await PhotonManager.ConnectWhenReadyAsync();
         if (this == null)
             return;
@@ -191,6 +199,9 @@ public class MainMenuUIHandler : MonoBehaviour
         photonDropped = false;
         Refresh();
         if (EntryFlow.Next(initDone, initFailed, GameServices.HasSession, GameServices.NeedsName) == EntryFlow.Screen.Retry)
+        {
+            retrying = false;
             UIRoot.Toast("Bağlanılamadı");
+        }
     }
 }
