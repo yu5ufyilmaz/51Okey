@@ -1,167 +1,176 @@
+using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.IO;
 using Photon.Pun;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class MainMenuUIHandler : MonoBehaviourPunCallbacks
+// Giriş ekranı: kayıtlı oturum yoksa Misafir / Google seçimi, isim gerekiyorsa isim paneli, sonra lobi.
+public class MainMenuUIHandler : MonoBehaviour
 {
-    public TMP_InputField playerNameInput;
-    public TextMeshProUGUI buttonText;
+    public TextMeshProUGUI loadingText;
 
-    [Header("Hesap (yalnızca Firebase arka ucunda görünür)")]
+    [Header("Seçim")]
+    public GameObject choicePanel;
+    public Button guestButton;
     public Button googleButton;
-    public TextMeshProUGUI accountStatusText;
+    public TextMeshProUGUI statusText;
+
+    [Header("İsim")]
+    public GameObject namePanel;
+    public TMP_InputField nameInput;
+    public TextMeshProUGUI nameError;
+    public Button nameOkButton;
+
+    [Header("Tekrar dene")]
     public GameObject retryPanel;
     public Button retryButton;
-    public GameObject confirmSwitchPanel;
 
-    TaskCompletionSource<bool> switchAnswer;
-    string filledName;
+    bool initDone, initFailed, autoTest, enteringLobby;
 
+    // Paneller sahnede açık durur (Editör'de görünsün); açılışta yalnız "Yükleniyor..." görünür.
     void Awake()
     {
-        GameServices.InitFailed += OnInitFailed;
-        GameServices.Auth.UserChanged += RefreshAccount;
-        GameServices.Profile.Changed += OnProfileChanged;
-        GameServices.ConfirmAccountSwitch = AskSwitchAsync;
-        RefreshAccount();
-    }
-
-    void OnDestroy()
-    {
-        GameServices.InitFailed -= OnInitFailed;
-        GameServices.Auth.UserChanged -= RefreshAccount;
-        GameServices.Profile.Changed -= OnProfileChanged;
-        if (GameServices.ConfirmAccountSwitch == AskSwitchAsync)
-            GameServices.ConfirmAccountSwitch = null;
-        switchAnswer?.TrySetResult(false);
+        Show(EntryFlow.Screen.Loading);
+        // Editör'de Google girişi yok (yerel arka uç): düğme yalnız Firebase'de.
+        googleButton.gameObject.SetActive(GameServices.UsesFirebase);
+        nameInput.characterLimit = GameConfig.NameMax;
+        statusText.text = "";
+        nameError.text = "";
     }
 
     async void Start()
     {
-        // Init hatasını PhotonManager zaten loglar; burada yutulur.
-        try
-        {
-            await GameServices.InitAsync();
-            // Köprü (giriş ekranı İP2'de gelir): oturum yoksa eski davranış, misafir hesap açılır.
-            if (!GameServices.HasSession)
-                await GameServices.EnterAsGuestAsync();
-        }
-        catch (System.Exception e)
-        {
-            // Init hazırsa hata misafir girişinden gelmiştir: onu PhotonManager loglamaz.
-            if (GameServices.IsReady)
-                Debug.LogWarning("[SERVICES] misafir girişi olmadı: " + e.GetType().Name + " " + e.Message);
-        }
-        // Profil yüklenemediyse (Current null) isim kutusuna dokunma.
-        var profile = GameServices.Profile.Current;
-        if (profile != null && playerNameInput != null && string.IsNullOrEmpty(playerNameInput.text))
-        {
-            playerNameInput.text = profile.DisplayName;
-            filledName = profile.DisplayName;
-        }
-        RefreshAccount();
-    }
-
-    // Tekrar dene ya da hesap geçişi sonrası profil yüklenince isim kutusu dolar; oyuncunun yazdığı isim ezilmez.
-    void OnProfileChanged(PlayerProfile profile)
-    {
-        if (profile == null || playerNameInput == null)
-            return;
-        if (string.IsNullOrEmpty(playerNameInput.text) || playerNameInput.text == filledName)
-        {
-            playerNameInput.text = profile.DisplayName;
-            filledName = profile.DisplayName;
-        }
-        RefreshAccount();
-    }
-
-    void RefreshAccount()
-    {
+        GameSettings.Apply();
+        // Senkron testinde isim ve lobiye geçiş SyncAutoTest'in işi; koşul GameServices'tekiyle aynı.
+        autoTest = Application.isEditor && SyncAutoTestFiles.TryLoadConfig(Directory.GetCurrentDirectory(), out _);
+        // Init hatasını PhotonManager zaten loglar; burada yalnız Tekrar dene paneli açılır.
+        try { await GameServices.InitAsync(); }
+        catch (Exception) { }
         if (this == null)
             return;
-        bool firebase = GameServices.UsesFirebase;
-        bool guest = GameServices.Auth.IsGuest;
-        if (googleButton != null)
-            googleButton.gameObject.SetActive(firebase && guest && GameServices.IsReady);
-        if (accountStatusText != null)
-        {
-            accountStatusText.gameObject.SetActive(firebase && GameServices.IsReady);
-            accountStatusText.text = guest ? "Misafir hesap" : "Google hesabı bağlı";
-        }
+        initDone = true;
+        initFailed = !GameServices.IsReady;
+        Refresh();
     }
 
-    // Yerel arka uçta init hatası olsa da bağlanılır (PhotonManager); panel yalnızca Firebase'de.
-    void OnInitFailed(System.Exception e)
+    void Refresh()
     {
-        if (this != null && GameServices.UsesFirebase && retryPanel != null)
-            retryPanel.SetActive(true);
+        var screen = EntryFlow.Next(initDone, initFailed, GameServices.HasSession, GameServices.NeedsName);
+        if (autoTest && (screen == EntryFlow.Screen.AskName || screen == EntryFlow.Screen.Lobby))
+        {
+            Show(EntryFlow.Screen.Loading);
+            loadingText.text = "Bağlanıyor...";
+            return;
+        }
+        Show(screen);
+        if (screen == EntryFlow.Screen.Lobby && !enteringLobby)
+            StartCoroutine(EnterLobby());
+    }
+
+    void Show(EntryFlow.Screen screen)
+    {
+        loadingText.gameObject.SetActive(screen == EntryFlow.Screen.Loading || screen == EntryFlow.Screen.Lobby);
+        retryPanel.SetActive(screen == EntryFlow.Screen.Retry);
+        choicePanel.SetActive(screen == EntryFlow.Screen.Choose);
+        namePanel.SetActive(screen == EntryFlow.Screen.AskName);
+    }
+
+    // Lobiye geçiş tek yerde: Photon lobisi oturana kadar beklenir, NickName profil isminden gelir.
+    IEnumerator EnterLobby()
+    {
+        enteringLobby = true;
+        loadingText.text = "Bağlanıyor...";
+        while (!PhotonNetwork.InLobby)
+            yield return null;
+        PhotonNetwork.NickName = GameServices.Profile.Current.DisplayName;
+        SceneChangeManager.Instance.ChangeScene("LobbyMenu");
+    }
+
+    // Çift dokunuş ikinci hesap açmasın: iş sürerken iki giriş düğmesi de kapalı (GameServices başka işlemi fırlatır).
+    void SetEntryBusy(bool busy)
+    {
+        guestButton.interactable = !busy;
+        googleButton.interactable = !busy;
+        if (busy)
+            statusText.text = "";
+    }
+
+    public async void PlayAsGuest()
+    {
+        SetEntryBusy(true);
+        try { await GameServices.EnterAsGuestAsync(); }
+        catch (Exception e)
+        {
+            Debug.LogWarning("[SERVICES] misafir girişi olmadı: " + e.GetType().Name + " " + e.Message);
+            if (this == null)
+                return;
+            SetEntryBusy(false);
+            statusText.text = "Bağlanılamadı";
+            return;
+        }
+        if (this == null)
+            return;
+        SetEntryBusy(false);
+        Refresh();
+    }
+
+    // İptal ya da hata: seçim ekranında kalınır, misafir hesap açılmaz.
+    public async void PlayWithGoogle()
+    {
+        SetEntryBusy(true);
+        LinkResult result;
+        try { result = await GameServices.EnterWithGoogleAsync(); }
+        catch (Exception e)
+        {
+            // Google girişi olup profil yüklenemediyse de buraya düşer.
+            Debug.LogWarning("[SERVICES] Google girişi olmadı: " + e.GetType().Name + " " + e.Message);
+            result = LinkResult.Failed;
+        }
+        if (this == null)
+            return;
+        SetEntryBusy(false);
+        if (result == LinkResult.Cancelled)
+            statusText.text = "Google girişi tamamlanmadı";
+        else if (result == LinkResult.Failed)
+            statusText.text = "Google'a bağlanılamadı";
+        Refresh();
+    }
+
+    public async void ConfirmName()
+    {
+        if (!GameConfig.IsValidName(nameInput.text))
+        {
+            nameError.text = "İsim 2-16 karakter olmalı";
+            return;
+        }
+        nameError.text = "";
+        nameOkButton.interactable = false;
+        try { await GameServices.Profile.SetDisplayNameAsync(nameInput.text); }
+        catch (Exception e)
+        {
+            Debug.LogWarning("[SERVICES] isim kaydedilemedi: " + e.GetType().Name + " " + e.Message);
+            if (this == null)
+                return;
+            nameOkButton.interactable = true;
+            nameError.text = "Bağlanılamadı";
+            return;
+        }
+        if (this == null)
+            return;
+        nameOkButton.interactable = true;
+        Refresh();
     }
 
     public async void RetryConnect()
     {
         retryButton.interactable = false;
-        bool ok = await PhotonManager.ConnectWhenReadyAsync();
+        await PhotonManager.ConnectWhenReadyAsync();
         if (this == null)
             return;
         retryButton.interactable = true;
-        retryPanel.SetActive(!ok);
-        RefreshAccount();
-    }
-
-    public async void LinkGoogle()
-    {
-        googleButton.interactable = false;
-        accountStatusText.text = "Google'a bağlanıyor...";
-        var result = await GameServices.Auth.LinkGoogleAsync();
-        if (this == null)
-            return;
-        googleButton.interactable = true;
-        RefreshAccount();
-        if (result == LinkResult.Failed)
-            accountStatusText.text = "Google'a bağlanılamadı";
-        else if (result == LinkResult.Cancelled)
-            accountStatusText.text = "Google girişi tamamlanmadı";
-    }
-
-    Task<bool> AskSwitchAsync()
-    {
-        switchAnswer?.TrySetResult(false);
-        switchAnswer = new TaskCompletionSource<bool>();
-        confirmSwitchPanel.SetActive(true);
-        return switchAnswer.Task;
-    }
-
-    public void ConfirmSwitchYes() => AnswerSwitch(true);
-
-    public void ConfirmSwitchNo() => AnswerSwitch(false);
-
-    void AnswerSwitch(bool yes)
-    {
-        confirmSwitchPanel.SetActive(false);
-        switchAnswer?.TrySetResult(yes);
-        switchAnswer = null;
-    }
-
-    //Main menü kısmındaki kodların Manager Scripti.
-    // Bu kısıma Google Hesaplarını, Facebook hesaplarını bağlama eklenecek.
-    public void ConnectLobby()
-    {
-        if (PhotonNetwork.InLobby)
-        {
-            if (playerNameInput.text.Length > 1)
-            {
-                PhotonNetwork.NickName = playerNameInput.text;
-                // Her lobi girişinde değil, yalnızca isim değiştiyse yaz (Firestore'da her yazım ağ isteği).
-                if (GameServices.Profile.Current?.DisplayName != playerNameInput.text.Trim())
-                    _ = GameServices.Profile.SetDisplayNameAsync(playerNameInput.text);
-
-                buttonText.text = "Connecting...";
-                SceneChangeManager.Instance.ChangeScene("LobbyMenu");
-            }
-        }
+        initFailed = !GameServices.IsReady;
+        Refresh();
     }
 }

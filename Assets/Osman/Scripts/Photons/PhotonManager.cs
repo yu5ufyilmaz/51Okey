@@ -49,7 +49,9 @@ public class PhotonManager : MonoBehaviourPunCallbacks
             if (GameServices.UsesFirebase)
                 return false;
         }
-        PhotonNetwork.ConnectUsingSettings();
+        // Çıkıştan sonra MainMenu yeniden yüklenir; bağlantı sürüyorsa ikinci kez bağlanılmaz.
+        if (!PhotonNetwork.IsConnected)
+            PhotonNetwork.ConnectUsingSettings();
         return true;
     }
 
