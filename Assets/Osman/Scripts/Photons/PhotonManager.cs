@@ -70,7 +70,7 @@ public class PhotonManager : MonoBehaviourPunCallbacks
     public override void OnJoinRoomFailed(short returnCode, string message)
     {
         UIRoot.HideLoading();
-        UIRoot.Toast(JoinErrorText.For(returnCode));
+        UIRoot.Toast(Loc.T(JoinErrorText.For(returnCode)));
         Debug.LogWarning("Failed to join room: " + returnCode + " " + message);
         BackToLobby();
     }
@@ -96,7 +96,7 @@ public class PhotonManager : MonoBehaviourPunCallbacks
     public override void OnCreateRoomFailed(short returnCode, string message)
     {
         UIRoot.HideLoading();
-        UIRoot.Toast(JoinErrorText.For(returnCode));
+        UIRoot.Toast(Loc.T(JoinErrorText.For(returnCode)));
         Debug.LogWarning("Failed to create room: " + returnCode + " " + message);
         BackToLobby();
     }

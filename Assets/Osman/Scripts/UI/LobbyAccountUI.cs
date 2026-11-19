@@ -47,17 +47,21 @@ public class LobbyAccountUI : MonoBehaviour
 
         nameInput.characterLimit = GameConfig.NameMax;
         nameError.text = "";
-        versionText.text = "Sürüm " + Application.version;
         SyncToggles();
         RefreshLanguage();
-        RefreshCurrent();
     }
 
     void OnEnable() => Loc.Changed += RefreshLanguage;
 
     void OnDisable() => Loc.Changed -= RefreshLanguage;
 
-    void RefreshLanguage() => languageValue.text = Loc.NameOf(Loc.Language);
+    // Dil değişince dile bağlı her yazı yeniden yazılır
+    void RefreshLanguage()
+    {
+        languageValue.text = Loc.NameOf(Loc.Language);
+        versionText.text = Loc.T("settings.version", Application.version);
+        RefreshCurrent();
+    }
 
     void OnDestroy()
     {
@@ -83,14 +87,14 @@ public class LobbyAccountUI : MonoBehaviour
         nameHint.gameObject.SetActive(!canChangeName);
         if (profile == null)
             return;
-        chipText.text = profile.DisplayName + " · Seviye " + profile.Level;
+        chipText.text = Loc.T("profile.chip", profile.DisplayName, profile.Level);
         nameText.text = profile.DisplayName;
-        levelText.text = "Seviye " + profile.Level;
-        xpText.text = profile.Xp % GameConfig.XpPerLevel + " / " + GameConfig.XpPerLevel + " XP";
+        levelText.text = Loc.T("profile.level", profile.Level);
+        xpText.text = Loc.T("profile.xp", profile.Xp % GameConfig.XpPerLevel, GameConfig.XpPerLevel);
         xpBar.fillAmount = profile.Xp % GameConfig.XpPerLevel / (float)GameConfig.XpPerLevel;
         coinText.text = profile.Coins.ToString();
         lobbyCoinText.text = profile.Coins.ToString();
-        accountText.text = GameServices.Auth.IsGuest ? "Misafir hesap" : "Google hesabı";
+        accountText.text = GameServices.Auth.IsGuest ? Loc.T("account.type_guest") : Loc.T("account.type_google");
         // Yazılırken (ör. Changed başka sebeple gelince) kutudaki metin ezilmesin.
         if (!nameInput.isFocused)
             nameInput.text = profile.DisplayName;
@@ -136,7 +140,7 @@ public class LobbyAccountUI : MonoBehaviour
             if (this == null)
                 return;
             nameSaveButton.interactable = true;
-            nameError.text = NameFlow.ErrorText(result);
+            nameError.text = NameFlow.ErrorText(result) is { Length: > 0 } key ? Loc.T(key) : "";
             if (result != NameResult.Ok)
                 return;
             SyncNickName();
@@ -166,13 +170,13 @@ public class LobbyAccountUI : MonoBehaviour
                 return;
             linkGoogleButton.interactable = true;
             if (result == LinkResult.Cancelled)
-                UIRoot.Toast("Google girişi tamamlanmadı");
+                UIRoot.Toast(Loc.T("toast.google_cancelled"));
             else if (result == LinkResult.Failed)
-                UIRoot.Toast("Google'a bağlanılamadı");
+                UIRoot.Toast(Loc.T("toast.google_failed"));
             // Google hesabına geçildi (bağlandı ya da var olan hesaba geçti) ve isim gerekiyor: isim kutusu açılır
             // (RefreshCurrent), sonraki açılışta da sorulur.
             else if (GameServices.NeedsName)
-                UIRoot.Toast("İsmini seçebilirsin");
+                UIRoot.Toast(Loc.T("toast.choose_name"));
             // Geçiş yarıda kalınca yeni misafire düşülebilir: Photon adı her sonuçta profille eşitlenir.
             SyncNickName();
             RefreshCurrent();
@@ -186,8 +190,8 @@ public class LobbyAccountUI : MonoBehaviour
     // Google hesabı başka profile bağlıysa GameServices oyuncuya sorar (eski MainMenu deseni).
     Task<bool> AskSwitchAsync() =>
         UIRoot.Confirm(
-            "Kayıtlı hesap bulundu",
-            "Bu Google hesabı başka bir oyuncu profiline bağlı.\nBu cihazdaki misafir ilerleme silinecek, kayıtlı hesabına geçilecek. Devam edilsin mi?"
+            Loc.T("account.switch_title"),
+            Loc.T("account.switch_body")
         );
 
     public void OpenSettings()
@@ -238,15 +242,15 @@ public class LobbyAccountUI : MonoBehaviour
     {
         try
         {
-            if (!await UIRoot.Confirm("Hesabımı Sil",
-                    "Hesabın, ismin, seviyen ve coinlerin kalıcı olarak silinir. Satın aldıkların da gider. Geri alınamaz.",
-                    "Devam", true) || this == null)
+            if (!await UIRoot.Confirm(Loc.T("settings.delete_account"),
+                    Loc.T("account.delete_body"),
+                    Loc.T("account.delete_continue"), true) || this == null)
                 return;
-            if (!await UIRoot.Confirm("Emin misin?", "Hesabın şimdi silinecek.", "Hesabı Sil", true) || this == null)
+            if (!await UIRoot.Confirm(Loc.T("account.delete_sure_title"), Loc.T("account.delete_sure_body"), Loc.T("account.delete_sure_yes"), true) || this == null)
                 return;
             // Silme sürerken uygulamadan çıkılırsa sonraki açılış sessizce başlangıç profili kurar: geri tuşu kapalı.
             UIRoot.BackBlocked = true;
-            UIRoot.ShowLoading("Hesap siliniyor...", false);
+            UIRoot.ShowLoading(Loc.T("account.deleting"), false);
             DeleteResult result;
             try
             {
@@ -269,19 +273,19 @@ public class LobbyAccountUI : MonoBehaviour
                     break;
                 // Oyuncunun yapacağı iş anlatılıyor: kısa bildirim yerine okunup kapatılan pencere
                 case DeleteResult.NeedsRecentLogin:
-                    await UIRoot.Notice("Tekrar giriş gerekli",
-                        "Güvenlik için hesabın silinmeden önce yeniden giriş yapman gerekiyor. Çıkış yap, tekrar giriş yap ve yeniden dene. Hiçbir şey silinmedi.");
+                    await UIRoot.Notice(Loc.T("account.relogin_title"),
+                        Loc.T("account.relogin_body"));
                     break;
                 case DeleteResult.DataDeletedAccountRemains:
                     // Servis yeni başlangıç profilini yükledi, oturum sürüyor: lobi onu göstersin
                     CloseSettings();
                     SyncNickName();
                     RefreshCurrent();
-                    await UIRoot.Notice("Hesap kapatılamadı",
-                        "Verilerin silindi ama hesabın kapatılamadı. Tekrar giriş yapıp Ayarlar'dan yeniden dene.");
+                    await UIRoot.Notice(Loc.T("account.close_failed_title"),
+                        Loc.T("account.close_failed_body"));
                     break;
                 default:
-                    UIRoot.Toast("Hesap silinemedi, tekrar dene");
+                    UIRoot.Toast(Loc.T("account.delete_failed"));
                     break;
             }
         }
@@ -297,9 +301,9 @@ public class LobbyAccountUI : MonoBehaviour
         try
         {
             string body = GameServices.Auth.IsGuest
-                ? "Misafir hesabından çıkarsan ilerlemen kaybolur."
-                : "Hesabından çıkılsın mı?";
-            if (!await UIRoot.Confirm("Çıkış yap", body, "Çıkış yap", true) || this == null)
+                ? Loc.T("account.sign_out_guest")
+                : Loc.T("account.sign_out_google");
+            if (!await UIRoot.Confirm(Loc.T("account.sign_out"), body, Loc.T("account.sign_out"), true) || this == null)
                 return;
             signOutButton.interactable = false;
             try { await GameServices.SignOutAsync(); }
@@ -309,7 +313,7 @@ public class LobbyAccountUI : MonoBehaviour
                 if (this == null)
                     return;
                 signOutButton.interactable = true;
-                UIRoot.Toast("Çıkış yapılamadı");
+                UIRoot.Toast(Loc.T("toast.sign_out_failed"));
                 return;
             }
             if (this == null)

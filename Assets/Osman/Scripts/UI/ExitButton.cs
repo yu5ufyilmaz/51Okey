@@ -21,7 +21,7 @@ public class ExitButton : MonoBehaviourPunCallbacks
     // Masadaki "Çıkış Butonu" ve geri tuşu buraya gelir ve önce onay sorar; oyun sonu odadan buraya uğramadan doğrudan çıkar.
     public async void AskExit()
     {
-        if (await UIRoot.Confirm("Masadan ayrıl", "Masadan ayrılmak istiyor musun?", "Ayrıl", true) && this != null)
+        if (await UIRoot.Confirm(Loc.T("table.leave_title"), Loc.T("table.leave_body"), Loc.T("table.leave_yes"), true) && this != null)
             ExitGame();
     }
 

@@ -34,7 +34,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
     static void Refused()
     {
         UIRoot.HideLoading();
-        UIRoot.Toast("Bağlantı bekleniyor, tekrar dene");
+        UIRoot.Toast(Loc.T("toast.wait_connection"));
     }
 
     // Oda oluşturma işlemi
@@ -71,7 +71,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
         roomOptions.CustomRoomPropertiesForLobby = new string[] { PwHashKey, "TotalRounds", SeatsKey };
 
         SetPickSeat(false);
-        UIRoot.ShowLoading("Masa kuruluyor...");
+        UIRoot.ShowLoading(Loc.T("room.creating"));
         if (!PhotonNetwork.CreateRoom(roomName, roomOptions, TypedLobby.Default)) Refused();
     }
 
@@ -115,7 +115,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
             { PwHashKey, "" },
         };
         SetPickSeat(false);
-        UIRoot.ShowLoading("Masaya giriliyor...");
+        UIRoot.ShowLoading(Loc.T("room.joining"));
         if (!PhotonNetwork.JoinRandomRoom(expectedProps, (byte)maxPlayers)) Refused();
     }
 
@@ -142,7 +142,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
             JoinRoomAtSeat(_roomName, seat); // Artık isim ve şifre kesinlikle doğru
             return true;
         }
-        UIRoot.Toast("Şifre yanlış");
+        UIRoot.Toast(Loc.T("toast.wrong_password"));
         return false;
     }
 
@@ -153,7 +153,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
     public void JoinRoomAtSeat(string roomName, int seat)
     {
         SetPickSeat(true, seat);
-        UIRoot.ShowLoading("Masaya giriliyor...");
+        UIRoot.ShowLoading(Loc.T("room.joining"));
         if (!PhotonNetwork.JoinRoom(roomName)) Refused();
     }
 

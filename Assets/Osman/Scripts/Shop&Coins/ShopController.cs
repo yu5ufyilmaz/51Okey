@@ -52,7 +52,7 @@ public class ShopController : MonoBehaviour
     public void RemoveAdsButton()
     {
         adsBuyButton.GetComponent<Button>().interactable = false;
-        adsBuyButton.GetComponentInChildren<TextMeshProUGUI>().text = "Active";
+        adsBuyButton.GetComponentInChildren<TextMeshProUGUI>().text = Loc.T("shop.active");
     }
 
     public void AddCoins(int coinAmount)

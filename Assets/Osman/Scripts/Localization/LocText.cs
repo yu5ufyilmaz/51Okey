@@ -10,6 +10,9 @@ public class LocText : MonoBehaviour
     void OnEnable() { Refresh(); Loc.Changed += Refresh; }
     void OnDisable() => Loc.Changed -= Refresh;
 
+    // Çalışma zamanında iki üç sabit durumu olan metinler anahtarı değiştirir; yazan hep LocText kalır.
+    public void SetKey(string newKey) { key = newKey; Refresh(); }
+
     void Refresh()
     {
         if (string.IsNullOrEmpty(key)) return;

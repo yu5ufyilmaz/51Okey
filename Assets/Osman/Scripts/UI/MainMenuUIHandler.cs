@@ -76,7 +76,7 @@ public class MainMenuUIHandler : MonoBehaviour
     void Show(EntryFlow.Screen screen)
     {
         if (screen == EntryFlow.Screen.Loading || screen == EntryFlow.Screen.Lobby)
-            UIRoot.ShowLoading("Bağlanıyor...", false);
+            UIRoot.ShowLoading(Loc.T("login.connecting"), false);
         else
             UIRoot.HideLoading();
         // Pencere ortadaki gövdesiyle büyük başlığı ikiye bölüyor: pencere açıkken başlık gizlenir
@@ -103,7 +103,7 @@ public class MainMenuUIHandler : MonoBehaviour
                 if (retrying)
                 {
                     retrying = false;
-                    UIRoot.Toast("Bağlanılamadı");
+                    UIRoot.Toast(Loc.T("login.connection_failed"));
                 }
                 Show(EntryFlow.Screen.Retry);
                 yield break;
@@ -124,7 +124,7 @@ public class MainMenuUIHandler : MonoBehaviour
     public async void PlayAsGuest()
     {
         SetEntryBusy(true);
-        UIRoot.ShowLoading("Giriş yapılıyor...", false);
+        UIRoot.ShowLoading(Loc.T("login.signing_in"), false);
         try { await GameServices.EnterAsGuestAsync(); }
         catch (Exception e)
         {
@@ -133,7 +133,7 @@ public class MainMenuUIHandler : MonoBehaviour
                 return;
             SetEntryBusy(false);
             UIRoot.HideLoading();
-            UIRoot.Toast("Bağlanılamadı");
+            UIRoot.Toast(Loc.T("login.connection_failed"));
             return;
         }
         if (this == null)
@@ -147,7 +147,7 @@ public class MainMenuUIHandler : MonoBehaviour
     public async void PlayWithGoogle()
     {
         SetEntryBusy(true);
-        UIRoot.ShowLoading("Giriş yapılıyor...", false);
+        UIRoot.ShowLoading(Loc.T("login.signing_in"), false);
         LinkResult result;
         try { result = await GameServices.EnterWithGoogleAsync(); }
         catch (Exception e)
@@ -161,10 +161,16 @@ public class MainMenuUIHandler : MonoBehaviour
         SetEntryBusy(false);
         UIRoot.HideLoading();
         if (result == LinkResult.Cancelled)
-            UIRoot.Toast("Google girişi tamamlanmadı");
+            UIRoot.Toast(Loc.T("toast.google_cancelled"));
         else if (result == LinkResult.Failed)
-            UIRoot.Toast("Google'a bağlanılamadı");
+            UIRoot.Toast(Loc.T("toast.google_failed"));
         Refresh();
+    }
+
+    static string ErrorTextOf(NameResult result)
+    {
+        string key = NameFlow.ErrorText(result);
+        return key.Length == 0 ? "" : Loc.T(key);
     }
 
     public async void ConfirmName()
@@ -181,7 +187,7 @@ public class MainMenuUIHandler : MonoBehaviour
         if (this == null)
             return;
         nameOkButton.interactable = true;
-        nameError.text = NameFlow.ErrorText(result);
+        nameError.text = ErrorTextOf(result);
         if (result == NameResult.Ok)
             Refresh();
     }
@@ -189,7 +195,7 @@ public class MainMenuUIHandler : MonoBehaviour
     public async void RetryConnect()
     {
         retryButton.interactable = false;
-        UIRoot.ShowLoading("Bağlanıyor...", false);
+        UIRoot.ShowLoading(Loc.T("login.connecting"), false);
         retrying = true;
         await PhotonManager.ConnectWhenReadyAsync();
         if (this == null)
@@ -201,7 +207,7 @@ public class MainMenuUIHandler : MonoBehaviour
         if (EntryFlow.Next(initDone, initFailed, GameServices.HasSession, GameServices.NeedsName) == EntryFlow.Screen.Retry)
         {
             retrying = false;
-            UIRoot.Toast("Bağlanılamadı");
+            UIRoot.Toast(Loc.T("login.connection_failed"));
         }
     }
 }

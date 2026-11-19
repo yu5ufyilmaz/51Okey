@@ -102,7 +102,6 @@ public class SeatManager : MonoBehaviourPunCallbacks
         UpdateSeatDisplay(); // Update the seat display for the local player
     }
 
-    const string SeatTakenMessage = "Koltuk doldu, başka bir yer seç";
 
     // İstek bir kez yapılır ve özellik silinir: aynı odada sahne yeniden yüklenince tekrar istenmesin.
     // Koltuk alınamazsa oyuncu oturmadan kalır, masadaki "OTUR" etiketleriyle seçer.
@@ -120,7 +119,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
             return;
         if (TakenSeats().Contains(wanted))
         {
-            UIRoot.Toast(SeatTakenMessage);
+            UIRoot.Toast(Loc.T("table.seat_taken"));
             return;
         }
         RequestSeat(wanted);
@@ -131,7 +130,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
     {
         yield return new WaitForSeconds(2f);
         if (!IsSeated(PhotonNetwork.LocalPlayer)) // bu arada başka OTUR'a dokunup oturduysa bildirim yok
-            UIRoot.Toast(SeatTakenMessage);
+            UIRoot.Toast(Loc.T("table.seat_taken"));
     }
 
     // Lobideki oda satırı koltukları bu özellikten okur. Yalnız master yazar; oyun başlayınca yazılmaz.

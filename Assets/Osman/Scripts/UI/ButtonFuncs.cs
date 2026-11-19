@@ -9,7 +9,6 @@ using UnityEngine.UI;
 public class ButtonFuncs : MonoBehaviourPunCallbacks
 {
     const float RedrawInterval = 0.5f;
-    const string WaitMessage = "Bağlantı bekleniyor, tekrar dene";
     const float ListWaitSeconds = 2f; // boş lobide sunucu liste göndermeyebilir: bu süreden sonra "masa yok" denir
 
     [Header("Masa kartları")]
@@ -44,6 +43,26 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
     int roundIndex;
     LobbyRoom selectedRoom; // şifre penceresi açıkken seçilen masa ve koltuk
     int selectedSeat;
+
+    public override void OnEnable()
+    {
+        base.OnEnable();
+        Loc.Changed += OnLanguageChanged;
+    }
+
+    public override void OnDisable()
+    {
+        base.OnDisable();
+        Loc.Changed -= OnLanguageChanged;
+    }
+
+    // Kartlar, boş liste yazısı ve el sayısı yeni dilde yazılır
+    void OnLanguageChanged()
+    {
+        redrawPending = true;
+        if (roundsText != null)
+            ShowRounds();
+    }
 
     void Start()
     {
@@ -100,7 +119,7 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
             return false;
         if (PhotonNetwork.InLobby)
             return true;
-        UIRoot.Toast(WaitMessage);
+        UIRoot.Toast(Loc.T("toast.wait_connection"));
         return false;
     }
 
@@ -144,7 +163,7 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
         ShowRounds();
     }
 
-    void ShowRounds() => roundsText.text = Rounds + " el";
+    void ShowRounds() => roundsText.text = Loc.T("room.rounds_count", Rounds);
 
     int Rounds => roundOptions.Length > 0 ? roundOptions[Mathf.Clamp(roundIndex, 0, roundOptions.Length - 1)] : 1;
 
@@ -156,12 +175,12 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
         string rName = roomNameInput.text.Trim();
         if (rName.Length == 0)
         {
-            UIRoot.Toast("Masa adı boş olamaz");
+            UIRoot.Toast(Loc.T("toast.table_name_empty"));
             return;
         }
         if (passwordToggle.isOn && string.IsNullOrWhiteSpace(passwordInput.text))
         {
-            UIRoot.Toast("Şifre boş olamaz");
+            UIRoot.Toast(Loc.T("toast.password_empty"));
             return;
         }
         roomManager.CreateCustomRoom(rName, passwordInput.text, Rounds, passwordToggle.isOn);
@@ -272,7 +291,7 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
             cards.Remove(name);
         }
         emptyCard.SetActive(visible.Count == 0);
-        emptyTitle.text = listArrived ? "Açık masa yok" : "Masalar yükleniyor...";
+        emptyTitle.GetComponent<LocText>().SetKey(listArrived ? "lobby.no_open_table" : "lobby.tables_loading");
         emptyBody.SetActive(listArrived);
         snapScroll.Settle(centredName != null && cards.TryGetValue(centredName, out RoomCard kept) ? kept.transform : null);
     }

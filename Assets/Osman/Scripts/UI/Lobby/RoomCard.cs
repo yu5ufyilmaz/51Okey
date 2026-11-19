@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,8 +6,6 @@ using UnityEngine.UI;
 // Lobideki masa kartı: ad, etiketler ve dört koltuk (dizi sırası koltuk 1..4). Boş koltukta OTUR, dolu koltukta baş harf + ad.
 public class RoomCard : MonoBehaviour
 {
-    static readonly CultureInfo Tr = new CultureInfo("tr-TR");
-
     [SerializeField] TMP_Text nameText;
     [SerializeField] TMP_Text tagsText;
     [SerializeField] GameObject[] taken;
@@ -33,7 +30,7 @@ public class RoomCard : MonoBehaviour
         this.room = room;
         this.onSit = onSit;
         nameText.text = room.Name;
-        tagsText.text = room.Rounds + " el" + (room.HasPassword ? "   ·   Şifreli" : "");
+        tagsText.text = Loc.T("room.rounds_count", room.Rounds) + (room.HasPassword ? Loc.T("room.locked_suffix") : "");
         for (int i = 0; i < 4; i++)
         {
             bool free = room.SeatFree(i + 1);
@@ -47,10 +44,10 @@ public class RoomCard : MonoBehaviour
         }
     }
 
-    // Adın ilk harfi, Türkçe büyük harf ("i" -> "İ"); boş adda boş.
+    // Adın ilk harfi, seçili dile göre büyük harf (tr: "i" -> "İ"); boş adda boş.
     public static string Initial(string name)
     {
         string n = name == null ? "" : name.Trim();
-        return n.Length == 0 ? "" : n.Substring(0, 1).ToUpper(Tr);
+        return n.Length == 0 ? "" : n.Substring(0, 1).ToUpper(Loc.Culture);
     }
 }

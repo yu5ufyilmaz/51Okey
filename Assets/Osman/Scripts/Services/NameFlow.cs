@@ -13,10 +13,10 @@ public static class NameFlow
         return !nameClaimed && !guestName ? Step.ClaimCurrent : Step.None;
     }
 
-    // Giriş ekranındaki isim paneli ve lobideki Profil aynı yazıyı gösterir; Ok boş.
+    // Giriş ekranındaki isim paneli ve lobideki Profil aynı yazıyı gösterir. Dönen değer Loc.T ile çevrilecek anahtar; Ok boş.
     public static string ErrorText(NameResult result) =>
-        result == NameResult.Taken ? "Bu isim alınmış"
-        : result == NameResult.Invalid ? "İsim 2-16 karakter olmalı"
-        : result == NameResult.Failed ? "Bağlanılamadı"
+        result == NameResult.Taken ? "error.name_taken"
+        : result == NameResult.Invalid ? "error.name_invalid"
+        : result == NameResult.Failed ? "login.connection_failed"
         : "";
 }

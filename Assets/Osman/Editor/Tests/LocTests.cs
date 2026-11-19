@@ -56,6 +56,11 @@ public class LocTests
         Assert.AreEqual("de", Loc.CodeOf(SystemLanguage.German));
     }
 
+    [Test] public void Profile_Chip_Starts_With_The_Name_In_Every_Language() {
+        Loc.Load(null, null);
+        foreach (var lang in Loc.Languages) { Loc.Language = lang; StringAssert.StartsWith("Zeynep", Loc.T("profile.chip", "Zeynep", 3)); }
+    }
+
     [Test] public void Every_Penalty_Reason_Has_Its_Own_Text_In_Both_Languages() {
         Loc.Load(null, null);
         foreach (var lang in new[] { "tr", "en" }) {

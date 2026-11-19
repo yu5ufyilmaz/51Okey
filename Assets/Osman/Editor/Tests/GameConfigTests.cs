@@ -52,9 +52,9 @@ public class GameConfigTests
         Assert.AreEqual(step, NameFlow.Next(isGuest, claimed, name));
 
     [TestCase(NameResult.Ok, "")]
-    [TestCase(NameResult.Taken, "Bu isim alınmış")]
-    [TestCase(NameResult.Invalid, "İsim 2-16 karakter olmalı")]
-    [TestCase(NameResult.Failed, "Bağlanılamadı")]
+    [TestCase(NameResult.Taken, "error.name_taken")]
+    [TestCase(NameResult.Invalid, "error.name_invalid")]
+    [TestCase(NameResult.Failed, "login.connection_failed")]
     public void NameFlow_ErrorText(NameResult result, string text) =>
         Assert.AreEqual(text, NameFlow.ErrorText(result));
 

@@ -101,11 +101,11 @@ public class UIRoot : MonoBehaviour
         inst.loading.SetActive(false);
     }
 
-    public static Task<bool> Confirm(string title, string body, string yesLabel = "Evet", bool destructive = false) =>
-        Ask(title, body, yesLabel, destructive, true);
+    public static Task<bool> Confirm(string title, string body, string yesLabel = null, bool destructive = false) =>
+        Ask(title, body, yesLabel ?? Loc.T("common.yes"), destructive, true);
 
     // Tek butonlu bilgi penceresi: onay penceresi Vazgeç gizlenerek açılır; buton, X ya da geri tuşuyla kapanır.
-    public static Task Notice(string title, string body, string okLabel = "Tamam") => Ask(title, body, okLabel, false, false);
+    public static Task Notice(string title, string body, string okLabel = null) => Ask(title, body, okLabel ?? Loc.T("common.ok"), false, false);
 
     static Task<bool> Ask(string title, string body, string yesLabel, bool destructive, bool showNo)
     {
@@ -189,7 +189,7 @@ public class UIRoot : MonoBehaviour
         if (timer.Tick(Time.unscaledTime))
         {
             HideLoading();
-            Toast("Bağlantı zaman aşımına uğradı");
+            Toast(Loc.T("toast.connection_timeout"));
         }
         if (toast.activeSelf && Time.unscaledTime >= toastUntil)
             toast.SetActive(false);
@@ -222,7 +222,7 @@ public class UIRoot : MonoBehaviour
             var exit = FindFirstObjectByType<ExitButton>();
             if (exit != null) exit.AskExit(); // onay metni ExitButton'da
         }
-        else if (await Confirm("Çıkış", "Oyundan çıkılsın mı?", "Çık", true))
+        else if (await Confirm(Loc.T("common.quit_title"), Loc.T("common.quit_body"), Loc.T("common.quit_yes"), true))
             Application.Quit();
     }
 }
