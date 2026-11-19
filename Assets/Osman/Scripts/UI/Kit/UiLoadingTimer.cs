@@ -4,12 +4,15 @@ public class UiLoadingTimer
     public const float Timeout = 15f;
 
     float startedAt;
+    bool timeoutOn = true;
 
     public bool Active { get; private set; }
 
-    public void Show(float now)
+    // timeout false: giriş gibi uzun süren işlerde sayaç susar, katman Hide'a kadar kalır.
+    public void Show(float now, bool timeout = true)
     {
         startedAt = now;
+        timeoutOn = timeout;
         Active = true;
     }
 
@@ -18,7 +21,7 @@ public class UiLoadingTimer
     // Zaman aşımına bu çağrıda uğradıysa true döner ve kendini kapatır.
     public bool Tick(float now)
     {
-        if (!Active || now - startedAt < Timeout)
+        if (!Active || !timeoutOn || now - startedAt < Timeout)
             return false;
         Active = false;
         return true;

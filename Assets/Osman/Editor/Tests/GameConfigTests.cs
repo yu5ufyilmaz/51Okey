@@ -65,6 +65,16 @@ public class GameConfigTests
     public void LevelForXp_OneLevelPerHundredXp(int xp, int level) =>
         Assert.AreEqual(level, GameConfig.LevelForXp(xp));
 
+    [TestCase("privacy")] [TestCase("terms")]
+    public void LegalUrl_KnownIdsReturnTheirConstant(string id) =>
+        Assert.AreEqual(id == "privacy" ? GameConfig.PrivacyUrl : GameConfig.TermsUrl, GameConfig.LegalUrl(id));
+
+    [TestCase("")] [TestCase("baska")] [TestCase(null)]
+    public void LegalUrl_UnknownIdIsEmpty(string id) => Assert.AreEqual("", GameConfig.LegalUrl(id));
+
+    [Test] public void HasLegalLinks_NeedsBothUrls() =>
+        Assert.AreEqual(GameConfig.PrivacyUrl != "" && GameConfig.TermsUrl != "", GameConfig.HasLegalLinks);
+
     [Test]
     public void CoinTx_KeepsItsFields()
     {

@@ -21,4 +21,18 @@ public class UiLoadingTimerTests
         var t = new UiLoadingTimer(); t.Show(0f); t.Show(10f);
         Assert.IsFalse(t.Tick(20f)); Assert.IsTrue(t.Tick(25f));
     }
+
+    [Test] public void NoTimeout_NeverFires()
+    {
+        var t = new UiLoadingTimer(); t.Show(0f, false);
+        Assert.IsTrue(t.Active);
+        Assert.IsFalse(t.Tick(9999f)); Assert.IsTrue(t.Active);
+        t.Hide(); Assert.IsFalse(t.Active);
+    }
+
+    [Test] public void ShowWithTimeoutAfterNoTimeout_Fires()
+    {
+        var t = new UiLoadingTimer(); t.Show(0f, false); t.Show(100f);
+        Assert.IsFalse(t.Tick(114f)); Assert.IsTrue(t.Tick(115f));
+    }
 }

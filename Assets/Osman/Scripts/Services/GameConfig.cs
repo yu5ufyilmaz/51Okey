@@ -10,6 +10,17 @@ public static class GameConfig
     public const int NameMin = 2, NameMax = 16;
     public const string GuestNamePrefix = "Misafir-";
 
+    // Adresler Osman'dan gelecek; boşken ilgili satırlar gizlenir.
+    public const string PrivacyUrl = "";
+    public const string TermsUrl = "";
+    public const string AccountDeletionUrl = "";
+    public const string SupportEmail = "";
+
+    // Length ile bakılır: sabit "" ile == karşılaştırması erişilemeyen kod uyarısı verir
+    public static bool HasLegalLinks => PrivacyUrl.Length > 0 && TermsUrl.Length > 0;
+
+    public static string LegalUrl(string linkId) => linkId == "privacy" ? PrivacyUrl : linkId == "terms" ? TermsUrl : "";
+
     public static int LevelForXp(int xp) => 1 + xp / XpPerLevel;
 
     // Oyuncunun seçebileceği isim. Kırpılmış uzunluk sayılır: " ab " geçerli, " a " değil.

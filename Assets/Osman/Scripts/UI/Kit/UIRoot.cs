@@ -30,6 +30,7 @@ public class UIRoot : MonoBehaviour
     readonly UiLoadingTimer timer = new UiLoadingTimer();
     TaskCompletionSource<bool> pending;
     float toastUntil;
+    bool askExitAfterBack;
 
     // Domain reload kapalıyken play'e girişte statikler sıfırlanmalı
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -72,13 +73,14 @@ public class UIRoot : MonoBehaviour
         r.toastUntil = Time.unscaledTime + ToastSeconds;
     }
 
-    public static void ShowLoading(string text = null)
+    // text null iken açık katmanın metni korunur; her çağrı sayacı yeniden başlatır.
+    public static void ShowLoading(string text = null, bool timeout = true)
     {
         var r = I;
         if (r == null) return;
-        r.loadingText.text = text ?? "";
+        if (text != null || !r.loading.activeSelf) r.loadingText.text = text ?? "";
         r.loading.SetActive(true);
-        r.timer.Show(Time.unscaledTime);
+        r.timer.Show(Time.unscaledTime, timeout);
     }
 
     public static void HideLoading()
@@ -120,8 +122,9 @@ public class UIRoot : MonoBehaviour
     {
         if (inst == null) return;
         var res = inst.stack.Back(IsLoading, w => w != null && w.isActiveAndEnabled, inst.CloseWindow);
-        if (res == BackResult.AskExit && inst.pending == null)
+        if ((res == BackResult.AskExit || inst.askExitAfterBack) && inst.pending == null)
             inst.AskExit();
+        inst.askExitAfterBack = false;
     }
 
     void Awake()
@@ -163,7 +166,7 @@ public class UIRoot : MonoBehaviour
 
     void CloseWindow(UiWindow w)
     {
-        if (!w.closable) { stack.Push(w); return; } // tuşu yut, pencere yığında kalsın
+        if (!w.closable) { stack.Push(w); askExitAfterBack = true; return; } // pencere yığında kalır, çıkış sorulur
         if (w == confirm) { Resolve(false); return; }
         w.Close();
     }
