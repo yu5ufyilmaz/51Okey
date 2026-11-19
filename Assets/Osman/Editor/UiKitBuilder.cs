@@ -20,7 +20,6 @@ public static partial class UiKitBuilder
         "Assets/Osman/Scenes/LobbyMenu.unity",
         "Assets/Osman/Scenes/Table.unity",
     };
-    const string RoomItemPrefab = "Assets/Resources/RoomItem.prefab";
 
     [MenuItem("Okey/UI Kit/Fontları Kur")]
     public static void BuildFonts()
@@ -94,22 +93,6 @@ public static partial class UiKitBuilder
             EditorSceneManager.SaveScene(scene);
             Debug.Log($"[UiKitBuilder] {scene.name}: {n} metin değişti");
         }
-
-        var root = PrefabUtility.LoadPrefabContents(RoomItemPrefab);
-        int p = 0;
-        foreach (var t in root.GetComponentsInChildren<TMP_Text>(true))
-        {
-            if (t.font == font) continue;
-            t.font = font;
-            p++;
-        }
-        // RoomItem'daki oda sayacı eski UI.Text; ChangaOne .ttf'i bırakıp Changa'ya geçir
-        var legacyFont = AssetDatabase.LoadAssetAtPath<Font>(FontDir + "Changa-ExtraBold.ttf");
-        foreach (var t in root.GetComponentsInChildren<UnityEngine.UI.Text>(true))
-            if (t.font != legacyFont) { t.font = legacyFont; p++; }
-        PrefabUtility.SaveAsPrefabAsset(root, RoomItemPrefab);
-        PrefabUtility.UnloadPrefabContents(root);
-        Debug.Log($"[UiKitBuilder] RoomItem.prefab: {p} metin değişti");
         AssetDatabase.SaveAssets();
     }
 }

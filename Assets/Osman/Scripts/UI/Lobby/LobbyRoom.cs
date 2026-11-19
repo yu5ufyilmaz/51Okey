@@ -16,6 +16,6 @@ public class LobbyRoom
     {
         if (seat < 1 || seat > 4)
             return false;
-        return Seats == null || string.IsNullOrEmpty(Seats[seat - 1]);
+        return Seats == null || seat > Seats.Length || string.IsNullOrEmpty(Seats[seat - 1]);
     }
 }

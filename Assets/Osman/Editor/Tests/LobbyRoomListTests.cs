@@ -50,6 +50,14 @@ public class LobbyRoomListTests
         Assert.IsFalse(l.Visible()[0].SeatFree(5));
     }
 
+    [Test] public void ShortSeatsArrayDoesNotThrow()
+    {
+        var l = new LobbyRoomList();
+        l.Apply(new[] { R("kisa", 1, true, false, "A", "") });
+        Assert.AreEqual(1, l.Visible().Count);
+        Assert.IsTrue(l.Visible()[0].SeatFree(3));
+    }
+
     [Test] public void ClearEmpties()
     {
         var l = new LobbyRoomList(); l.Apply(new[] { R("a") }); l.Clear();

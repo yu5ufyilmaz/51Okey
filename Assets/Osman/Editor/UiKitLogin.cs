@@ -92,7 +92,7 @@ public static partial class UiKitBuilder
         // İsim penceresi: kapatılamaz, X yok; gövde içeriğe göre kısaltıldı (başlık ve butonlar gövdeye çapalı)
         var namePanel = LoginWindow(window, canvas, "NamePanel", "İsmini seç");
         var nameContent = namePanel.transform.Find("Body/Content");
-        var nameInput = NameInput(nameContent);
+        var nameInput = TextInput(nameContent, "NameInput", "İsim", new Vector2(900, 130));
         var nameError = Text(nameContent, "NameError", "", 34, bold);
         nameError.color = new Color32(0xFF, 0x8F, 0x85, 0xFF);
         Anchor(nameError.gameObject, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -170), new Vector2(0, 60));
@@ -135,50 +135,21 @@ public static partial class UiKitBuilder
         Debug.Log("[UiKitBuilder] Giriş ekranı kuruldu: " + MainMenuPath);
     }
 
-    static GameObject ChoiceButton(GameObject prefab, Transform parent, string name, string label)
+    static GameObject ChoiceButton(GameObject prefab, Transform parent, string name, string label, float w = 720, float h = 150, float fontSize = 52)
     {
         var b = Nested(prefab, parent, name);
-        ((RectTransform)b.transform).sizeDelta = new Vector2(720, 150);
+        ((RectTransform)b.transform).sizeDelta = new Vector2(w, h);
         var t = b.GetComponentInChildren<TMP_Text>(true);
         t.text = label;
-        t.fontSize = 52;
+        t.fontSize = fontSize;
         return b;
     }
 
     static GameObject LoginWindow(GameObject windowPrefab, Transform parent, string name, string title)
     {
-        var w = Nested(windowPrefab, parent, name);
+        var w = KitWindow(windowPrefab, parent, name, title, new Vector2(1100, 600));
         w.GetComponent<UiWindow>().closable = false;
-        var body = w.transform.Find("Body");
-        ((RectTransform)body).sizeDelta = new Vector2(1100, 600);
-        body.Find("Title").GetComponent<TMP_Text>().text = title;
-        body.Find("Close").gameObject.SetActive(false);
+        w.transform.Find("Body/Close").gameObject.SetActive(false);
         return w;
-    }
-
-    // TMP_InputField'in beklediği düzen: kök (zemin) > Text Area (RectMask2D) > Placeholder + Text
-    static TMP_InputField NameInput(Transform parent)
-    {
-        var g = Child("NameInput", parent);
-        Anchor(g, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1), Vector2.zero, new Vector2(900, 130));
-        var img = Sliced(g, "row_slate");
-        var area = Child("Text Area", g.transform);
-        Fill(area, 40, 10, -40, -10);
-        area.AddComponent<RectMask2D>();
-        var placeholder = Text(area.transform, "Placeholder", "İsim", 48, bold);
-        placeholder.color = new Color(1, 1, 1, 0.45f);
-        placeholder.alignment = TextAlignmentOptions.MidlineLeft;
-        Fill(placeholder.gameObject, 0, 0, 0, 0);
-        var text = Text(area.transform, "Text", "", 48, bold);
-        text.alignment = TextAlignmentOptions.MidlineLeft;
-        Fill(text.gameObject, 0, 0, 0, 0);
-        var field = g.AddComponent<TMP_InputField>();
-        field.targetGraphic = img;
-        field.textViewport = (RectTransform)area.transform;
-        field.textComponent = text;
-        field.placeholder = placeholder;
-        field.lineType = TMP_InputField.LineType.SingleLine;
-        field.fontAsset = bold;
-        return field;
     }
 }

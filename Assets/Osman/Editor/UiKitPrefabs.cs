@@ -305,8 +305,47 @@ public static partial class UiKitBuilder
         var a = new Vector2(x, 0.5f);
         Anchor(k, a, a, a, new Vector2(x == 0f ? 8 : -8, 0), new Vector2(60, 60));
         var img = k.AddComponent<Image>();
-        img.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
+        img.sprite = KnobSprite;
         img.raycastTarget = false;
+    }
+
+    // Unity'nin yerleşik yuvarlak görseli (anahtar topuzu, lobi avatarı)
+    static Sprite KnobSprite => AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
+
+    // Kit penceresi örneği: başlık ve gövde boyu verilir
+    static GameObject KitWindow(GameObject windowPrefab, Transform parent, string name, string title, Vector2 bodySize)
+    {
+        var w = Nested(windowPrefab, parent, name);
+        var body = w.transform.Find("Body");
+        ((RectTransform)body).sizeDelta = bodySize;
+        body.Find("Title").GetComponent<TMP_Text>().text = title;
+        return w;
+    }
+
+    // TMP_InputField'in beklediği düzen: kök (zemin) > Text Area (RectMask2D) > Placeholder + Text. Üstte ortaya çapalı.
+    static TMP_InputField TextInput(Transform parent, string name, string placeholderText, Vector2 size)
+    {
+        var g = Child(name, parent);
+        Anchor(g, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1), Vector2.zero, size);
+        var img = Sliced(g, "row_slate");
+        var area = Child("Text Area", g.transform);
+        Fill(area, 40, 10, -40, -10);
+        area.AddComponent<RectMask2D>();
+        var placeholder = Text(area.transform, "Placeholder", placeholderText, 48, bold);
+        placeholder.color = new Color(1, 1, 1, 0.45f);
+        placeholder.alignment = TextAlignmentOptions.MidlineLeft;
+        Fill(placeholder.gameObject, 0, 0, 0, 0);
+        var text = Text(area.transform, "Text", "", 48, bold);
+        text.alignment = TextAlignmentOptions.MidlineLeft;
+        Fill(text.gameObject, 0, 0, 0, 0);
+        var field = g.AddComponent<TMP_InputField>();
+        field.targetGraphic = img;
+        field.textViewport = (RectTransform)area.transform;
+        field.textComponent = text;
+        field.placeholder = placeholder;
+        field.lineType = TMP_InputField.LineType.SingleLine;
+        field.fontAsset = bold;
+        return field;
     }
 
     static TextMeshProUGUI Text(Transform parent, string name, string text, float size, TMP_FontAsset font)
