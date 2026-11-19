@@ -20,11 +20,14 @@ public static partial class UiKitBuilder
         extraBold = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(ExtraBoldPath);
         outline = AssetDatabase.LoadAssetAtPath<Material>(OutlinePath);
         var bg = AssetDatabase.LoadAssetAtPath<Sprite>(MenuBackgroundPath);
-        var uiSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
         var green = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + "Btn_Green.prefab");
+        var orange = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + "Btn_Orange.prefab");
         var window = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + "Window.prefab");
-        if (bold == null || extraBold == null || outline == null || bg == null || uiSprite == null || green == null || window == null || LoadSprite("row_slate") == null)
+        if (bold == null || extraBold == null || outline == null || bg == null || green == null || orange == null || window == null || LoadSprite("row_slate") == null)
         { Debug.LogWarning("[UiKitBuilder] Giriş ekranı için font, görsel ya da prefab eksik; sahneye dokunulmadı."); return; }
+        // LoginWindow ve içerik bu yolları Find ile arar; kit değiştiyse sahneye dokunmadan dön
+        foreach (var path in new[] { "Body", "Body/Title", "Body/Close", "Body/Content", "Body/Buttons" })
+            if (window.transform.Find(path) == null) { Debug.LogWarning("[UiKitBuilder] Window prefab'ında " + path + " yok; sahneye dokunulmadı."); return; }
 
         if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
         var scene = EditorSceneManager.OpenScene(MainMenuPath, OpenSceneMode.Single);
@@ -71,25 +74,8 @@ public static partial class UiKitBuilder
         vl.childControlWidth = vl.childControlHeight = false;
         vl.childForceExpandWidth = vl.childForceExpandHeight = false;
 
-        // Google butonu kit dışı: beyaz zemin, koyu yazı (Google marka kuralı), dış çizgisiz
-        var google = Child("GoogleButton", choice.transform);
-        Size(google, 720, 150);
-        var gImg = google.AddComponent<Image>();
-        gImg.sprite = uiSprite;
-        gImg.type = Image.Type.Sliced;
-        gImg.color = Color.white;
-        var googleBtn = google.AddComponent<Button>();
-        googleBtn.targetGraphic = gImg;
-        google.AddComponent<UiPressScale>();
-        var gLabel = Text(google.transform, "Label", "Google ile Giriş", 52, extraBold);
-        gLabel.color = new Color32(0x2C, 0x33, 0x3C, 0xFF);
-        Fill(gLabel.gameObject, 0, 0, 0, 0);
-
-        var guest = Nested(green, choice.transform, "GuestButton");
-        ((RectTransform)guest.transform).sizeDelta = new Vector2(720, 150);
-        var guestLabel = guest.GetComponentInChildren<TMP_Text>(true);
-        guestLabel.text = "Misafir Olarak Oyna";
-        guestLabel.fontSize = 52;
+        var google = ChoiceButton(green, choice.transform, "GoogleButton", "Google ile Giriş");
+        var guest = ChoiceButton(orange, choice.transform, "GuestButton", "Misafir Olarak Oyna");
 
         var legal = Text(safe.transform, "LegalText", LegalTextValue, 30, bold);
         legal.color = new Color32(0xCF, 0xD6, 0xDE, 0xFF);
@@ -121,9 +107,10 @@ public static partial class UiKitBuilder
         retry.GetComponentInChildren<TMP_Text>(true).text = "TEKRAR DENE";
 
         handler.versionText = version;
+        handler.title = title.gameObject;
         handler.choicePanel = choice;
         handler.guestButton = guest.GetComponent<Button>();
-        handler.googleButton = googleBtn;
+        handler.googleButton = google.GetComponent<Button>();
         handler.namePanel = namePanel;
         handler.nameInput = nameInput;
         handler.nameError = nameError;
@@ -131,7 +118,7 @@ public static partial class UiKitBuilder
         handler.retryPanel = retryPanel;
         handler.retryButton = retry.GetComponent<Button>();
         UnityEventTools.AddPersistentListener(handler.guestButton.onClick, handler.PlayAsGuest);
-        UnityEventTools.AddPersistentListener(googleBtn.onClick, handler.PlayWithGoogle);
+        UnityEventTools.AddPersistentListener(handler.googleButton.onClick, handler.PlayWithGoogle);
         UnityEventTools.AddPersistentListener(handler.nameOkButton.onClick, handler.ConfirmName);
         UnityEventTools.AddPersistentListener(handler.retryButton.onClick, handler.RetryConnect);
         EditorUtility.SetDirty(handler);
@@ -145,6 +132,16 @@ public static partial class UiKitBuilder
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
         Debug.Log("[UiKitBuilder] Giriş ekranı kuruldu: " + MainMenuPath);
+    }
+
+    static GameObject ChoiceButton(GameObject prefab, Transform parent, string name, string label)
+    {
+        var b = Nested(prefab, parent, name);
+        ((RectTransform)b.transform).sizeDelta = new Vector2(720, 150);
+        var t = b.GetComponentInChildren<TMP_Text>(true);
+        t.text = label;
+        t.fontSize = 52;
+        return b;
     }
 
     static GameObject LoginWindow(GameObject windowPrefab, Transform parent, string name, string title)

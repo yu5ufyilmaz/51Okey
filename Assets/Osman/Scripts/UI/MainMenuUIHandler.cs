@@ -12,6 +12,7 @@ using UnityEngine.UI;
 public class MainMenuUIHandler : MonoBehaviour
 {
     public TextMeshProUGUI versionText;
+    public GameObject title;
 
     [Header("Seçim")]
     public GameObject choicePanel;
@@ -78,6 +79,8 @@ public class MainMenuUIHandler : MonoBehaviour
             UIRoot.ShowLoading("Bağlanıyor...", false);
         else
             UIRoot.HideLoading();
+        // Pencere ortadaki gövdesiyle büyük başlığı ikiye bölüyor: pencere açıkken başlık gizlenir
+        title.SetActive(screen != EntryFlow.Screen.AskName && screen != EntryFlow.Screen.Retry);
         retryPanel.SetActive(screen == EntryFlow.Screen.Retry);
         choicePanel.SetActive(screen == EntryFlow.Screen.Choose);
         namePanel.SetActive(screen == EntryFlow.Screen.AskName);
