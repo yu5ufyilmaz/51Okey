@@ -52,5 +52,7 @@ public class LocalAuthService : IAuthService
     }
 
     // Yerel kimlik yeniden giriş istemez.
-    public bool IsRecentLoginError(Exception e) => false;
+    public bool NeedsRecentLoginToDelete => false;
+
+    public Task AbandonGuestAsync() => SignOutAsync();
 }

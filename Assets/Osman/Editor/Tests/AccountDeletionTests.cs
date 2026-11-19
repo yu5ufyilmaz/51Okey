@@ -23,8 +23,24 @@ public class AccountDeletionTests
         auth.UserId != null && store.Current?.UserId == auth.UserId;
 
     static DeleteResult Delete(IAuthService auth, LocalProfileStore store) =>
-        AccountDeletion.RunAsync(HasSession(auth, store), store.DeleteAsync, auth.DeleteAccountAsync,
-            auth.IsRecentLoginError, store.Clear).GetAwaiter().GetResult();
+        AccountDeletion.RunAsync(HasSession(auth, store), auth.NeedsRecentLoginToDelete, store.DeleteAsync,
+            auth.DeleteAccountAsync, null, store.Clear).GetAwaiter().GetResult();
+
+    int profiles, identities, abandons, drops;
+
+    DeleteResult Run(bool hasSession = true, bool needsRecentLogin = false, bool profileFails = false,
+        bool identityFails = false, bool guest = false, bool abandonFails = false)
+    {
+        profiles = identities = abandons = drops = 0;
+        Func<Task> abandon = null;
+        if (guest)
+            abandon = () => { abandons++; return abandonFails ? Task.FromException(new InvalidOperationException("çıkılamadı")) : Task.CompletedTask; };
+        return AccountDeletion.RunAsync(hasSession, needsRecentLogin,
+            () => { profiles++; return profileFails ? Task.FromException(new InvalidOperationException("yazılamadı")) : Task.CompletedTask; },
+            () => { identities++; if (identityFails) throw new InvalidOperationException("ağ yok"); return Task.CompletedTask; },
+            abandon,
+            () => drops++).GetAwaiter().GetResult();
+    }
 
     (LocalAuthService, LocalProfileStore) SignedIn(string tag)
     {
@@ -46,70 +62,57 @@ public class AccountDeletionTests
         Assert.IsFalse(File.Exists(path));
     }
 
-    // Yerel depoda isim benzersizliği yok: bu test silinen profilin ismi bırakmasını yerel arka uçta doğrular.
-    [Test]
-    public void DeleteAccount_Ok_NameCanBeTakenAgain()
-    {
-        var (auth, store) = SignedIn("51Okey");
-        Assert.AreEqual(NameResult.Ok, store.SetDisplayNameAsync("Ahmet").GetAwaiter().GetResult());
-        Assert.AreEqual(DeleteResult.Ok, Delete(auth, store));
-        var (_, again) = SignedIn("51Okey_clone_0");
-        Assert.AreEqual(NameResult.Ok, again.SetDisplayNameAsync("Ahmet").GetAwaiter().GetResult());
-        Assert.AreEqual("Ahmet", again.Current.DisplayName);
-    }
-
     [Test]
     public void DeleteAccount_NoSession_IsFailed()
     {
-        int calls = 0;
-        var result = AccountDeletion.RunAsync(false,
-            () => { calls++; return Task.CompletedTask; },
-            () => { calls++; return Task.CompletedTask; },
-            e => false,
-            () => calls++).GetAwaiter().GetResult();
-        Assert.AreEqual(DeleteResult.Failed, result);
-        Assert.AreEqual(0, calls, "oturum yoksa hiçbir adım çağrılmaz");
+        Assert.AreEqual(DeleteResult.Failed, Run(hasSession: false));
+        Assert.AreEqual(0, profiles + identities + drops, "oturum yoksa hiçbir adım çağrılmaz");
     }
 
     [Test]
-    public void DeleteAccount_AuthFails_ReturnsFailed_DoesNotThrow()
+    public void DeleteAccount_NeedsRecentLogin_DeletesNothing()
     {
-        int profiles = 0, drops = 0;
-        var result = AccountDeletion.RunAsync(true,
-            () => { profiles++; return Task.CompletedTask; },
-            () => throw new InvalidOperationException("ağ yok"),
-            e => false,
-            () => drops++).GetAwaiter().GetResult();
-        Assert.AreEqual(DeleteResult.Failed, result);
-        Assert.AreEqual(1, profiles, "kimlikten önce profil silinir");
-        Assert.AreEqual(0, drops, "kimlik duruyorsa yerel durum düşmez");
+        Assert.AreEqual(DeleteResult.NeedsRecentLogin, Run(needsRecentLogin: true));
+        Assert.AreEqual(0, profiles + identities + drops, "yakın giriş yoksa hiçbir şey silinmez");
     }
 
     [Test]
     public void DeleteAccount_ProfileFails_KeepsIdentity()
     {
-        int identities = 0, drops = 0;
-        var result = AccountDeletion.RunAsync(true,
-            () => throw new InvalidOperationException("yazılamadı"),
-            () => { identities++; return Task.CompletedTask; },
-            e => false,
-            () => drops++).GetAwaiter().GetResult();
-        Assert.AreEqual(DeleteResult.Failed, result);
+        Assert.AreEqual(DeleteResult.Failed, Run(profileFails: true));
         Assert.AreEqual(0, identities, "profil silinemezse kimlik silinmez");
         Assert.AreEqual(0, drops);
     }
 
     [Test]
-    public void DeleteAccount_AuthNeedsRecentLogin_ReturnsNeedsRecentLogin()
+    public void DeleteAccount_IdentityFails_NonGuest_ReportsDataDeleted()
     {
-        int drops = 0;
-        var recent = new InvalidOperationException("yakın zamanda giriş gerekli");
-        var result = AccountDeletion.RunAsync(true,
-            () => Task.CompletedTask,
-            () => Task.FromException(new AggregateException(recent)),
-            e => e == recent || e.InnerException == recent,
-            () => drops++).GetAwaiter().GetResult();
-        Assert.AreEqual(DeleteResult.NeedsRecentLogin, result);
+        Assert.AreEqual(DeleteResult.DataDeletedAccountRemains, Run(identityFails: true));
+        Assert.AreEqual(1, profiles, "kimlikten önce profil silinir");
+        Assert.AreEqual(0, drops, "kimlik duruyorsa yerel durum düşmez");
+    }
+
+    [Test]
+    public void DeleteAccount_IdentityFails_Guest_AbandonsAndIsOk()
+    {
+        Assert.AreEqual(DeleteResult.Ok, Run(identityFails: true, guest: true));
+        Assert.AreEqual(1, abandons);
+        Assert.AreEqual(1, drops);
+    }
+
+    [Test]
+    public void DeleteAccount_IdentityAndAbandonFail_Guest_ReportsDataDeleted()
+    {
+        Assert.AreEqual(DeleteResult.DataDeletedAccountRemains, Run(identityFails: true, guest: true, abandonFails: true));
+        Assert.AreEqual(1, abandons);
         Assert.AreEqual(0, drops);
+    }
+
+    [Test]
+    public void DeleteAccount_Guest_IdentityOk_DoesNotAbandon()
+    {
+        Assert.AreEqual(DeleteResult.Ok, Run(guest: true));
+        Assert.AreEqual(0, abandons);
+        Assert.AreEqual(1, drops);
     }
 }

@@ -171,13 +171,18 @@ public class FirebaseAuthService : IAuthService
         SetUser(null);
     }
 
-    // Firebase görevleri istisnayı AggregateException içinde verebilir.
-    public bool IsRecentLoginError(Exception e)
+    // Firebase silmeyi son girişten 5 dk içinde kabul eder; 4 dk ile pay bırakılır. LastSignInTimestamp UTC.
+    public bool NeedsRecentLoginToDelete =>
+        user != null && !user.IsAnonymous && DateTime.UtcNow - (user.Metadata?.LastSignInTimestamp ?? DateTime.MinValue) > TimeSpan.FromMinutes(4);
+
+    // SignOutAsync misafiri reddeder; bu yalnız hesap silme içindir (profil zaten silinmiştir).
+    public async Task AbandonGuestAsync()
     {
-        for (var x = e; x != null; x = x.InnerException)
-            if (x is Firebase.FirebaseException f && (AuthError)f.ErrorCode == AuthError.RequiresRecentLogin)
-                return true;
-        return false;
+        var auth = await boot.AuthAsync();
+        if (auth.CurrentUser != null && !auth.CurrentUser.IsAnonymous)
+            throw new InvalidOperationException("yalnız misafir kimliği bırakılır");
+        auth.SignOut();
+        SetUser(null);
     }
 
     // shortcut: oturumun Firebase tarafında düşmesi (token iptali) izlenmiyor; gerekirse auth.StateChanged dinlenir.

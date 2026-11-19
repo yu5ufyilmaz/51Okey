@@ -154,8 +154,11 @@ public static class GameServices
 
     static async Task<DeleteResult> DeleteAccountCoreAsync()
     {
-        var result = await AccountDeletion.RunAsync(HasSession, Profile.DeleteAsync, Auth.DeleteAccountAsync, Auth.IsRecentLoginError, DropProfile);
-        if (result != DeleteResult.Ok && Auth.UserId != null && !HasSession)
+        // Profil silindikten sonra sahipsiz kalan anonim kimlik veri taşımaz: misafirde bırakılması yeterli.
+        var abandon = Auth.IsGuest ? (Func<Task>)Auth.AbandonGuestAsync : null;
+        var result = await AccountDeletion.RunAsync(HasSession, Auth.NeedsRecentLoginToDelete, Profile.DeleteAsync,
+            Auth.DeleteAccountAsync, abandon, DropProfile);
+        if (result == DeleteResult.DataDeletedAccountRemains && Auth.UserId != null && !HasSession)
         {
             ForgetProfileLoad();
             try { await ProfileLoadAsync(); }
