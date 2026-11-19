@@ -275,3 +275,48 @@ Paket 2 (giriş ekranı) bitti: `207ef38..3afb223`. Sonraki paketlerin bilmesi g
 - Gerçek geri tuşu: giriş ekranında, isim penceresinde, klavye açıkken.
 - 20:9'da başlık ile butonlar arası boşluk (Editörde ölçüldü: 42 birim).
 - Google hesap seçici açıkken arkadaki yükleme katmanı; iptalde bildirimin çıkması.
+
+## Paket 3'ten devreden notlar (2026-11-19)
+
+Paket 3 (lobi) bitti: `2c396c5..ae73344`. EditMode 231, çok editörlü senkron testi `1501056` üzerinde geçti.
+
+### Verilen kararlar (Osman uyurken, itiraz edilebilir)
+
+- "Ayrıl" ile çıkan oyuncu, oyun başlamamışsa odadan tamamen çıkar (`LeaveRoom(false)`): koltuğu hemen boşalır, aynı masaya hemen dönebilir. Oyun başladıktan sonra eskisi gibi 60 sn "inactive" kalır, yerine bot oynar.
+- Başarısız giriş ya da masa kurmadan sonra istemci lobiye geri alınır (senkron testi sırasında atlanır).
+- Masaya katılan oyuncuda yükleme katmanı masaya varınca kapatılır. Kök neden: katılanın masa sahnesini Photon yükler (`AutomaticallySyncScene`), `RoomManager.OnJoinedRoom` ve `SceneChangeManager` katılanda çalışmaz. Bu hata paket 1'den beri vardı (15 sn sonra yanlış "zaman aşımı" bildirimi).
+- El sayısı açılır liste yerine `-` / `+` ile seçilir (seçenekler aynı).
+- Yenile butonu kaldırıldı; liste her güncellemeyi işliyor.
+- `HEMEN OYNA` oda bulamazsa "İsim-1234" biçiminde benzersiz adla masa kurar.
+- Masa kurma: boş masa adı ve anahtar açıkken boş şifre reddedilir.
+- Oda şifresi yumuşak bir kapıdır: özet lobideki herkese gider, kısa şifre çevrimdışı denenerek bulunabilir. Gerçek güvenlik Photon eklentisi ister.
+
+### Tasarımdan eksik kalanlar (Osman'ın kararı)
+
+- Ortadaki kart diğerlerinden büyük değil (`UiSnapScroll.cs`'te `shortcut:` notu var).
+- Boş kartta kendi `MASA AÇ` butonu yok; alt bardaki kullanılıyor.
+- Mağaza kit penceresine tam geçmedi: kapat butonu, karartma ve geri tuşu var; gövdesi ve içeriği eski. İçerikte yer tutucular duruyor ("Ürün 6/7/8", İngilizce "Remove ADS", karışık USD/TL fiyatlar).
+- Lobide değilken butonlar soluklaşmıyor; basılınca "Bağlantı bekleniyor, tekrar dene" bildirimi çıkıyor.
+
+### Paket 4 — ayarlar ve profil
+
+- Kurucu yalnızca `Canvas/ProfilePanel` ve `Canvas/SettingsPanel`'i değiştirmeli; adları ve Canvas'ın son iki çocuğu olmaları korunmalı (`BuildLobbyScreen` bu adlara bakar).
+- Yeni pencereler lobinin yeniden kurulan kısmındaki (üst bar vb.) nesnelere başvurmamalı: `BuildLobbyScreen` bilinmeyen başvuru görürse çalışmayı reddeder.
+- `LobbyAccountUI.OpenProfile` / `OpenSettings` adları değişmemeli (üst bar kalıcı dinleyiciyle bağlı); `chipText` ve `lobbyCoinText` boşaltılmamalı.
+- `LobbyAccountUI.cs:14` yorumu artık yanlış: `ShopController` sahne açılışında abone oluyor.
+- Mağaza Canvas'ı (sıra 10) profil ve ayar pencerelerinin (sıra 0) üstünde çizilir.
+
+### Masa belgesi
+
+- Bekleme odasında uygulaması çöken ya da bağlantısı kopan oyuncu 60 sn "inactive" kalır: adı lobi kartında görünür, koltuğu dolu sayılır, dört kişi sayımına girer ve üç oyuncu + hayalet olan masa lobiden kaybolur. Düzeltmek `TileDistrubite.AssignPlayerQueue`'nun inactive oyuncuları nasıl okuduğuna dokunmayı gerektirir.
+- Kodda `RejoinRoom` / `ReconnectAndRejoin` yok: 60 sn'lik `PlayerTtl` bugün hiçbir yeniden bağlanmayı sağlamıyor.
+- Masaya katılan oyuncu `RoomManager.OnJoinedRoom`'daki `PlayerScore = 0` sıfırlamasını çalıştırmıyor (aynı Photon sahne yükleme nedeni).
+- Lobiye dönüşte üç yer koşulsuz `JoinLobby` çağırıyor (`PhotonManager.OnConnectedToMaster`, `ExitButton.OnConnectedToMaster`, `ButtonFuncs.Start`); çakışırlarsa PUN `Debug.LogError` basar. Üçü de `NetworkClientState == ConnectedToMasterServer` denetimiyle korunmalı.
+- Masada bağlantı kopması (`OnDisconnected`) hiçbir yerde ele alınmıyor.
+
+### Telefonda bakılacaklar
+
+- Kart kaydırma hissi; sürüklerken liste güncellenirse kartın yer değiştirmesi.
+- Telefonda masa kur, Editörde kartı gör ve belirli koltuğa otur (ve tersi); şifreli masa; `BOTLARLA OYNA`.
+- Mağaza: karartma panelin çerçevesini de koyulaştırıyor; X butonu köşede, 20:9 ve 21:9'da üst bara değmiyor (Editörde ölçüldü).
+- Başkasının masasına girince 15 sn sonra "zaman aşımı" bildirimi artık çıkmamalı.
