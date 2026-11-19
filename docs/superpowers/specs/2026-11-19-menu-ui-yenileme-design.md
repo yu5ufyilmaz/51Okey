@@ -202,3 +202,43 @@ Bugünkü alanların hepsi kalır, yeniden dizilir: solda avatar, sağda isim (y
 ## Açık kalanlar (Osman'dan beklenen)
 
 - Gizlilik politikası, kullanım şartları ve Play'in istediği web üzerinden hesap silme sayfasının adresleri; destek e-postası.
+
+## Paket 1'den devreden notlar (2026-11-19)
+
+Paket 1 (ortak UI kiti) bitti; son incelemede çıkan ve sonraki paketlerin planına girmesi gereken maddeler.
+
+### Kullanılacak API (paket 1'in ürettiği)
+
+- `UIRoot.Toast(metin)`, `UIRoot.ShowLoading(metin)` / `HideLoading()`, `UIRoot.Confirm(başlık, metin, evetEtiketi, yıkıcıMı)`.
+- `UiWindow`: `closable` (false = geri tuşu yutulur), `closeOnBack` (varsayılan true), `onBack` (geri tuşu ve X butonu, her kapatma isteğinde çalışır), `Close()`.
+- Prefab'lar `Assets/Osman/Prefabs/UI/` altında ve yalnızca `Okey/UI Kit/Prefabları Kur` ile üretilir; Inspector'da elle yapılan değişiklik bir sonraki kurulumda kaybolur.
+- Yazı tipi: `Changa-ExtraBold SDF` (başlık, buton), `Changa-Bold SDF` (uzun metin), dış çizgi için `Changa-ExtraBold SDF Outline.mat`. `font` atandıktan sonra materyal yeniden atanmalı.
+
+### Paket 2 — giriş
+
+- Canvas 1920x1080 / Match 0.5 ve `Crystal.SafeArea` bu pakette MainMenu'ye uygulanır (paket 1'den ertelendi).
+- Yükleme göstergesi 15 sn sonra kendiliğinden kapanıyor. Google hesap seçici açıkken bu yanlış "zaman aşımı" verir: ya zaman aşımsız bir yükleme türü eklenir ya da yükleme seçici döndükten sonra gösterilir.
+- İsim penceresinde (`closable = false`) geri tuşu yutuluyor; oyuncu oradan çıkamıyor. Çıkış onayına düşmesi değerlendirilir. Bu pencerede X butonu gizlenir.
+- İlk telefon derlemesinde gerçek Android geri tuşu denenir (Editörde yalnızca kod üzerinden tetiklendi).
+
+### Paket 3 — lobi
+
+- Canvas ölçeği ve SafeArea LobbyMenu ve `ShopCanvas` için bu pakette eşitlenir.
+- `ShopCanvas` sahnede kapalı kayıtlı: `MARKET` butonu hiçbir şey açmıyor (paket 1'den önce de böyleydi). Mağaza ortak pencereye geçerken düzelir; açılışta etkin duran bir panele `UiWindow` konmaz.
+- Sahne geçişi `ShowLoading()` çağırınca "Masaya giriliyor..." metni siliniyor: yükleme zaten açıksa metin korunur.
+- `HEMEN OYNA` oda bulamayınca oyuncunun adıyla oda kuruyor; aynı adda oda varsa oyuncu "Bu isimde bir masa var" görüyor. Otomatik oda benzersiz ya da boş adla kurulur.
+- Masa kurma ve şifreyle girme butonları `PhotonNetwork.InLobby` değilken kapalı olur.
+
+### Paket 4 — ayarlar ve profil
+
+- Anahtar prefab'ı yuvarlak köşeli dikdörtgen, tam hap biçimi değil.
+- Bildirim metni tek satır, 40 punto, kaydırmasız: "Güvenlik için tekrar giriş yapıp yeniden dene" gibi uzun metinler için otomatik boyut ya da satır kaydırma açılır.
+- Ayarlar penceresinin masadan da açılabilmesi için `UIRoot`'ta bir açma noktası yok; bu pakette eklenir.
+- Onay penceresi açıkken açılan bir sahne penceresi yığında onun üstüne giriyor; geri tuşu görünmeyen pencereyi kapatıyor.
+
+### Masa belgesi
+
+- Masadaki buton metinlerinde Türkçe harf yok ("Çıkıs", "TAS ISLE", "SERI AÇ"): eski fontta ş ve İ olmadığı için böyle yazılmış, Changa destekliyor.
+- Skor tablosundaki 16 metin (`PlayerColumn_1..4`) yer tutucu metinle kutusundan geniş ölçülüyor; gerçek içerikle bakılmalı.
+- `UIRoot`, masadaki çıkış butonunu `FindFirstObjectByType<ExitButton>()` ile buluyor; buton gizlenirse geri tuşu masada işlemez.
+- Yeni Changa materyalleri `TMP_SDF-Mobile` shader'ını kullanıyor (eski font tam `TMP_SDF` idi). Dış çizgi telefonda gözle kontrol edilmeli.
