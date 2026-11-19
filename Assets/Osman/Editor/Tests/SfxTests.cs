@@ -172,5 +172,28 @@ public class SfxTests
         Assert.DoesNotThrow(() => Sfx.Play(SfxId.MeldShown));
         UnityEngine.Object.DestroyImmediate(lib);
     }
+    [Test] public void Every_Event_Has_A_Clip_Or_Is_Silent_On_Purpose()
+    {
+        var lib = Resources.Load<SfxLibrary>("SfxLibrary");
+        foreach (var e in lib.entries)
+        {
+            bool silent = SfxSetup.SilentOnPurpose.Contains(e.id);
+            bool has = e.clips != null && e.clips.Length > 0;
+            Assert.IsTrue(has != silent, e.id + (silent ? " sessiz denmiş ama sesi var" : " sesi yok"));
+            if (has) Assert.IsFalse(e.clips.Any(c => c == null), e.id + " kayıp dosya");
+        }
+    }
+    [Test] public void No_Clip_Is_Shared_Between_Events()
+    {
+        var lib = Resources.Load<SfxLibrary>("SfxLibrary");
+        var all = lib.entries.Where(e => e.clips != null).SelectMany(e => e.clips).Where(c => c != null).ToList();
+        Assert.AreEqual(all.Count, all.Distinct().Count());
+    }
+    [Test] public void Check_Reports_No_Orphan_Files_And_No_Unused_Ids()
+    {
+        var r = SfxSetup.Check();
+        Assert.IsEmpty(r.OrphanFiles, string.Join(", ", r.OrphanFiles));
+        Assert.IsEmpty(r.UnusedIds, string.Join(", ", r.UnusedIds));
+    }
     [TearDown] public void Restore() { Sfx.UseLibrary(null); Sfx.ClearRecent(); LogAssert.ignoreFailingMessages = false; }
 }
