@@ -90,6 +90,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UiWindow
   closable: 1
+  closeOnBack: 1
   onBack:
     m_PersistentCalls:
       m_Calls: []

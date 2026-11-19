@@ -43,6 +43,10 @@ public class UIRoot : MonoBehaviour
 
     static void OnQuit() => quitting = true;
 
+    // Geri tuşu açılıştan itibaren çalışsın; Update ancak örnek varken döner
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    static void Boot() => _ = I;
+
     static UIRoot I
     {
         get
@@ -129,10 +133,16 @@ public class UIRoot : MonoBehaviour
         yesDestructive.onClick.AddListener(() => Resolve(true));
         no.onClick.AddListener(() => Resolve(false));
         close.onClick.AddListener(() => Resolve(false));
+        SceneManager.activeSceneChanged += OnSceneChanged;
     }
+
+    // Sahne değişince açık onay hayır sayılır (çağıran sahne nesnesi artık yok). Bildirim ve yükleme kalır.
+    void OnSceneChanged(Scene from, Scene to) => Resolve(false);
 
     void OnDestroy()
     {
+        SceneManager.activeSceneChanged -= OnSceneChanged;
+        Resolve(false);
         if (inst == this) inst = null;
     }
 
@@ -156,8 +166,7 @@ public class UIRoot : MonoBehaviour
         if (!w.closable) { stack.Push(w); return; } // tuşu yut, pencere yığında kalsın
         if (w == confirm) { Resolve(false); return; }
         w.onBack.Invoke();
-        // shortcut: yalnızca Inspector'dan bağlanan dinleyici "dolu" sayılır; koddan AddListener eklenirse pencere yine kapanır
-        if (w.onBack.GetPersistentEventCount() == 0)
+        if (w.closeOnBack)
             w.gameObject.SetActive(false);
     }
 
@@ -166,7 +175,7 @@ public class UIRoot : MonoBehaviour
     {
         var p = pending;
         pending = null;
-        confirm.gameObject.SetActive(false);
+        if (confirm != null) confirm.gameObject.SetActive(false); // yok edilirken çocuk gitmiş olabilir
         p?.TrySetResult(value);
     }
 

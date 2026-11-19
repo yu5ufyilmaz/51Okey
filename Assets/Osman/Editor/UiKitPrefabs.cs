@@ -27,6 +27,8 @@ public static partial class UiKitBuilder
         extraBold = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(ExtraBoldPath);
         outline = AssetDatabase.LoadAssetAtPath<Material>(OutlinePath);
         if (bold == null || extraBold == null || outline == null) { Debug.LogWarning("[UiKitBuilder] Önce BuildFonts çalıştırılmalı."); return; }
+        foreach (var n in new[] { "btn_green", "btn_orange", "btn_teal", "btn_red", "panel_slate", "row_slate", "coin" })
+            if (LoadSprite(n) == null) { Debug.LogWarning("[UiKitBuilder] Görsel yok: " + SpriteDir + n + ".png"); return; }
         if (!AssetDatabase.IsValidFolder("Assets/Osman/Prefabs")) AssetDatabase.CreateFolder("Assets/Osman", "Prefabs");
         if (!AssetDatabase.IsValidFolder("Assets/Osman/Prefabs/UI")) AssetDatabase.CreateFolder("Assets/Osman/Prefabs", "UI");
 
@@ -110,8 +112,7 @@ public static partial class UiKitBuilder
         return g;
     }
 
-    // Kapalıyken gri hap + soldaki topuz; açıkken yeşil "On" katmanı (sağda topuzuyla) üstüne açılır. Ek betik gerekmez.
-    // shortcut: SetIsOnWithoutNotify olayı tetiklemez, "On" görünmez; koddan isOn ata
+    // Kapalıyken gri hap + soldaki topuz; açıkken yeşil "On" katmanı (sağda topuzuyla) üstüne açılır, UiToggleView eşler.
     static GameObject Toggle()
     {
         var g = Root("Toggle");
@@ -126,7 +127,9 @@ public static partial class UiKitBuilder
         var tg = g.AddComponent<Toggle>();
         tg.targetGraphic = bg;
         tg.isOn = false;
-        UnityEventTools.AddPersistentListener(tg.onValueChanged, on.SetActive);
+        var view = new SerializedObject(g.AddComponent<UiToggleView>());
+        view.FindProperty("on").objectReferenceValue = on;
+        view.ApplyModifiedPropertiesWithoutUndo();
         return g;
     }
 
@@ -147,19 +150,6 @@ public static partial class UiKitBuilder
         Fill(safe, 0, 0, 0, 0);
         safe.AddComponent<Crystal.SafeArea>();
 
-        // Yükleme: karartma + dönen jeton + metin
-        var loading = Child("Loading", safe.transform);
-        Fill(loading, -DimBleed, -DimBleed, DimBleed, DimBleed);
-        Dim(loading);
-        var ring = Child("Ring", loading.transform);
-        Anchor(ring, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, 50), new Vector2(96, 96));
-        var ringImg = ring.AddComponent<Image>();
-        ringImg.sprite = LoadSprite("coin");
-        ringImg.raycastTarget = false;
-        var loadingText = Text(loading.transform, "Text", "", 40, bold);
-        Anchor(loadingText.gameObject, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, -60), new Vector2(1200, 80));
-        loading.SetActive(false);
-
         // Onay: Window örneği, gövde metni + evet (yeşil/kırmızı) + Vazgeç
         var confirm = Nested(windowPrefab, safe.transform, "Confirm");
         var body = confirm.transform.Find("Body");
@@ -175,12 +165,26 @@ public static partial class UiKitBuilder
         no.GetComponentInChildren<TMP_Text>().text = "Vazgeç";
         confirm.SetActive(false);
 
+        // Yükleme onayın üstünde: onay açıkken yükleme başlarsa butonları tıklanmasın
+        var loading = Child("Loading", safe.transform);
+        Fill(loading, -DimBleed, -DimBleed, DimBleed, DimBleed);
+        Dim(loading);
+        var ring = Child("Ring", loading.transform);
+        Anchor(ring, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, 50), new Vector2(96, 96));
+        var ringImg = ring.AddComponent<Image>();
+        ringImg.sprite = LoadSprite("coin");
+        ringImg.raycastTarget = false;
+        var loadingText = Text(loading.transform, "Text", "", 40, bold);
+        Anchor(loadingText.gameObject, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, -60), new Vector2(1200, 80));
+        loading.SetActive(false);
+
         // Bildirim en sonda: onay ve yüklemenin de üstünde görünsün
         var toast = Child("Toast", safe.transform);
         Anchor(toast, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -60), new Vector2(1000, 110));
-        Sliced(toast, "row_slate").raycastTarget = false;
-        var toastText = Text(toast.transform, "Text", "", 40, bold);
-        Fill(toastText.gameObject, 30, 0, -30, 0);
+        Sliced(toast, "btn_orange").raycastTarget = false; // koyu panelde de bordo zeminde de seçilsin
+        var toastText = Text(toast.transform, "Text", "", 40, extraBold); // dış çizgi materyali ExtraBold atlasına ait
+        toastText.fontSharedMaterial = outline;
+        Fill(toastText.gameObject, 30, 12, -30, 0);
         toast.SetActive(false);
 
         var so = new SerializedObject(root);
