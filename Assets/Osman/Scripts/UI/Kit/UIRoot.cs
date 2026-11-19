@@ -98,7 +98,13 @@ public class UIRoot : MonoBehaviour
         inst.loading.SetActive(false);
     }
 
-    public static Task<bool> Confirm(string title, string body, string yesLabel = "Evet", bool destructive = false)
+    public static Task<bool> Confirm(string title, string body, string yesLabel = "Evet", bool destructive = false) =>
+        Ask(title, body, yesLabel, destructive, true);
+
+    // Tek butonlu bilgi penceresi: onay penceresi Vazgeç gizlenerek açılır; buton, X ya da geri tuşuyla kapanır.
+    public static Task Notice(string title, string body, string okLabel = "Tamam") => Ask(title, body, okLabel, false, false);
+
+    static Task<bool> Ask(string title, string body, string yesLabel, bool destructive, bool showNo)
     {
         var r = I;
         if (r == null) return Task.FromResult(false);
@@ -110,6 +116,7 @@ public class UIRoot : MonoBehaviour
         b.GetComponentInChildren<TMP_Text>(true).text = yesLabel;
         r.yes.gameObject.SetActive(!destructive);
         r.yesDestructive.gameObject.SetActive(destructive);
+        r.no.gameObject.SetActive(showNo);
         r.confirm.gameObject.SetActive(true);
         if (r.raiseConfirm)
         {

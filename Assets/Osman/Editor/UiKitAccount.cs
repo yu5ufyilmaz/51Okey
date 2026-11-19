@@ -12,7 +12,7 @@ public static partial class UiKitBuilder
 {
     static readonly Color32 MutedText = new Color32(0xA9, 0xB3, 0xBD, 0xFF);
     static readonly Color32 DangerText = new Color32(0xFF, 0x8F, 0x85, 0xFF);
-    const float SettingsBodyHeight = 880f; // 20:9'da mantıksal yükseklik ~966; altı satır sığmaz, liste kayar
+    const float SettingsBodyHeight = 900f; // 20:9'da mantıksal yükseklik ~966; beş satır, başlık ve sürüm kaydırmasız sığar
 
     [MenuItem("Okey/UI Kit/Hesap Pencerelerini Kur")]
     public static void BuildAccountWindows() => Guarded(LobbyPath, BuildAccount);
@@ -224,33 +224,27 @@ public static partial class UiKitBuilder
         uw.closeOnBack = false;
         UnityEventTools.AddPersistentListener(uw.onBack, account.CloseSettings);
         var body = win.transform.Find("Body");
-        // Butonsuz pencere: içerik alttaki sürüm yazısına kadar iner
+        // Butonsuz pencere: içerik alttaki sürüm yazısına kadar iner; beş satır (5x120 + 4x14 = 656) kaydırmasız sığar
         var content = body.Find("Content");
-        Fill(content.gameObject, 60, 100, -60, -150);
-
-        // Satırlar üstten dizilir; sığmayınca liste dikey kayar
-        var viewport = Child("Viewport", content);
-        Fill(viewport, 0, 0, 0, 0);
-        viewport.AddComponent<RectMask2D>();
-        viewport.AddComponent<Image>().color = Color.clear; // satır aralarından da sürüklensin
-        var list = Child("List", viewport.transform);
-        Anchor(list, new Vector2(0, 1), Vector2.one, new Vector2(0.5f, 1), Vector2.zero, Vector2.zero);
+        Fill(content.gameObject, 60, 84, -60, -150);
+        var list = content.gameObject;
         var vl = list.AddComponent<VerticalLayoutGroup>();
         vl.spacing = 14;
         vl.childAlignment = TextAnchor.UpperCenter;
         vl.childControlWidth = true;
         vl.childForceExpandWidth = true;
         vl.childControlHeight = vl.childForceExpandHeight = false;
-        list.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-        var scroll = content.gameObject.AddComponent<ScrollRect>();
-        scroll.viewport = (RectTransform)viewport.transform;
-        scroll.content = (RectTransform)list.transform;
-        scroll.horizontal = false;
-        scroll.vertical = true;
-        scroll.movementType = ScrollRect.MovementType.Clamped;
 
-        var sound = ToggleRow(row, toggle, list.transform, "SoundRow", "Ses");
-        var music = ToggleRow(row, toggle, list.transform, "MusicRow", "Müzik");
+        // Ses ve Müzik tek satırda, yarım genişlikte iki hücre
+        var audio = Child("AudioRow", list.transform);
+        Size(audio, 0, 120);
+        var hl = audio.AddComponent<HorizontalLayoutGroup>();
+        hl.spacing = 14;
+        hl.childControlWidth = true;
+        hl.childForceExpandWidth = true;
+        hl.childControlHeight = hl.childForceExpandHeight = false;
+        var sound = ToggleRow(row, toggle, audio.transform, "SoundRow", "Ses");
+        var music = ToggleRow(row, toggle, audio.transform, "MusicRow", "Müzik");
         var privacy = LinkRow(row, list.transform, "PrivacyRow", "Gizlilik Politikası");
         var terms = LinkRow(row, list.transform, "TermsRow", "Kullanım Şartları");
         var support = LinkRow(row, list.transform, "SupportRow", "Destek");
@@ -259,7 +253,7 @@ public static partial class UiKitBuilder
 
         var version = Text(body, "VersionText", "", 30, bold);
         version.color = MutedText;
-        Anchor(version.gameObject, Vector2.zero, new Vector2(1, 0), new Vector2(0.5f, 0), new Vector2(0, 30), new Vector2(-120, 50));
+        Anchor(version.gameObject, Vector2.zero, new Vector2(1, 0), new Vector2(0.5f, 0), new Vector2(0, 24), new Vector2(-120, 50));
 
         account.soundToggle = sound;
         account.musicToggle = music;

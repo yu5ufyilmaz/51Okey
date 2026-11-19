@@ -243,15 +243,18 @@ public class LobbyAccountUI : MonoBehaviour
                 case DeleteResult.Ok:
                     SceneChangeManager.Instance.ChangeScene("MainMenu");
                     break;
+                // Oyuncunun yapacağı iş anlatılıyor: kısa bildirim yerine okunup kapatılan pencere
                 case DeleteResult.NeedsRecentLogin:
-                    UIRoot.Toast("Güvenlik için çıkış yapıp tekrar giriş yap, sonra yeniden dene");
+                    await UIRoot.Notice("Tekrar giriş gerekli",
+                        "Güvenlik için hesabın silinmeden önce yeniden giriş yapman gerekiyor. Çıkış yap, tekrar giriş yap ve yeniden dene. Hiçbir şey silinmedi.");
                     break;
                 case DeleteResult.DataDeletedAccountRemains:
                     // Servis yeni başlangıç profilini yükledi, oturum sürüyor: lobi onu göstersin
-                    UIRoot.Toast("Verilerin silindi ama hesap kapatılamadı. Tekrar giriş yapıp yeniden dene");
                     CloseSettings();
                     SyncNickName();
                     RefreshCurrent();
+                    await UIRoot.Notice("Hesap kapatılamadı",
+                        "Verilerin silindi ama hesabın kapatılamadı. Tekrar giriş yapıp Ayarlar'dan yeniden dene.");
                     break;
                 default:
                     UIRoot.Toast("Hesap silinemedi, tekrar dene");
