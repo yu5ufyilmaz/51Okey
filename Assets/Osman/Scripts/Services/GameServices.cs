@@ -133,7 +133,15 @@ public static class GameServices
         await Auth.SignOutAsync();
         // Kimlik zaten yoksa UserChanged gelmez: profil yine de düşer.
         if (Profile.Current != null)
-            Profile.Clear();
+            DropProfile();
+    }
+
+    // Aynı kimlikle yeniden girişte profil yeniden yüklensin: yükleme kaydı da sıfırlanır.
+    static void DropProfile()
+    {
+        profileUser = null;
+        profileLoad = Task.CompletedTask;
+        Profile.Clear();
     }
 
     // Aynı işlem sürerken gelen çağrı onun Task'ını alır; başka bir işlem sürerken fırlatır (iki hesap işlemi iç içe koşmasın).
@@ -191,9 +199,7 @@ public static class GameServices
     {
         if (Auth.UserId == null)
         {
-            profileUser = null;
-            profileLoad = Task.CompletedTask;
-            Profile.Clear();
+            DropProfile();
             return;
         }
         try { await ProfileLoadAsync(); }

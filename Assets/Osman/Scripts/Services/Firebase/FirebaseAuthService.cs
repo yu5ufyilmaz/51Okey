@@ -46,11 +46,12 @@ public class FirebaseAuthService : IAuthService
     }
 
     // Anonim hesaba geri girilemez: misafirin çıkışı hesabı ve coinini kaybettirir.
+    // auth.CurrentUser'a bakılır: RestoreAsync'ten önce de kayıtlı misafir korunur.
     public async Task SignOutAsync()
     {
-        if (user != null && user.IsAnonymous)
-            throw new InvalidOperationException("misafir hesaptan çıkılmaz");
         var auth = await boot.AuthAsync();
+        if (auth.CurrentUser?.IsAnonymous == true)
+            throw new InvalidOperationException("misafir hesaptan çıkılmaz");
         auth.SignOut();
         SetUser(null);
     }

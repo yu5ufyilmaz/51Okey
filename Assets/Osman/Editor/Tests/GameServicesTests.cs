@@ -52,11 +52,30 @@ public class GameServicesTests
     {
         GameServices.InitAsync().GetAwaiter().GetResult();
         GameServices.SignOutAsync().GetAwaiter().GetResult();
-        Assert.IsFalse(GameServices.HasSession);
-        GameServices.EnterAsGuestAsync().GetAwaiter().GetResult();
-        Assert.IsTrue(GameServices.HasSession);
-        Assert.AreEqual("local-" + GameServices.InstanceTag, GameServices.Auth.UserId);
-        Assert.AreEqual(GameServices.Auth.UserId, GameServices.Profile.Current.UserId);
+        try
+        {
+            Assert.IsFalse(GameServices.HasSession);
+            GameServices.EnterAsGuestAsync().GetAwaiter().GetResult();
+            Assert.IsTrue(GameServices.HasSession);
+            Assert.AreEqual("local-" + GameServices.InstanceTag, GameServices.Auth.UserId);
+            Assert.AreEqual(GameServices.Auth.UserId, GameServices.Profile.Current.UserId);
+        }
+        finally { GameServices.EnterAsGuestAsync().GetAwaiter().GetResult(); }
+    }
+
+    // Gözden geçirme odağı 1: Google başarısızsa misafir hesap açılmaz (yerel arka uçta Google hep Failed).
+    [Test]
+    public void EnterWithGoogle_Failed_OpensNoAccount()
+    {
+        GameServices.InitAsync().GetAwaiter().GetResult();
+        GameServices.SignOutAsync().GetAwaiter().GetResult();
+        try
+        {
+            Assert.AreEqual(LinkResult.Failed, GameServices.EnterWithGoogleAsync().GetAwaiter().GetResult());
+            Assert.IsFalse(GameServices.HasSession);
+            Assert.IsNull(GameServices.Auth.UserId);
+        }
+        finally { GameServices.EnterAsGuestAsync().GetAwaiter().GetResult(); }
     }
 
     [Test]
@@ -89,7 +108,7 @@ public class GameServicesTests
 
     // Yerel arka uç aynı karede biter: aynı Task beklenemez, iki çağrının tek hesap açtığı sınanır.
     [Test]
-    public void EnterAsGuest_TwiceInOneFrame_ReturnsSameTask()
+    public void EnterAsGuest_Twice_OneAccount()
     {
         GameServices.InitAsync().GetAwaiter().GetResult();
         GameServices.SignOutAsync().GetAwaiter().GetResult();
