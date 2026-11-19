@@ -320,3 +320,54 @@ Paket 3 (lobi) bitti: `2c396c5..ae73344`. EditMode 231, çok editörlü senkron 
 - Telefonda masa kur, Editörde kartı gör ve belirli koltuğa otur (ve tersi); şifreli masa; `BOTLARLA OYNA`.
 - Mağaza: karartma panelin çerçevesini de koyulaştırıyor; X butonu köşede, 20:9 ve 21:9'da üst bara değmiyor (Editörde ölçüldü).
 - Başkasının masasına girince 15 sn sonra "zaman aşımı" bildirimi artık çıkmamalı.
+
+## Paket 4'ten devreden notlar (2026-11-19)
+
+Paket 4 (ayarlar, profil, hesap silme) bitti. Dört paketin dördü de tamam; sırada telefon denemesi ve masa tasarımı var.
+
+### Hesap silme nasıl çalışıyor
+
+- Giriş noktası: `GameServices.DeleteAccountAsync()` → `DeleteResult { Ok, NeedsRecentLogin, Failed, DataDeletedAccountRemains }`. Karar mantığı `AccountDeletion.RunAsync` içinde, testli.
+- Sıra: yakın giriş denetimi → profil (işlem geçmişi + isim kaydı + profil, tek toplu yazma) → kimlik. `NeedsRecentLogin` ve `Failed` sonuçlarında hiçbir şey silinmemiştir.
+- Google hesabı: bu açılışta son 4 dakika içinde Google girişi yapılmamışsa hiçbir şey silinmez; oyuncuya "çıkış yap, tekrar gir, yeniden dene" denir. Uygulamayı yeniden açmış oyuncu her zaman bu adımdan geçer. Süre cihaz saatinden bağımsız ölçülür.
+- Kalan açık: son toplu yazmanın kendisi 5 sn'den uzun sürerse oyuncuya "Hesap silinemedi" denmiş olur ama silme tamamlanır.
+- Doğrulanmadı: Firebase misafirden Google'a bağlamayı silme için "yakın giriş" sayıyor mu. Saymıyorsa oyuncu "Hesap kapatılamadı" yoluna düşer.
+- Misafir: kimlik silinemezse cihazdaki misafir kimliği bırakılır ve sonuç başarılıdır; sunucuda veri taşımayan anonim bir kayıt kalır.
+- Çevrimdışıyken silme hiçbir şey yazmadan hata verir (okumalar sunucudan). Adımların her biri 20 sn ile sınırlıdır; 15 sn'den sonra yeni yazma başlamaz.
+- Silme sürerken geri tuşu çalışmaz.
+
+### Hiçbir cihazda denenmedi
+
+Firebase, Firestore ve Google ile ilgili her şey yalnızca kod okunarak yazıldı; Editör yerel arka uçla çalışır. Gerçek hesapta hiçbir silme çalıştırılmadı. Yayından önce aşağıdaki liste atılacak hesaplarla telefonda denenmeli.
+
+### Telefonda deneme listesi (atılacak hesaplarla)
+
+1. Misafir, çevrimiçi: sil → giriş ekranı → "Misafir Olarak Oyna" yeni kimlik ve başlangıç profili verir. Firestore konsolunda `users/{eski}`, işlem geçmişi ve `names/{eski isim}` yok.
+2. Son 4 dakikada giriş yapmış Google hesabı: sil → giriş ekranı. Sonraki "Google ile Giriş" hesap seçiciyi gösterir. Aynı Google hesabı yeni kimlik ve yeni profil alır; eski isim yeniden alınabilir.
+3. Uygulaması yeniden açılmış Google hesabı: sil → "Tekrar giriş gerekli" penceresi; sunucuda hiçbir şey değişmemiş. Çıkış yap, gir, sil → başarılı.
+4. Misafirden az önce Google'a bağlanmış hesap, hemen sil: "Tekrar giriş gerekli" çıkıyor mu, çıkmıyorsa silme başarılı mı.
+5. Uçak kipinde sil: yaklaşık 20 sn içinde "Hesap silinemedi" bildirimi. Bağlantı gelince ve uygulama yeniden açılınca profil yerinde; kuyrukta bekleyen silme yok.
+6. Silme sırasında bağlantıyı kes (ikinci onaydan hemen sonra uçak kipi): gösterilen sonuç ve sunucudaki durum not edilir.
+7. Google hesabında profil silinip kimlik silinemezse: "Hesap kapatılamadı" penceresi, lobi başlangıç profilini gösterir, Ayarlar'dan hemen yeniden deneme kalanı siler.
+8. Misafirde kimlik silinemezse: sonuç başarılı, giriş ekranı; Auth'ta kalan anonim kayıt veri taşımıyor.
+9. Büyük geçmiş (konsoldan deneme kimliğine 500'den fazla işlem kaydı eklenir): tek silme hepsini kaldırır, süre zaman sınırının altında kalır.
+10. Firestore kuralları toplu yazmayı (geçmiş + isim + profil) hem misafir hem Google kimliği için kabul ediyor.
+11. "Hesap siliniyor..." sırasında geri tuşu hiçbir şey yapmıyor. Uygulama o sırada öldürülürse yeniden açılıştaki durum not edilir.
+12. Silme sonrası: lobide eski isim ya da coin kalmıyor; yeni masada Photon adı yeni profilin adı.
+13. Misafirden var olan Google hesabına geçiş çevrimiçi çalışıyor; çevrimdışı temiz hata veriyor ve misafir korunuyor (aynı silme kodunu kullanır).
+14. Arayüz, 20:9: ayarlar satırları, anahtarların yeniden açılışta korunması, bildirim penceresinin okunması, iki onayda da geri tuşuyla iptal.
+
+### Osman'dan beklenenler
+
+- Gizlilik politikası, kullanım şartları ve web üzerinden hesap silme sayfası adresleri; destek e-postası (`GameConfig`). Adresler gelene kadar ayarlardaki üç satır ve giriş ekranındaki şartlar satırı gizli; Play yüklemesi bunlarsız yapılamaz.
+- Google butonu için logo görseli (Google'ın marka kuralı).
+- Mağaza içeriği: yer tutucu ürünler, İngilizce "Remove ADS", karışık USD/TL fiyatlar.
+
+### Bilinen eksikler
+
+- Ayarlar masadan açılamıyor (tasarım "ileride" diyordu): masa işinde.
+- Ayarlar penceresi adresler gelene kadar yarı boş; 20:9'da arkadaki üst bar ve alt butonların üstüne biniyor (pencere açıkken arkası tıklanmaz).
+- Onay penceresi ayarların üstünde açılınca çift çerçeve görünüyor.
+- XP çubuğu uçlarda yaklaşık %5 sapıyor (96-99 XP dolu görünür); avatar dairesinin kenarı bulanık (hazır sprite büyütülüyor).
+- "Hesap silinemedi" bildirimi, zaman aşımındaki "sonuç bilinmiyor" durumunu ayırt etmiyor.
+- Bekleme odasında bağlantısı kopan oyuncunun 60 sn hayalet kalması, `JoinLobby` çakışması, katılan oyuncuda puan sıfırlama: masa belgesinde.
