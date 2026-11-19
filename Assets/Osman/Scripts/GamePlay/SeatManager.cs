@@ -62,6 +62,8 @@ public class SeatManager : MonoBehaviourPunCallbacks
     #region Player Join and Left Functions
     public override void OnJoinedRoom()
     {
+        // Katılanın masa sahnesini PUN (AutomaticallySyncScene) yükler; RoomManager/SceneChangeManager yükleme katmanını kapatamaz.
+        UIRoot.HideLoading();
         AssignPositionAndInstantiate();
         // Odayı kuran direkt oturur (sahne yeniden yüklendiyse koltuğunu korur).
         int seatNumber = GetSeatNumberOfPlayer(PhotonNetwork.LocalPlayer);
@@ -122,13 +124,13 @@ public class SeatManager : MonoBehaviourPunCallbacks
             return;
         }
         RequestSeat(wanted);
-        StartCoroutine(ToastIfNotSeatedAt(wanted));
+        StartCoroutine(ToastIfNotSeated());
     }
 
-    IEnumerator ToastIfNotSeatedAt(int seat)
+    IEnumerator ToastIfNotSeated()
     {
         yield return new WaitForSeconds(2f);
-        if (GetSeatNumberOfPlayer(PhotonNetwork.LocalPlayer) != seat)
+        if (!IsSeated(PhotonNetwork.LocalPlayer)) // bu arada başka OTUR'a dokunup oturduysa bildirim yok
             UIRoot.Toast(SeatTakenMessage);
     }
 
@@ -140,19 +142,20 @@ public class SeatManager : MonoBehaviourPunCallbacks
         string[] seats = SeatNames.Build(
             PhotonNetwork.PlayerList.Select(p => new KeyValuePair<int, string>(GetSeatNumberOfPlayer(p), p.NickName))
         );
-        if (
-            PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(RoomManager.SeatsKey, out object old)
-            && old is string[] oldSeats
-            && oldSeats.SequenceEqual(seats)
-        )
+        // Oda özelliğinin yerel kopyası sunucu yankısıyla güncellenir; karşılaştırma son gönderilenle yapılır.
+        if (lastPublished != null && lastPublished.SequenceEqual(seats))
             return;
+        lastPublished = seats;
         PhotonNetwork.CurrentRoom.SetCustomProperties(
             new ExitGames.Client.Photon.Hashtable { { RoomManager.SeatsKey, seats } }
         );
     }
 
+    string[] lastPublished;
+
     public override void OnMasterClientSwitched(Player newMasterClient)
     {
+        lastPublished = null; // yeni master bir kez yazar
         if (newMasterClient.IsLocal)
             PublishSeats();
     }

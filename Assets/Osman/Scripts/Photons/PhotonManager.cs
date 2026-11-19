@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Photon.Pun;
+using Photon.Realtime;
 using UnityEngine;
 
 public class PhotonManager : MonoBehaviourPunCallbacks
@@ -71,6 +72,20 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         UIRoot.HideLoading();
         UIRoot.Toast(JoinErrorText.For(returnCode));
         Debug.LogWarning("Failed to join room: " + returnCode + " " + message);
+        BackToLobby();
+    }
+
+    // Başarısız giriş/kurmadan sonra istemci ana sunucuda kalır, lobiye kendisi dönmez (oda listesi durur).
+    // Senkron testin misafiri saniyede bir yeniden dener; onun akışı değişmesin.
+    static void BackToLobby()
+    {
+        if (
+            SyncAutoTest.Instance == null
+            && PhotonNetwork.IsConnectedAndReady
+            && !PhotonNetwork.InLobby
+            && PhotonNetwork.NetworkClientState != ClientState.JoiningLobby
+        )
+            PhotonNetwork.JoinLobby();
     }
 
     public override void OnJoinRandomFailed(short returnCode, string message)
@@ -83,5 +98,6 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         UIRoot.HideLoading();
         UIRoot.Toast(JoinErrorText.For(returnCode));
         Debug.LogWarning("Failed to create room: " + returnCode + " " + message);
+        BackToLobby();
     }
 }
