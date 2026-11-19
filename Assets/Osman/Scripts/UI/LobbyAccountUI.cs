@@ -25,6 +25,8 @@ public class LobbyAccountUI : MonoBehaviour
     public TextMeshProUGUI coinText;
     public Button linkGoogleButton;
     public TextMeshProUGUI linkStatus;
+    public Button signOutButton;
+    public TextMeshProUGUI signOutStatus;
 
     [Header("Hesap değiştirme onayı")]
     public GameObject confirmSwitchPanel;
@@ -34,8 +36,6 @@ public class LobbyAccountUI : MonoBehaviour
     public Toggle soundToggle;
     public Toggle musicToggle;
     public TextMeshProUGUI versionText;
-    public Button signOutButton;
-    public TextMeshProUGUI signOutStatus;
 
     TaskCompletionSource<bool> switchAnswer;
 
@@ -103,6 +103,7 @@ public class LobbyAccountUI : MonoBehaviour
     {
         nameError.text = "";
         linkStatus.text = "";
+        signOutStatus.text = "";
         nameInput.text = GameServices.Profile.Current?.DisplayName ?? "";
         RefreshCurrent();
         profilePanel.SetActive(true);
@@ -197,7 +198,6 @@ public class LobbyAccountUI : MonoBehaviour
 
     public void OpenSettings()
     {
-        signOutStatus.text = "";
         SyncToggles();
         RefreshCurrent();
         settingsPanel.SetActive(true);
