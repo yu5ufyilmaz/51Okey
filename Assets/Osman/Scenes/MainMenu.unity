@@ -2477,6 +2477,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1071898200}
+  - component: {fileID: 1071898201}
   m_Layer: 5
   m_Name: NamePanel
   m_TagString: Untagged
@@ -2507,6 +2508,23 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 1400, y: 960}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1071898201
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1071898199}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb03e01760da9a34e92df78e7f0683e7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UiWindow
+  closable: 0
+  closeOnBack: 1
+  onBack:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1113965437
 GameObject:
   m_ObjectHideFlags: 0

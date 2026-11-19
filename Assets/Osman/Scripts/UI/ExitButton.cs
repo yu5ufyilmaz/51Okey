@@ -16,6 +16,13 @@ public class ExitButton : MonoBehaviourPunCallbacks
         PhotonNetwork.LeaveRoom();
     }
 
+    // Masadaki "Çıkış Butonu" ve geri tuşu buraya gelir; oyun sonu ve test oyuncuları ExitGame'i onaysız çağırır.
+    public async void AskExit()
+    {
+        if (await UIRoot.Confirm("Masadan ayrıl", "Masadan ayrılmak istiyor musun?", "Ayrıl", true) && this != null)
+            ExitGame();
+    }
+
     // Photon "Tamam, odadan çıktın" dediği an burası çalışır.
     public override void OnLeftRoom()
     {

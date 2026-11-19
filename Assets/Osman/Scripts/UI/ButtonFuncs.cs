@@ -265,10 +265,12 @@ public class ButtonFuncs : MonoBehaviourPunCallbacks
 
         // RoomManager üzerinden şifre kontrolünü ve odaya girişi başlat
         // selectedRoomName ve selectedRoomPassword değerleri OnRoomItemClicked ile atanmıştı
-        roomManager.JoinRoomWithPassword(selectedRoomName, enteredPass, selectedRoomPassword);
+        // Şifre yanlışsa pencere açık kalır, yalnız alan temizlenir
+        bool joining = roomManager.JoinRoomWithPassword(selectedRoomName, enteredPass, selectedRoomPassword);
 
         // Paneli kapat ve temizle
-        passwordPopupPanel.SetActive(false);
+        if (joining)
+            passwordPopupPanel.SetActive(false);
         passwordCheckInput.text = "";
     }
 

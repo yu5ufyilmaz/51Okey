@@ -27,12 +27,13 @@ public class SceneChangeManager : MonoBehaviour
 
     private IEnumerator LoadSceneAsync(string sceneName)
     {
+        UIRoot.ShowLoading();
         AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(sceneName);
 
         while (!asyncLoad.isDone)
         {
-            Debug.Log("Loading progress: " + (asyncLoad.progress * 100) + "%");
             yield return null;
         }
+        UIRoot.HideLoading();
     }
 }

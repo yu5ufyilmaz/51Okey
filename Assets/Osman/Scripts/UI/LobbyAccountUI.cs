@@ -31,16 +31,11 @@ public class LobbyAccountUI : MonoBehaviour
     public Button signOutButton;
     public TextMeshProUGUI signOutStatus;
 
-    [Header("Hesap değiştirme onayı")]
-    public GameObject confirmSwitchPanel;
-
     [Header("Ayarlar")]
     public GameObject settingsPanel;
     public Toggle soundToggle;
     public Toggle musicToggle;
     public TextMeshProUGUI versionText;
-
-    TaskCompletionSource<bool> switchAnswer;
 
     void Awake()
     {
@@ -63,8 +58,6 @@ public class LobbyAccountUI : MonoBehaviour
         GameServices.Auth.UserChanged -= RefreshCurrent;
         if (GameServices.ConfirmAccountSwitch == AskSwitchAsync)
             GameServices.ConfirmAccountSwitch = null;
-        // Onay beklerken sahne kapanırsa GameServices bekleyip kalmasın: hayır sayılır.
-        switchAnswer?.TrySetResult(false);
     }
 
     void RefreshCurrent() => Refresh(GameServices.Profile.Current);
@@ -186,24 +179,11 @@ public class LobbyAccountUI : MonoBehaviour
     }
 
     // Google hesabı başka profile bağlıysa GameServices oyuncuya sorar (eski MainMenu deseni).
-    Task<bool> AskSwitchAsync()
-    {
-        switchAnswer?.TrySetResult(false);
-        switchAnswer = new TaskCompletionSource<bool>();
-        confirmSwitchPanel.SetActive(true);
-        return switchAnswer.Task;
-    }
-
-    public void ConfirmSwitchYes() => AnswerSwitch(true);
-
-    public void ConfirmSwitchNo() => AnswerSwitch(false);
-
-    void AnswerSwitch(bool yes)
-    {
-        confirmSwitchPanel.SetActive(false);
-        switchAnswer?.TrySetResult(yes);
-        switchAnswer = null;
-    }
+    Task<bool> AskSwitchAsync() =>
+        UIRoot.Confirm(
+            "Kayıtlı hesap bulundu",
+            "Bu Google hesabı başka bir oyuncu profiline bağlı.\nBu cihazdaki misafir ilerleme silinecek, kayıtlı hesabına geçilecek. Devam edilsin mi?"
+        );
 
     public void OpenSettings()
     {
@@ -222,6 +202,11 @@ public class LobbyAccountUI : MonoBehaviour
     {
         try
         {
+            string body = GameServices.Auth.IsGuest
+                ? "Misafir hesabından çıkarsan ilerlemen kaybolur."
+                : "Hesabından çıkılsın mı?";
+            if (!await UIRoot.Confirm("Çıkış yap", body, "Çıkış yap", true) || this == null)
+                return;
             signOutButton.interactable = false;
             signOutStatus.text = "";
             try { await GameServices.SignOutAsync(); }

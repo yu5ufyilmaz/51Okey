@@ -59,6 +59,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
         roomOptions.CustomRoomPropertiesForLobby = new string[] { "Password", "TotalRounds" };
 
         SetPickSeat(false);
+        UIRoot.ShowLoading("Masa kuruluyor...");
         PhotonNetwork.CreateRoom(roomName, roomOptions, TypedLobby.Default);
     }
 
@@ -81,6 +82,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
             { "Password", "" },
         };
         SetPickSeat(false);
+        UIRoot.ShowLoading("Masaya giriliyor...");
         PhotonNetwork.JoinRandomRoom(expectedProps, (byte)maxPlayers);
     }
 
@@ -94,7 +96,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
 
     // Scripts/Photons/RoomManager.cs
     // Scripts/Photons/RoomManager.cs içindeki ilgili metod:
-    public void JoinRoomWithPassword(
+    public bool JoinRoomWithPassword(
         string _roomName,
         string enteredPassword,
         string actualPassword
@@ -104,25 +106,22 @@ public class RoomManager : MonoBehaviourPunCallbacks
         string cleanEntered = enteredPassword.Trim();
         string cleanActual = actualPassword.Trim();
 
-        Debug.Log(
-            $"[Giriş Denemesi] Oda: '{_roomName}' | Girilen: '{cleanEntered}' | Beklenen: '{cleanActual}'"
-        );
-
         if (cleanEntered == cleanActual)
         {
             SetPickSeat(true);
+            UIRoot.ShowLoading("Masaya giriliyor...");
             PhotonNetwork.JoinRoom(_roomName); // Artık isim ve şifre kesinlikle doğru
+            return true;
         }
-        else
-        {
-            Debug.LogError("Hatalı Şifre! Girilen: " + cleanEntered);
-        }
+        UIRoot.Toast("Şifre yanlış");
+        return false;
     }
 
     // Listeden tıklayarak katılma (Şifreli odalar için ileride buraya şifre sorma eklenecek)
     public void JoinRoomManual(string _roomName)
     {
         SetPickSeat(true);
+        UIRoot.ShowLoading("Masaya giriliyor...");
         PhotonNetwork.JoinRoom(_roomName);
     }
 

@@ -142,8 +142,8 @@ public class UIRoot : MonoBehaviour
     void OnDestroy()
     {
         SceneManager.activeSceneChanged -= OnSceneChanged;
+        if (inst == this) inst = null; // devamı Toast/ShowLoading çağırırsa yok edilen nesneye dokunmasın
         Resolve(false);
-        if (inst == this) inst = null;
     }
 
     void Update()
@@ -166,7 +166,7 @@ public class UIRoot : MonoBehaviour
         if (!w.closable) { stack.Push(w); return; } // tuşu yut, pencere yığında kalsın
         if (w == confirm) { Resolve(false); return; }
         w.onBack.Invoke();
-        if (w.closeOnBack)
+        if (w != null && w.closeOnBack) // işleyici pencereyi yok etmiş olabilir
             w.gameObject.SetActive(false);
     }
 
@@ -183,11 +183,8 @@ public class UIRoot : MonoBehaviour
     {
         if (SceneManager.GetActiveScene().name == "Table")
         {
-            if (await Confirm("Masadan ayrıl", "Masadan ayrılmak istiyor musun?", "Ayrıl", true))
-            {
-                var exit = FindFirstObjectByType<ExitButton>();
-                if (exit != null) exit.ExitGame();
-            }
+            var exit = FindFirstObjectByType<ExitButton>();
+            if (exit != null) exit.AskExit(); // onay metni ExitButton'da
         }
         else if (await Confirm("Çıkış", "Oyundan çıkılsın mı?", "Çık", true))
             Application.Quit();
