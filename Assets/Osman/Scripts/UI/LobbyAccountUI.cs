@@ -64,9 +64,12 @@ public class LobbyAccountUI : MonoBehaviour
 
     void RefreshCurrent() => Refresh(GameServices.Profile.Current);
 
-    // Profil yüklenmediyse (null) hiçbir yazıya dokunulmaz.
+    // Profil yüklenmediyse (null) yazılara dokunulmaz; düğme görünürlüğü profile bağlı değildir ve her zaman kurulur
+    // (çıkış yalnız CanSignOut iken görünür: Firebase misafiri çıkarsa hesabı kalıcı kaybeder).
     void Refresh(PlayerProfile profile)
     {
+        linkGoogleButton.gameObject.SetActive(GameServices.UsesFirebase && GameServices.Auth.IsGuest);
+        signOutButton.gameObject.SetActive(GameServices.CanSignOut);
         if (profile == null)
             return;
         chipText.text = profile.DisplayName + " · Seviye " + profile.Level;
@@ -74,8 +77,6 @@ public class LobbyAccountUI : MonoBehaviour
         xpText.text = "XP: " + profile.Xp % GameConfig.XpPerLevel + " / " + GameConfig.XpPerLevel;
         coinText.text = "Coin: " + profile.Coins;
         accountText.text = GameServices.Auth.IsGuest ? "Hesap: Misafir" : "Hesap: Google";
-        linkGoogleButton.gameObject.SetActive(GameServices.UsesFirebase && GameServices.Auth.IsGuest);
-        signOutButton.gameObject.SetActive(GameServices.CanSignOut);
         // Yazılırken (ör. Changed başka sebeple gelince) kutudaki metin ezilmesin.
         if (!nameInput.isFocused)
             nameInput.text = profile.DisplayName;
