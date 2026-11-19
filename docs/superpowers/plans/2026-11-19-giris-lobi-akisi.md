@@ -330,3 +330,6 @@ Açık kalanlar:
 - Kullanıcı cihazda sırayla denedi ve logda doğrulandı: Hesaptan çık → Google ile gir (aynı hesap, profil yüklendi, lobi) →
   Hesaptan çık → Misafir olarak oyna (yeni anonim hesap, 1000 coin).
 - Cihazda hâlâ denenmedi: misafirken Profil'den "Google'a bağla" ve hesap değiştirme onayı, çevrimdışı açılış.
+- 04:45: misafirken Profil → "Google'a bağla" kullanıcı tarafından denendi. O anın logu yakalanamadı; sonuç yeniden açılışla
+  doğrulandı: denemeden önce cihaz misafir hesaptaydı, yeniden açılışta Google hesabının kimliği geri yüklendi (hesaba geçiş
+  olmuş). Play Games hatası yok. Cihazda hâlâ denenmedi: çevrimdışı açılış. Dört editörlü senkron testi de koşulmadı.
