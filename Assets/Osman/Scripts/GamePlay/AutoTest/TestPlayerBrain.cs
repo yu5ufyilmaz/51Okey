@@ -73,8 +73,9 @@ public class TestPlayerBrain
     readonly Random rng;
     readonly double mistakeRate;
     bool? pathPairs;
-    bool arrangedThisTurn,
-        mistakeUsed,
+    string arrangedSig; // bu turda en son dizilen per kümesi (taş kimlikleri)
+    readonly HashSet<string> refusedThisTurn = new HashSet<string>(); // oyunun reddettiği adımlar
+    bool mistakeUsed,
         sideCancelled,
         sideForMistake,
         twinProbe,
@@ -99,7 +100,9 @@ public class TestPlayerBrain
 
     public void NewTurn()
     {
-        arrangedThisTurn = mistakeUsed = sideCancelled = sideForMistake = twinProbe = false;
+        arrangedSig = null;
+        refusedThisTurn.Clear();
+        mistakeUsed = sideCancelled = sideForMistake = twinProbe = false;
         processedAtEnd.Clear();
         TurnMistake = Mistake.None;
         if (mistakeRate > 0 && rng.NextDouble() < mistakeRate)
@@ -108,6 +111,12 @@ public class TestPlayerBrain
             TurnMistake = kinds[rng.Next(kinds.Count)];
         }
     }
+
+    // Sürücü: beklenen adım oyunda olmadı; bu turda aynısı tekrar önerilmez.
+    public void NoteRefused(PlanStep step) => refusedThisTurn.Add(RefusalKey(step));
+
+    static string RefusalKey(PlanStep s) =>
+        s.Kind == StepKind.Process ? $"P|{s.TileId}|{s.SlotKey}" : s.Kind.ToString();
 
     bool Opened(TableView v) => v.IOpenedSeries || v.IOpenedPairs;
 
@@ -222,11 +231,14 @@ public class TestPlayerBrain
         }
 
         var best = Best(v, hand);
-        bool canOpen = CanOpen(v, hand, best);
+        bool canOpen = CanOpen(v, hand, best)
+            && !refusedThisTurn.Contains((PathIsPairs ? StepKind.OpenPairs : StepKind.OpenSeries).ToString());
 
-        if (canOpen && !arrangedThisTurn)
+        // Açılacak per kümesi son dizilenden farklıysa yeniden diz (ilk açıştan sonra el değişir).
+        string sig = string.Join("/", best.Melds.Select(m => string.Join(",", m.Select(t => t.id))));
+        if (canOpen && sig != arrangedSig)
         {
-            arrangedThisTurn = true;
+            arrangedSig = sig;
             var inMelds = new HashSet<string>(best.Melds.SelectMany(m => m).Select(t => t.id));
             var layout = RackLayout.Place(best.Melds, hand.Where(t => !inMelds.Contains(t.id)).ToList());
             if (layout != null)
@@ -254,6 +266,8 @@ public class TestPlayerBrain
             foreach (var tile in hand.Where(t => !IsOkey(t)))
             {
                 var exact = MatchingSlot(v, tile, true);
+                if (exact != null && refusedThisTurn.Contains($"P|{tile.id}|{exact.Key}"))
+                    exact = null;
                 if (exact != null && Opened(v))
                     return Process(exact, tile, $"{Name(tile)} işlek, işliyorum", Mistake.None);
                 if (exact != null && !Opened(v) && TakeMistake(Mistake.ProcessBeforeOpen))
@@ -283,6 +297,13 @@ public class TestPlayerBrain
         var step = Step(StepKind.Process, reason, mistake, tile);
         step.SlotKey = slot.Key;
         return step;
+    }
+
+    // Adım koruması tıkandığında turu bitirmek için en güvenli atış (bilerek hata yok).
+    public PlanStep SafeDiscard(TableView v)
+    {
+        mistakeUsed = true;
+        return Discard(v, Best(v, v.Hand));
     }
 
     PlanStep Discard(TableView v, MeldSet best)

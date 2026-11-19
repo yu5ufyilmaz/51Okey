@@ -25,6 +25,7 @@ public class SyncAutoTestConfig
 
     public string displayName; // boş değilse Photon takma adı bu; iç kimlik (nickName) değişmez
     public float botFillDelaySec; // > 0: host oyunun bot doldurma bekleme süresini bununla değiştirir (üst sınır)
+    public bool humanHost; // -JoinRoom: oda insanda; adım koruması tıkanırsa Error'a düşme, turu bitirip devam et
     public int humans; // > 0: bu kadar insan oturunca host bot beklemesini bitirir (0 = kullanılmaz)
 
     public string PhotonName => string.IsNullOrEmpty(displayName) ? nickName : displayName;

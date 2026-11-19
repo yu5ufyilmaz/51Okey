@@ -92,8 +92,28 @@ public partial class SyncAutoTest
             }
             yield return new WaitForSeconds(Config.moveDelaySec);
         }
-        if (state != State.Error)
-            Fail($"tur {MaxStepsPerTurn} adımda bitmedi");
+        if (state == State.Error)
+            yield break;
+        string guardMsg = $"tur {MaxStepsPerTurn} adımda bitmedi";
+        if (!Config.humanHost)
+        {
+            Fail(guardMsg);
+            yield break;
+        }
+        // İnsan host'lu oyunda bırakıp gitme: en güvenli atışla turu bitir, sonraki turlarda devam et.
+        DriverNote(guardMsg);
+        if (!turnManager.canDrop && turnManager.currentTurnPlayer == que && !GameManager.Instance.isGameEnded)
+        {
+            TableView dv = BuildTableView();
+            yield return StartCoroutine(Execute(brain.PlanDraw(dv), dv));
+        }
+        if (turnManager.canDrop && turnManager.currentTurnPlayer == que && !GameManager.Instance.isGameEnded && state != State.Error)
+        {
+            TableView dv = BuildTableView();
+            yield return StartCoroutine(Execute(brain.SafeDiscard(dv), dv));
+            if (turnManager.currentTurnPlayer != que || GameManager.Instance.isGameEnded)
+                myMoves++;
+        }
     }
 
     // --- Görünüm ---
@@ -345,11 +365,19 @@ public partial class SyncAutoTest
                 yield return StartCoroutine(WaitFor(() => allowed ? Td.GetPlayerTiles().Count < before.Hand : false, allowed ? ObserveTimeout : 1f));
                 Obs after = Observe();
                 bool opened = after.Hand < before.Hand;
-                Check(
-                    $"{step.Kind} ({best.Score}, limit {v.TableLimit})",
-                    allowed ? "açıldı" : "açılmadı",
-                    opened ? "açıldı" : "açılmadı"
-                );
+                // Oyunun saydığı geçerli per yoksa (ıstaka dizilimi kayması) bu oyun hatası değil, sürücü sorunu.
+                var sm = Sm;
+                bool noPers = pairs ? sm.pairTotalPerCount < 1 : sm.totalPerCount - sm.pairTotalPerCount < 1;
+                if (allowed && !opened && noPers)
+                    DriverNote($"{step.Kind}: oyun ıstakada geçerli per görmedi (dizilim kaydı), açılamadı");
+                else
+                    Check(
+                        $"{step.Kind} ({best.Score}, limit {v.TableLimit})",
+                        allowed ? "açıldı" : "açılmadı",
+                        opened ? "açıldı" : "açılmadı"
+                    );
+                if (!opened && step.Mistake == Mistake.None)
+                    brain.NoteRefused(step);
                 if (opened)
                 {
                     status.opens++;
@@ -379,6 +407,8 @@ public partial class SyncAutoTest
                 System.Func<bool> gone = () => !Td.GetPlayerTiles().Any(t => t.id == tileId);
                 yield return StartCoroutine(WaitFor(gone, expectAccept ? ObserveTimeout : 1f));
                 bool accepted = gone();
+                if (!accepted && expectAccept)
+                    brain.NoteRefused(step);
                 Check($"işle {TestPlayerBrain.Name(tile.tileDataInfo)} -> que{sv.OwnerQue}", expectAccept ? "işlendi" : "reddedildi", accepted ? "işlendi" : "reddedildi");
                 if (accepted)
                 {

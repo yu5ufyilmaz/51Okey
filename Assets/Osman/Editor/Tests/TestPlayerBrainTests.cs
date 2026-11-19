@@ -188,4 +188,72 @@ public class TestPlayerBrainTests
         Assert.IsTrue(MistakeRun(7, 0.5).Any(m => m != Mistake.None));
         Assert.IsTrue(MistakeRun(7, 0).All(m => m == Mistake.None));
     }
+    static TableView PairsView(List<Tiles> hand, bool iOpenedPairs) =>
+        new TableView
+        {
+            MyQue = 2,
+            Hand = hand,
+            Indicator = T(TileColor.blue, 7),
+            TableLimit = 67,
+            AnyoneElseOpened = true,
+            IOpenedPairs = iOpenedPairs,
+            CanDrop = true,
+            PileCount = 40,
+        };
+
+    static List<Tiles> Hand15() =>
+        new List<Tiles>
+        {
+            Okey(), T(TileColor.red, 1), T(TileColor.blue, 9), T(TileColor.blue, 1), T(TileColor.yellow, 13),
+            T(TileColor.yellow, 3), T(TileColor.yellow, 6), T(TileColor.red, 2), T(TileColor.black, 1),
+            T(TileColor.blue, 9), T(TileColor.blue, 4), T(TileColor.yellow, 2), T(TileColor.yellow, 1),
+            T(TileColor.yellow, 13), T(TileColor.blue, 12),
+        };
+
+    static List<Tiles> Hand9() =>
+        new List<Tiles>
+        {
+            T(TileColor.blue, 1), T(TileColor.yellow, 3), T(TileColor.yellow, 6), T(TileColor.red, 2),
+            T(TileColor.black, 1), T(TileColor.blue, 4), T(TileColor.yellow, 2), T(TileColor.yellow, 1),
+            T(TileColor.blue, 7),
+        };
+
+    [Test]
+    public void Brain_ArrangesAgainForSecondOpenSameTurn()
+    {
+        var brain = new TestPlayerBrain(1, 0);
+        brain.NewDeal();
+        var h15 = Hand15();
+        Assert.AreEqual(StepKind.Arrange, brain.NextAction(PairsView(h15, false)).Kind);
+        Assert.AreEqual(StepKind.OpenPairs, brain.NextAction(PairsView(h15, false)).Kind);
+
+        var h9 = Hand9();
+        Assert.AreEqual(StepKind.Arrange, brain.NextAction(PairsView(h9, true)).Kind);
+        Assert.AreEqual(StepKind.OpenPairs, brain.NextAction(PairsView(h9, true)).Kind);
+    }
+
+    [Test]
+    public void Brain_RefusedOpenIsNotRetriedThisTurn()
+    {
+        var brain = new TestPlayerBrain(1, 0);
+        brain.NewDeal();
+        var h15 = Hand15();
+        brain.NextAction(PairsView(h15, false)); // Arrange
+        var open = brain.NextAction(PairsView(h15, false));
+        Assert.AreEqual(StepKind.OpenPairs, open.Kind);
+        brain.NoteRefused(open);
+
+        bool reachedDiscard = false;
+        for (int i = 0; i < 4 && !reachedDiscard; i++)
+        {
+            var step = brain.NextAction(PairsView(h15, false));
+            Assert.AreNotEqual(StepKind.OpenPairs, step.Kind);
+            reachedDiscard = step.Kind == StepKind.Discard;
+        }
+        Assert.IsTrue(reachedDiscard);
+
+        brain.NewTurn(); // ret hafızası sıfırlanır
+        brain.NextAction(PairsView(h15, false));
+        Assert.AreEqual(StepKind.OpenPairs, brain.NextAction(PairsView(h15, false)).Kind);
+    }
 }

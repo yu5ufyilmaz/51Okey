@@ -114,6 +114,8 @@ foreach ($p in $Projects) {
 
 $runId = Get-Date -Format 'yyyyMMdd_HHmmss'
 $timedOut = $false
+$allDone = $false
+$final = $null
 $started = Get-Date
 # Photon'a sadece MainMenu'deki PhotonManager bağlanır; editörde hangi sahne açıksa açık olsun Play oradan başlasın.
 # Kod dosyadan verilir: PowerShell 5.1 native argümanlardaki tırnakları siler.
@@ -147,6 +149,7 @@ try {
             fillWithBots       = [bool]($Solo -or $Bots)
             displayName        = $(if ($SameNames) { 'Ayni' } else { '' })
             botFillDelaySec    = $botFillDelaySec
+            humanHost          = [bool]$JoinRoom
             humans             = $(if ($Bots) { 4 - $Bots } else { 0 })
         }
         [IO.File]::WriteAllText((Join-Path $dir 'config.json'), ($cfg | ConvertTo-Json))
@@ -175,7 +178,7 @@ try {
         $line = "deal $(if ($h) { $h.deal } else { '?' }) | moves $moves$(if (-not $JoinRoom) { " | ok $(if ($h) { $h.sync.ok }) desync $(if ($h) { $h.sync.desync })" })"
         if ($line -ne $last) { Write-Host $line; $last = $line }
         $states = @($all | ForEach-Object { if ($_) { $_.state } else { '' } })
-        if (@($states | Where-Object { $_ -eq 'Done' }).Count -eq $Projects.Count) { break }
+        if (@($states | Where-Object { $_ -eq 'Done' }).Count -eq $Projects.Count) { $allDone = $true; break }
         if ($states -contains 'Error') { break }
         if ((Get-Date) -gt $started.AddSeconds($TimeoutSec)) { $timedOut = $true; break }
         Start-Sleep -Seconds 2
@@ -185,8 +188,14 @@ try {
 }
 finally {
     # 6. Kapat: kalmış config, kullanıcının sonraki elle Play'ini otopilotla açardı.
+    # -JoinRoom: hata/zaman aşımıyla bittiyse insanın oyunu sürüyor olabilir; test oyuncularını durdurma.
+    $leaveForHuman = [bool]$JoinRoom -and -not $allDone -and ($null -ne $final)
+    if ($leaveForHuman) {
+        Write-Host "UYARI: -JoinRoom koşusu tamamlanmadan bitti; test oyuncuları Play'de kalıyor ve oynamaya devam ediyor."
+        Write-Host "Durdurmak için her clone'da: unity command editor.playmode stop --project-path <clone yolu>"
+    }
     foreach ($p in $Projects) {
-        if (-not $KeepPlaying) {
+        if (-not $KeepPlaying -and -not $leaveForHuman) {
             try { Invoke-UnityCmd $p @('editor.playmode', 'stop') -Retries 10 | Out-Null }
             catch { Write-Host "UYARI: $(Leaf $p) Play'den çıkarılamadı: $($_.Exception.Message)" }
             try { Invoke-UnityCmd $p @('script', 'eval', '--file', $resetStart) -Retries 10 | Out-Null }
