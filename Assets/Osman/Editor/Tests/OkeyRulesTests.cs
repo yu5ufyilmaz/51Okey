@@ -171,10 +171,10 @@ public class OkeyRulesTests
     {
         var ind = T(TileColor.blue, 5);
         var islek = new List<Tiles> { T(TileColor.red, 9) };
-        Assert.AreEqual("Okey attı", GameManager.DiscardPenaltyReason(Okey(), ind, false, islek));
-        Assert.AreEqual("Okey attı", GameManager.DiscardPenaltyReason(T(TileColor.blue, 6), ind, false, islek));
-        Assert.AreEqual("Gösterge attı", GameManager.DiscardPenaltyReason(T(TileColor.blue, 5), ind, true, islek));
-        Assert.AreEqual("İşlek attı", GameManager.DiscardPenaltyReason(T(TileColor.red, 9), ind, false, islek));
+        Assert.AreEqual(PenaltyReason.DiscardedOkey, GameManager.DiscardPenaltyReason(Okey(), ind, false, islek));
+        Assert.AreEqual(PenaltyReason.DiscardedOkey, GameManager.DiscardPenaltyReason(T(TileColor.blue, 6), ind, false, islek));
+        Assert.AreEqual(PenaltyReason.DiscardedIndicator, GameManager.DiscardPenaltyReason(T(TileColor.blue, 5), ind, true, islek));
+        Assert.AreEqual(PenaltyReason.DiscardedIslek, GameManager.DiscardPenaltyReason(T(TileColor.red, 9), ind, false, islek));
         Assert.IsNull(GameManager.DiscardPenaltyReason(T(TileColor.blue, 5), ind, false, islek));
         Assert.IsNull(GameManager.DiscardPenaltyReason(T(TileColor.red, 8), ind, false, islek));
     }

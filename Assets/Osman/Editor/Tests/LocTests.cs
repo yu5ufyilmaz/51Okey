@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -47,4 +48,20 @@ public class LocTests
         Assert.AreEqual("en", Loc.CodeOf(SystemLanguage.English));
         Assert.AreEqual("de", Loc.CodeOf(SystemLanguage.German));
     }
+
+    [Test] public void Every_Penalty_Reason_Has_Its_Own_Text_In_Both_Languages() {
+        Loc.Load(null, null);
+        foreach (var lang in new[] { "tr", "en" }) {
+            Loc.Language = lang;
+            var texts = Enum.GetValues(typeof(PenaltyReason)).Cast<PenaltyReason>().Select(PenaltyReasonText.Of).ToList();
+            CollectionAssert.AllItemsAreUnique(texts);
+            Assert.IsFalse(texts.Any(t => t.StartsWith("penalty.")), lang);
+        }
+    }
+    [Test] public void Penalty_Text_Is_Picked_By_The_Viewer_Language() {
+        Loc.Load(null, null);
+        Loc.Language = "tr"; Assert.AreEqual("Okey attı", PenaltyReasonText.Of(PenaltyReason.DiscardedOkey));
+        Loc.Language = "en"; Assert.AreNotEqual("Okey attı", PenaltyReasonText.Of(PenaltyReason.DiscardedOkey));
+    }
+    [Test] public void Unknown_Penalty_Value_Gives_Empty_Text() { Assert.AreEqual("", PenaltyReasonText.Of((PenaltyReason)200)); }
 }

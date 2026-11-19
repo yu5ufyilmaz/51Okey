@@ -1,3 +1,10 @@
 ﻿key,tr,en,note
 # Dil
 lang.name,Türkçe,English,Dil seçicide görünen ad
+# Ceza
+penalty.took_side_could_not_open,"Yandan aldı, açamadı","Took from the side, could not open",
+penalty.side_tile_taken,Taşı yandan alındı,Tile taken from the side,
+penalty.discarded_okey,Okey attı,Discarded the okey,
+penalty.discarded_indicator,Gösterge attı,Discarded the indicator,
+penalty.discarded_islek,İşlek attı,Discarded a playable tile,
+penalty.processed_on_meld,Perine işlendi,Tile added to their meld,

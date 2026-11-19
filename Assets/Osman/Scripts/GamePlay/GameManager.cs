@@ -207,20 +207,20 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (PhotonNetwork.IsMasterClient)
         {
             scoreManager.UpdatePlayerScore(playerQue, penaltyScore);
-            AnnouncePenalty(playerQue, penaltyScore, "Yandan aldı, açamadı");
+            AnnouncePenalty(playerQue, penaltyScore, PenaltyReason.TookSideCouldNotOpen);
             Debug.Log($"[GENEL CEZA] Oyuncu {playerQue} için {penaltyScore} puan ceza işlendi.");
         }
     }
 
     // Master ceza yazınca herkes, cezayı yiyenin isimliğinin üstünde miktarı ve sebebi görür.
-    public void AnnouncePenalty(int playerQue, int amount, string reason) =>
-        photonView.RPC(nameof(ShowPenaltyRPC), RpcTarget.All, playerQue, amount, reason);
+    public void AnnouncePenalty(int playerQue, int amount, PenaltyReason reason) =>
+        photonView.RPC(nameof(ShowPenaltyRPC), RpcTarget.All, playerQue, amount, (byte)reason);
 
     [PunRPC]
-    void ShowPenaltyRPC(int playerQue, int amount, string reason)
+    void ShowPenaltyRPC(int playerQue, int amount, byte reason)
     {
         if (UIManager.Instance != null)
-            UIManager.Instance.ShowPenaltyFloat(playerQue, amount, reason);
+            UIManager.Instance.ShowPenaltyFloat(playerQue, amount, PenaltyReasonText.Of((PenaltyReason)reason));
     }
 
     [PunRPC]
@@ -234,7 +234,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         int targetPlayerQue = (currentPlayerQue == 1) ? 4 : currentPlayerQue - 1;
 
         scoreManager.UpdatePlayerScore(targetPlayerQue, penalty);
-        AnnouncePenalty(targetPlayerQue, penalty, "Taşı yandan alındı");
+        AnnouncePenalty(targetPlayerQue, penalty, PenaltyReason.SideTileTaken);
         currentSidePickTile = null;
 
         Debug.Log(
@@ -344,7 +344,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         // Atanın bu tur açtığı/işlediği taşlar az önce masaya oturdu; işlek listesi onlarla güncel olsun.
         tileDistrubite.RecalculateAllAvailableSlots();
-        string reason = DiscardPenaltyReason(
+        PenaltyReason? reason = DiscardPenaltyReason(
             thrownTile,
             tileDistrubite.GetIndicatorTile(),
             IsDoubleOpenedOnTable,
@@ -354,7 +354,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
             int penaltyAmount = 250;
             scoreManager.UpdatePlayerScore(playerQue, penaltyAmount);
-            AnnouncePenalty(playerQue, penaltyAmount, reason);
+            AnnouncePenalty(playerQue, penaltyAmount, reason.Value);
             Debug.Log(
                 $"<color=red>CEZA KESİLDİ!</color> Atılan: {thrownTile.color} {thrownTile.number} -> Oyuncu {playerQue} +{penaltyAmount}"
             );
@@ -370,8 +370,8 @@ public class GameManager : MonoBehaviourPunCallbacks
         IEnumerable<Tiles> islekTiles
     ) => DiscardPenaltyReason(thrownTile, indicator, pairsOpenedOnTable, islekTiles) != null ? 250 : 0;
 
-    // Ceza yoksa null; varsa ekranda cezanın altında yazan sebep.
-    public static string DiscardPenaltyReason(
+    // Ceza yoksa null; varsa sebep.
+    public static PenaltyReason? DiscardPenaltyReason(
         Tiles thrownTile,
         Tiles indicator,
         bool pairsOpenedOnTable,
@@ -388,14 +388,14 @@ public class GameManager : MonoBehaviourPunCallbacks
         bool isRealOkey = thrownTile.color == okeyColor && thrownTile.number == okeyNumber;
 
         if (thrownTile.type == TileType.Joker || (isRealOkey && thrownTile.type != TileType.FakeJoker))
-            return "Okey attı";
+            return PenaltyReason.DiscardedOkey;
         if (
             indicator != null
             && thrownTile.type == TileType.Number
             && thrownTile.color == indicator.color
             && thrownTile.number == indicator.number
         )
-            return pairsOpenedOnTable ? "Gösterge attı" : null;
+            return pairsOpenedOnTable ? PenaltyReason.DiscardedIndicator : (PenaltyReason?)null;
         if (
             islekTiles != null
             && thrownTile.type != TileType.FakeJoker
@@ -403,7 +403,7 @@ public class GameManager : MonoBehaviourPunCallbacks
                 t.color == thrownTile.color && t.number == thrownTile.number && t.type != TileType.Joker
             )
         )
-            return "İşlek attı";
+            return PenaltyReason.DiscardedIslek;
         return null;
     }
 

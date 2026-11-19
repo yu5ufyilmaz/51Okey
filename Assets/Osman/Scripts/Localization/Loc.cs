@@ -21,7 +21,7 @@ public static class Loc
         get { _ = Table; return language; }
         set
         {
-            if (value == null || value == language || !Has(Table.Languages, value)) return;
+            if (value == null || !Has(Table.Languages, value) || value == language) return;
             language = value;
             culture = MakeCulture(value);
             Changed?.Invoke();
