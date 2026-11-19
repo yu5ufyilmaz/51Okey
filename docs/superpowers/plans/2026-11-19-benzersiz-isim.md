@@ -131,3 +131,20 @@ Commit: `Benzersiz isim: isim kaydı, otomatik misafir ismi`.
 
 - Kuralları konsoldan yayınla; `firebase/firestore.rules` ile aynı olduğunu doğrula.
 - APK, telefon: misafir girişi → `Misafir-NNNNN`; Google ile gir → isim sorulur; alınmış isim reddedilir; Profil'den değişir.
+
+## Sonuç (2026-11-19)
+
+Commit'ler: `d851d00` (çıkış Profil'de), `5be090d` (benzersiz isim), `858f609` (gözden geçirme düzeltmeleri). Push yok.
+
+- EditMode 195/195; tek editörlü senkron testi `5be090d` üzerinde geçti. Bağımsız gözden geçirme: kritik yok; iki önemli
+  bulgu (eski isim bellekten okunuyordu → transaction artık önce `users/{uid}` okur; silmede isim + kullanıcı belgesi tek batch)
+  ve iki küçük bulgu düzeltildi.
+- Kurallar `okey51-dev` üzerinde 05:18'de yayınlandı; konsol metni `firebase/firestore.rules` ile birebir aynı.
+- APK (`858f609`, 05:23) telefona kuruldu. Açılışta Google hesabı geri yüklendi; onarım `names/Duzz` kaydını oluşturdu ve
+  `users/{uid}.nameClaimed = true` yazdı (Firestore konsolunda görüldü). Yani isim transaction'ı canlı kurallardan geçiyor.
+  Logda izin ya da isim hatası yok.
+- Kanıtlanmadı: misafire `Misafir-NNNNN` atanması (açılıştan sonra kullanıcı çıkış → Misafir yaptı, ama bakıldığında o
+  misafirin belgesi ve isim kaydı yoktu; Google'a geri geçişte ikisinin birlikte silinmesiyle tutarlı, logu yok),
+  "Bu isim alınmış" reddi, Profil'den isim değiştirme, yeni Google hesabında isim sorma.
+- Bırakılan küçük bulgular: `Mısafir-` (noktasız ı) benzeri önek engellenmiyor; `Misafir-` ile başlayan isim için hata
+  yazısı uzunluk yazısıyla aynı.
