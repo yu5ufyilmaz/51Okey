@@ -179,7 +179,7 @@ MonoBehaviour:
   m_text: "\xD6d\xFCll\xFC Reklam"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 23923aa227ba6194db0c88aa1d240573, type: 2}
-  m_sharedMaterial: {fileID: -1805086352467481398, guid: 23923aa227ba6194db0c88aa1d240573, type: 2}
+  m_sharedMaterial: {fileID: 2100000, guid: 8bbf095628291f540b874b8f226fd629, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -316,7 +316,7 @@ MonoBehaviour:
   m_text: Google ile gir
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 23923aa227ba6194db0c88aa1d240573, type: 2}
-  m_sharedMaterial: {fileID: -1805086352467481398, guid: 23923aa227ba6194db0c88aa1d240573, type: 2}
+  m_sharedMaterial: {fileID: 2100000, guid: 8bbf095628291f540b874b8f226fd629, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -799,7 +799,7 @@ MonoBehaviour:
   m_text: "\xD6d\xFCll\xFC Ge\xE7i\u015F Reklam"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 23923aa227ba6194db0c88aa1d240573, type: 2}
-  m_sharedMaterial: {fileID: -1805086352467481398, guid: 23923aa227ba6194db0c88aa1d240573, type: 2}
+  m_sharedMaterial: {fileID: 2100000, guid: 8bbf095628291f540b874b8f226fd629, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -936,7 +936,7 @@ MonoBehaviour:
   m_text: Misafir olarak oyna
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 23923aa227ba6194db0c88aa1d240573, type: 2}
-  m_sharedMaterial: {fileID: -1805086352467481398, guid: 23923aa227ba6194db0c88aa1d240573, type: 2}
+  m_sharedMaterial: {fileID: 2100000, guid: 8bbf095628291f540b874b8f226fd629, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1916,7 +1916,7 @@ MonoBehaviour:
   m_text: Tekrar dene
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 23923aa227ba6194db0c88aa1d240573, type: 2}
-  m_sharedMaterial: {fileID: -1805086352467481398, guid: 23923aa227ba6194db0c88aa1d240573, type: 2}
+  m_sharedMaterial: {fileID: 2100000, guid: 8bbf095628291f540b874b8f226fd629, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -2053,7 +2053,7 @@ MonoBehaviour:
   m_text: "Reklam V\u0130r"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 23923aa227ba6194db0c88aa1d240573, type: 2}
-  m_sharedMaterial: {fileID: -1805086352467481398, guid: 23923aa227ba6194db0c88aa1d240573, type: 2}
+  m_sharedMaterial: {fileID: 2100000, guid: 8bbf095628291f540b874b8f226fd629, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -2974,7 +2974,7 @@ MonoBehaviour:
   m_text: Tamam
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 23923aa227ba6194db0c88aa1d240573, type: 2}
-  m_sharedMaterial: {fileID: -1805086352467481398, guid: 23923aa227ba6194db0c88aa1d240573, type: 2}
+  m_sharedMaterial: {fileID: 2100000, guid: 8bbf095628291f540b874b8f226fd629, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -3824,7 +3824,7 @@ MonoBehaviour:
 '
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 23923aa227ba6194db0c88aa1d240573, type: 2}
-  m_sharedMaterial: {fileID: -1805086352467481398, guid: 23923aa227ba6194db0c88aa1d240573, type: 2}
+  m_sharedMaterial: {fileID: 2100000, guid: 8bbf095628291f540b874b8f226fd629, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
