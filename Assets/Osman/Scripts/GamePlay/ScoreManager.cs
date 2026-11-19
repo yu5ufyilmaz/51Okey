@@ -681,6 +681,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         if (turnManager != null && !turnManager.IsPlayerTurn())
         {
             Debug.LogWarning("Sıra sizde değil, geri alma yapamazsınız.");
+            Sfx.Play(SfxId.Error);
             return;
         }
 
@@ -1022,6 +1023,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             hasOpenedSeries = true;
             Debug.Log("Oyuncu başarıyla per açtı. Kısıtlamalar kaldırıldı.");
         }
+        else Sfx.Play(SfxId.Error);
     }
 
     private void PlacePairPers(List<List<Tiles>> validPairs)
@@ -1188,6 +1190,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             GameManager.Instance.SetDoubleOpened();
             Debug.Log("Çift açıldı ve sisteme işlendi.");
         }
+        else Sfx.Play(SfxId.Error);
     }
 
     void TakeBackPers()

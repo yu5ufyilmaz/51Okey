@@ -98,34 +98,61 @@ public static class SfxSetup
         }
     }
 
-    // "dosya | süre | tepe dBFS | RMS dBFS" satırları; RMS -60 dBFS üstü örneklerden.
-    public static string MeasureAll()
+    // dosya | süre | tepe dBFS | RMS dBFS | güncel ses düzeyi x RMS; RMS -60 dBFS üstü örneklerden.
+    [MenuItem("Okey/Ses/Ses Düzeylerini Ölç")]
+    static void MeasureMenu() => Debug.Log("Sfx ölçüm\ndosya | süre | tepe dBFS | RMS dBFS | düzey x RMS dB\n" + MeasureAll());
+
+    static string MeasureAll()
     {
+        var lib = AssetDatabase.LoadAssetAtPath<SfxLibrary>(AssetPath);
         var lines = new List<string>();
         foreach (var path in AudioPaths())
         {
             var imp = (AudioImporter)AssetImporter.GetAtPath(path);
             var orig = imp.defaultSampleSettings;
             bool swap = orig.loadType != AudioClipLoadType.DecompressOnLoad; // GetData için geçici
-            if (swap) { var t = orig; t.loadType = AudioClipLoadType.DecompressOnLoad; imp.defaultSampleSettings = t; imp.SaveAndReimport(); }
-            var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(path);
-            var data = new float[clip.samples * clip.channels];
-            clip.GetData(data, 0);
-            double peak = 0, sum = 0; int n = 0;
-            foreach (var v in data)
+            try
             {
-                var a = Mathf.Abs(v);
-                if (a > peak) peak = a;
-                if (a > 0.001f) { sum += (double)a * a; n++; }
+                if (swap) { var t = orig; t.loadType = AudioClipLoadType.DecompressOnLoad; imp.defaultSampleSettings = t; imp.SaveAndReimport(); }
+                var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(path);
+                var data = new float[clip.samples * clip.channels];
+                clip.GetData(data, 0);
+                double peak = 0, sum = 0; int n = 0;
+                foreach (var v in data)
+                {
+                    var a = Mathf.Abs(v);
+                    if (a > peak) peak = a;
+                    if (a > 0.001f) { sum += (double)a * a; n++; }
+                }
+                double rms = n > 0 ? System.Math.Sqrt(sum / n) : 0;
+                var entry = lib != null ? lib.entries.FirstOrDefault(e => e.clips != null && e.clips.Contains(clip)) : null;
+                string vol = entry != null ? (20 * System.Math.Log10(rms * entry.volume)).ToString("0.0") : "-";
+                lines.Add(Path.GetFileName(path) + " | " + clip.length.ToString("0.00") + " s | " + (20 * System.Math.Log10(peak)).ToString("0.0") + " | " + (20 * System.Math.Log10(rms)).ToString("0.0") + " | " + vol);
             }
-            double rms = n > 0 ? System.Math.Sqrt(sum / n) : 0;
-            lines.Add(Path.GetFileName(path) + " | " + clip.length.ToString("0.00") + " s | " + (20 * System.Math.Log10(peak)).ToString("0.0") + " | " + (20 * System.Math.Log10(rms)).ToString("0.0"));
-            if (swap) { imp.defaultSampleSettings = orig; imp.SaveAndReimport(); }
+            finally
+            {
+                if (swap) { imp.defaultSampleSettings = orig; imp.SaveAndReimport(); }
+            }
         }
         return string.Join("\n", lines);
     }
 
-    // clips boş satıra Defaults'u yazar; dolu satıra dokunmaz.
+    // Satırı olmayan id'lere Defaults'tan satır ekler; var olan satıra (boş bile olsa) dokunmaz.
+    internal static void AddMissingRows(SfxLibrary lib)
+    {
+        foreach (var d in Defaults)
+        {
+            if (lib.Find(d.id) != null) continue;
+            lib.entries.Add(new SfxLibrary.Entry
+            {
+                id = d.id,
+                clips = d.files.Select(f => AssetDatabase.LoadAssetAtPath<AudioClip>(AudioDir + f)).Where(c => c != null).ToArray(),
+                volume = d.volume, minInterval = d.minInterval, pitchJitter = d.pitchJitter,
+            });
+        }
+    }
+
+    // Var olan satırlara dokunmaz; yalnız eksik id'leri ekler.
     [MenuItem("Okey/Ses/Ses Listesini Kur")]
     public static void Build()
     {
@@ -133,18 +160,12 @@ public static class SfxSetup
         var lib = AssetDatabase.LoadAssetAtPath<SfxLibrary>(AssetPath);
         if (lib == null)
         {
+            if (File.Exists(AssetPath)) { Debug.LogError("Sfx: " + AssetPath + " var ama yüklenemedi; üzerine yazılmadı."); return; }
             if (!AssetDatabase.IsValidFolder("Assets/Resources")) AssetDatabase.CreateFolder("Assets", "Resources");
             lib = ScriptableObject.CreateInstance<SfxLibrary>();
             AssetDatabase.CreateAsset(lib, AssetPath);
         }
-        foreach (var d in Defaults)
-        {
-            var e = lib.Find(d.id);
-            if (e == null) lib.entries.Add(e = new SfxLibrary.Entry { id = d.id });
-            else if (e.clips != null && e.clips.Length > 0) continue; // dolu satıra dokunma
-            e.clips = d.files.Select(f => AssetDatabase.LoadAssetAtPath<AudioClip>(AudioDir + f)).Where(c => c != null).ToArray();
-            e.volume = d.volume; e.minInterval = d.minInterval; e.pitchJitter = d.pitchJitter;
-        }
+        AddMissingRows(lib);
         EditorUtility.SetDirty(lib);
         AssetDatabase.SaveAssets();
     }

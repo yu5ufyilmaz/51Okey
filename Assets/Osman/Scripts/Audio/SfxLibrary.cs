@@ -9,9 +9,9 @@ public class SfxLibrary : ScriptableObject
     {
         public SfxId id;
         public AudioClip[] clips;
-        public float volume = 1f;
-        public float pitchJitter;
-        public float minInterval = 0.05f;
+        [Range(0f, 1f)] public float volume = 1f;
+        [Range(0f, 0.2f)] public float pitchJitter;
+        [Min(0f)] public float minInterval = 0.05f;
     }
 
     public List<Entry> entries = new List<Entry>();

@@ -10,10 +10,20 @@ public static class Sfx
     static readonly SfxGate gate = new SfxGate();
     static readonly HashSet<SfxId> warned = new HashSet<SfxId>();
     static SfxLibrary library;
-    static AudioSource source;
+    static AudioSource source, jitterSource;
     static bool quitting, quitHooked;
     // UnityEngine.Random dağıtım/koltuk tohumunu paylaşır; ses ayrı üreteç kullanır.
     static readonly System.Random rng = new System.Random();
+
+    static void OnQuit() => quitting = true;
+
+    // Düzenleyicide oynatma durunca alan yeniden yüklenmeyebilir: bayrak ve kanca sıfırlanır.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetQuit()
+    {
+        Application.quitting -= OnQuit;
+        quitting = quitHooked = false;
+    }
 
     public static IReadOnlyList<SfxId> Recent => recent;
 
@@ -29,6 +39,7 @@ public static class Sfx
     public static void UseLibrary(SfxLibrary lib)
     {
         library = lib;
+        quitting = false;
         gate.Reset();
     }
 
@@ -37,8 +48,8 @@ public static class Sfx
     public static void PlayAt(SfxId id, float now, float volumeScale = 1f)
     {
         if (SyncAutoTest.Instance != null) return;
-        if (!quitHooked) { quitHooked = true; Application.quitting += () => quitting = true; }
-        if (quitting) return;
+        if (!quitHooked) { quitHooked = true; Application.quitting += OnQuit; }
+        if (quitting && Application.isPlaying) return;
         if (library == null) library = Resources.Load<SfxLibrary>("SfxLibrary");
         var entry = library != null ? library.Find(id) : null;
         if (entry == null)
@@ -56,8 +67,8 @@ public static class Sfx
         var clip = PickClip(entry.clips);
         if (clip == null || !Application.isPlaying) return;
 
-        var src = GetSource();
-        src.pitch = 1f + (float)(rng.NextDouble() * 2 - 1) * entry.pitchJitter;
+        var src = GetSource(entry.pitchJitter > 0f);
+        if (entry.pitchJitter > 0f) src.pitch = 1f + (float)(rng.NextDouble() * 2 - 1) * entry.pitchJitter;
         src.PlayOneShot(clip, Mathf.Clamp01(entry.volume * volumeScale));
     }
 
@@ -72,14 +83,24 @@ public static class Sfx
         return null;
     }
 
-    static AudioSource GetSource()
+    // Perde oynayan sesler eğilmesin: perdesi oynayanlar ayrı kaynakta.
+    static AudioSource GetSource(bool jitter)
     {
-        if (source != null) return source;
-        var go = new GameObject("Sfx");
-        Object.DontDestroyOnLoad(go);
-        source = go.AddComponent<AudioSource>();
-        source.playOnAwake = false;
-        source.spatialBlend = 0f;
-        return source;
+        if (source == null || jitterSource == null)
+        {
+            var go = new GameObject("Sfx");
+            Object.DontDestroyOnLoad(go);
+            source = NewSource(go);
+            jitterSource = NewSource(go);
+        }
+        return jitter ? jitterSource : source;
+    }
+
+    static AudioSource NewSource(GameObject go)
+    {
+        var a = go.AddComponent<AudioSource>();
+        a.playOnAwake = false;
+        a.spatialBlend = 0f;
+        return a;
     }
 }

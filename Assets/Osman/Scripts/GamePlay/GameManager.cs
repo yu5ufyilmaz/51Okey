@@ -466,8 +466,9 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         if (!isGameReady)
             return;
+        bool sfxFirst = !isGameEnded; // ses: ikinci RPC tekrar çalmasın
         isGameEnded = true;
-        Sfx.Play(Sfx.FinishFor(winnerActorNumber, PhotonNetwork.LocalPlayer.ActorNumber));
+        if (sfxFirst) Sfx.Play(Sfx.FinishFor(winnerActorNumber, PhotonNetwork.LocalPlayer.ActorNumber));
 
         DesyncDetector.Report("Finish");
 

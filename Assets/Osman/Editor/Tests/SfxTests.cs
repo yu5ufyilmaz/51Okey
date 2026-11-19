@@ -41,6 +41,24 @@ public class SfxTests
         Assert.AreEqual(27, (int)SfxId.UiEnterRoom);
         Assert.AreEqual(28, Enum.GetValues(typeof(SfxId)).Length);
     }
+    [Test] public void SfxId_Numbers_Are_Unique()
+    {
+        var all = Enum.GetValues(typeof(SfxId)).Cast<int>().ToList();
+        Assert.AreEqual(all.Count, all.Distinct().Count());
+    }
+    [Test] public void Build_Leaves_Existing_Rows_Alone()
+    {
+        var lib = ScriptableObject.CreateInstance<SfxLibrary>();
+        lib.entries = new List<SfxLibrary.Entry> { new SfxLibrary.Entry { id = SfxId.TileDraw, clips = new AudioClip[0], volume = 0.33f } };
+        SfxSetup.AddMissingRows(lib);
+        Assert.AreEqual(28, lib.entries.Count);
+        var row = lib.Find(SfxId.TileDraw);
+        Assert.AreEqual(0, row.clips.Length);
+        Assert.AreEqual(0.33f, row.volume);
+        SfxSetup.AddMissingRows(lib);
+        Assert.AreEqual(28, lib.entries.Count);
+        UnityEngine.Object.DestroyImmediate(lib);
+    }
     [Test] public void Play_With_Missing_Entry_Does_Not_Throw()
     {
         var lib = ScriptableObject.CreateInstance<SfxLibrary>(); lib.entries = new List<SfxLibrary.Entry>();

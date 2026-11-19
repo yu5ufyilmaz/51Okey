@@ -17,6 +17,8 @@ public class LocalizationTests
         Assert.IsEmpty(Run(table, "\"common.cs\" \"lobby.a\"").Errors);
         Assert.IsNotEmpty(Run(table, "\"common.missing_key\"").Errors);
     }
+    [Test] public void Audio_File_Name_Is_Not_A_Used_Key() =>
+        Assert.IsEmpty(Run("key,tr,en\nlobby.a,A,B\n", "\"error.ogg\" \"lobby.a\"").Errors);
     [Test] public void Replacement_Char_Is_Error() => Assert.IsNotEmpty(Run("key,tr,en\nlobby.a,Ta\uFFFD,Tile\n").Errors);
     [Test] public void Duplicate_Key_Is_Error() => Assert.IsNotEmpty(Run("key,tr,en\nlobby.a,A,B\nlobby.a,C,D\n").Errors);
     [Test] public void Bad_Key_Format_Is_Error() => Assert.IsNotEmpty(Run("key,tr,en\nLobby.PlayNow,A,B\n").Errors);
