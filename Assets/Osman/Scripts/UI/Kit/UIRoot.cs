@@ -25,6 +25,8 @@ public class UIRoot : MonoBehaviour
 
     static UIRoot inst;
     static bool quitting;
+    // Geri dönüşü olmayan işlem (hesap silme) sürerken geri tuşu hiçbir şey yapmaz.
+    public static bool BackBlocked;
 
     readonly UiBackStack<UiWindow> stack = new UiBackStack<UiWindow>();
     readonly UiLoadingTimer timer = new UiLoadingTimer();
@@ -40,6 +42,7 @@ public class UIRoot : MonoBehaviour
     {
         inst = null;
         quitting = false;
+        BackBlocked = false;
         Application.quitting -= OnQuit;
         Application.quitting += OnQuit;
     }
@@ -141,7 +144,7 @@ public class UIRoot : MonoBehaviour
     // Geri tuşunun yaptığı iş; Update Escape'te çağırır.
     public static void HandleBack()
     {
-        if (inst == null) return;
+        if (inst == null || BackBlocked) return;
         // Zaman aşımsız yükleme takılabilir: geri tuşu çıkış sorar, pencere kapatmaz
         if (IsLoading && !inst.timer.TimeoutOn && inst.pending == null)
         {

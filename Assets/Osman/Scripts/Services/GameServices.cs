@@ -10,7 +10,6 @@ public static class GameServices
     public const string UseFirebaseInEditorPref = "Okey.UseFirebaseInEditor";
     // Misafir ismi çakışırsa yeni rastgele numarayla en çok bu kadar denenir; olmazsa sonraki açılışta yeniden.
     public const int GuestNameAttempts = 5;
-    public const int DeleteStepTimeoutMs = 20000;
 
     // Nesneler beklemeden ve süreç boyunca bir kez kurulur: arayüz InitAsync bitmeden Profile.Changed'a abone olabilir.
     static readonly InitGate init;
@@ -172,7 +171,7 @@ public static class GameServices
     }
 
     // Asılı kalan silme adımı (çevrimdışı Firestore yazımı) akışı kilitlemesin.
-    static Func<Task> Limited(Func<Task> step) => () => AccountDeletion.WithTimeoutAsync(step(), DeleteStepTimeoutMs);
+    static Func<Task> Limited(Func<Task> step) => () => AccountDeletion.WithTimeoutAsync(step(), AccountDeletion.StepTimeoutMs);
 
     public static Task SignOutAsync() => Exclusive(SignOutCoreAsync);
 

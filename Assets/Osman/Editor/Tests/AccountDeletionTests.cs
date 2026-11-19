@@ -109,6 +109,33 @@ public class AccountDeletionTests
             AccountDeletion.WithTimeoutAsync(new TaskCompletionSource<bool>().Task, 50).GetAwaiter().GetResult());
 
     [Test]
+    public void WithTimeout_CompletesInTime_ReturnsNormally() =>
+        Assert.DoesNotThrow(() => AccountDeletion.WithTimeoutAsync(Task.CompletedTask, 1000).GetAwaiter().GetResult());
+
+    [Test]
+    public void WithTimeout_InnerThrows_Propagates() =>
+        Assert.Throws<InvalidOperationException>(() =>
+            AccountDeletion.WithTimeoutAsync(Task.FromException(new InvalidOperationException()), 1000).GetAwaiter().GetResult());
+
+    const long Tps = 1000; // saniyedeki tık
+
+    [Test]
+    public void RecentEnough_NoRecord_IsNotRecent() =>
+        Assert.IsFalse(AccountDeletion.RecentEnough(null, 5 * Tps, Tps));
+
+    [Test]
+    public void RecentEnough_3m59s_IsRecent() =>
+        Assert.IsTrue(AccountDeletion.RecentEnough(10 * Tps, (10 + 239) * Tps, Tps));
+
+    [Test]
+    public void RecentEnough_4m_IsNotRecent() =>
+        Assert.IsFalse(AccountDeletion.RecentEnough(10 * Tps, (10 + 240) * Tps, Tps));
+
+    [Test]
+    public void RecentEnough_NowBeforeRecord_IsNotRecent() =>
+        Assert.IsFalse(AccountDeletion.RecentEnough(10 * Tps, 9 * Tps, Tps));
+
+    [Test]
     public void DeleteAccount_IdentityFails_NonGuest_ReportsDataDeleted()
     {
         Assert.AreEqual(DeleteResult.DataDeletedAccountRemains, Run(identityFails: true));

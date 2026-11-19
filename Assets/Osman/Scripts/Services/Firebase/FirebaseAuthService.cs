@@ -15,6 +15,8 @@ public class FirebaseAuthService : IAuthService
     readonly Func<Task> deleteGuestProfile;
     readonly Func<Task<bool>> confirmSwitch;
     FirebaseUser user;
+    // Bu süreçte son başarılı Google girişi (Stopwatch tıkı): cihaz saatinden ve timeScale'den bağımsız.
+    long? lastGoogleAuth;
 
     public string UserId => user?.UserId;
     public bool IsGuest => user == null || user.IsAnonymous;
@@ -52,6 +54,7 @@ public class FirebaseAuthService : IAuthService
             throw new InvalidOperationException("misafir hesaptan çıkılmaz");
         auth.SignOut();
         GoogleSignIn.SignOut(); // sonraki "Google ile gir" hesabı yeniden sorsun
+        lastGoogleAuth = null;
         SetUser(null);
     }
 
@@ -111,11 +114,14 @@ public class FirebaseAuthService : IAuthService
         var auth = await boot.AuthAsync();
         if (auth.CurrentUser == null)
         {
-            SetUser(await auth.SignInWithCredentialAsync(GoogleAuthProvider.GetCredential(idToken, null)));
+            var signedIn = await auth.SignInWithCredentialAsync(GoogleAuthProvider.GetCredential(idToken, null));
+            MarkGoogleAuth();
+            SetUser(signedIn);
             return (Step.Ok, null);
         }
         try { await auth.CurrentUser.LinkWithCredentialAsync(GoogleAuthProvider.GetCredential(idToken, null)); }
         catch (Exception e) when (IsCredentialInUse(e)) { return (Step.InUse, UpdatedCredential(e)); }
+        MarkGoogleAuth();
         SetUser(auth.CurrentUser);
         return (Step.Ok, null);
     }
@@ -128,7 +134,9 @@ public class FirebaseAuthService : IAuthService
         try
         {
             await auth.CurrentUser.DeleteAsync();
-            SetUser(await auth.SignInWithCredentialAsync(credential));
+            var signedIn = await auth.SignInWithCredentialAsync(credential);
+            MarkGoogleAuth();
+            SetUser(signedIn);
             return Step.Ok;
         }
         catch
@@ -181,9 +189,12 @@ public class FirebaseAuthService : IAuthService
         SetUser(null);
     }
 
-    // Firebase silmeyi son girişten 5 dk içinde kabul eder; 4 dk ile pay bırakılır. LastSignInTimestamp UTC.
+    // Firebase silmeyi son girişten 5 dk içinde kabul eder. Geri yüklenen oturumda kayıt yok: yeniden giriş istenir.
     public bool NeedsRecentLoginToDelete =>
-        user != null && !user.IsAnonymous && DateTime.UtcNow - (user.Metadata?.LastSignInTimestamp ?? DateTime.MinValue) > TimeSpan.FromMinutes(4);
+        user != null && !user.IsAnonymous
+        && !AccountDeletion.RecentEnough(lastGoogleAuth, System.Diagnostics.Stopwatch.GetTimestamp(), System.Diagnostics.Stopwatch.Frequency);
+
+    void MarkGoogleAuth() => lastGoogleAuth = System.Diagnostics.Stopwatch.GetTimestamp();
 
     // SignOutAsync misafiri reddeder; bu yalnız hesap silme içindir (profil zaten silinmiştir).
     public async Task AbandonGuestAsync()

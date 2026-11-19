@@ -160,6 +160,7 @@ public class FirestoreProfileStore : IProfileStore, IWallet
     // Tekrar çağrılabilir: olmayan belgeyi silmek hata değildir.
     public async Task DeleteAsync()
     {
+        var clock = System.Diagnostics.Stopwatch.StartNew();
         if (Current != null)
         {
             var uid = Current.UserId;
@@ -188,6 +189,7 @@ public class FirestoreProfileStore : IProfileStore, IWallet
                 var part = db.StartBatch();
                 for (int i = next; i < next + LedgerBatchSize; i++)
                     part.Delete(ledger[i].Reference);
+                ThrowIfPastCommitBudget(clock);
                 await part.CommitAsync();
             }
             // Tek batch: isim silinip kullanıcı belgesi kalırsa misafir sahibi olmadığı ismi "kayıtlı" sanır ve hiç onarılmaz.
@@ -197,10 +199,19 @@ public class FirestoreProfileStore : IProfileStore, IWallet
             if (ownedName != null)
                 batch.Delete(ownedName);
             batch.Delete(userRef);
+            ThrowIfPastCommitBudget(clock);
             await batch.CommitAsync();
         }
+        // Kalan açık: commit 5 sn'den uzun sürerse çağıran Failed bildirmiş olur ama silme burada tamamlanır.
         Current = null;
         Notify();
+    }
+
+    // Çağıran AccountDeletion.StepTimeoutMs'te vazgeçer: bütçe dolduysa yeni commit başlamaz (sessiz silme olmasın).
+    static void ThrowIfPastCommitBudget(System.Diagnostics.Stopwatch clock)
+    {
+        if (clock.ElapsedMilliseconds > AccountDeletion.CommitBudgetMs)
+            throw new TimeoutException("silme süresi doldu");
     }
 
     // Çıkış: yalnız bellekteki profil düşer; belge yerinde kalır.

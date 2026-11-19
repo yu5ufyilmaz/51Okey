@@ -226,15 +226,21 @@ public class LobbyAccountUI : MonoBehaviour
                 return;
             if (!await UIRoot.Confirm("Emin misin?", "Hesabın şimdi silinecek.", "Hesabı Sil", true) || this == null)
                 return;
+            // Silme sürerken uygulamadan çıkılırsa sonraki açılış sessizce başlangıç profili kurar: geri tuşu kapalı.
+            UIRoot.BackBlocked = true;
             UIRoot.ShowLoading("Hesap siliniyor...", false);
             DeleteResult result;
-            // Başka hesap işlemi sürerken çağrı Task dönmeden fırlatır
-            try { result = await GameServices.DeleteAccountAsync(); }
-            catch (Exception e)
+            try
             {
-                Debug.LogWarning("[SERVICES] hesap silinemedi: " + e.GetType().Name);
-                result = DeleteResult.Failed;
+                // Başka hesap işlemi sürerken çağrı Task dönmeden fırlatır
+                try { result = await GameServices.DeleteAccountAsync(); }
+                catch (Exception e)
+                {
+                    Debug.LogWarning("[SERVICES] hesap silinemedi: " + e.GetType().Name);
+                    result = DeleteResult.Failed;
+                }
             }
+            finally { UIRoot.BackBlocked = false; }
             UIRoot.HideLoading();
             if (this == null)
                 return;

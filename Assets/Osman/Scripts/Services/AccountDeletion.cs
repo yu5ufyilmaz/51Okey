@@ -6,6 +6,12 @@ using UnityEngine;
 // Sıra profil → kimlik: Firestore kuralları profili yalnız kendi kimliğiyle sildirir.
 public static class AccountDeletion
 {
+    // Her silme adımının üst sınırı; Firestore son commit'i en geç bütçe dolunca başlatır (5 sn commit payı).
+    public const int StepTimeoutMs = 20000;
+    public const int CommitBudgetMs = StepTimeoutMs - 5000;
+    // Firebase silmeyi son girişten 5 dk içinde kabul eder; 4 dk ile pay bırakılır.
+    public const int RecentLoginSeconds = 240;
+
     // abandonIdentity: kimlik silinemezse cihazdan bırakma (misafir); yeniden girilebilen hesapta null.
     public static async Task<DeleteResult> RunAsync(
         bool hasSession,
@@ -48,7 +54,16 @@ public static class AccountDeletion
     public static async Task WithTimeoutAsync(Task task, int ms)
     {
         if (await Task.WhenAny(task, Task.Delay(ms)).ConfigureAwait(false) != task)
+        {
+            // Bırakılan adımın sonraki hatası gözlenmemiş istisna olarak kalmasın.
+            _ = task.ContinueWith(t => _ = t.Exception, TaskContinuationOptions.OnlyOnFaulted);
             throw new TimeoutException();
+        }
         await task.ConfigureAwait(false);
     }
+
+    // Monoton saat tıkları; kayıt yoksa ya da saat geri gittiyse yakın sayılmaz.
+    public static bool RecentEnough(long? lastAuthTicks, long nowTicks, long ticksPerSecond) =>
+        lastAuthTicks.HasValue && nowTicks >= lastAuthTicks.Value
+        && nowTicks - lastAuthTicks.Value < RecentLoginSeconds * ticksPerSecond;
 }
