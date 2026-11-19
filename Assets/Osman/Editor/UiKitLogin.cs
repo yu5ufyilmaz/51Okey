@@ -10,7 +10,6 @@ public static partial class UiKitBuilder
 {
     const string MainMenuPath = "Assets/Osman/Scenes/MainMenu.unity";
     const string MenuBackgroundPath = "Assets/Sprites/okey_ui_demo/main_menu_background.png";
-    const string LegalTextValue = "Devam ederek <link=\"terms\"><u>Kullanım Şartları</u></link> ve <link=\"privacy\"><u>Gizlilik Politikası</u></link>'nı kabul edersin";
 
     [MenuItem("Okey/UI Kit/Giriş Ekranını Kur")]
     public static void BuildLoginScreen() => Guarded(MainMenuPath, BuildLogin);
@@ -78,10 +77,10 @@ public static partial class UiKitBuilder
         vl.childControlWidth = vl.childControlHeight = false;
         vl.childForceExpandWidth = vl.childForceExpandHeight = false;
 
-        var google = ChoiceButton(green, choice.transform, "GoogleButton", "Google ile Giriş");
-        var guest = ChoiceButton(orange, choice.transform, "GuestButton", "Misafir Olarak Oyna");
+        var google = ChoiceButton(green, choice.transform, "GoogleButton", "login.google_sign_in");
+        var guest = ChoiceButton(orange, choice.transform, "GuestButton", "login.play_as_guest");
 
-        var legal = Text(safe.transform, "LegalText", LegalTextValue, 30, bold);
+        var legal = Label(safe.transform, "LegalText", "login.legal", 30, bold);
         legal.color = new Color32(0xCF, 0xD6, 0xDE, 0xFF);
         legal.raycastTarget = true; // bağlantıya dokunuş LegalLinksText'e gelsin
         Anchor(legal.gameObject, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 70), new Vector2(1600, 50));
@@ -93,22 +92,22 @@ public static partial class UiKitBuilder
         Anchor(version.gameObject, new Vector2(1, 0), new Vector2(1, 0), new Vector2(1, 0), new Vector2(-40, 30), new Vector2(400, 40));
 
         // İsim penceresi: kapatılamaz, X yok; gövde içeriğe göre kısaltıldı (başlık ve butonlar gövdeye çapalı)
-        var namePanel = LoginWindow(window, canvas, "NamePanel", "İsmini seç");
+        var namePanel = LoginWindow(window, canvas, "NamePanel", "login.choose_name");
         var nameContent = namePanel.transform.Find("Body/Content");
-        var nameInput = TextInput(nameContent, "NameInput", "İsim", new Vector2(900, 130));
+        var nameInput = TextInput(nameContent, "NameInput", "common.name", new Vector2(900, 130));
         var nameError = Text(nameContent, "NameError", "", 34, bold);
         nameError.color = new Color32(0xFF, 0x8F, 0x85, 0xFF);
         Anchor(nameError.gameObject, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -170), new Vector2(0, 60));
         var nameOk = Nested(green, namePanel.transform.Find("Body/Buttons"), "NameOkButton");
-        nameOk.GetComponentInChildren<TMP_Text>(true).text = "TAMAM";
+        SetLabel(nameOk.GetComponentInChildren<TMP_Text>(true), "common.ok_caps");
 
-        var retryPanel = LoginWindow(window, canvas, "RetryPanel", "Bağlanılamadı");
-        var message = Text(retryPanel.transform.Find("Body/Content"), "Message", "İnternet bağlantını kontrol edip tekrar dene.", 40, bold);
+        var retryPanel = LoginWindow(window, canvas, "RetryPanel", "login.connection_failed");
+        var message = Label(retryPanel.transform.Find("Body/Content"), "Message", "login.check_connection", 40, bold);
         message.color = new Color32(0xCF, 0xD6, 0xDE, 0xFF);
         message.textWrappingMode = TextWrappingModes.Normal;
         Fill(message.gameObject, 0, 0, 0, 0);
         var retry = Nested(green, retryPanel.transform.Find("Body/Buttons"), "RetryButton");
-        retry.GetComponentInChildren<TMP_Text>(true).text = "TEKRAR DENE";
+        SetLabel(retry.GetComponentInChildren<TMP_Text>(true), "common.retry_caps");
 
         handler.versionText = version;
         handler.title = title.gameObject;
@@ -138,19 +137,19 @@ public static partial class UiKitBuilder
         Debug.Log("[UiKitBuilder] Giriş ekranı kuruldu: " + MainMenuPath);
     }
 
-    static GameObject ChoiceButton(GameObject prefab, Transform parent, string name, string label, float w = 720, float h = 150, float fontSize = 52)
+    static GameObject ChoiceButton(GameObject prefab, Transform parent, string name, string labelKey, float w = 720, float h = 150, float fontSize = 52)
     {
         var b = Nested(prefab, parent, name);
         ((RectTransform)b.transform).sizeDelta = new Vector2(w, h);
         var t = b.GetComponentInChildren<TMP_Text>(true);
-        t.text = label;
+        SetLabel(t, labelKey);
         t.fontSize = fontSize;
         return b;
     }
 
-    static GameObject LoginWindow(GameObject windowPrefab, Transform parent, string name, string title)
+    static GameObject LoginWindow(GameObject windowPrefab, Transform parent, string name, string titleKey)
     {
-        var w = KitWindow(windowPrefab, parent, name, title, new Vector2(1100, 600));
+        var w = KitWindow(windowPrefab, parent, name, titleKey, new Vector2(1100, 600));
         w.GetComponent<UiWindow>().closable = false;
         w.transform.Find("Body/Close").gameObject.SetActive(false);
         return w;

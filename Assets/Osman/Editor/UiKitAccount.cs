@@ -103,7 +103,7 @@ public static partial class UiKitBuilder
 
     static GameObject BuildProfile(GameObject window, GameObject green, GameObject red, Transform canvas, LobbyAccountUI account)
     {
-        var win = KitWindow(window, canvas, "ProfilePanel", "PROFİL", new Vector2(1100, 760));
+        var win = KitWindow(window, canvas, "ProfilePanel", "profile.title", new Vector2(1100, 760));
         var uw = win.GetComponent<UiWindow>();
         uw.closeOnBack = false;
         UnityEventTools.AddPersistentListener(uw.onBack, account.CloseProfile);
@@ -126,15 +126,15 @@ public static partial class UiKitBuilder
         // İsim: değiştirebilen için kutu + KAYDET, değiştiremeyen için düz isim + ipucu (Refresh seçer)
         var nameRow = Child("NameRow", info.transform);
         Size(nameRow, 0, 120);
-        var nameInput = TextInput(nameRow.transform, "NameInput", "İsim", new Vector2(480, 120));
+        var nameInput = TextInput(nameRow.transform, "NameInput", "common.name", new Vector2(480, 120));
         Fill(nameInput.gameObject, 0, 0, -240, 0);
-        var nameSave = ChoiceButton(green, nameRow.transform, "NameSaveButton", "KAYDET", 220, 120, 44);
+        var nameSave = ChoiceButton(green, nameRow.transform, "NameSaveButton", "profile.save", 220, 120, 44);
         Anchor(nameSave, right, right, right, Vector2.zero, new Vector2(220, 120));
         var nameText = Text(nameRow.transform, "NameText", "", 48, extraBold);
         nameText.alignment = TextAlignmentOptions.MidlineLeft;
         Anchor(nameText.gameObject, new Vector2(0, 1), Vector2.one, new Vector2(0.5f, 1), Vector2.zero, new Vector2(0, 76));
         ShrinkToFit(nameText, 32);
-        var nameHint = Text(nameRow.transform, "NameHint", "İsim seçmek için Google'a bağlan", 30, bold);
+        var nameHint = Label(nameRow.transform, "NameHint", "profile.name_hint", 30, bold);
         nameHint.color = MutedText;
         nameHint.alignment = TextAlignmentOptions.MidlineLeft;
         Anchor(nameHint.gameObject, Vector2.zero, new Vector2(1, 0), new Vector2(0.5f, 0), Vector2.zero, new Vector2(0, 44));
@@ -195,9 +195,9 @@ public static partial class UiKitBuilder
         initialSo.ApplyModifiedPropertiesWithoutUndo();
 
         var buttons = win.transform.Find("Body/Buttons");
-        var link = ChoiceButton(green, buttons, "LinkGoogleButton", "Google'a Bağla, ilerlemeni koru", 620, 130, 40);
+        var link = ChoiceButton(green, buttons, "LinkGoogleButton", "profile.link_google", 620, 130, 40);
         ShrinkToFit(link.GetComponentInChildren<TMP_Text>(true), 28);
-        var signOut = ChoiceButton(red, buttons, "SignOutButton", "ÇIKIŞ YAP", 360, 130, 48);
+        var signOut = ChoiceButton(red, buttons, "SignOutButton", "profile.sign_out", 360, 130, 48);
 
         account.nameInput = nameInput;
         account.nameSaveButton = nameSave.GetComponent<Button>();
@@ -219,7 +219,7 @@ public static partial class UiKitBuilder
 
     static GameObject BuildSettings(GameObject window, GameObject row, GameObject toggle, Transform canvas, LobbyAccountUI account)
     {
-        var win = KitWindow(window, canvas, "SettingsPanel", "AYARLAR", new Vector2(1100, SettingsBodyHeight));
+        var win = KitWindow(window, canvas, "SettingsPanel", "settings.title", new Vector2(1100, SettingsBodyHeight));
         var uw = win.GetComponent<UiWindow>();
         uw.closeOnBack = false;
         UnityEventTools.AddPersistentListener(uw.onBack, account.CloseSettings);
@@ -243,12 +243,12 @@ public static partial class UiKitBuilder
         hl.childControlWidth = true;
         hl.childForceExpandWidth = true;
         hl.childControlHeight = hl.childForceExpandHeight = false;
-        var sound = ToggleRow(row, toggle, audio.transform, "SoundRow", "Ses");
-        var music = ToggleRow(row, toggle, audio.transform, "MusicRow", "Müzik");
-        var privacy = LinkRow(row, list.transform, "PrivacyRow", "Gizlilik Politikası");
-        var terms = LinkRow(row, list.transform, "TermsRow", "Kullanım Şartları");
-        var support = LinkRow(row, list.transform, "SupportRow", "Destek");
-        var delete = LinkRow(row, list.transform, "DeleteRow", "Hesabımı Sil");
+        var sound = ToggleRow(row, toggle, audio.transform, "SoundRow", "settings.sound");
+        var music = ToggleRow(row, toggle, audio.transform, "MusicRow", "settings.music");
+        var privacy = LinkRow(row, list.transform, "PrivacyRow", "settings.privacy");
+        var terms = LinkRow(row, list.transform, "TermsRow", "settings.terms");
+        var support = LinkRow(row, list.transform, "SupportRow", "settings.support");
+        var delete = LinkRow(row, list.transform, "DeleteRow", "settings.delete_account");
         delete.transform.Find("Label").GetComponent<TMP_Text>().color = DangerText;
 
         var version = Text(body, "VersionText", "", 30, bold);
@@ -271,17 +271,17 @@ public static partial class UiKitBuilder
         return win;
     }
 
-    static GameObject KitRow(GameObject row, Transform parent, string name, string label)
+    static GameObject KitRow(GameObject row, Transform parent, string name, string labelKey)
     {
         var r = Nested(row, parent, name);
         ((RectTransform)r.transform).sizeDelta = new Vector2(980, 120);
-        r.transform.Find("Label").GetComponent<TMP_Text>().text = label;
+        SetLabel(r.transform.Find("Label").GetComponent<TMP_Text>(), labelKey);
         return r;
     }
 
-    static Toggle ToggleRow(GameObject row, GameObject toggle, Transform parent, string name, string label)
+    static Toggle ToggleRow(GameObject row, GameObject toggle, Transform parent, string name, string labelKey)
     {
-        var r = KitRow(row, parent, name, label);
+        var r = KitRow(row, parent, name, labelKey);
         var right = new Vector2(1, 0.5f);
         var t = Nested(toggle, r.transform, name.Replace("Row", "Toggle"));
         Anchor(t, right, right, right, new Vector2(-20, 0), new Vector2(150, 120));
@@ -289,9 +289,9 @@ public static partial class UiKitBuilder
     }
 
     // Satırın tamamı dokunulur; sağda ">"
-    static GameObject LinkRow(GameObject row, Transform parent, string name, string label)
+    static GameObject LinkRow(GameObject row, Transform parent, string name, string labelKey)
     {
-        var r = KitRow(row, parent, name, label);
+        var r = KitRow(row, parent, name, labelKey);
         r.transform.Find("Value").GetComponent<TMP_Text>().text = ">";
         r.AddComponent<Button>().targetGraphic = r.GetComponent<Image>();
         return r;

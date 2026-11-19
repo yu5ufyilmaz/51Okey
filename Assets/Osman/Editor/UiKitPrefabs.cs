@@ -184,7 +184,7 @@ public static partial class UiKitBuilder
         var yes = Nested(green, buttons, "Yes");
         var yesRed = Nested(red, buttons, "YesDestructive");
         var no = Nested(teal, buttons, "No");
-        no.GetComponentInChildren<TMP_Text>().text = "Vazgeç";
+        SetLabel(no.GetComponentInChildren<TMP_Text>(), "common.cancel");
         confirm.SetActive(false);
 
         // Yükleme onayın üstünde: onay açıkken yükleme başlarsa butonları tıklanmasın
@@ -332,17 +332,17 @@ public static partial class UiKitBuilder
     static Sprite KnobSprite => AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
 
     // Kit penceresi örneği: başlık ve gövde boyu verilir
-    static GameObject KitWindow(GameObject windowPrefab, Transform parent, string name, string title, Vector2 bodySize)
+    static GameObject KitWindow(GameObject windowPrefab, Transform parent, string name, string titleKey, Vector2 bodySize)
     {
         var w = Nested(windowPrefab, parent, name);
         var body = w.transform.Find("Body");
         ((RectTransform)body).sizeDelta = bodySize;
-        body.Find("Title").GetComponent<TMP_Text>().text = title;
+        SetLabel(body.Find("Title").GetComponent<TMP_Text>(), titleKey);
         return w;
     }
 
     // TMP_InputField'in beklediği düzen: kök (zemin) > Text Area (RectMask2D) > Placeholder + Text. Üstte ortaya çapalı.
-    static TMP_InputField TextInput(Transform parent, string name, string placeholderText, Vector2 size)
+    static TMP_InputField TextInput(Transform parent, string name, string placeholderKey, Vector2 size)
     {
         var g = Child(name, parent);
         Anchor(g, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1), Vector2.zero, size);
@@ -350,7 +350,7 @@ public static partial class UiKitBuilder
         var area = Child("Text Area", g.transform);
         Fill(area, 40, 10, -40, -10);
         area.AddComponent<RectMask2D>();
-        var placeholder = Text(area.transform, "Placeholder", placeholderText, 48, bold);
+        var placeholder = Label(area.transform, "Placeholder", placeholderKey, 48, bold);
         placeholder.color = new Color(1, 1, 1, 0.45f);
         placeholder.alignment = TextAlignmentOptions.MidlineLeft;
         Fill(placeholder.gameObject, 0, 0, 0, 0);
@@ -378,6 +378,25 @@ public static partial class UiKitBuilder
         t.raycastTarget = false;
         t.text = text;
         return t;
+    }
+
+    // Çevrilen etiket: LocText ekler, Editor önizlemesi için tablonun tr hücresini yazar
+    static TextMeshProUGUI Label(Transform parent, string name, string key, float size, TMP_FontAsset font)
+    {
+        var t = Text(parent, name, "", size, font);
+        SetLabel(t, key);
+        return t;
+    }
+
+    // Var olan metne anahtar bağlar; anahtar tabloda yoksa hata basar
+    static void SetLabel(TMP_Text target, string key)
+    {
+        var lt = target.GetComponent<LocText>() ?? target.gameObject.AddComponent<LocText>();
+        lt.key = key;
+        var csv = AssetDatabase.LoadAssetAtPath<TextAsset>("Assets/Resources/Localization.csv");
+        var tr = LocTable.Parse(csv != null ? csv.text : null).Get("tr", key);
+        if (tr == null) { Debug.LogError("[UiKitBuilder] Dil tablosunda anahtar yok: " + key); return; }
+        target.text = tr;
     }
 
     static GameObject Save(GameObject g, string name) => SaveAt(g, PrefabDir + name + ".prefab");
