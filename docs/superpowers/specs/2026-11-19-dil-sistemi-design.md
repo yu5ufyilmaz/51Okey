@@ -222,3 +222,42 @@ font eklemek ayrı bir adımdır; denetim menüsü fontta bulunmayan harfleri li
 - Çok editörlü senkron testi (`Run-SyncTest.ps1 -Deals 1`) geçer; ceza RPC'si değişti.
 - Biri Türkçe biri İngilizce iki editörde ceza yazısının her birinde kendi dilinde çıktığı görülür.
 - Telefonda deneme Osman'dadır.
+
+## Uygulamadan devreden notlar
+
+Tabloda 119 anahtar var: lang 1, penalty 6, common 9, login 8, lobby 7, room 13, profile 8,
+settings 9, table 21, shop 3, toast 9, error 7, account 18.
+
+Ne, nasıl doğrulandı:
+
+- EditMode: 291 test geçti, 0 başarısız (denetim testi dahil).
+- `Okey/Dil/Tabloyu Denetle`: 0 hata, 0 uyarı, 0 eksik harf. 16 "kalan metin" var; hepsi
+  `[Header]`, log metni ve Editor kurucu tablolarında, oyuncuya görünmez.
+- Senkron testi (`Run-SyncTest.ps1 -Deals 1`): PASS, 1 el, ok 50, desync 0.
+- İngilizce ekran görüntüleri 1920x1080 (lobi ve ayarlar için ayrıca 2400x1080): giriş, boş ve kartlı lobi,
+  masa kurma, şifre, ayarlar, profil, mağaza, çıkış onayı, bildirim, yükleme, hesap silme ilk onayı,
+  masa ve skor paneli. Taşan metin çıkmadı. Görüntüler `.superpowers/shots-keep/dil/sweep-*.png`.
+- Excel gidiş-dönüşü: tablo `;` ayırıcıyla yeniden yazıldı; 119 anahtar, 0 hata, tüm hücreler aynı.
+- Tabloda İngilizce cümleler gözden geçirildi (ör. "will be lost", "Quit" başlığı, "Min. to open").
+
+Bilinen açıklar:
+
+- Oyun ortasında dil değişirse skor satırları yenilenmez; dil yalnız lobide değişir.
+- Ekranda duran isim hatası dil değişince yeniden çevrilmez.
+- `table.waiting_player` satırı çalışma zamanında kullanılmıyor.
+- Mağaza ürün adları ve fiyatları bilerek çevrilmedi ("Ürün 1" gibi geçici adlar Türkçe kalır).
+- Ayarlarda Gizlilik ve Şartlar tek satırda; Editor'de URL tanımsız olduğundan bu satırlar ve
+  girişteki yasal satır gizli (adresler hâlâ eksik).
+- Misafir adı öneki `Misafir-` çevrilmiyor.
+- İlk açılış dilini sistem dili belirler (bu PC'deki Editor İngilizce açılır).
+- Masadaki "GERİ BIRAK" düğmesi Editor'de görünür yapılamadı, ekran görüntüsü yok; metin otomatik
+  boyutlandırma ile sığar (tercih edilen genişlik düğmeden geniş).
+- Masa kurma penceresinde "Rounds" etiketi ile "Rounds: 1" değeri art arda tekrar ediyor.
+
+Telefonda denenecekler:
+
+- Telefon dili İngilizce iken ilk açılış, sonra telefon dili Türkçe iken ilk açılış.
+- Dili değiştirip uygulamayı kapatıp açma; seçim korunmalı.
+- İki telefon, farklı dilde, aynı masada: ceza yazısı her telefonda kendi dilinde çıkmalı.
+- Avatar baş harfinde Türkçe büyük İ (Android).
+- 20:9 telefonda uzun İngilizce metinler (kartlar, onay pencereleri, bildirim).
