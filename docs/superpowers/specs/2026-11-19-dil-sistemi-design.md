@@ -225,34 +225,51 @@ font eklemek ayrı bir adımdır; denetim menüsü fontta bulunmayan harfleri li
 
 ## Uygulamadan devreden notlar
 
-Tabloda 119 anahtar var: lang 1, penalty 6, common 9, login 8, lobby 7, room 13, profile 8,
-settings 9, table 21, shop 3, toast 9, error 7, account 18.
+Son durum: commit `58f3c55`, dal `MDC-001-firebase`, push yok.
+
+Tabloda 119 anahtar var (tr ve en dolu). Bölümler: lang, common, login, lobby, room, profile,
+settings, account, shop, table, penalty, toast, error.
 
 Ne, nasıl doğrulandı:
 
-- EditMode: 291 test geçti, 0 başarısız (denetim testi dahil).
-- `Okey/Dil/Tabloyu Denetle`: 0 hata, 0 uyarı, 0 eksik harf. 16 "kalan metin" var; hepsi
+- EditMode: 305 test geçti, 0 başarısız (denetim testi dahil).
+- `Okey/Dil/Tabloyu Denetle`: 0 hata, 0 uyarı, fontta eksik harf yok. 16 "kalan metin" var; hepsi
   `[Header]`, log metni ve Editor kurucu tablolarında, oyuncuya görünmez.
-- Senkron testi (`Run-SyncTest.ps1 -Deals 1`): PASS, 1 el, ok 50, desync 0.
-- İngilizce ekran görüntüleri 1920x1080 (lobi ve ayarlar için ayrıca 2400x1080): giriş, boş ve kartlı lobi,
+- Çok editörlü senkron testi (`Run-SyncTest.ps1 -Deals 1`) son commit üzerinde: PASS, 1 el, ok 50, desync 0.
+- Karışık dil, canlı: aynı ceza bildirimi Türkçe editörde "Okey attı", İngilizce klonda
+  "Discarded the okey" olarak göründü.
+- İngilizce ekran görüntüleri 1920x1080 (lobi ve ayarlar ayrıca 2400x1080): giriş, boş ve kartlı lobi,
   masa kurma, şifre, ayarlar, profil, mağaza, çıkış onayı, bildirim, yükleme, hesap silme ilk onayı,
-  masa ve skor paneli. Taşan metin çıkmadı. Görüntüler `.superpowers/shots-keep/dil/sweep-*.png`.
-- Excel gidiş-dönüşü: tablo `;` ayırıcıyla yeniden yazıldı; 119 anahtar, 0 hata, tüm hücreler aynı.
-- Tabloda İngilizce cümleler gözden geçirildi (ör. "will be lost", "Quit" başlığı, "Min. to open").
+  masa ve skor paneli. Taşan veya Türkçe kalmış metin çıkmadı. Görüntüler `.superpowers/shots-keep/dil/`.
+- Excel gidiş-dönüşü: tablo `;` ayırıcıyla yeniden yazıldı; 119 anahtar, 0 hata, bütün hücreler aynı.
+
+Tasarıma göre değişenler ve sonradan eklenenler:
+
+- Ayarlarda Gizlilik ve Şartlar tek satırda yan yana. Neden: dil satırı eklenince pencere 20:9
+  telefonda kırpılıyordu; pencere eski boyunda (900) kaldı.
+- Derleme kapısı: tabloda hata varsa APK derlemesi durur (`LocBuildGate`).
+- Denetim sahne ve prefablardaki `LocText` anahtarlarını da okur; `?` biçimindeki bozuk harfi,
+  geçersiz ve yinelenen dil sütunu başlığını da hata sayar.
+- Telefon dili tanıma Unity'nin bildiği bütün dilleri kapsar (Çince çeşitleri `zh`).
+- Mağazadaki "Active" Türkçede "Aktif" oldu; "Remove ADS" başlığı "Reklamları Kaldır".
+- El sayısı İngilizcede kartta "Rounds: 3", masa kurma seçicisinde yalnızca sayı.
+- `Localization.csv` satır sonları LF (okuyucu ikisini de kabul eder).
+- Ceza nedeni numaraları ağ biçimidir: yalnızca sona eklenir, sıra değişmez.
 
 Bilinen açıklar:
 
 - Oyun ortasında dil değişirse skor satırları yenilenmez; dil yalnız lobide değişir.
 - Ekranda duran isim hatası dil değişince yeniden çevrilmez.
-- `table.waiting_player` satırı çalışma zamanında kullanılmıyor.
-- Mağaza ürün adları ve fiyatları bilerek çevrilmedi ("Ürün 1" gibi geçici adlar Türkçe kalır).
-- Ayarlarda Gizlilik ve Şartlar tek satırda; Editor'de URL tanımsız olduğundan bu satırlar ve
-  girişteki yasal satır gizli (adresler hâlâ eksik).
+- Mağaza ürün adları ve fiyatları bilerek çevrilmedi ("Ürün 1", "14.99 TL").
+- Editor'de yasal adresler tanımsız olduğundan Gizlilik, Şartlar, Destek satırları ve girişteki
+  yasal satır gizli; adresler hâlâ eksik.
 - Misafir adı öneki `Misafir-` çevrilmiyor.
-- İlk açılış dilini sistem dili belirler (bu PC'deki Editor İngilizce açılır).
-- Masadaki "GERİ BIRAK" düğmesi Editor'de görünür yapılamadı, ekran görüntüsü yok; metin otomatik
-  boyutlandırma ile sığar (tercih edilen genişlik düğmeden geniş).
-- Masa kurma penceresinde "Rounds" etiketi ile "Rounds: 1" değeri art arda tekrar ediyor.
+- İlk açılış dilini sistem dili belirler (bu bilgisayardaki Editor İngilizce açılır).
+- Masadaki "GERİ BIRAK" düğmesinin İngilizcesi ekranda görülmedi; metin otomatik küçülerek sığar.
+- Denetim, hücre içindeki `sayfa?a=1` gibi bir adresi bozuk harf sanar; tabloda adres yok.
+- Denetim sahnede `key:` adlı başka bir alan görürse onu da anahtar sayar; bugün öyle bir alan yok.
+- Bellek: uzun oturumda ana editör 12 GB'ı geçince Play'e giriş 60 saniyeyi bulur ve senkron
+  testi "Connecting durumunda takıldı" diye düşer. Editörü yeniden başlatmak gerekir.
 
 Telefonda denenecekler:
 
@@ -261,3 +278,4 @@ Telefonda denenecekler:
 - İki telefon, farklı dilde, aynı masada: ceza yazısı her telefonda kendi dilinde çıkmalı.
 - Avatar baş harfinde Türkçe büyük İ (Android).
 - 20:9 telefonda uzun İngilizce metinler (kartlar, onay pencereleri, bildirim).
+- Tabloyu bilerek bozup (bir `en` hücresini sil) APK derlemesinin durduğunu görmek.
