@@ -2026,7 +2026,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     void ShowLimitMessage(int score, int tableLimit)
     {
         int needed = AnyoneElseOpened() ? tableLimit + 1 : tableLimit;
-        string message = $"Limitin yetmiyor, açamazsın! (Elin: {score}, gereken: {needed})";
+        string message = Loc.T("table.limit_not_enough", score, needed);
         Debug.LogWarning(message);
         if (UIManager.Instance != null)
             UIManager.Instance.ShowMessage(message);

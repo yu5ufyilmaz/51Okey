@@ -320,6 +320,13 @@ public static partial class UiKitBuilder
             Anchor(close.gameObject, Vector2.one, Vector2.one, Vector2.one, new Vector2(40, 4), new Vector2(120, 120));
             close.SetAsLastSibling();
         }
+        // Sabit etiketler tablodan; ürün adları ve fiyatlar elle kalır
+        foreach (var t in root.GetComponentsInChildren<TMP_Text>(true))
+        {
+            string s = Regex.Replace(t.text, @"\s+", " ").Trim();
+            if (s == "Satın Al" || s == "Buy") SetLabel(t, "shop.buy");
+            else if (s == "Remove ADS" || s == "Reklamları Kaldır") SetLabel(t, "shop.remove_ads");
+        }
         win.gameObject.SetActive(false);
         EditorUtility.SetDirty(shop);
         foreach (var c in root.GetComponentsInChildren<Component>(true))

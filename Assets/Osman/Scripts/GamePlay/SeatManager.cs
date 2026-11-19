@@ -467,7 +467,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
                 continue;
             bool pick = canPick && !occupied[i];
             if (pick)
-                field.text = "OTUR";
+                field.text = Loc.T("table.sit");
             field.raycastTarget = pick;
             var button = field.GetComponent<UnityEngine.UI.Button>();
             if (button == null && pick)

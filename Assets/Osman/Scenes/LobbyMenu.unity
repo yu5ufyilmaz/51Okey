@@ -7652,6 +7652,7 @@ GameObject:
   - component: {fileID: 1065804525}
   - component: {fileID: 1065804527}
   - component: {fileID: 1065804526}
+  - component: {fileID: 1065804528}
   m_Layer: 5
   m_Name: Text (TMP)
   m_TagString: Untagged
@@ -7698,7 +7699,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Sat\u0131n Al\n"
+  m_text: "Sat\u0131n Al"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 23923aa227ba6194db0c88aa1d240573, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: 8bbf095628291f540b874b8f226fd629, type: 2}
@@ -7778,6 +7779,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1065804524}
   m_CullTransparentMesh: 1
+--- !u!114 &1065804528
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1065804524}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eeac974a3302fd7449813f9a25d44cb8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LocText
+  key: shop.buy
 --- !u!1 &1078871258
 GameObject:
   m_ObjectHideFlags: 0
@@ -8360,6 +8374,7 @@ GameObject:
   - component: {fileID: 1127524730}
   - component: {fileID: 1127524732}
   - component: {fileID: 1127524731}
+  - component: {fileID: 1127524733}
   m_Layer: 5
   m_Name: ItemName
   m_TagString: Untagged
@@ -8406,9 +8421,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Remove ADS
-
-'
+  m_text: "Reklamlar\u0131 Kald\u0131r"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 23923aa227ba6194db0c88aa1d240573, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: 8bbf095628291f540b874b8f226fd629, type: 2}
@@ -8488,6 +8501,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1127524729}
   m_CullTransparentMesh: 1
+--- !u!114 &1127524733
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1127524729}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eeac974a3302fd7449813f9a25d44cb8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LocText
+  key: shop.remove_ads
 --- !u!1 &1150176227
 GameObject:
   m_ObjectHideFlags: 0
@@ -8701,6 +8727,7 @@ GameObject:
   - component: {fileID: 1164952646}
   - component: {fileID: 1164952648}
   - component: {fileID: 1164952647}
+  - component: {fileID: 1164952649}
   m_Layer: 5
   m_Name: Text (TMP)
   m_TagString: Untagged
@@ -8747,7 +8774,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Sat\u0131n Al\n"
+  m_text: "Sat\u0131n Al"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 23923aa227ba6194db0c88aa1d240573, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: 8bbf095628291f540b874b8f226fd629, type: 2}
@@ -8827,6 +8854,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1164952645}
   m_CullTransparentMesh: 1
+--- !u!114 &1164952649
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1164952645}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eeac974a3302fd7449813f9a25d44cb8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LocText
+  key: shop.buy
 --- !u!1 &1165627524
 GameObject:
   m_ObjectHideFlags: 0
@@ -13864,6 +13904,7 @@ GameObject:
   - component: {fileID: 1671601237}
   - component: {fileID: 1671601239}
   - component: {fileID: 1671601238}
+  - component: {fileID: 1671601240}
   m_Layer: 5
   m_Name: Text (TMP)
   m_TagString: Untagged
@@ -13910,7 +13951,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Sat\u0131n Al\n"
+  m_text: "Sat\u0131n Al"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 23923aa227ba6194db0c88aa1d240573, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: 8bbf095628291f540b874b8f226fd629, type: 2}
@@ -13990,6 +14031,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1671601236}
   m_CullTransparentMesh: 1
+--- !u!114 &1671601240
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1671601236}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eeac974a3302fd7449813f9a25d44cb8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LocText
+  key: shop.buy
 --- !u!1001 &1709486099
 PrefabInstance:
   m_ObjectHideFlags: 0

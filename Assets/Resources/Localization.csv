@@ -73,7 +73,28 @@ table.leave_title,Masadan ayrıl,Leave table,
 table.leave_body,Masadan ayrılmak istiyor musun?,Do you want to leave the table?,
 table.leave_yes,Ayrıl,Leave,
 table.seat_taken,"Koltuk doldu, başka bir yer seç","Seat taken, pick another one",
+table.play_again,TEKRAR OYNA,PLAY AGAIN,
+table.collect_tiles,TAŞLARI TOPLA,COLLECT TILES,
+table.add_tile,TAŞ İŞLE,ADD TILE,
+table.scoreboard,TABLO,SCORES,
+table.put_back,GERİ BIRAK,PUT BACK,
+table.exit,Çıkış,Exit,
+table.open_pairs,ÇİFT AÇ,OPEN PAIRS,
+table.open_runs,"SERİ
+AÇ","OPEN
+RUNS",
+table.waiting_player,Oyuncu Bekleniyor,Waiting for player,
+table.live_penalties,ANLIK CEZA PUANLARI,LIVE PENALTY POINTS,
+table.run_score,Seri Puan: <color={0}>{1}</color>,Run points: <color={0}>{1}</color>,
+table.pair_score,Çift Puan: <color={0}>{1}</color>,Pair points: <color={0}>{1}</color>,
+table.threshold,Baraj: {0},Threshold: {0},
+table.winner,{0} Oyunu Kazandı!,{0} won the game!,
+table.back_to_lobby_in,Lobiye dönüş: {0}s,Back to lobby: {0}s,
+table.limit_not_enough,"Limitin yetmiyor, açamazsın! (Elin: {0}, gereken: {1})","Not enough to open! (Hand: {0}, needed: {1})",
+table.sit,OTUR,SIT,
 # Mağaza
+shop.buy,Satın Al,Buy,
+shop.remove_ads,Reklamları Kaldır,Remove Ads,
 shop.active,Aktif,Active,Kodda İngilizce Active yazıyordu; Türkçesi Aktif
 # Bildirim
 toast.wait_connection,"Bağlantı bekleniyor, tekrar dene","Waiting for connection, try again",

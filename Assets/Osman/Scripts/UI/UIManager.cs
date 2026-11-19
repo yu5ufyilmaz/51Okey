@@ -94,7 +94,7 @@ public class UIManager : MonoBehaviourPunCallbacks
         if (liveScoreContentText == null)
             return;
 
-        string content = "<size=110%><b>ANLIK CEZA PUANLARI</b></size>\n\n";
+        string content = "<size=110%><b>" + Loc.T("table.live_penalties") + "</b></size>\n\n";
 
         foreach (var player in PhotonNetwork.PlayerList)
         {
@@ -151,7 +151,7 @@ public class UIManager : MonoBehaviourPunCallbacks
         if (currentScoreText != null)
         {
             string colorHex = (myScore > currentLimit) ? "green" : "white";
-            currentScoreText.text = $"Seri Puan: <color={colorHex}>{myScore}</color>";
+            currentScoreText.text = Loc.T("table.run_score", colorHex, myScore);
         }
 
         // 2. Çift Puanı (Dikkat: Buraya artık Puan geliyor)
@@ -159,13 +159,13 @@ public class UIManager : MonoBehaviourPunCallbacks
         {
             string colorHex = (myPairsScore > currentLimit) ? "green" : "white";
             // İstersen burada "Çift Puanı" yazabilirsin
-            currentPairText.text = $"Çift Puan: <color={colorHex}>{myPairsScore}</color>";
+            currentPairText.text = Loc.T("table.pair_score", colorHex, myPairsScore);
         }
 
         // 3. Ortak Baraj
         if (tableLimitText != null)
         {
-            tableLimitText.text = $"Baraj: {currentLimit}";
+            tableLimitText.text = Loc.T("table.threshold", currentLimit);
         }
 
         // pairLimitText objesini silebilirsin veya boş bırakabilirsin.
@@ -456,7 +456,7 @@ public class UIManager : MonoBehaviourPunCallbacks
             {
                 // İstersen rengini altın sarısı vs. yapabilirsin
                 rankingText.color = Color.yellow;
-                rankingText.text = $"{winnerName} Oyunu Kazandı!";
+                rankingText.text = Loc.T("table.winner", winnerName);
             }
             else
             {
@@ -485,7 +485,7 @@ public class UIManager : MonoBehaviourPunCallbacks
         for (int i = 10; i > 0; i--)
         {
             if (restartTimerText)
-                restartTimerText.text = $"Lobiye dönüş: {i}s";
+                restartTimerText.text = Loc.T("table.back_to_lobby_in", i);
             yield return new WaitForSeconds(1f);
         }
     }
