@@ -5,6 +5,7 @@ using Firebase.Firestore;
 using UnityEngine;
 
 // Tasarım 5.2: users/{uid} + users/{uid}/ledger/{txId}. Kurallar: firebase/firestore.rules (coins int >= 0, defter güncellenmez).
+// İsim kaydı names/{isim} = { uid, createdAt }: ilk alan tutar, isim değişikliği tek transaction.
 // Coin değişikliği tek transaction: bakiye oku, eksiye düşecekse reddet, coins güncelle, defter kaydı yaz.
 // Cüzdan: istisna = sonuç bilinmiyor (aynı Id ile tekrar dene); false = uygulanmadı.
 public class FirestoreProfileStore : IProfileStore, IWallet
@@ -57,12 +58,59 @@ public class FirestoreProfileStore : IProfileStore, IWallet
         Notify();
     }
 
-    public async Task SetDisplayNameAsync(string name)
+    // Tek transaction: yeni ismi al (başkasınınsa Taken), bizdeki eski kaydı bırak, displayName + nameClaimed yaz.
+    // Ağ ya da izin hatası: Failed, bellekteki profil değişmez.
+    public async Task<NameResult> SetDisplayNameAsync(string name)
     {
         name = name?.Trim();
-        if (Current == null || !GameConfig.IsValidName(name) || name == Current.DisplayName)
-            return;
-        await Update(p => p.DisplayName = name, new Dictionary<string, object> { { "displayName", name } });
+        if (Current == null || !GameConfig.IsStorableName(name))
+            return NameResult.Invalid;
+        if (name == Current.DisplayName && Current.NameClaimed)
+            return NameResult.Ok;
+        var uid = Current.UserId;
+        // Kayıtlı olmayan eski isim kimsenin kaydı değildir (başkasının olabilir): yalnız kayıtlıysa bırakılır.
+        var oldName = Current.NameClaimed && Current.DisplayName != name ? Current.DisplayName : null;
+        bool claimed;
+        try
+        {
+            var db = await boot.FirestoreAsync();
+            var userRef = db.Collection("users").Document(uid);
+            var nameRef = db.Collection("names").Document(name);
+            var oldRef = oldName != null ? db.Collection("names").Document(oldName) : null;
+            claimed = await db.RunTransactionAsync(async t =>
+            {
+                var taken = await t.GetSnapshotAsync(nameRef);
+                if (taken.Exists && taken.GetValue<string>("uid") != uid)
+                    return false;
+                // Transaction'da önce bütün okumalar: eski kayıt hâlâ bizimse silinir (kural yalnız sahibine sildirir).
+                var old = oldRef != null ? await t.GetSnapshotAsync(oldRef) : null;
+                if (!taken.Exists)
+                    t.Set(nameRef, new Dictionary<string, object> { { "uid", uid }, { "createdAt", FieldValue.ServerTimestamp } });
+                if (old != null && old.Exists && old.GetValue<string>("uid") == uid)
+                    t.Delete(oldRef);
+                t.Update(userRef, new Dictionary<string, object>
+                {
+                    { "displayName", name },
+                    { "nameClaimed", true },
+                    { "lastSeenAt", FieldValue.ServerTimestamp },
+                });
+                return true;
+            });
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning("[Profil] isim kaydedilemedi: " + e.GetType().Name + " " + uid);
+            return NameResult.Failed;
+        }
+        if (!claimed)
+            return NameResult.Taken;
+        if (Current != null && Current.UserId == uid)
+        {
+            Current.DisplayName = name;
+            Current.NameClaimed = true;
+            Notify();
+        }
+        return NameResult.Ok;
     }
 
     public async Task AddXpAsync(int xp)
@@ -91,12 +139,20 @@ public class FirestoreProfileStore : IProfileStore, IWallet
         Notify();
     }
 
-    // Hesap silme akışı: önce defter, sonra kullanıcı belgesi (kural defteri yalnızca silmeye açar).
+    // Hesap silme akışı: önce isim kaydı (bizimse), sonra defter, sonra kullanıcı belgesi (kural defteri yalnızca silmeye açar).
     public async Task DeleteAsync()
     {
         if (Current != null)
         {
             var userRef = await UserDoc(Current.UserId);
+            if (Current.NameClaimed)
+            {
+                var uid = Current.UserId;
+                var nameRef = (await boot.FirestoreAsync()).Collection("names").Document(Current.DisplayName);
+                var name = await nameRef.GetSnapshotAsync();
+                if (name.Exists && name.GetValue<string>("uid") == uid)
+                    await nameRef.DeleteAsync();
+            }
             var ledger = await userRef.Collection("ledger").GetSnapshotAsync();
             foreach (var entry in ledger.Documents)
                 await entry.Reference.DeleteAsync();
@@ -166,6 +222,7 @@ public class FirestoreProfileStore : IProfileStore, IWallet
         Level = (int)Long(f, "level", 1),
         Xp = (int)Long(f, "xp", 0),
         NoAds = f.TryGetValue("noAds", out var a) && a is bool b && b,
+        NameClaimed = f.TryGetValue("nameClaimed", out var c) && c is bool claimed && claimed,
         SchemaVersion = (int)Long(f, "schemaVersion", 1),
     };
 

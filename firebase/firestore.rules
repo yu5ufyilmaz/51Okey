@@ -15,5 +15,12 @@ service cloud.firestore {
         allow read, create, delete: if request.auth != null && request.auth.uid == uid;
       }
     }
+
+    match /names/{name} {
+      // İsim kaydı: ilk alan tutar. update yok: var olan kayda yazılamaz, sahibi dışında kimse silemez.
+      allow get: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
   }
 }

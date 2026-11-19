@@ -1,22 +1,49 @@
-using System.Linq;
 using NUnit.Framework;
 
 public class GameConfigTests
 {
-    [Test]
-    public void DefaultName_IsOyuncuPlusFourDigits() =>
-        StringAssert.IsMatch(@"^Oyuncu\d{4}$", GameConfig.DefaultName("local-51Okey"));
+    [TestCase(42, "Misafir-00042")]
+    [TestCase(123456, "Misafir-23456")]
+    public void GuestName_IsPrefixPlusFiveDigits(int number, string name) =>
+        Assert.AreEqual(name, GameConfig.GuestName(number));
 
-    [Test]
-    public void DefaultName_IsStableForSameUser() =>
-        Assert.AreEqual(GameConfig.DefaultName("abc"), GameConfig.DefaultName("abc"));
+    [TestCase("Misafir-00042", true)]
+    [TestCase("Misafir-42", false)]
+    [TestCase("Misafir-abcde", false)]
+    [TestCase("misafir-00042", false)]
+    [TestCase("Ahmet", false)]
+    [TestCase(null, false)]
+    public void IsGuestName_OnlyExactFormat(string name, bool guest) =>
+        Assert.AreEqual(guest, GameConfig.IsGuestName(name));
 
-    [Test]
-    public void DefaultName_DiffersForTheFourEditors()
-    {
-        var ids = new[] { "local-51Okey", "local-51Okey_clone_0", "local-51Okey_clone_1", "local-51Okey_clone_2" };
-        Assert.AreEqual(4, ids.Select(GameConfig.DefaultName).Distinct().Count());
-    }
+    // Uzunluk durumları GameServicesTests.IsValidName'de.
+    [TestCase("Misafir-12345", false)]
+    [TestCase("misafir-x", false)]
+    [TestCase("MISAFIR-1", false)]
+    [TestCase("a/b", false)]
+    [TestCase("Ahmet", true)]
+    [TestCase("Misafirim", true)]
+    public void IsValidName_RejectsGuestPrefixAndSlash(string name, bool valid) =>
+        Assert.AreEqual(valid, GameConfig.IsValidName(name));
+
+    // Karar tablosu: misafire isim atanır, Google hesabının kayıtsız ismi kaydedilmeye çalışılır.
+    [TestCase(true, false, "Misafir-00042", NameFlow.Step.AssignGuest)]
+    [TestCase(true, false, "Deneme Oyuncu", NameFlow.Step.AssignGuest)]
+    [TestCase(true, true, "Ahmet", NameFlow.Step.AssignGuest)]
+    [TestCase(true, true, "Misafir-00042", NameFlow.Step.None)]
+    [TestCase(false, false, "Ahmet", NameFlow.Step.ClaimCurrent)]
+    [TestCase(false, false, "Misafir-00042", NameFlow.Step.None)]
+    [TestCase(false, true, "Misafir-00042", NameFlow.Step.None)]
+    [TestCase(false, true, "Ahmet", NameFlow.Step.None)]
+    public void NameFlow_Next(bool isGuest, bool claimed, string name, NameFlow.Step step) =>
+        Assert.AreEqual(step, NameFlow.Next(isGuest, claimed, name));
+
+    [TestCase(NameResult.Ok, "")]
+    [TestCase(NameResult.Taken, "Bu isim alınmış")]
+    [TestCase(NameResult.Invalid, "İsim 2-16 karakter olmalı")]
+    [TestCase(NameResult.Failed, "Bağlanılamadı")]
+    public void NameFlow_ErrorText(NameResult result, string text) =>
+        Assert.AreEqual(text, NameFlow.ErrorText(result));
 
     [TestCase(0, 1)]
     [TestCase(99, 1)]

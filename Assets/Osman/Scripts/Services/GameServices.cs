@@ -8,6 +8,8 @@ public static class GameServices
     // Editörde Firebase soğuk açılışı 9-12 sn ölçüldü (İP2, İP3): 10 sn sınırı ilk açılışta düşüyordu.
     public const int InitTimeoutMs = 20000;
     public const string UseFirebaseInEditorPref = "Okey.UseFirebaseInEditor";
+    // Misafir ismi çakışırsa yeni rastgele numarayla en çok bu kadar denenir; olmazsa sonraki açılışta yeniden.
+    public const int GuestNameAttempts = 5;
 
     // Nesneler beklemeden ve süreç boyunca bir kez kurulur: arayüz InitAsync bitmeden Profile.Changed'a abone olabilir.
     static readonly InitGate init;
@@ -18,6 +20,8 @@ public static class GameServices
     // Süren giriş/çıkış: çift dokunuş yeni işlem başlatmaz, aynı Task'ı alır.
     static Task pending = Task.CompletedTask;
     static System.Reflection.MethodInfo pendingOp;
+    // UnityEngine.Random yalnız ana iş parçacığında çalışır; EditMode testleri de buradan geçer.
+    static readonly System.Random guestNumbers = new System.Random();
 
     public static IAuthService Auth { get; }
     public static IProfileStore Profile { get; }
@@ -33,8 +37,10 @@ public static class GameServices
     public static bool IsReady => init.IsReady;
 
     public static bool HasSession => Auth.UserId != null && Profile.Current?.UserId == Auth.UserId;
-    // Ayrı "isim seçildi" alanı yok: varsayılan isim duruyorsa sorulur.
-    public static bool NeedsName => HasSession && Profile.Current.DisplayName == GameConfig.DefaultName(Auth.UserId);
+    // Misafire isim sorulmaz. Google hesabının ismi kayıtlı değilse ya da hâlâ Misafir- ise sorulur.
+    public static bool NeedsName => CanChangeName
+        && (!Profile.Current.NameClaimed || GameConfig.IsGuestName(Profile.Current.DisplayName));
+    public static bool CanChangeName => HasSession && !Auth.IsGuest;
     // Firebase misafiri çıkarsa anonim hesaba geri dönemez; yerel kimlik sabit, kayıp yok.
     public static bool CanSignOut => HasSession && (!Auth.IsGuest || !UsesFirebase);
     public static event Action<Exception> InitFailed
@@ -102,6 +108,10 @@ public static class GameServices
         if (await Auth.RestoreAsync())
             await ProfileLoadAsync();
     }
+
+    // Oyuncunun seçtiği isim: misafir seçemez, Misafir- öneki ve '/' reddedilir.
+    public static Task<NameResult> ChooseNameAsync(string name) =>
+        CanChangeName && GameConfig.IsValidName(name) ? Profile.SetDisplayNameAsync(name) : Task.FromResult(NameResult.Invalid);
 
     // Oturum varsa yeniden giriş yapılmaz, yalnız profil beklenir.
     public static Task EnterAsGuestAsync() => Exclusive(EnterAsGuestCoreAsync);
@@ -193,10 +203,35 @@ public static class GameServices
 
     static async Task LoadProfileAsync(string uid)
     {
-        await Profile.LoadOrCreateAsync(uid, GameConfig.DefaultName(uid));
+        await Profile.LoadOrCreateAsync(uid, NewGuestName());
         if (Profile.Current?.UserId != uid)
             throw new InvalidOperationException("profil yüklenemedi");
+        await EnsureNameAsync();
         LogProfile();
+    }
+
+    static string NewGuestName() => GameConfig.GuestName(guestNumbers.Next(100000));
+
+    // İsim güvenceye alınır; Taken/Failed girişi engellemez (isim kayıtsız kalır, sonraki yüklemede yeniden denenir).
+    static async Task EnsureNameAsync()
+    {
+        var profile = Profile.Current;
+        var step = NameFlow.Next(Auth.IsGuest, profile.NameClaimed, profile.DisplayName);
+        if (step == NameFlow.Step.ClaimCurrent)
+        {
+            await Profile.SetDisplayNameAsync(profile.DisplayName);
+            return;
+        }
+        if (step != NameFlow.Step.AssignGuest)
+            return;
+        // Yeni profil zaten bir Misafir- adayıyla açıldı: önce o denenir.
+        var name = GameConfig.IsGuestName(profile.DisplayName) ? profile.DisplayName : NewGuestName();
+        for (int i = 0; i < GuestNameAttempts; i++, name = NewGuestName())
+        {
+            if (await Profile.SetDisplayNameAsync(name) != NameResult.Taken)
+                return;
+        }
+        Debug.LogWarning("[SERVICES] misafir ismi alınamadı: " + Auth.UserId);
     }
 
     static async void StartAds()

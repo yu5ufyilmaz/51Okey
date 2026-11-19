@@ -3,7 +3,7 @@ using NUnit.Framework;
 using UnityEngine;
 
 // Not: bu testler ana editörün gerçek yerel profilini kullanır (yoksa oluşturur); bakiyeyi değiştirmez.
-// Çıkış testleri sonunda misafir olarak geri girer, isim testi eski ismi geri yazar.
+// Çıkış testleri sonunda misafir olarak geri girer. Eski profilin ismi açılışta Misafir-NNNNN olarak onarılır.
 public class GameServicesTests
 {
     [Test]
@@ -162,20 +162,19 @@ public class GameServicesTests
         }
     }
 
+    // Yerel oyuncu hep misafir: ismi otomatik Misafir-NNNNN, kayıtlı; isim sorulmaz ve seçemez.
     [Test]
-    public void NeedsName_TrueForDefaultName_FalseAfterRename()
+    public void LocalGuest_HasClaimedGuestName_CannotChooseName()
     {
         GameServices.InitAsync().GetAwaiter().GetResult();
-        var original = GameServices.Profile.Current.DisplayName;
-        try
-        {
-            GameServices.Profile.SetDisplayNameAsync(GameConfig.DefaultName(GameServices.Auth.UserId)).GetAwaiter().GetResult();
-            Assert.IsTrue(GameServices.NeedsName);
-            GameServices.Profile.SetDisplayNameAsync("Testİsim").GetAwaiter().GetResult();
-            Assert.IsFalse(GameServices.NeedsName);
-        }
-        finally { GameServices.Profile.SetDisplayNameAsync(original).GetAwaiter().GetResult(); }
-        Assert.AreEqual(original, GameServices.Profile.Current.DisplayName);
+        var profile = GameServices.Profile.Current;
+        Assert.IsTrue(GameConfig.IsGuestName(profile.DisplayName), profile.DisplayName);
+        Assert.IsTrue(profile.NameClaimed);
+        Assert.IsFalse(GameServices.NeedsName);
+        Assert.IsFalse(GameServices.CanChangeName);
+        var name = profile.DisplayName;
+        Assert.AreEqual(NameResult.Invalid, GameServices.ChooseNameAsync("Ahmet").GetAwaiter().GetResult());
+        Assert.AreEqual(name, GameServices.Profile.Current.DisplayName);
     }
 
     [Test]

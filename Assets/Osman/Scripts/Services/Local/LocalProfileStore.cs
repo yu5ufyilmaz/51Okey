@@ -54,13 +54,20 @@ public class LocalProfileStore : IProfileStore, IWallet
         return Task.CompletedTask;
     }
 
-    public Task SetDisplayNameAsync(string name)
+    // Tek profil, benzersizlik denetimi yok: geçerli isim her zaman kaydedilir. Dosya yazılamazsa Failed.
+    public Task<NameResult> SetDisplayNameAsync(string name)
     {
         name = name?.Trim();
-        if (Current == null || !GameConfig.IsValidName(name))
-            return Task.CompletedTask;
-        Mutate(() => Current.DisplayName = name);
-        return Task.CompletedTask;
+        if (Current == null || !GameConfig.IsStorableName(name))
+            return Task.FromResult(NameResult.Invalid);
+        if (name == Current.DisplayName && Current.NameClaimed)
+            return Task.FromResult(NameResult.Ok);
+        bool written = Mutate(() =>
+        {
+            Current.DisplayName = name;
+            Current.NameClaimed = true;
+        });
+        return Task.FromResult(written ? NameResult.Ok : NameResult.Failed);
     }
 
     public Task AddXpAsync(int xp)

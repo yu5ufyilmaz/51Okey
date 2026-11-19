@@ -19,6 +19,9 @@ public class LobbyAccountUI : MonoBehaviour
     public TMP_InputField nameInput;
     public Button nameSaveButton;
     public TextMeshProUGUI nameError;
+    // Misafir ismini seçemez: kutu yerine düz isim ve "Google'a bağlan" ipucu görünür.
+    public TextMeshProUGUI nameText;
+    public TextMeshProUGUI nameHint;
     public TextMeshProUGUI accountText;
     public TextMeshProUGUI levelText;
     public TextMeshProUGUI xpText;
@@ -72,9 +75,16 @@ public class LobbyAccountUI : MonoBehaviour
     {
         linkGoogleButton.gameObject.SetActive(GameServices.UsesFirebase && GameServices.Auth.IsGuest);
         signOutButton.gameObject.SetActive(GameServices.CanSignOut);
+        bool canChangeName = GameServices.CanChangeName;
+        nameInput.gameObject.SetActive(canChangeName);
+        nameSaveButton.gameObject.SetActive(canChangeName);
+        nameError.gameObject.SetActive(canChangeName);
+        nameText.gameObject.SetActive(!canChangeName);
+        nameHint.gameObject.SetActive(!canChangeName);
         if (profile == null)
             return;
         chipText.text = profile.DisplayName + " · Seviye " + profile.Level;
+        nameText.text = profile.DisplayName;
         levelText.text = "Seviye: " + profile.Level;
         xpText.text = "XP: " + profile.Xp % GameConfig.XpPerLevel + " / " + GameConfig.XpPerLevel;
         coinText.text = "Coin: " + profile.Coins;
@@ -115,26 +125,21 @@ public class LobbyAccountUI : MonoBehaviour
     {
         try
         {
-            if (!GameConfig.IsValidName(nameInput.text))
-            {
-                nameError.text = "İsim 2-16 karakter olmalı";
-                return;
-            }
             nameError.text = "";
             nameSaveButton.interactable = false;
-            try { await GameServices.Profile.SetDisplayNameAsync(nameInput.text); }
+            NameResult result;
+            try { result = await GameServices.ChooseNameAsync(nameInput.text); }
             catch (Exception e)
             {
                 Debug.LogWarning("[SERVICES] isim kaydedilemedi: " + e.GetType().Name + " " + e.Message);
-                if (this == null)
-                    return;
-                nameSaveButton.interactable = true;
-                nameError.text = "Bağlanılamadı";
-                return;
+                result = NameResult.Failed;
             }
             if (this == null)
                 return;
             nameSaveButton.interactable = true;
+            nameError.text = NameFlow.ErrorText(result);
+            if (result != NameResult.Ok)
+                return;
             SyncNickName();
             RefreshCurrent();
         }
@@ -166,6 +171,9 @@ public class LobbyAccountUI : MonoBehaviour
                 linkStatus.text = "Google girişi tamamlanmadı";
             else if (result == LinkResult.Failed)
                 linkStatus.text = "Google'a bağlanılamadı";
+            // Misafir aynı hesapla Google'a geçti: isim kutusu açılır (RefreshCurrent), sonraki açılışta da sorulur.
+            else if (result == LinkResult.Linked)
+                linkStatus.text = "İsmini seçebilirsin";
             // Geçiş yarıda kalınca yeni misafire düşülebilir: Photon adı her sonuçta profille eşitlenir.
             SyncNickName();
             RefreshCurrent();

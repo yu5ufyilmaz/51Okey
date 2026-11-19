@@ -367,4 +367,42 @@ public class LocalServicesTests
         s.SetDisplayNameAsync(new string('a', 16)).GetAwaiter().GetResult();
         Assert.AreEqual(new string('a', 16), s.Current.DisplayName);
     }
+
+    // --- benzersiz isim: yerel depo kayıt yapar, benzersizlik denetimi yok ---
+
+    static NameResult SetName(LocalProfileStore s, string name) => s.SetDisplayNameAsync(name).GetAwaiter().GetResult();
+
+    [Test]
+    public void Profile_NewProfileNameNotClaimed() =>
+        Assert.IsFalse(Loaded().Current.NameClaimed);
+
+    [Test]
+    public void SetDisplayName_OkClaimsAndPersists()
+    {
+        var s = Loaded();
+        Assert.AreEqual(NameResult.Ok, SetName(s, "Ahmet"));
+        Assert.AreEqual("Ahmet", s.Current.DisplayName);
+        Assert.IsTrue(s.Current.NameClaimed);
+        var again = Loaded();
+        Assert.AreEqual("Ahmet", again.Current.DisplayName);
+        Assert.IsTrue(again.Current.NameClaimed);
+    }
+
+    [Test]
+    public void SetDisplayName_17Chars_InvalidAndUnchanged()
+    {
+        var s = Loaded();
+        Assert.AreEqual(NameResult.Invalid, SetName(s, new string('a', 17)));
+        Assert.AreEqual("Oyuncu0001", s.Current.DisplayName);
+        Assert.IsFalse(s.Current.NameClaimed);
+    }
+
+    [Test]
+    public void SetDisplayName_SameNameAgain_Ok()
+    {
+        var s = Loaded();
+        Assert.AreEqual(NameResult.Ok, SetName(s, "Ahmet"));
+        Assert.AreEqual(NameResult.Ok, SetName(s, "Ahmet"));
+        Assert.AreEqual("Ahmet", s.Current.DisplayName);
+    }
 }

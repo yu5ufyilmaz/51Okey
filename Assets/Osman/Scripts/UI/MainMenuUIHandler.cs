@@ -155,27 +155,21 @@ public class MainMenuUIHandler : MonoBehaviour
 
     public async void ConfirmName()
     {
-        if (!GameConfig.IsValidName(nameInput.text))
-        {
-            nameError.text = "İsim 2-16 karakter olmalı";
-            return;
-        }
         nameError.text = "";
         nameOkButton.interactable = false;
-        try { await GameServices.Profile.SetDisplayNameAsync(nameInput.text); }
+        NameResult result;
+        try { result = await GameServices.ChooseNameAsync(nameInput.text); }
         catch (Exception e)
         {
             Debug.LogWarning("[SERVICES] isim kaydedilemedi: " + e.GetType().Name + " " + e.Message);
-            if (this == null)
-                return;
-            nameOkButton.interactable = true;
-            nameError.text = "Bağlanılamadı";
-            return;
+            result = NameResult.Failed;
         }
         if (this == null)
             return;
         nameOkButton.interactable = true;
-        Refresh();
+        nameError.text = NameFlow.ErrorText(result);
+        if (result == NameResult.Ok)
+            Refresh();
     }
 
     public async void RetryConnect()

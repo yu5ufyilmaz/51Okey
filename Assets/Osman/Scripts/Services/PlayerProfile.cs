@@ -5,11 +5,14 @@ public class PlayerProfile
     public long Coins;
     public int Level = 1, Xp;
     public bool NoAds;
+    // İsim names/{isim} kaydıyla bu hesaba ait mi (Firestore alanı "nameClaimed"); eski profillerde false.
+    public bool NameClaimed;
     public int SchemaVersion = 1;
 }
 
 public enum CoinReason { StarterGrant, RewardedAd, Purchase, TableFee, TablePayout }
 public enum LinkResult { Linked, SwitchedToExistingAccount, Cancelled, Failed }
+public enum NameResult { Ok, Invalid, Taken, Failed }
 
 public readonly struct CoinTx
 {

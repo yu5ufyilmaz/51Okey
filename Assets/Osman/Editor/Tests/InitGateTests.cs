@@ -108,7 +108,7 @@ public class InitGateTests
     {
         var p = FirestoreProfileStore.FromFields("u1", new System.Collections.Generic.Dictionary<string, object>
         {
-            { "displayName", "Osman" }, { "coins", 1200L }, { "level", 3L }, { "xp", 250L }, { "noAds", true }, { "schemaVersion", 1L },
+            { "displayName", "Osman" }, { "coins", 1200L }, { "level", 3L }, { "xp", 250L }, { "noAds", true }, { "schemaVersion", 1L }, { "nameClaimed", true },
         }, "Oyuncu0001");
         Assert.AreEqual("u1", p.UserId);
         Assert.AreEqual("Osman", p.DisplayName);
@@ -116,11 +116,13 @@ public class InitGateTests
         Assert.AreEqual(3, p.Level);
         Assert.AreEqual(250, p.Xp);
         Assert.IsTrue(p.NoAds);
+        Assert.IsTrue(p.NameClaimed);
 
         var empty = FirestoreProfileStore.FromFields("u2", new System.Collections.Generic.Dictionary<string, object>(), "Oyuncu0002");
         Assert.AreEqual("Oyuncu0002", empty.DisplayName);
         Assert.AreEqual(0, empty.Coins);
         Assert.AreEqual(1, empty.Level);
         Assert.IsFalse(empty.NoAds);
+        Assert.IsFalse(empty.NameClaimed);
     }
 }
