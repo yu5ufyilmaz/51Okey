@@ -41,6 +41,16 @@ public class UiBackStackTests
         Assert.AreEqual(BackResult.AskExit, Back(s, false, closed, w => w != "ölü"));
     }
 
+    [Test] public void CloseCallbackMayMutateStack()
+    {
+        var s = new UiBackStack<string>(); s.Push("alt"); s.Push("w");
+        var res = s.Back(false, _ => true, w => { s.Remove(w); s.Push("yeni"); });
+        Assert.AreEqual(BackResult.ClosedWindow, res);
+        Assert.AreEqual(2, s.Count);
+        Assert.AreEqual(BackResult.ClosedWindow, Back(s, false, new System.Collections.Generic.List<string>()));
+        Assert.AreEqual(1, s.Count); // üstte "yeni" kapandı, altta "alt" kaldı
+    }
+
     [Test] public void PushTwice_KeepsOneEntry_RemoveDropsIt()
     {
         var s = new UiBackStack<string>(); s.Push("a"); s.Push("a");

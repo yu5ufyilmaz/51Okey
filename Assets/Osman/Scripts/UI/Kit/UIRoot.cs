@@ -165,9 +165,7 @@ public class UIRoot : MonoBehaviour
     {
         if (!w.closable) { stack.Push(w); return; } // tuşu yut, pencere yığında kalsın
         if (w == confirm) { Resolve(false); return; }
-        w.onBack.Invoke();
-        if (w != null && w.closeOnBack) // işleyici pencereyi yok etmiş olabilir
-            w.gameObject.SetActive(false);
+        w.Close();
     }
 
     // Pencere önce kapanır, sonra sonuç verilir; devamında yeni Confirm açılırsa kapanmasın

@@ -83,7 +83,7 @@ public static partial class UiKitBuilder
             foreach (var t in Object.FindObjectsByType<TMP_Text>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
                 if (t.font == font) continue;
-                t.font = font; // fontSize, renk, materyal ön ayarına dokunulmaz
+                t.font = font; // font atamak materyali o fontun varsayılanına sıfırlar; fontSize ve renk korunur
                 EditorUtility.SetDirty(t);
                 n++;
             }

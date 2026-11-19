@@ -30,6 +30,13 @@ public class RoomManager : MonoBehaviourPunCallbacks
         PhotonNetwork.AutomaticallySyncScene = true;
     }
 
+    // Photon çağrıyı eşzamanlı reddederse (istemci hazır değil) geri çağrı hiç gelmez; yükleme açık kalmasın
+    static void Refused()
+    {
+        UIRoot.HideLoading();
+        UIRoot.Toast("Bağlantı bekleniyor, tekrar dene");
+    }
+
     // Oda oluşturma işlemi
     public void CreateCustomRoom(
         string roomName,
@@ -60,7 +67,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
 
         SetPickSeat(false);
         UIRoot.ShowLoading("Masa kuruluyor...");
-        PhotonNetwork.CreateRoom(roomName, roomOptions, TypedLobby.Default);
+        if (!PhotonNetwork.CreateRoom(roomName, roomOptions, TypedLobby.Default)) Refused();
     }
 
     // Odayı listeden bilerek seçen koltuğunu bekleme ekranında kendisi seçer; kuran ve rastgele gelen ilk boş koltuğa oturur.
@@ -83,7 +90,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
         };
         SetPickSeat(false);
         UIRoot.ShowLoading("Masaya giriliyor...");
-        PhotonNetwork.JoinRandomRoom(expectedProps, (byte)maxPlayers);
+        if (!PhotonNetwork.JoinRandomRoom(expectedProps, (byte)maxPlayers)) Refused();
     }
 
     // Eğer JoinRandomRoom başarısız olursa (Oda yoksa) Photon bu callback'i çağırır
@@ -110,7 +117,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
         {
             SetPickSeat(true);
             UIRoot.ShowLoading("Masaya giriliyor...");
-            PhotonNetwork.JoinRoom(_roomName); // Artık isim ve şifre kesinlikle doğru
+            if (!PhotonNetwork.JoinRoom(_roomName)) Refused(); // Artık isim ve şifre kesinlikle doğru
             return true;
         }
         UIRoot.Toast("Şifre yanlış");
@@ -122,7 +129,7 @@ public class RoomManager : MonoBehaviourPunCallbacks
     {
         SetPickSeat(true);
         UIRoot.ShowLoading("Masaya giriliyor...");
-        PhotonNetwork.JoinRoom(_roomName);
+        if (!PhotonNetwork.JoinRoom(_roomName)) Refused();
     }
 
     public override void OnJoinedRoom()

@@ -7,7 +7,15 @@ public class UiWindow : MonoBehaviour
 {
     public bool closable = true;
     public bool closeOnBack = true;
-    public UnityEvent onBack = new UnityEvent();
+    public UnityEvent onBack = new UnityEvent(); // her kapatma isteğinde çalışır: geri tuşu ve X butonu
+
+    // Geri tuşu ve X butonunun ortak yolu
+    public void Close()
+    {
+        onBack.Invoke();
+        if (this != null && closeOnBack) // işleyici pencereyi yok etmiş olabilir
+            gameObject.SetActive(false);
+    }
 
     void OnEnable() => UIRoot.Register(this);
     void OnDisable() => UIRoot.Unregister(this);

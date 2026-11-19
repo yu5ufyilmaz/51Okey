@@ -39,7 +39,7 @@ public static partial class UiKitBuilder
             Save(Button("Btn_Orange", "btn_orange", 420, 140, ""), "Btn_Orange");
             var teal = Save(Button("Btn_Teal", "btn_teal", 420, 140, ""), "Btn_Teal");
             var red = Save(Button("Btn_Red", "btn_red", 420, 140, ""), "Btn_Red");
-            var closeBtn = Save(Button("Btn_Close", "btn_red", 96, 96, "X"), "Btn_Close");
+            var closeBtn = Save(CloseButton(), "Btn_Close");
             var window = Save(Window(closeBtn), "Window");
             Save(Row(), "Row");
             Save(Toggle(), "Toggle");
@@ -66,6 +66,24 @@ public static partial class UiKitBuilder
         return g;
     }
 
+    // Görünen kırmızı düğme 96x96, dokunma alanı 120x120 (48dp tabanı): şeffaf kök görsel hedef alanı olur
+    static GameObject CloseButton()
+    {
+        var g = Root("Btn_Close");
+        Size(g, 120, 120);
+        g.AddComponent<Image>().color = Color.clear;
+        var v = Child("Visual", g.transform);
+        Size(v, 96, 96);
+        var img = Sliced(v, "btn_red");
+        img.raycastTarget = false;
+        g.AddComponent<Button>().targetGraphic = img;
+        g.AddComponent<UiPressScale>();
+        var t = Text(v.transform, "Label", "X", 48, extraBold);
+        t.fontSharedMaterial = outline;
+        Fill(t.gameObject, 16, 14, -16, 0);
+        return g;
+    }
+
     static GameObject Window(GameObject closePrefab)
     {
         var g = Root("Window");
@@ -81,8 +99,8 @@ public static partial class UiKitBuilder
         Anchor(title.gameObject, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -40), new Vector2(-260, 90));
 
         var close = Nested(closePrefab, body.transform, "Close");
-        Anchor(close, new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1), new Vector2(-28, -28), new Vector2(96, 96));
-        UnityEventTools.AddBoolPersistentListener(close.GetComponent<Button>().onClick, g.SetActive, false);
+        Anchor(close, new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1), new Vector2(-16, -16), new Vector2(120, 120)); // 96'lık görsel eskisi gibi köşeden 28 içeride
+        UnityEventTools.AddPersistentListener(close.GetComponent<Button>().onClick, g.GetComponent<UiWindow>().Close);
 
         Fill(Child("Content", body.transform), 60, 210, -60, -150);
 
@@ -116,10 +134,14 @@ public static partial class UiKitBuilder
     static GameObject Toggle()
     {
         var g = Root("Toggle");
-        Size(g, 150, 76);
-        var bg = Pill(g, new Color32(0x3C, 0x46, 0x52, 0xFF));
-        Knob(g.transform, 0f);
-        var on = Child("On", g.transform);
+        Size(g, 150, 120); // dokunma alanı 48dp tabanı; görsel 150x76 ortada
+        g.AddComponent<Image>().color = Color.clear;
+        var vis = Child("Visual", g.transform);
+        Size(vis, 150, 76);
+        var bg = Pill(vis, new Color32(0x3C, 0x46, 0x52, 0xFF));
+        bg.raycastTarget = false;
+        Knob(vis.transform, 0f);
+        var on = Child("On", vis.transform);
         Fill(on, 0, 0, 0, 0);
         Pill(on, new Color32(0x4C, 0xAF, 0x2F, 0xFF)).raycastTarget = false;
         Knob(on.transform, 1f);
