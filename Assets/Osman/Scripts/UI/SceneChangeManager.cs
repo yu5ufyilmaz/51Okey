@@ -27,7 +27,7 @@ public class SceneChangeManager : MonoBehaviour
 
     private IEnumerator LoadSceneAsync(string sceneName)
     {
-        UIRoot.ShowLoading();
+        UIRoot.KeepLoading(); // açık yüklemenin metni ve kipi korunur
         AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(sceneName);
 
         while (!asyncLoad.isDone)

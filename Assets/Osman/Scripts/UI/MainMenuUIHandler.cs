@@ -182,6 +182,7 @@ public class MainMenuUIHandler : MonoBehaviour
     public async void RetryConnect()
     {
         retryButton.interactable = false;
+        UIRoot.ShowLoading("Bağlanıyor...", false);
         await PhotonManager.ConnectWhenReadyAsync();
         if (this == null)
             return;
@@ -189,5 +190,7 @@ public class MainMenuUIHandler : MonoBehaviour
         initFailed = !GameServices.IsReady;
         photonDropped = false;
         Refresh();
+        if (EntryFlow.Next(initDone, initFailed, GameServices.HasSession, GameServices.NeedsName) == EntryFlow.Screen.Retry)
+            UIRoot.Toast("Bağlanılamadı");
     }
 }

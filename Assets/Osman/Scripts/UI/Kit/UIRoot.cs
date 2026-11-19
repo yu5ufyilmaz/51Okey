@@ -85,6 +85,12 @@ public class UIRoot : MonoBehaviour
         r.timer.Show(Time.unscaledTime, timeout);
     }
 
+    // Sahne geçişi açık yüklemenin metnini ve zaman aşımı kipini bozmasın; kapalıysa ShowLoading gibi açılır.
+    public static void KeepLoading()
+    {
+        if (!IsLoading) ShowLoading();
+    }
+
     public static void HideLoading()
     {
         if (inst == null) return;

@@ -259,6 +259,7 @@ public static partial class UiKitBuilder
         pwUw.closeOnBack = false;
         UnityEventTools.AddPersistentListener(pwUw.onBack, handler.CancelPasswordPanel);
 
+        FixShop(shop);
         createWin.SetActive(false);
         pwWin.SetActive(false);
         profile.SetAsLastSibling();
@@ -269,6 +270,62 @@ public static partial class UiKitBuilder
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
         Debug.Log("[UiKitBuilder] Lobi kuruldu: " + LobbyPath);
+    }
+
+    [MenuItem("Okey/UI Kit/Mağazayı Düzelt")]
+    public static void BuildShop() => Guarded(LobbyPath, () =>
+    {
+        if (EditorApplication.isPlaying) { Debug.LogWarning("[UiKitBuilder] Play modunda mağaza düzeltilmez."); return; }
+        if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+        var scene = EditorSceneManager.OpenScene(LobbyPath, OpenSceneMode.Single);
+        var shop = Object.FindFirstObjectByType<ShopController>(FindObjectsInactive.Include);
+        var closeBtn = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + "Btn_Close.prefab");
+        if (shop == null || closeBtn == null) { Debug.LogWarning("[UiKitBuilder] ShopController ya da Btn_Close.prefab yok; sahneye dokunulmadı."); return; }
+        FixShop(shop);
+        EditorSceneManager.SaveScene(scene);
+        Debug.Log("[UiKitBuilder] Mağaza düzeltildi: " + LobbyPath);
+    });
+
+    // ShopCanvas yerinde düzeltilir: kök etkin (ShopController.Start çalışsın), pencere gövdesi kapalı, ana Canvas'ın üstünde, UIRoot'un altında.
+    static void FixShop(ShopController shop)
+    {
+        var root = shop.gameObject;
+        root.SetActive(true);
+        var cv = root.GetComponent<Canvas>();
+        cv.sortingOrder = 10;
+        var cs = root.GetComponent<CanvasScaler>();
+        cs.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        cs.referenceResolution = new Vector2(1920, 1080);
+        cs.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+        cs.matchWidthOrHeight = 0.5f;
+        if (root.GetComponent<GraphicRaycaster>() == null) root.AddComponent<GraphicRaycaster>();
+        // Kapalı mağaza lobi dokunuşlarını yutmasın
+        foreach (var g in root.GetComponentsInChildren<Graphic>(true))
+            if (g.raycastTarget && !g.transform.IsChildOf(root.transform.Find("SafeArea/ShopBackground"))) g.raycastTarget = false;
+
+        var win = root.transform.Find("SafeArea/ShopBackground");
+        var uw = win.GetComponent<UiWindow>();
+        if (win.Find("Dim") == null)
+        {
+            var dim = Child("Dim", win);
+            Anchor(dim, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(6000, 6000)); // panelden büyük: tüm ekranı kaplar
+            Dim(dim);
+            dim.transform.SetAsFirstSibling();
+        }
+        var old = win.Find("Close Shop Button");
+        if (old != null)
+        {
+            var rt = (RectTransform)old;
+            var pos = rt.anchoredPosition;
+            Object.DestroyImmediate(old.gameObject);
+            var close = Nested(AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + "Btn_Close.prefab"), win, "Btn_Close");
+            Anchor(close, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), pos, new Vector2(120, 120));
+            UnityEventTools.AddPersistentListener(close.GetComponent<Button>().onClick, uw.Close);
+        }
+        win.gameObject.SetActive(false);
+        EditorUtility.SetDirty(shop);
+        foreach (var c in root.GetComponentsInChildren<Component>(true))
+            if (PrefabUtility.IsPartOfPrefabInstance(c)) PrefabUtility.RecordPrefabInstancePropertyModifications(c);
     }
 
     // El seçenekleri eski TMP_Dropdown'ın metinlerinden ("3 EL" -> 3) ya da önceki kurulumdan okunur.
