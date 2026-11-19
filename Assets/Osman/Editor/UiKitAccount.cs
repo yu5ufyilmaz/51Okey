@@ -12,7 +12,7 @@ public static partial class UiKitBuilder
 {
     static readonly Color32 MutedText = new Color32(0xA9, 0xB3, 0xBD, 0xFF);
     static readonly Color32 DangerText = new Color32(0xFF, 0x8F, 0x85, 0xFF);
-    const float SettingsBodyHeight = 1034f; // altı satır (6x120 + 5x14 = 790), başlık ve sürüm kaydırmasız sığar; eski 900 + bir satır (120 + 14)
+    const float SettingsBodyHeight = 900f; // 20:9'da mantıksal yükseklik ~966; en kötü durumda beş satır (5x120 + 4x14 = 656 <= 666), başlık ve sürüm kaydırmasız sığar
 
     [MenuItem("Okey/UI Kit/Hesap Pencerelerini Kur")]
     public static void BuildAccountWindows() => Guarded(LobbyPath, BuildAccount);
@@ -237,19 +237,22 @@ public static partial class UiKitBuilder
         vl.childControlHeight = vl.childForceExpandHeight = false;
 
         // Ses ve Müzik tek satırda, yarım genişlikte iki hücre
-        var audio = Child("AudioRow", list.transform);
-        Size(audio, 0, 120);
-        var hl = audio.AddComponent<HorizontalLayoutGroup>();
-        hl.spacing = 14;
-        hl.childControlWidth = true;
-        hl.childForceExpandWidth = true;
-        hl.childControlHeight = hl.childForceExpandHeight = false;
+        var audio = HalfRow(list.transform, "AudioRow");
         var sound = ToggleRow(row, toggle, audio.transform, "SoundRow", "settings.sound");
         var music = ToggleRow(row, toggle, audio.transform, "MusicRow", "settings.music");
         var language = KitRow(row, list.transform, "LanguageRow", "settings.language");
         var languageValue = Stepper(language, closeBtn, "<", ">", out var prev, out var next);
-        var privacy = LinkRow(row, list.transform, "PrivacyRow", "settings.privacy");
-        var terms = LinkRow(row, list.transform, "TermsRow", "settings.terms");
+        // Gizlilik ve Şartlar da tek satırda iki hücre; uzun etiketler küçülür
+        var legal = HalfRow(list.transform, "LegalRow");
+        var privacy = LinkRow(row, legal.transform, "PrivacyRow", "settings.privacy");
+        var terms = LinkRow(row, legal.transform, "TermsRow", "settings.terms");
+        foreach (var c in new[] { privacy, terms })
+        {
+            var l = c.transform.Find("Label").GetComponent<TMP_Text>();
+            l.enableAutoSizing = true;
+            l.fontSizeMax = l.fontSize;
+            l.fontSizeMin = l.fontSize * 0.7f;
+        }
         var support = LinkRow(row, list.transform, "SupportRow", "settings.support");
         var delete = LinkRow(row, list.transform, "DeleteRow", "settings.delete_account");
         delete.transform.Find("Label").GetComponent<TMP_Text>().color = DangerText;
@@ -275,6 +278,18 @@ public static partial class UiKitBuilder
         UnityEventTools.AddPersistentListener(support.GetComponent<Button>().onClick, account.OpenSupport);
         UnityEventTools.AddPersistentListener(delete.GetComponent<Button>().onClick, account.DeleteAccount);
         return win;
+    }
+
+    static GameObject HalfRow(Transform parent, string name)
+    {
+        var r = Child(name, parent);
+        Size(r, 0, 120);
+        var hl = r.AddComponent<HorizontalLayoutGroup>();
+        hl.spacing = 14;
+        hl.childControlWidth = true;
+        hl.childForceExpandWidth = true;
+        hl.childControlHeight = hl.childForceExpandHeight = false;
+        return r;
     }
 
     static GameObject KitRow(GameObject row, Transform parent, string name, string labelKey)

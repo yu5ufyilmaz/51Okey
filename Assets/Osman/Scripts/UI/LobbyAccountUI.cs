@@ -200,6 +200,8 @@ public class LobbyAccountUI : MonoBehaviour
         RefreshCurrent();
         privacyRow.SetActive(GameConfig.PrivacyUrl.Length > 0);
         termsRow.SetActive(GameConfig.TermsUrl.Length > 0);
+        // Gizlilik ve Şartlar ortak satırda; ikisi de gizliyse satır boşluk bırakmasın
+        privacyRow.transform.parent.gameObject.SetActive(privacyRow.activeSelf || termsRow.activeSelf);
         supportRow.SetActive(GameConfig.SupportEmail.Length > 0);
         deleteRow.SetActive(GameServices.HasSession);
         settingsPanel.SetActive(true);

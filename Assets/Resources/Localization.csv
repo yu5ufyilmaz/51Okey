@@ -45,7 +45,7 @@ room.confirm_create,MASAYI KUR,CREATE,
 room.table_password,Masanın şifresi,Table password,
 room.enter,GİR,JOIN,
 room.sit,OTUR,SIT,
-room.rounds_count,{0} el,{0} rounds,
+room.rounds_count,{0} el,Rounds: {0},
 room.locked_suffix,   ·   Şifreli,   ·   Locked,Baştaki boşluklar korunmalı
 room.creating,Masa kuruluyor...,Creating table...,
 room.joining,Masaya giriliyor...,Joining table...,
