@@ -323,3 +323,10 @@ Açık kalanlar:
 - Play Games geri çağrısı hiç gelmezse giriş düğmeleri uygulama yeniden açılana kadar kapalı kalır (zaman aşımı yok).
 - ChangaOne fontunda İ/ş/ğ yok, yedek fonta düşüyor (eski durum).
 - Test verisi: yerel profil adı "Deneme Oyuncu"; geliştirme Firebase projesinde "Deneme FB" adlı anonim kullanıcı kaldı.
+
+### Telefon (2026-11-19 04:40, `3733b34` APK'sı, eski verinin üstüne kuruldu)
+
+- adb yeniden eşleştirildi, APK kuruldu. Açılış: oturum geri yüklendi, seçim ekranı atlandı, 10 saniyede lobi. Play Games hatası yok.
+- Kullanıcı cihazda sırayla denedi ve logda doğrulandı: Hesaptan çık → Google ile gir (aynı hesap, profil yüklendi, lobi) →
+  Hesaptan çık → Misafir olarak oyna (yeni anonim hesap, 1000 coin).
+- Cihazda hâlâ denenmedi: misafirken Profil'den "Google'a bağla" ve hesap değiştirme onayı, çevrimdışı açılış.
