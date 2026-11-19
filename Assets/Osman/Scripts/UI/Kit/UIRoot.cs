@@ -31,6 +31,8 @@ public class UIRoot : MonoBehaviour
     TaskCompletionSource<bool> pending;
     float toastUntil;
     bool askExitAfterBack;
+    bool raiseConfirm;  // takılan yüklemede açılan onay yükleme katmanının üstüne çıkar
+    bool confirmRaised;
 
     // Domain reload kapalıyken play'e girişte statikler sıfırlanmalı
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -103,6 +105,12 @@ public class UIRoot : MonoBehaviour
         r.yes.gameObject.SetActive(!destructive);
         r.yesDestructive.gameObject.SetActive(destructive);
         r.confirm.gameObject.SetActive(true);
+        if (r.raiseConfirm)
+        {
+            r.confirm.transform.SetAsLastSibling();
+            r.toast.transform.SetAsLastSibling();
+            r.confirmRaised = true;
+        }
         return r.pending.Task;
     }
 
@@ -121,7 +129,16 @@ public class UIRoot : MonoBehaviour
     public static void HandleBack()
     {
         if (inst == null) return;
-        var res = inst.stack.Back(IsLoading, w => w != null && w.isActiveAndEnabled, inst.CloseWindow);
+        // Zaman aşımsız yükleme takılabilir: geri tuşu çıkış sorar, pencere kapatmaz
+        if (IsLoading && !inst.timer.TimeoutOn && inst.pending == null)
+        {
+            inst.askExitAfterBack = false;
+            inst.raiseConfirm = true;
+            inst.AskExit(); // Confirm ilk await'ten önce eşzamanlı açılır
+            inst.raiseConfirm = false;
+            return;
+        }
+        var res = inst.stack.Back(IsLoading && inst.timer.TimeoutOn, w => w != null && w.isActiveAndEnabled, inst.CloseWindow);
         if ((res == BackResult.AskExit || inst.askExitAfterBack) && inst.pending == null)
             inst.AskExit();
         inst.askExitAfterBack = false;
@@ -177,6 +194,8 @@ public class UIRoot : MonoBehaviour
         var p = pending;
         pending = null;
         if (confirm != null) confirm.gameObject.SetActive(false); // yok edilirken çocuk gitmiş olabilir
+        if (confirmRaised && confirm != null) confirm.transform.SetSiblingIndex(loading.transform.GetSiblingIndex()); // normal sıra: Confirm, Loading, Toast
+        confirmRaised = false;
         p?.TrySetResult(value);
     }
 

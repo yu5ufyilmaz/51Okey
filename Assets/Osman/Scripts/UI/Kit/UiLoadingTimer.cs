@@ -7,6 +7,7 @@ public class UiLoadingTimer
     bool timeoutOn = true;
 
     public bool Active { get; private set; }
+    public bool TimeoutOn => timeoutOn;
 
     // timeout false: giriş gibi uzun süren işlerde sayaç susar, katman Hide'a kadar kalır.
     public void Show(float now, bool timeout = true)

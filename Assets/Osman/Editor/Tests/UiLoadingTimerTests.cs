@@ -35,4 +35,12 @@ public class UiLoadingTimerTests
         var t = new UiLoadingTimer(); t.Show(0f, false); t.Show(100f);
         Assert.IsFalse(t.Tick(114f)); Assert.IsTrue(t.Tick(115f));
     }
+
+    [Test] public void TimeoutOn_FollowsLastShow()
+    {
+        var t = new UiLoadingTimer();
+        t.Show(0f); Assert.IsTrue(t.TimeoutOn);
+        t.Show(1f, false); Assert.IsFalse(t.TimeoutOn);
+        t.Show(2f); Assert.IsTrue(t.TimeoutOn);
+    }
 }

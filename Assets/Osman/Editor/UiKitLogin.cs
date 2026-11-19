@@ -67,7 +67,8 @@ public static partial class UiKitBuilder
         Anchor(title.gameObject, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -150), new Vector2(0, 220));
 
         var choice = Child("ChoicePanel", safe.transform);
-        Size(choice, 720, 150 * 2 + 36);
+        // Başlığın altına sabit boşlukla çapalı: ekran oranı ne olursa olsun çakışmaz
+        Anchor(choice, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -400), new Vector2(720, 150 * 2 + 36));
         var vl = choice.AddComponent<VerticalLayoutGroup>();
         vl.spacing = 36;
         vl.childAlignment = TextAnchor.MiddleCenter;
