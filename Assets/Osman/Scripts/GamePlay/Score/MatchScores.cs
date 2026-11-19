@@ -28,7 +28,7 @@ public class MatchScores : MonoBehaviourPunCallbacks
 
     readonly List<PenaltyEntry> current = new List<PenaltyEntry>();
     readonly Dictionary<int, List<PenaltyEntry>> byHand = new Dictionary<int, List<PenaltyEntry>>();
-    readonly HashSet<int> seen = new HashSet<int>();
+    readonly Dictionary<int, int[]> raw = new Dictionary<int, int[]>();
 
     public IReadOnlyList<PenaltyEntry> CurrentHandPenalties => current;
     public IReadOnlyList<PenaltyEntry> PenaltiesOf(int handIndex) =>
@@ -58,7 +58,7 @@ public class MatchScores : MonoBehaviourPunCallbacks
     {
         if (props == null) return;
         bool changed = false;
-        var arrived = new List<HandResultData>();
+        var arrived = new List<(HandResultData d, bool first)>();
         foreach (DictionaryEntry kv in props)
         {
             string key = kv.Key as string;
@@ -69,21 +69,30 @@ public class MatchScores : MonoBehaviourPunCallbacks
             }
             else if (key.StartsWith(HandPrefix) && key.Length > HandPrefix.Length && char.IsDigit(key[HandPrefix.Length]))
             {
-                var d = HandBreakdown.Decode(kv.Value as int[]);
+                var arr = kv.Value as int[];
+                var d = HandBreakdown.Decode(arr);
                 if (d == null) continue;
+                raw.TryGetValue(d.handIndex, out int[] old);
+                var kind = HandBreakdown.Classify(old, arr);
+                if (kind == HandBreakdown.Arrival.Same) continue;
+                raw[d.handIndex] = arr;
                 History.Set(d);
                 changed = true;
-                if (seen.Add(d.handIndex)) arrived.Add(d);
+                arrived.Add((d, kind == HandBreakdown.Arrival.New));
             }
         }
-        foreach (var d in arrived)
+        foreach (var (d, first) in arrived)
         {
-            // süren elin cezaları bu ele taşınır
-            if (current.Count > 0) { byHand[d.handIndex] = new List<PenaltyEntry>(current); current.Clear(); }
+            // süren elin cezaları yalnız ilk gelişte bu ele taşınır
+            if (first && current.Count > 0) { byHand[d.handIndex] = new List<PenaltyEntry>(current); current.Clear(); }
             Debug.Log(ScoreLine(d.handIndex));
-            HandArrived?.Invoke(d);
+            if (HandArrived != null)
+                foreach (Action<HandResultData> h in HandArrived.GetInvocationList())
+                    try { h(d); } catch (Exception e) { Debug.LogException(e); }
         }
-        if (changed) Changed?.Invoke();
+        if (changed && Changed != null)
+            foreach (Action h in Changed.GetInvocationList())
+                try { h(); } catch (Exception e) { Debug.LogException(e); }
     }
 
     // [SKOR] el {n}: 1={t1} ... ; satırı olmayan koltuk "-"

@@ -35,6 +35,16 @@ public static class HandBreakdown
         return d;
     }
 
+    public enum Arrival { New, Changed, Same }
+
+    // Aynı el iki kez yazılabilir (iki FinishGameRPC): yeni mi, içerik değişti mi, aynı mı
+    public static Arrival Classify(int[] stored, int[] incoming)
+    {
+        if (stored == null) return Arrival.New;
+        if (incoming != null && stored.Length == incoming.Length && System.Linq.Enumerable.SequenceEqual(stored, incoming)) return Arrival.Same;
+        return Arrival.Changed;
+    }
+
     public static int[] Encode(HandResultData d)
     {
         if (d == null) return null;

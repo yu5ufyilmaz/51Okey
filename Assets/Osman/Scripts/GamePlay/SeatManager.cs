@@ -260,8 +260,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
     {
         // Free the seat that was occupied by the player who left
         int seatNumber_E = GetSeatNumberOfPlayer(otherPlayer);
-        if (seatNumber_E >= 1 && seatNumber_E <= 4)
-            rememberedNames[seatNumber_E - 1] = otherPlayer.NickName; // ayrılsa da adı kalır
+        SeatNaming.RememberLeaver(rememberedNames, seatNumber_E, otherPlayer.NickName, SeatsLocked); // oyun başladıysa ayrılsa da adı kalır
         if (PhotonNetwork.IsMasterClient && SeatsLocked)
             PublishSeatNames();
         if (seatNumber_E != -1 && PhotonNetwork.IsMasterClient)
@@ -670,6 +669,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
                     PhotonNetwork.CurrentRoom.SetCustomProperties(
                         new ExitGames.Client.Photon.Hashtable { { SeatsLockedKey, true } }
                     );
+                    System.Array.Clear(rememberedNames, 0, 4); // yalnız şu an oturanlar
                     PublishSeatNames();
                     StartCoroutine(CountdownAndShuffle());
                 }

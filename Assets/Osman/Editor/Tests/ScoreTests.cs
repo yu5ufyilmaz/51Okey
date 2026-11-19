@@ -115,6 +115,23 @@ public class ScoreTests
         Assert.IsTrue(d.rows.All(r => r.finishReward == 0));
         Assert.AreEqual(120, d.rows[0].handTotal); Assert.AreEqual(600, d.rows[1].handTotal); Assert.AreEqual(440, d.rows[2].handTotal);
     }
+    [Test] public void PreGame_Leaver_Leaves_No_Ghost_Name() {
+        var rem = new string[4];
+        rem[0] = "Ali"; SeatNaming.RememberLeaver(rem, 3, "Can", false);   // koltuk 3 oyun öncesi ayrıldı
+        CollectionAssert.AreEqual(new[] { "Ali", "Bot 1", "Bot 2", "Bot 3" }, SeatNaming.Names(rem, new[] { false, true, true, true }));
+    }
+    [Test] public void MidGame_Leaver_Keeps_Name_And_Bot_Numbers_Stay() {
+        var rem = new[] { "Ali", null, "Can", null };
+        SeatNaming.RememberLeaver(rem, 3, "Can", true);
+        CollectionAssert.AreEqual(new[] { "Ali", "Bot 1", "Can (bot)", "Bot 2" }, SeatNaming.Names(rem, new[] { false, true, true, true }));
+    }
+    [Test] public void Arrival_New_Changed_Same() {
+        var a = new[] { 1, 0, 1, 0 }; var b = new[] { 1, 2, 1, 0 };
+        Assert.AreEqual(HandBreakdown.Arrival.New, HandBreakdown.Classify(null, a));
+        Assert.AreEqual(HandBreakdown.Arrival.Same, HandBreakdown.Classify(a, (int[])a.Clone()));
+        Assert.AreEqual(HandBreakdown.Arrival.Changed, HandBreakdown.Classify(a, b));
+        Assert.AreEqual(HandBreakdown.Arrival.Changed, HandBreakdown.Classify(a, new[] { 1, 0, 1, 0, 9 }));
+    }
     [Test] public void Names_Bad_Input_Never_Throws() {
         CollectionAssert.AreEqual(new[] { "Bot 1", "Bot 2", "Bot 3", "Bot 4" }, SeatNaming.Names(null, null));
         CollectionAssert.AreEqual(new[] { "Bot 1", "X", "Bot 2", "Bot 3" }, SeatNaming.Names(new[] { " ", "X" }, null));

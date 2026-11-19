@@ -1,5 +1,12 @@
 public static class SeatNaming
 {
+    // Oyuncu ayrılınca adı yalnız oyun başladıysa kalır; oyun öncesi ayrılan iz bırakmaz
+    public static void RememberLeaver(string[] remembered, int seat, string name, bool seatsLocked)
+    {
+        if (remembered == null || seat < 1 || seat > remembered.Length) return;
+        remembered[seat - 1] = seatsLocked ? name : null;
+    }
+
     // humanNames[i]: koltuk i+1'deki insan (hiç oturmadıysa null); botNow[i]: şu an bot mu oynuyor
     public static string[] Names(string[] humanNames, bool[] botNow)
     {
