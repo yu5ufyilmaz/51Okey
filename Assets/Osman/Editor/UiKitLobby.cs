@@ -340,20 +340,8 @@ public static partial class UiKitBuilder
             if (PrefabUtility.IsPartOfPrefabInstance(c)) PrefabUtility.RecordPrefabInstancePropertyModifications(c);
     }
 
-    // El seçenekleri eski TMP_Dropdown'ın metinlerinden ("3 EL" -> 3) ya da önceki kurulumdan okunur.
-    static int[] RoundOptions(Transform canvas, ButtonFuncs handler)
-    {
-        var dd = canvas.Find("SafeArea") != null ? canvas.Find("SafeArea").GetComponentInChildren<TMP_Dropdown>(true) : null;
-        if (dd == null)
-            return handler.roundOptions != null && handler.roundOptions.Length > 0 ? handler.roundOptions : null;
-        var list = new List<int>();
-        foreach (var o in dd.options)
-        {
-            if (int.TryParse(Regex.Match(o.text, @"\d+").Value, out int n) && n > 0) list.Add(n);
-            else Debug.LogWarning("[UiKitBuilder] El seçeneğinde sayı yok, atlandı: " + o.text);
-        }
-        return list.Count > 0 ? list.ToArray() : null;
-    }
+    // El seçenekleri sabit: 1..7.
+    static int[] RoundOptions(Transform canvas, ButtonFuncs handler) => new[] { 1, 2, 3, 4, 5, 6, 7 };
 
     // Silinecek nesnelere sahnede başka bir yerden başvuru varsa (bilinen ve yeniden bağlananlar dışında) hiçbir şey silinmez.
     static bool OnlyKnownRefsIntoCanvas(UnityEngine.SceneManagement.Scene scene, Transform canvas, Transform profile, Transform settings)

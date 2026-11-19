@@ -149,11 +149,80 @@ public static partial class UiKitBuilder
         else if (Object.FindFirstObjectByType<MatchScores>(FindObjectsInactive.Include) == null) gm.gameObject.AddComponent<MatchScores>();
 
         BindOpenBadges();
+        BindSettings();
 
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
         Debug.Log("[UiKitBuilder] Masa metinleri bağlandı: " + TablePath);
         if (!string.IsNullOrEmpty(previous) && previous != TablePath) EditorSceneManager.OpenScene(previous, OpenSceneMode.Single);
+    }
+
+    // --- ayarlar (ses, müzik) ---
+
+    // Çıkış düğmesinin sağına Ayarlar düğmesi ve ortada küçük pencere; ikisi de varsa dokunulmaz
+    static void BindSettings()
+    {
+        Transform safe = null;
+        foreach (var sa in Object.FindObjectsByType<Crystal.SafeArea>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            if (sa.transform.parent != null && sa.transform.parent.GetComponent<Canvas>() != null) { safe = sa.transform; break; }
+        UnityEngine.UI.Button exit = null;
+        foreach (var b in Object.FindObjectsByType<UnityEngine.UI.Button>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            if (b.gameObject.name == "Çıkış Butonu") { exit = b; break; }
+        if (safe == null || exit == null) { Debug.LogError("[UiKitBuilder] SafeArea ya da çıkış düğmesi yok, ayarlar kurulamadı."); return; }
+        var existingWin = safe.Find("SettingsWindow");
+        var existingBtn = exit.transform.parent.Find("SettingsButton");
+        if (existingWin != null && existingBtn != null) return;
+        if (existingWin != null) Object.DestroyImmediate(existingWin.gameObject);
+        if (existingBtn != null) Object.DestroyImmediate(existingBtn.gameObject);
+
+        bold = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(BoldPath);
+        extraBold = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(ExtraBoldPath);
+        var teal = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + "Btn_Teal.prefab");
+        var window = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + "Window.prefab");
+        var row = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + "Row.prefab");
+        var toggle = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + "Toggle.prefab");
+        if (bold == null || extraBold == null || teal == null || window == null || row == null || toggle == null || toggle.GetComponent<Toggle>() == null)
+        { Debug.LogError("[UiKitBuilder] Kit varlıkları eksik, önce Prefabları Kur çalıştırılmalı."); return; }
+
+        var win = KitWindow(window, safe, "SettingsWindow", "settings.title", new Vector2(1000, 360));
+        // SafeArea'nın boyu ekrandan küçük olabilir: karartma Fill ile değil, ortadan büyük bir kareyle ekranı örter
+        var half = new Vector2(0.5f, 0.5f);
+        Anchor(win, half, half, half, Vector2.zero, new Vector2(6000, 6000));
+        var uw = win.GetComponent<UiWindow>();
+        uw.closeOnBack = false;
+        var ts = win.AddComponent<TableSettings>();
+        UnityEventTools.AddPersistentListener(uw.onBack, ts.Close);
+        var content = win.transform.Find("Body/Content").gameObject;
+        Fill(content, 60, 40, -60, -150);
+        var vl = content.AddComponent<VerticalLayoutGroup>();
+        vl.childAlignment = TextAnchor.MiddleCenter;
+        vl.childControlWidth = true;
+        vl.childForceExpandWidth = true;
+        vl.childControlHeight = vl.childForceExpandHeight = false;
+        var audio = HalfRow(content.transform, "AudioRow");
+        ts.soundToggle = ToggleRow(row, toggle, audio.transform, "SoundRow", "settings.sound");
+        ts.musicToggle = ToggleRow(row, toggle, audio.transform, "MusicRow", "settings.music");
+        UnityEventTools.AddPersistentListener(ts.soundToggle.onValueChanged, ts.OnSoundToggle);
+        UnityEventTools.AddPersistentListener(ts.musicToggle.onValueChanged, ts.OnMusicToggle);
+        EditorUtility.SetDirty(ts);
+
+        // Çıkış düğmesiyle aynı kap, çapa ve yükseklik; sağında 12 birim boşlukla (daha sağda iskambil yuvası var, 112'den geniş olamaz)
+        var er = (RectTransform)exit.transform;
+        var btn = ChoiceButton(teal, exit.transform.parent, "SettingsButton", "lobby.settings", 112, er.sizeDelta.y, 34);
+        Anchor(btn, er.anchorMin, er.anchorMax, er.pivot, new Vector2(er.anchoredPosition.x + er.sizeDelta.x + 12f, er.anchoredPosition.y), new Vector2(112, er.sizeDelta.y));
+        AutoSize(btn.GetComponentInChildren<TMP_Text>(true), 34, 20);
+        UnityEventTools.AddPersistentListener(btn.GetComponent<Button>().onClick, ts.Open);
+
+        win.SetActive(false);
+        foreach (var o in new[] { win, btn })
+        {
+            SameLayerAll(o, safe.gameObject.layer);
+            foreach (var c in o.GetComponentsInChildren<Component>(true))
+                if (PrefabUtility.IsPartOfPrefabInstance(c)) PrefabUtility.RecordPrefabInstancePropertyModifications(c);
+        }
+        // Skor tablosunun altında kalır: el sonu tablosu üste çıkar
+        var sb = safe.Find("Scoreboard");
+        win.transform.SetSiblingIndex(sb != null ? sb.GetSiblingIndex() : safe.childCount - 1);
     }
 
     // --- skor tablosu ---

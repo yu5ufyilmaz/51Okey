@@ -53,6 +53,8 @@ public class ScoreboardView : MonoBehaviour
 
     bool Open => window != null && window.activeSelf;
 
+    public bool IsShown => Open;
+
     void Awake() => Instance = this;
     void OnDestroy() { if (Instance == this) Instance = null; }
 
