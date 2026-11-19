@@ -654,7 +654,10 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (UIManager.Instance != null)
             UIManager.Instance.gameOverPanel.SetActive(false);
 
-        turnManager.photonView.RPC("RPC_ResetTurnForNewRound", RpcTarget.All);
+        // Sıfırlama yalnızca masa sahibinden gider: her istemci yollarsa geç gelen kopyalar
+        // StartRoundVisuals'ın açtığı canDrop'u siler ve 1. sıradaki masa sahibi takılır.
+        if (PhotonNetwork.IsMasterClient)
+            turnManager.photonView.RPC("RPC_ResetTurnForNewRound", RpcTarget.All);
 
         if (PhotonNetwork.IsMasterClient)
         {
