@@ -4,13 +4,11 @@ using Firebase.Auth;
 using UnityEngine;
 #if UNITY_ANDROID && !UNITY_EDITOR
 using Firebase;
-using GooglePlayGames;
-using GooglePlayGames.BasicApi;
 using Step = GoogleLinkFlow.Step;
 #endif
 
-// Açılış: kayıtlı Firebase kullanıcısı varsa o; yoksa oyuncu seçer (misafir ya da Google). Açılışta Play Games çağrısı yok (tasarım 5.3):
-// PlayGamesPlatform yalnızca "Google ile gir" düğmesinde kullanılır, Activate/Authenticate çağrılmaz.
+// Açılış: kayıtlı Firebase kullanıcısı varsa o; yoksa oyuncu seçer (misafir ya da Google). Açılışta Google çağrısı yok:
+// "Google ile oturum aç" (Credential Manager, GoogleSignIn.cs) yalnızca "Google ile gir" / "Google'a bağla" düğmesinde açılır.
 public class FirebaseAuthService : IAuthService
 {
     readonly FirebaseBoot boot;
@@ -53,10 +51,11 @@ public class FirebaseAuthService : IAuthService
         if (auth.CurrentUser?.IsAnonymous == true)
             throw new InvalidOperationException("misafir hesaptan çıkılmaz");
         auth.SignOut();
+        GoogleSignIn.SignOut(); // sonraki "Google ile gir" hesabı yeniden sorsun
         SetUser(null);
     }
 
-    // Play Games v2 ManuallyAuthenticate → RequestServerSideAccess → PlayGamesAuthProvider.GetCredential → anonim kullanıcıya
+    // Credential Manager hesap seçme penceresi → Google ID token → GoogleAuthProvider.GetCredential → anonim kullanıcıya
     // LinkWithCredentialAsync. Bağlıysa uid değişmez (UserChanged yok, IsGuest false olur); hesaba geçişte UserChanged tetiklenir.
     // Kullanıcı yoksa (giriş ekranından Google) misafir açılmaz: SignInWithCredentialAsync ile doğrudan Google kimliğiyle girilir.
     public Task<LinkResult> LinkGoogleAsync()
@@ -64,7 +63,7 @@ public class FirebaseAuthService : IAuthService
 #if UNITY_ANDROID && !UNITY_EDITOR
         return LinkOnDeviceAsync();
 #else
-        // Editörde ve Android dışında Play Games yok: beklenen durum, uyarı.
+        // Editörde ve Android dışında Google girişi yok: beklenen durum, uyarı.
         Debug.LogWarning("[AUTH] Google girişi yalnızca Android cihazda çalışır");
         return Task.FromResult(LinkResult.Failed);
 #endif
@@ -75,75 +74,61 @@ public class FirebaseAuthService : IAuthService
     {
         if (user != null && !IsGuest)
             return LinkResult.Linked;
-        string code = null;
+        // Pencere akış başına bir kez açılır: token akış boyunca saklanır, geçişte yeniden sorulmaz.
+        string idToken = null;
+        Credential updated = null;
         try
         {
             var result = await GoogleLinkFlow.RunAsync(
                 async () =>
                 {
-                    var signedIn = await PlayGamesSignInAsync();
-                    if (signedIn != Step.Ok)
-                        return signedIn;
-                    code = await ServerAuthCodeAsync();
-                    return code == null ? Step.Failed : Step.Ok;
+                    var (step, token) = await GoogleSignIn.SignInAsync();
+                    idToken = token;
+                    return step;
                 },
-                () => LinkAsync(code),
+                async () =>
+                {
+                    var (step, credential) = await LinkAsync(idToken);
+                    updated = credential;
+                    return step;
+                },
                 confirmSwitch,
-                SwitchToGoogleAccountAsync);
+                () => SwitchToGoogleAccountAsync(updated != null && updated.IsValid() ? updated : GoogleAuthProvider.GetCredential(idToken, null)));
             Debug.Log("[AUTH] Google: " + result + " uid=" + UserId);
             return result;
         }
         catch (Exception e)
         {
-            Debug.LogWarning("[AUTH] Google'a bağlanılamadı: " + e.GetType().Name + " " + e.Message);
+            // İleti loglanmaz: e-posta içerebilir.
+            Debug.LogWarning("[AUTH] Google'a bağlanılamadı: " + e.GetType().Name);
             return LinkResult.Failed;
         }
     }
 
-    static Task<Step> PlayGamesSignInAsync()
-    {
-        if (PlayGamesPlatform.Instance.IsAuthenticated())
-            return Task.FromResult(Step.Ok);
-        var done = new TaskCompletionSource<Step>();
-        PlayGamesPlatform.Instance.ManuallyAuthenticate(status => done.TrySetResult(
-            status == SignInStatus.Success ? Step.Ok : status == SignInStatus.Canceled ? Step.Cancelled : Step.Failed));
-        return done.Task;
-    }
-
-    // Kod tek kullanımlık: her Firebase denemesi için yenisi istenir. Kod loglanmaz.
-    static Task<string> ServerAuthCodeAsync()
-    {
-        var done = new TaskCompletionSource<string>();
-        PlayGamesPlatform.Instance.RequestServerSideAccess(false, c => done.TrySetResult(string.IsNullOrEmpty(c) ? null : c));
-        return done.Task;
-    }
-
-    async Task<Step> LinkAsync(string code)
+    // InUse'da Firebase'in verdiği güncel kimlik bilgisi (varsa) geçiş için döner.
+    async Task<(Step, Credential)> LinkAsync(string idToken)
     {
         var auth = await boot.AuthAsync();
         if (auth.CurrentUser == null)
         {
-            SetUser(await auth.SignInWithCredentialAsync(PlayGamesAuthProvider.GetCredential(code)));
-            return Step.Ok;
+            SetUser(await auth.SignInWithCredentialAsync(GoogleAuthProvider.GetCredential(idToken, null)));
+            return (Step.Ok, null);
         }
-        try { await auth.CurrentUser.LinkWithCredentialAsync(PlayGamesAuthProvider.GetCredential(code)); }
-        catch (Exception e) when (IsCredentialInUse(e)) { return Step.InUse; }
+        try { await auth.CurrentUser.LinkWithCredentialAsync(GoogleAuthProvider.GetCredential(idToken, null)); }
+        catch (Exception e) when (IsCredentialInUse(e)) { return (Step.InUse, UpdatedCredential(e)); }
         SetUser(auth.CurrentUser);
-        return Step.Ok;
+        return (Step.Ok, null);
     }
 
     // Sıra: misafir belge (kurallar yalnız kendi belgeni sildirir) → misafir Auth kullanıcısı → Google hesabıyla giriş.
-    async Task<Step> SwitchToGoogleAccountAsync()
+    async Task<Step> SwitchToGoogleAccountAsync(Credential credential)
     {
-        var code = await ServerAuthCodeAsync();
-        if (code == null)
-            return Step.Failed;
         var auth = await boot.AuthAsync();
         await deleteGuestProfile();
         try
         {
             await auth.CurrentUser.DeleteAsync();
-            SetUser(await auth.SignInWithCredentialAsync(PlayGamesAuthProvider.GetCredential(code)));
+            SetUser(await auth.SignInWithCredentialAsync(credential));
             return Step.Ok;
         }
         catch
@@ -154,6 +139,14 @@ public class FirebaseAuthService : IAuthService
                 SetUser((await auth.SignInAnonymouslyAsync()).User);
             throw;
         }
+    }
+
+    static Credential UpdatedCredential(Exception e)
+    {
+        for (var x = e; x != null; x = x.InnerException)
+            if (x is FirebaseAccountLinkException link)
+                return link.UserInfo?.UpdatedCredential;
+        return null;
     }
 
     // Firebase görevleri istisnayı AggregateException içinde verebilir.

@@ -1,14 +1,14 @@
 using System;
 using System.Threading.Tasks;
 
-// "Google ile gir" kararları (tasarım 5.3). Firebase'e ve Play Games'e dokunmaz: adımlar dışarıdan verilir, EditMode testi var.
+// "Google ile gir" kararları (tasarım 5.3). Firebase'e ve Google girişine dokunmaz: adımlar dışarıdan verilir, EditMode testi var.
 // Profiller birleştirilmez: Google hesabı başka profile bağlıysa ya o hesaba geçilir (misafir silinir) ya misafir kalınır.
 public static class GoogleLinkFlow
 {
     public enum Step { Ok, Cancelled, Failed, InUse }
 
-    // signIn: Play Games girişi + sunucu kodu. link: anonim kullanıcıya bağla (Ok / InUse / Failed).
-    // confirm: oyuncuya sorulur. switchAccount: misafiri sil, kayıtlı hesaba gir (yeni sunucu koduyla; kod tek kullanımlık).
+    // signIn: Google hesap seçimi + ID token. link: anonim kullanıcıya bağla (Ok / InUse / Failed).
+    // confirm: oyuncuya sorulur. switchAccount: misafiri sil, kayıtlı hesaba gir (aynı token; pencere yeniden açılmaz).
     public static async Task<LinkResult> RunAsync(
         Func<Task<Step>> signIn,
         Func<Task<Step>> link,
