@@ -288,3 +288,38 @@ Adımlar:
   "Misafir olarak oyna" → isim → lobi; Ayarlar'da "Hesaptan çık" yok; Profil → "Google'a bağla" → hesap değiştirme
   onayı çıkar.
 - [ ] Sonuç bu dosyanın sonuna "Sonuç" başlığıyla yazılır; hafıza notu güncellenir.
+
+## Sonuç (2026-11-19)
+
+Commit'ler (`MDC-001-firebase`, push yok): İP1 `5fa018a` + `9f076a9`, İP2 `13ecc67` + `a2a475c`, İP3 `f17577a` + `07df17f`,
+son gözden geçirme düzeltmeleri `3733b34`.
+
+Kapıdan geçen:
+- EditMode testleri 159/159 (130'dan; 29 yeni). `Check-Secrets.ps1` her commit'te temiz.
+- Tek editörlü senkron testi (`Run-SyncTest.ps1 -Solo -Mode smart -Seed 11`) `07df17f` üzerinde geçti: 1 el, 0 desync.
+  Ondan önceki bir koşu `AT-host 60 sn'de masaya oturamadı: state=Joining` ile kaldı ve tekrarlanmadı; nedeni kanıtlanmadı.
+- `AndroidDevBuild.Build()` `3733b34` üzerinde APK üretti (211 sn, 0 hata). İlk deneme Gradle'ın bayat ara dosyalarına
+  takılmıştı (`:launcher:compressDebugAssets ... already contains entry`); `Library/Bee/.../compressed_assets` silinince geçti.
+- Editörde elle (yerel arka uç): isim paneli ve kuralı, doğrudan lobi, çıkış → seçim ekranı → yeniden giriş, Photon
+  koparsa Tekrar dene, profil ve ayarlar panelleri, ses ayarının kalıcılığı, oda → masa → lobi.
+- Editörde Firebase ile: seçim ekranı, çift dokunuşta tek anonim hesap, Google hatasında ekranda kalma.
+
+Yapılmayan / doğrulanmayan:
+- Dört editörlü senkron testi (klonlar kapalıydı; yalnız tek editörlü koşuldu).
+- Telefon: APK kurulmadı. adb eşleştirmesi düşmüş (port açık, `failed to connect`); yeni eşleme kodu gerekiyor.
+  Cihazda Google ile giriş / bağlama / hesap geçişi, Firebase çıkışı ve çevrimdışı açılış hiç denenmedi.
+
+Plandan sapmalar:
+- Lobi kanvası 1920x1080 ve `SafeArea` altında (plandaki 2960x1440 yalnız `MainMenu` içindi). Profil kutusu ve Ayarlar
+  düğmesi kendi `SafeArea`'lı `AccountBar` nesnesinde; ikisi de 50 px yüksek (mevcut düğmelerin üstünde 55 px yer vardı).
+- "Google'a bağla" `Auth.LinkGoogleAsync` yerine `GameServices.EnterWithGoogleAsync` çağırır (tekil ve profili bekler).
+- Photon bağlanamazsa süresiz bekleme yerine Tekrar dene paneli açılır (plan yalnız "bekle" diyordu).
+- Lobi coin yazısı `LobbyAccountUI` tarafından da yazılır (market açılmadan "0" görünüyordu; `ShopController` değişmedi).
+
+Açık kalanlar:
+- MARKET düğmesi marketi açmıyor olabilir: `ShopController.OpenShop` yalnız `ShopBackground`'u açıyor, sahnede kapalı
+  duran `ShopCanvas`'ı açan bir şey görünmüyor. Bu işten önce de böyleydi; doğrulanmadı.
+- Firestore yazma hatası yutuluyor: isim kaydı başarısız olursa oyuncuya "Bağlanılamadı" gösterilmiyor.
+- Play Games geri çağrısı hiç gelmezse giriş düğmeleri uygulama yeniden açılana kadar kapalı kalır (zaman aşımı yok).
+- ChangaOne fontunda İ/ş/ğ yok, yedek fonta düşüyor (eski durum).
+- Test verisi: yerel profil adı "Deneme Oyuncu"; geliştirme Firebase projesinde "Deneme FB" adlı anonim kullanıcı kaldı.
