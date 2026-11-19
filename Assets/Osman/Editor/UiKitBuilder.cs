@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.TextCore.LowLevel;
 
 // UI kiti kurulum araçları. Bu bölüm: Changa yazı tipi (Türkçe harfler) ve sahnelerdeki TMP metinlerin geçişi.
-public static class UiKitBuilder
+public static partial class UiKitBuilder
 {
     const string FontDir = "Assets/Fonts/";
     const string BoldPath = FontDir + "Changa-Bold SDF.asset";
