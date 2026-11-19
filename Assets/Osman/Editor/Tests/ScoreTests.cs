@@ -142,4 +142,12 @@ public class ScoreTests
         Assert.AreEqual(68, OpenValue.Pick(68, 24));     // aynı turda sonradan eklenen değeri bozmaz
         Assert.AreEqual(0, OpenValue.Pick(0, 0));
     }
+    [Test] public void Signed_And_Dash() {
+        Assert.AreEqual("+490", ScoreboardText.Signed(490)); Assert.AreEqual("-600", ScoreboardText.Signed(-600)); Assert.AreEqual("0", ScoreboardText.Signed(0));
+        Assert.AreEqual("-", ScoreboardText.Dash(0)); Assert.AreEqual("+70", ScoreboardText.Dash(70));
+    }
+    [Test] public void Countdown_Clamps_At_Zero() {
+        Assert.AreEqual(10, ScoreboardText.Countdown(100f, 100f, 10)); Assert.AreEqual(7, ScoreboardText.Countdown(100f, 102.5f, 10));
+        Assert.AreEqual(0, ScoreboardText.Countdown(100f, 130f, 10));
+    }
 }

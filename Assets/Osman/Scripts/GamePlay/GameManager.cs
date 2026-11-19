@@ -654,10 +654,6 @@ public class GameManager : MonoBehaviourPunCallbacks
             }
         }
 
-        if (UIManager.Instance != null)
-        {
-            UIManager.Instance.ShowDetailedGameOver(dictRewards, dictPenalties, dictNetScores);
-        }
         StartCoroutine(RestartSequence());
     }
 
@@ -718,8 +714,8 @@ public class GameManager : MonoBehaviourPunCallbacks
         OpenValues.Clear();
         OpenValueShown?.Invoke(0, 0, false); // yeni el: etiketleri boşalt
 
-        if (UIManager.Instance != null)
-            UIManager.Instance.gameOverPanel.SetActive(false);
+        if (ScoreboardView.Instance != null)
+            ScoreboardView.Instance.Hide(); // skor tablosu sıradaki elde kapanır
 
         // Sıfırlama yalnızca masa sahibinden gider: her istemci yollarsa geç gelen kopyalar
         // StartRoundVisuals'ın açtığı canDrop'u siler ve 1. sıradaki masa sahibi takılır.

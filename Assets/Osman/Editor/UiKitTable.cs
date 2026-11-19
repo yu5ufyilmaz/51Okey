@@ -2,8 +2,10 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using TMPro;
 using UnityEditor;
+using UnityEditor.Events;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.UI;
 
 // UI kiti: masa sahnesi (Table). Sahne elle yapılmış; sabit etiketler bugünkü metinlerinden bulunup LocText alır.
 public static partial class UiKitBuilder
@@ -13,7 +15,6 @@ public static partial class UiKitBuilder
     // anahtar, sahnedeki eski metin, beklenen adet
     static readonly (string key, string old, int count)[] TableLabels =
     {
-        ("table.play_again", "TEKRAR OYNA", 1),
         ("table.collect_tiles", "TASLARI TOPLA", 1),
         ("table.add_tile", "TAS ISLE", 1),
         ("table.scoreboard", "TABLO", 1),
@@ -24,6 +25,19 @@ public static partial class UiKitBuilder
     };
 
     static string Norm(string s) => Regex.Replace(s ?? "", @"\s+", " ").Trim();
+
+    // Sahnede yeni kurulan nesne üst nesnesinin katmanını (UI) alır
+    static void SameLayer(GameObject g, Transform parent)
+    {
+        if (g.layer == parent.gameObject.layer) return;
+        g.layer = parent.gameObject.layer;
+        EditorUtility.SetDirty(g);
+    }
+
+    static void SameLayerAll(GameObject g, int layer)
+    {
+        foreach (var t in g.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = layer;
+    }
 
     static void BindOpenBadges()
     {
@@ -37,9 +51,10 @@ public static partial class UiKitBuilder
             foreach (var t in plate.GetComponentsInChildren<TMP_Text>(true)) if (t.gameObject.name != "OpenBadge") { name = t; break; }
             if (name == null) { Debug.LogError("[UiKitBuilder] İsimlikte ad yazısı yok: " + plate.name); return; }
             var existing = plate.Find("OpenBadge");
-            if (existing != null) { labels[i] = existing.GetComponent<TMP_Text>(); continue; }
+            if (existing != null) { labels[i] = existing.GetComponent<TMP_Text>(); SameLayer(existing.gameObject, plate); continue; }
             var go = new GameObject("OpenBadge", typeof(RectTransform));
             go.transform.SetParent(plate, false);
+            SameLayer(go, plate);
             var rt = (RectTransform)go.transform;
             rt.anchorMin = rt.anchorMax = new Vector2(1f, 0.5f);
             rt.pivot = new Vector2(1f, 0.5f);
@@ -63,7 +78,8 @@ public static partial class UiKitBuilder
             labels[i] = tx;
         }
         var host = ui.turnIndicators[0].transform.parent.parent.gameObject;
-        var badges = host.GetComponent<OpenBadges>() ?? host.AddComponent<OpenBadges>();
+        var badges = host.GetComponent<OpenBadges>();
+        if (badges == null) badges = host.AddComponent<OpenBadges>();
         bool same = badges.labels != null && badges.labels.Length == 4;
         for (int i = 0; same && i < 4; i++) same = badges.labels[i] == labels[i];
         if (!same) { badges.labels = labels; EditorUtility.SetDirty(badges); }
@@ -83,6 +99,8 @@ public static partial class UiKitBuilder
         var seatFields = new HashSet<TMP_Text>();
         foreach (var sm in Object.FindObjectsByType<SeatManager>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             if (sm.seatTextFields != null) foreach (var f in sm.seatTextFields) if (f != null) seatFields.Add(f);
+
+        var view = BindScoreboard();
 
         var all = Object.FindObjectsByType<TMP_Text>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         foreach (var (key, old, count) in TableLabels)
@@ -122,6 +140,7 @@ public static partial class UiKitBuilder
                 if (b.gameObject.name == btnName) { found = b; break; }
             if (found == null) { Debug.LogError("[UiKitBuilder] Masada düğme bulunamadı: " + btnName); continue; }
             Sound(found.gameObject, SfxId.UiClick);
+            if (btnName == "CurrentScoreButton" && view != null) RebindScoreButton(found, view);
         }
 
         // Skor geçmişi: GameManager nesnesinde bir kez (ikinci çalıştırmada çoğalmaz)
@@ -135,5 +154,244 @@ public static partial class UiKitBuilder
         EditorSceneManager.SaveScene(scene);
         Debug.Log("[UiKitBuilder] Masa metinleri bağlandı: " + TablePath);
         if (!string.IsNullOrEmpty(previous) && previous != TablePath) EditorSceneManager.OpenScene(previous, OpenSceneMode.Single);
+    }
+
+    // --- skor tablosu ---
+
+    static readonly Color Mute = new Color(0.62f, 0.70f, 0.78f);
+    const float RowH = 58f, HeadH = 44f, Pad = 50f;
+
+    class RowBuild { public GameObject root; public Image bg; public TMP_Text[] cells; public TMP_Text marker; }
+
+    // Eski paneller silinir; skor tablosu yoksa kurulur (varsa elle değiştirilmiş olabilir, dokunulmaz)
+    static ScoreboardView BindScoreboard()
+    {
+        Transform safe = null;
+        foreach (var sa in Object.FindObjectsByType<Crystal.SafeArea>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            if (sa.transform.parent != null && sa.transform.parent.GetComponent<Canvas>() != null) { safe = sa.transform; break; }
+        if (safe == null) { Debug.LogError("[UiKitBuilder] Masada SafeArea bulunamadı, skor tablosu kurulamadı."); return null; }
+
+        foreach (var n in new[] { "ScorePanel", "CurrentScorePanel" })
+            foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                if (t != null && t.name == n && t.IsChildOf(safe)) Object.DestroyImmediate(t.gameObject);
+
+        var existing = safe.Find("Scoreboard");
+        if (existing != null) return existing.GetComponent<ScoreboardView>();
+
+        bold = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(BoldPath);
+        extraBold = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(ExtraBoldPath);
+        var closePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabDir + "Btn_Close.prefab");
+        if (bold == null || extraBold == null || closePrefab == null || LoadSprite("panel_slate") == null || LoadSprite("row_slate") == null)
+        { Debug.LogError("[UiKitBuilder] Kit varlıkları eksik, önce Prefabları Kur çalıştırılmalı."); return null; }
+
+        var root = Child("Scoreboard", safe);
+        Fill(root, 0, 0, 0, 0);
+        var win = Child("Window", root.transform);   // karartma + gövde; kapalı başlar
+        Fill(win, -DimBleed, -DimBleed, DimBleed, DimBleed);
+        Dim(win);
+        var uw = win.AddComponent<UiWindow>();
+
+        var body = Child("Body", win.transform);
+        Size(body, 1640, 870);
+        Sliced(body, "panel_slate");
+
+        var close = Nested(closePrefab, body.transform, "Close");
+        Anchor(close, new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1), new Vector2(18, 18), new Vector2(120, 120)); // köşeden dışarı taşar: sütun başlıklarını örtmesin
+        UnityEventTools.AddPersistentListener(close.GetComponent<Button>().onClick, uw.Close);
+
+        var header = Text(Band(body.transform, "Header", 22, 76, 150).transform, "Text", "", 50, extraBold);
+        Fill(header.gameObject, 0, 0, 0, 0);
+        header.richText = false;
+        AutoSize(header, 50, 28);
+
+        // üst tablo: bu elin dökümü
+        var L = TextAlignmentOptions.CaplineLeft;
+        var R = TextAlignmentOptions.CaplineRight;
+        var topHead = RowObj(body.transform, "TopHead", 108, HeadH, false);
+        Title(topHead, "col_player", "table.col_player", 360, 0, L);
+        Title(topHead, "col_left", "table.col_left", 420, 1, R);
+        Title(topHead, "col_penalties", "table.col_penalties", 220, 0, R);
+        Title(topHead, "col_finish", "table.col_finish", 220, 0, R);
+        Title(topHead, "col_hand", "table.col_hand", 220, 0, R);
+        var top = new List<RowBuild>();
+        for (int i = 0; i < 4; i++)
+        {
+            var r = DataRow(body.transform, "TopRow" + (i + 1), 156 + i * (RowH + 4));
+            r.cells = new TMP_Text[]
+            {
+                DataCell(r.root.transform, "Name", L, 360, 0), DataCell(r.root.transform, "Left", R, 420, 1), DataCell(r.root.transform, "Penalty", R, 220, 0),
+                DataCell(r.root.transform, "Finish", R, 220, 0), DataCell(r.root.transform, "Total", R, 220, 0),
+            };
+            top.Add(r);
+        }
+
+        var pen = Text(Band(body.transform, "PenaltyLine", 408, 44, Pad).transform, "Text", "", 30, bold);
+        Fill(pen.gameObject, 12, 0, -12, 0);
+        pen.alignment = L;
+        pen.color = new Color(1f, 0.78f, 0.38f);
+        pen.richText = false;
+        AutoSize(pen, 30, 20);
+
+        var sep = Band(body.transform, "Separator", 462, 3, Pad);
+        var sepImg = sep.AddComponent<Image>();
+        sepImg.color = new Color(1, 1, 1, 0.15f);
+        sepImg.raycastTarget = false;
+
+        // alt tablo: eller ve toplam
+        var botHead = RowObj(body.transform, "BotHead", 480, HeadH, false);
+        Title(botHead, "col_player", "table.col_player", 360, 0, L);
+        var handHeaders = new TMP_Text[7];
+        for (int n = 0; n < 7; n++)
+        {
+            var h = DataCell(botHead.transform, "Hand" + (n + 1), R, 100, 1);
+            h.font = extraBold; h.fontSizeMax = 28; h.fontSizeMin = 18; h.fontSize = 28; h.color = Mute;
+            handHeaders[n] = h;
+        }
+        Title(botHead, "col_total", "table.col_total", 170, 0, R);
+        Spacer(botHead.transform, 130);
+        var bot = new List<RowBuild>();
+        for (int i = 0; i < 4; i++)
+        {
+            var r = DataRow(body.transform, "BotRow" + (i + 1), 528 + i * (RowH + 4));
+            var cells = new List<TMP_Text> { DataCell(r.root.transform, "Name", L, 360, 0) };
+            for (int n = 0; n < 7; n++) cells.Add(DataCell(r.root.transform, "Hand" + (n + 1), R, 100, 1));
+            cells.Add(DataCell(r.root.transform, "Total", R, 170, 0));
+            r.cells = cells.ToArray();
+            var mk = DataCell(r.root.transform, "Leading", L, 130, 0);
+            mk.font = extraBold; mk.fontSizeMax = 26; mk.fontSizeMin = 18; mk.fontSize = 26; mk.color = new Color(1f, 0.82f, 0.30f);
+            mk.margin = new Vector4(18, 0, 0, 0);
+            r.marker = mk;
+            bot.Add(r);
+        }
+
+        var foot = Text(Band(body.transform, "Footer", 794, 50, Pad).transform, "Text", "", 36, bold);
+        Fill(foot.gameObject, 0, 0, 0, 0);
+        foot.richText = false;
+
+        var view = root.AddComponent<ScoreboardView>();
+        var so = new SerializedObject(view);
+        so.FindProperty("window").objectReferenceValue = win;
+        so.FindProperty("uiWindow").objectReferenceValue = uw;
+        so.FindProperty("closeButton").objectReferenceValue = close;
+        so.FindProperty("header").objectReferenceValue = header;
+        so.FindProperty("penaltyLine").objectReferenceValue = pen;
+        so.FindProperty("footer").objectReferenceValue = foot;
+        var hh = so.FindProperty("handHeaders");
+        hh.arraySize = 7;
+        for (int n = 0; n < 7; n++) hh.GetArrayElementAtIndex(n).objectReferenceValue = handHeaders[n];
+        SetRows(so.FindProperty("topRows"), top);
+        SetRows(so.FindProperty("botRows"), bot);
+        so.ApplyModifiedPropertiesWithoutUndo();
+
+        win.SetActive(false);
+        SameLayerAll(root, safe.gameObject.layer);
+        root.transform.SetAsLastSibling();
+        return view;
+    }
+
+    static void SetRows(SerializedProperty arr, List<RowBuild> rows)
+    {
+        arr.arraySize = rows.Count;
+        for (int i = 0; i < rows.Count; i++)
+        {
+            var e = arr.GetArrayElementAtIndex(i);
+            e.FindPropertyRelative("root").objectReferenceValue = rows[i].root;
+            e.FindPropertyRelative("bg").objectReferenceValue = rows[i].bg;
+            e.FindPropertyRelative("marker").objectReferenceValue = rows[i].marker;
+            var c = e.FindPropertyRelative("cells");
+            c.arraySize = rows[i].cells.Length;
+            for (int k = 0; k < rows[i].cells.Length; k++) c.GetArrayElementAtIndex(k).objectReferenceValue = rows[i].cells[k];
+        }
+    }
+
+    // Üstten çapalı, yatay uzayan şerit
+    static GameObject Band(Transform parent, string name, float y, float h, float margin)
+    {
+        var g = Child(name, parent);
+        Anchor(g, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0.5f, 1), new Vector2(0, -y), new Vector2(-2 * margin, h));
+        return g;
+    }
+
+    static GameObject RowObj(Transform parent, string name, float y, float h, bool background)
+    {
+        var g = Band(parent, name, y, h, Pad);
+        if (background) { var img = Sliced(g, "row_slate"); img.raycastTarget = false; }
+        var hl = g.AddComponent<HorizontalLayoutGroup>();
+        hl.padding = new RectOffset(12, 12, 0, 0);
+        hl.childAlignment = TextAnchor.MiddleLeft;
+        hl.childControlWidth = hl.childControlHeight = true;
+        hl.childForceExpandWidth = hl.childForceExpandHeight = false;
+        return g;
+    }
+
+    static RowBuild DataRow(Transform parent, string name, float y)
+    {
+        var g = RowObj(parent, name, y, RowH, true);
+        var mine = Child("Mine", g.transform);   // yerel oyuncu vurgusu, hücrelerin altında
+        Fill(mine, 0, 0, 0, 0);
+        mine.AddComponent<LayoutElement>().ignoreLayout = true;
+        mine.transform.SetAsFirstSibling();
+        var hi = Pill(mine, new Color(0.30f, 0.62f, 0.95f, 0.40f));
+        hi.pixelsPerUnitMultiplier = 0.5f;
+        hi.raycastTarget = false;
+        hi.enabled = false;
+        return new RowBuild { root = g, bg = hi };
+    }
+
+    static void Layout(GameObject g, float pref, float flex)
+    {
+        var le = g.AddComponent<LayoutElement>();
+        le.minWidth = 0;
+        le.preferredWidth = pref;
+        le.flexibleWidth = flex;
+    }
+
+    static void AutoSize(TMP_Text t, float max, float min)
+    {
+        t.enableAutoSizing = true;
+        t.fontSizeMax = max;
+        t.fontSizeMin = min;
+        t.fontSize = max;
+    }
+
+    // Çalışma zamanında yazılan hücre: LocText yok
+    static TMP_Text DataCell(Transform row, string name, TextAlignmentOptions al, float pref, float flex)
+    {
+        var t = Text(row, name, "", 36, bold);
+        t.alignment = al;
+        t.richText = false;
+        t.overflowMode = TextOverflowModes.Ellipsis;
+        t.margin = new Vector4(10, 0, 10, 0);
+        AutoSize(t, 36, 22);
+        Layout(t.gameObject, pref, flex);
+        return t;
+    }
+
+    // Sabit sütun başlığı: LocText'li
+    static void Title(GameObject row, string name, string key, float pref, float flex, TextAlignmentOptions al)
+    {
+        var t = Label(row.transform, name, key, 26, extraBold);
+        t.alignment = al;
+        t.color = Mute;
+        t.richText = false;
+        t.margin = new Vector4(10, 0, 10, 0);
+        AutoSize(t, 26, 16);
+        Layout(t.gameObject, pref, flex);
+    }
+
+    static void Spacer(Transform row, float pref) => Layout(Child("Spacer", row), pref, 0);
+
+    static void RebindScoreButton(Button b, ScoreboardView view)
+    {
+        var ev = b.onClick;
+        bool has = false;
+        for (int i = ev.GetPersistentEventCount() - 1; i >= 0; i--)
+        {
+            if (ev.GetPersistentTarget(i) == view && ev.GetPersistentMethodName(i) == "Toggle") { has = true; continue; }
+            if (ev.GetPersistentTarget(i) == null || ev.GetPersistentMethodName(i) == "ToggleLiveScoreboard")
+                UnityEventTools.RemovePersistentListener(ev, i);
+        }
+        if (!has) UnityEventTools.AddPersistentListener(ev, view.Toggle);
+        EditorUtility.SetDirty(b);
     }
 }

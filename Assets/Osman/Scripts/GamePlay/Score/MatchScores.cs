@@ -18,7 +18,8 @@ public class MatchScores : MonoBehaviourPunCallbacks
 
     public MatchHistory History { get; } = new MatchHistory();
     public string[] SeatNames { get; private set; } = new string[] { "", "", "", "" };
-    public int TotalRounds =>
+    int previewRounds;
+    public int TotalRounds => previewRounds > 0 ? previewRounds :
         PhotonNetwork.CurrentRoom != null && PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue("TotalRounds", out object v) && v is int n ? n : 0;
 
     public event Action Changed;
@@ -118,6 +119,17 @@ public class MatchScores : MonoBehaviourPunCallbacks
             current.Add(new PenaltyEntry { seat = seat, amount = amount, reason = reason });
         }
         catch (Exception e) { Debug.LogException(e); }
+    }
+
+    // Yalnız ekran görüntüsü doğrulaması: sahte oda verisi (oyun akışı kullanmaz)
+    public void PreviewSetRounds(int n) => previewRounds = n;
+    public void PreviewSetSeatNames(string[] names) => SeatNames = names;
+    public void PreviewAddPenalty(int handIndex, int seat, int amount, PenaltyReason reason)
+    {
+        var e = new PenaltyEntry { seat = seat, amount = amount, reason = reason };
+        if (handIndex <= 0) { current.Add(e); return; }
+        if (!byHand.TryGetValue(handIndex, out var l)) byHand[handIndex] = l = new List<PenaltyEntry>();
+        l.Add(e);
     }
 
     // master

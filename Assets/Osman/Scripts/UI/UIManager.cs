@@ -10,10 +10,6 @@ public class UIManager : MonoBehaviourPunCallbacks
 {
     public static UIManager Instance;
 
-    [Header("Game Over Screen References")]
-    public GameObject gameOverPanel; // Sahnedeki ana panel
-    public List<PlayerResultSlot> playerResultSlots; // 4 adet sütunu buraya sürükleyeceksin
-
     [Header("Texts - Game Info")]
     public TextMeshProUGUI tileCountText;
     public TextMeshProUGUI tableLimitText;
@@ -22,28 +18,8 @@ public class UIManager : MonoBehaviourPunCallbacks
     public TextMeshProUGUI currentScoreText;
     public TextMeshProUGUI currentPairText;
 
-    [Header("Texts - Game Over")]
-    public TextMeshProUGUI rankingText;
-    public TextMeshProUGUI restartTimerText;
-
     [Header("Visuals")]
     public GameObject[] turnIndicators; // 0:Me, 1:Right, 2:Top, 3:Left
-
-    // --- [YENİ] CANLI SKOR TABLOSU ---
-    [Header("Live Scoreboard UI")]
-    public GameObject liveScorePanel; // Açılıp kapanacak panel
-    public TextMeshProUGUI liveScoreContentText; // Puanların yazacağı text
-    private bool isScoreboardOpen = false;
-
-    [System.Serializable]
-    public class PlayerResultSlot
-    {
-        public int seatNumber; // 1, 2, 3, 4 (Hangi koltuk olduğu)
-        public TMPro.TextMeshProUGUI playerNameText;
-        public TMPro.TextMeshProUGUI rewardText; // Düşerler (Üst)
-        public TMPro.TextMeshProUGUI penaltyText; // Cezalar (Orta)
-        public TMPro.TextMeshProUGUI netScoreText; // Toplam (Alt)
-    }
 
     private void Awake()
     {
@@ -51,93 +27,11 @@ public class UIManager : MonoBehaviourPunCallbacks
             Instance = this;
         else
             Destroy(gameObject);
-
-        if (gameOverPanel)
-            gameOverPanel.SetActive(false);
     }
-
-    // UIManager.cs içine ekle
 
     private void Start()
     {
         ShowRackScores(0, 0, 0);
-        // Oyun başlar başlamaz "Anlık Puan" tablosundaki eski yazıları sil.
-        // ScoreManager'dan puanlar 0'lanıp gelene kadar boş dursun veya temiz gözüksün.
-        if (liveScoreContentText != null)
-        {
-            liveScoreContentText.text = "";
-        }
-
-        // Eğer oyun başında panel açıksa (ki genelde kapalı başlar ama) temiz bir liste oluştur.
-        if (isScoreboardOpen)
-        {
-            UpdateLiveScoreboardText();
-        }
-    }
-
-    // --- GÜNCELLEME METODLARI ---
-    public void ToggleLiveScoreboard()
-    {
-        if (liveScorePanel == null)
-            return;
-
-        isScoreboardOpen = !isScoreboardOpen;
-        liveScorePanel.SetActive(isScoreboardOpen);
-
-        if (isScoreboardOpen)
-        {
-            UpdateLiveScoreboardText();
-        }
-    }
-
-    public void UpdateLiveScoreboardText()
-    {
-        if (liveScoreContentText == null)
-            return;
-
-        string content = "<size=110%><b>" + Loc.T("table.live_penalties") + "</b></size>\n\n";
-
-        foreach (var player in PhotonNetwork.PlayerList)
-        {
-            string pName = player.NickName;
-            int score = 0;
-
-            // Puanı Photon'dan çek
-            if (player.CustomProperties.TryGetValue("PlayerScore", out object val))
-            {
-                score = (int)val;
-            }
-
-            string color = player.IsLocal ? "green" : "white";
-            content += $"<color={color}>{pName}: {score}</color>\n";
-        }
-
-        liveScoreContentText.text = content;
-    }
-
-    public override void OnPlayerPropertiesUpdate(
-        Player targetPlayer,
-        ExitGames.Client.Photon.Hashtable changedProps
-    )
-    {
-        // Eğer değişen özellik "PlayerScore" ise (yani biri ceza yediyse)
-        if (changedProps.ContainsKey("PlayerScore"))
-        {
-            Debug.Log($"Puan Güncellemesi Algılandı: {targetPlayer.NickName}");
-
-            // Eğer tablo açıksa anında yazıyı güncelle
-            if (isScoreboardOpen)
-            {
-                UpdateLiveScoreboardText();
-            }
-        }
-    }
-
-    // Biri ceza yiyince anlık yenilemek için
-    public void RefreshLiveScoreboardIfOpen()
-    {
-        if (isScoreboardOpen)
-            UpdateLiveScoreboardText();
     }
 
     public void UpdateTileCount(int count)
@@ -369,137 +263,5 @@ public class UIManager : MonoBehaviourPunCallbacks
         if (t != null)
             Destroy(t.gameObject);
         activePenaltyFloats[playerQue]--;
-    }
-
-    // GameManager'dan gelen 3 ayrı listeyi (Diziyi) alıyoruz
-    // GameManager'dan gelen 3 ayrı listeyi (Diziyi) alıyoruz
-    public void ShowDetailedGameOver(
-        Dictionary<int, int> rewards,
-        Dictionary<int, int> penalties,
-        Dictionary<int, int> netScores
-    )
-    {
-        if (gameOverPanel != null)
-        {
-            gameOverPanel.SetActive(true);
-        }
-
-        // --- KAZANANI BULMA MANTIĞI (BAŞLANGIÇ) ---
-        int lowestScore = int.MaxValue; // En düşük puanı bulmak için yüksek bir sayıdan başlatıyoruz
-        string winnerName = "";
-        // ------------------------------------------
-
-        // Tüm slotları gez ve verileri doldur
-        foreach (var slot in playerResultSlots)
-        {
-            // O koltukta oturan oyuncuyu bul
-            Photon.Realtime.Player p = GetPlayerBySeat(slot.seatNumber);
-
-            if (p != null)
-            {
-                // 1. İsim
-                slot.playerNameText.text = p.NickName;
-
-                // 2. Düşer (Reward)
-                if (rewards.ContainsKey(slot.seatNumber))
-                {
-                    int val = rewards[slot.seatNumber];
-                    slot.rewardText.text = val.ToString();
-                    slot.rewardText.color = Color.green;
-                }
-                else
-                {
-                    slot.rewardText.text = "0";
-                }
-
-                // 3. Ceza (Penalty)
-                if (penalties.ContainsKey(slot.seatNumber))
-                {
-                    int val = penalties[slot.seatNumber];
-                    slot.penaltyText.text = "+" + val.ToString();
-                    slot.penaltyText.color = Color.red;
-                }
-                else
-                {
-                    slot.penaltyText.text = "0";
-                }
-
-                // 4. Toplam (Net Score)
-                if (netScores.ContainsKey(slot.seatNumber))
-                {
-                    int val = netScores[slot.seatNumber];
-                    slot.netScoreText.text = val.ToString();
-                    slot.netScoreText.fontStyle = TMPro.FontStyles.Bold;
-
-                    if (val > 0)
-                        slot.netScoreText.color = Color.red;
-                    else if (val < 0)
-                        slot.netScoreText.color = Color.green;
-                    else
-                        slot.netScoreText.color = Color.white;
-
-                    // --- KAZANAN KONTROLÜ ---
-                    // Eğer bu oyuncunun puanı şu ana kadar bulduğumuz en düşük puandan daha azsa
-                    if (val < lowestScore)
-                    {
-                        lowestScore = val;
-                        winnerName = p.NickName;
-                    }
-                    // ------------------------
-                }
-                else
-                {
-                    slot.netScoreText.text = "0";
-                }
-            }
-            else
-            {
-                // O koltukta oyuncu yoksa boş göster
-                slot.playerNameText.text = "-";
-                slot.rewardText.text = "";
-                slot.penaltyText.text = "";
-                slot.netScoreText.text = "";
-            }
-        }
-
-        // --- KAZANANI YAZDIRMA ---
-        if (rankingText != null)
-        {
-            if (!string.IsNullOrEmpty(winnerName))
-            {
-                // İstersen rengini altın sarısı vs. yapabilirsin
-                rankingText.color = Color.yellow;
-                rankingText.text = Loc.T("table.winner", winnerName);
-            }
-            else
-            {
-                rankingText.text = "";
-            }
-        }
-        // -------------------------
-    }
-
-    // Yardımcı Fonksiyon: Koltuk Numarasına Göre Oyuncuyu Bulma
-    private Photon.Realtime.Player GetPlayerBySeat(int seatNum)
-    {
-        foreach (var p in Photon.Pun.PhotonNetwork.PlayerList)
-        {
-            if (p.CustomProperties.TryGetValue("PlayerQue", out object q))
-            {
-                if ((int)q == seatNum)
-                    return p;
-            }
-        }
-        return null;
-    }
-
-    private IEnumerator TimerRoutine()
-    {
-        for (int i = 10; i > 0; i--)
-        {
-            if (restartTimerText)
-                restartTimerText.text = Loc.T("table.back_to_lobby_in", i);
-            yield return new WaitForSeconds(1f);
-        }
     }
 }
