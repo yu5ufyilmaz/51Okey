@@ -171,8 +171,9 @@ public class LobbyAccountUI : MonoBehaviour
                 linkStatus.text = "Google girişi tamamlanmadı";
             else if (result == LinkResult.Failed)
                 linkStatus.text = "Google'a bağlanılamadı";
-            // Misafir aynı hesapla Google'a geçti: isim kutusu açılır (RefreshCurrent), sonraki açılışta da sorulur.
-            else if (result == LinkResult.Linked)
+            // Google hesabına geçildi (bağlandı ya da var olan hesaba geçti) ve isim gerekiyor: isim kutusu açılır
+            // (RefreshCurrent), sonraki açılışta da sorulur.
+            else if (GameServices.NeedsName)
                 linkStatus.text = "İsmini seçebilirsin";
             // Geçiş yarıda kalınca yeni misafire düşülebilir: Photon adı her sonuçta profille eşitlenir.
             SyncNickName();

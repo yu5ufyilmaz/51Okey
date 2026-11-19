@@ -26,6 +26,19 @@ public class GameConfigTests
     public void IsValidName_RejectsGuestPrefixAndSlash(string name, bool valid) =>
         Assert.AreEqual(valid, GameConfig.IsValidName(name));
 
+    // Firestore belge kimliği olamayan ve görünmez karakterli isimler; misafir isimleri de bu denetimden geçer.
+    [TestCase(".", false)]
+    [TestCase("..", false)]
+    [TestCase("__ab__", false)]
+    [TestCase("a\u200Bb", false)]
+    [TestCase("a\0b", false)]
+    [TestCase("a\tb", false)]
+    [TestCase("a.b", true)]
+    [TestCase("_ab_", true)]
+    [TestCase("Ali Veli", true)]
+    public void IsStorableName_RejectsBadDocumentIds(string name, bool storable) =>
+        Assert.AreEqual(storable, GameConfig.IsStorableName(name));
+
     // Karar tablosu: misafire isim atanır, Google hesabının kayıtsız ismi kaydedilmeye çalışılır.
     [TestCase(true, false, "Misafir-00042", NameFlow.Step.AssignGuest)]
     [TestCase(true, false, "Deneme Oyuncu", NameFlow.Step.AssignGuest)]

@@ -17,11 +17,20 @@ public static class GameConfig
     public static bool IsValidName(string name) =>
         IsStorableName(name) && !name.Trim().StartsWith(GuestNamePrefix, System.StringComparison.OrdinalIgnoreCase);
 
-    // Depoların yazdığı isim: oyuncu ismi ya da otomatik misafir ismi.
+    // Depoların yazdığı isim: oyuncu ismi ya da otomatik misafir ismi. Firestore belge kimliği olamayanlar (".", "..", "__x__")
+    // ve görünmez karakterler reddedilir (kontrol: NUL yerel SDK'da kesebilir; biçim: sıfır genişlikli boşlukla benzer isim).
     public static bool IsStorableName(string name)
     {
-        int length = name?.Trim().Length ?? 0;
-        return length >= NameMin && length <= NameMax && name.IndexOf('/') < 0;
+        var trimmed = name?.Trim();
+        int length = trimmed?.Length ?? 0;
+        if (length < NameMin || length > NameMax || trimmed == ".." || name.IndexOf('/') >= 0)
+            return false;
+        if (length >= 4 && trimmed.StartsWith("__", System.StringComparison.Ordinal) && trimmed.EndsWith("__", System.StringComparison.Ordinal))
+            return false;
+        foreach (char c in trimmed)
+            if (char.IsControl(c) || System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) == System.Globalization.UnicodeCategory.Format)
+                return false;
+        return true;
     }
 
     public static string GuestName(int number) => GuestNamePrefix + ((number % 100000 + 100000) % 100000).ToString("D5");

@@ -68,24 +68,35 @@ public class FirestoreProfileStore : IProfileStore, IWallet
         if (name == Current.DisplayName && Current.NameClaimed)
             return NameResult.Ok;
         var uid = Current.UserId;
-        // Kayıtlı olmayan eski isim kimsenin kaydı değildir (başkasının olabilir): yalnız kayıtlıysa bırakılır.
-        var oldName = Current.NameClaimed && Current.DisplayName != name ? Current.DisplayName : null;
-        bool claimed;
+        NameResult result;
         try
         {
             var db = await boot.FirestoreAsync();
             var userRef = db.Collection("users").Document(uid);
             var nameRef = db.Collection("names").Document(name);
-            var oldRef = oldName != null ? db.Collection("names").Document(oldName) : null;
-            claimed = await db.RunTransactionAsync(async t =>
+            result = await db.RunTransactionAsync(async t =>
             {
+                // Eski isim bellekten değil sunucudan: yanıtı kaybolan commit ya da ikinci cihaz isim sızdırmasın.
+                // Kullanıcı belgesini okumak aynı kullanıcının eşzamanlı değişikliklerini çakıştırır (Firestore yeniden dener).
+                var user = await t.GetSnapshotAsync(userRef);
+                if (!user.Exists)
+                    return NameResult.Failed;
+                var fields = user.ToDictionary();
+                var serverName = fields.TryGetValue("displayName", out var n) ? n as string : null;
+                bool serverClaimed = fields.TryGetValue("nameClaimed", out var c) && c is bool b && b;
+                if (serverClaimed && serverName == name)
+                    return NameResult.Ok;
+                // Kayıtlı olmayan eski isim kimsenin kaydı değildir (başkasının olabilir): yalnız kayıtlıysa bırakılır.
+                var oldRef = serverClaimed && !string.IsNullOrEmpty(serverName) ? db.Collection("names").Document(serverName) : null;
+                // Transaction'da önce bütün okumalar, sonra yazmalar.
                 var taken = await t.GetSnapshotAsync(nameRef);
                 if (taken.Exists && taken.GetValue<string>("uid") != uid)
-                    return false;
-                // Transaction'da önce bütün okumalar: eski kayıt hâlâ bizimse silinir (kural yalnız sahibine sildirir).
+                    return NameResult.Taken;
                 var old = oldRef != null ? await t.GetSnapshotAsync(oldRef) : null;
+                // Kayıt zaten bizimse yazılmaz: kural var olan kayda yazmaya izin vermez.
                 if (!taken.Exists)
                     t.Set(nameRef, new Dictionary<string, object> { { "uid", uid }, { "createdAt", FieldValue.ServerTimestamp } });
+                // Kural yalnız sahibine sildirir.
                 if (old != null && old.Exists && old.GetValue<string>("uid") == uid)
                     t.Delete(oldRef);
                 t.Update(userRef, new Dictionary<string, object>
@@ -94,7 +105,7 @@ public class FirestoreProfileStore : IProfileStore, IWallet
                     { "nameClaimed", true },
                     { "lastSeenAt", FieldValue.ServerTimestamp },
                 });
-                return true;
+                return NameResult.Ok;
             });
         }
         catch (Exception e)
@@ -102,8 +113,11 @@ public class FirestoreProfileStore : IProfileStore, IWallet
             Debug.LogWarning("[Profil] isim kaydedilemedi: " + e.GetType().Name + " " + uid);
             return NameResult.Failed;
         }
-        if (!claimed)
-            return NameResult.Taken;
+        if (result == NameResult.Failed)
+            Debug.LogWarning("[Profil] isim kaydedilemedi: kullanıcı belgesi yok " + uid);
+        if (result != NameResult.Ok)
+            return result;
+        // Sunucuda isim zaten bizimse de buraya gelinir: bellek eşitlenir.
         if (Current != null && Current.UserId == uid)
         {
             Current.DisplayName = name;
@@ -139,24 +153,35 @@ public class FirestoreProfileStore : IProfileStore, IWallet
         Notify();
     }
 
-    // Hesap silme akışı: önce isim kaydı (bizimse), sonra defter, sonra kullanıcı belgesi (kural defteri yalnızca silmeye açar).
+    // Hesap silme akışı: önce defter (kural defteri yalnızca silmeye açar), sonra isim kaydı ve kullanıcı belgesi birlikte.
     public async Task DeleteAsync()
     {
         if (Current != null)
         {
-            var userRef = await UserDoc(Current.UserId);
-            if (Current.NameClaimed)
-            {
-                var uid = Current.UserId;
-                var nameRef = (await boot.FirestoreAsync()).Collection("names").Document(Current.DisplayName);
-                var name = await nameRef.GetSnapshotAsync();
-                if (name.Exists && name.GetValue<string>("uid") == uid)
-                    await nameRef.DeleteAsync();
-            }
+            var uid = Current.UserId;
+            var db = await boot.FirestoreAsync();
+            var userRef = db.Collection("users").Document(uid);
             var ledger = await userRef.Collection("ledger").GetSnapshotAsync();
             foreach (var entry in ledger.Documents)
                 await entry.Reference.DeleteAsync();
-            await userRef.DeleteAsync();
+            // Tek batch: isim silinip kullanıcı belgesi kalırsa misafir sahibi olmadığı ismi "kayıtlı" sanır ve hiç onarılmaz.
+            // İsim sunucudaki belgeden okunur (bellek eski olabilir); kayıt varsa ve bizimse silinir.
+            var batch = db.StartBatch();
+            var user = await userRef.GetSnapshotAsync();
+            if (user.Exists)
+            {
+                var fields = user.ToDictionary();
+                var serverName = fields.TryGetValue("displayName", out var n) ? n as string : null;
+                if (fields.TryGetValue("nameClaimed", out var c) && c is bool claimed && claimed && !string.IsNullOrEmpty(serverName))
+                {
+                    var nameRef = db.Collection("names").Document(serverName);
+                    var name = await nameRef.GetSnapshotAsync();
+                    if (name.Exists && name.GetValue<string>("uid") == uid)
+                        batch.Delete(nameRef);
+                }
+            }
+            batch.Delete(userRef);
+            await batch.CommitAsync();
         }
         Current = null;
         Notify();
