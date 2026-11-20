@@ -433,18 +433,8 @@ public class GameManager : MonoBehaviourPunCallbacks
             Debug.Log($"OYUN BİTTİ! Kazanan ActorNumber: {data.actorNumber}");
             // Çiftten bitiş master'da playersWhoOpenedPairs'ten hesaplanır; okey ve kafa sadece bitirenin client'ında bilinir.
             photonView.RPC("FinishGameRPC", RpcTarget.All, data.actorNumber, data.okeyFinish, data.kafa);
-            return;
         }
-
-        // 2. Taş Bitti (BERABERE)
-        if (PhotonNetwork.IsMasterClient)
-        {
-            if (tileDistrubite.allTiles.Count == 0)
-            {
-                Debug.Log("OYUN BİTTİ! Ortada taş kalmadı. (Berabere)");
-                photonView.RPC("FinishGameRPC", RpcTarget.AllViaServer, -1, false, false);
-            }
-        }
+        // Beraberlik burada gönderilmez: atılan taş henüz elden düşmedi, el sonucu onu da sayardı (TileUI atıştan sonra gönderir).
     }
 
     public bool IsDoubleOpenedOnTable

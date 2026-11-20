@@ -1033,12 +1033,13 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
         // --- OYUN BİTİŞ / SIRA DEVRETME ---
         // Ortada taş kalmadıysa beraberlik
+        // Sunucu üzerinden: masa sahibinde de atılan taşın silinmesinden ve kendi ceza duyurusundan sonra işlensin.
         if (tileDistrubite.allTiles.Count == 0)
         {
             if (GameManager.Instance != null && !GameManager.Instance.isGameEnded)
                 GameManager.Instance.photonView.RPC(
                     "FinishGameRPC",
-                    RpcTarget.All,
+                    RpcTarget.AllViaServer,
                     -1,
                     false,
                     false
