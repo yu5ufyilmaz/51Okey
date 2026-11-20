@@ -156,6 +156,8 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
     {
+        if ((propertiesThatChanged.ContainsKey("TableLimit") || propertiesThatChanged.ContainsKey("IsDoubleOpened")) && tileDistrubite != null)
+            tileDistrubite.RefreshTurnStartLimits();
         if (propertiesThatChanged.ContainsKey("TableLimit"))
         {
             int newLimit = (int)propertiesThatChanged["TableLimit"];
@@ -692,9 +694,13 @@ public class GameManager : MonoBehaviourPunCallbacks
             || que != tm.currentTurnPlayer
             || r == null
             || r.que != que
+            || r.serial != serial
             || serial == rollbackDoneSerial
         )
         {
+            // Kayıt bu seriye ait değil: yerelde bir şey geri alınmaz; master'ın bekletmesi yine de kalkar, oyun devam eder.
+            if (r != null && serial == tm.TurnSerial && (r.que != que || r.serial != serial))
+                Debug.LogWarning($"[GERIAL] kayıt uyuşmuyor (kayıt sıra {r.que} seri {r.serial}, mesaj sıra {que} seri {serial}), geri alınmadı");
             if (master && serial == pendingRollbackSerial)
                 pendingRollbackSerial = -1;
             return;
@@ -703,10 +709,19 @@ public class GameManager : MonoBehaviourPunCallbacks
         var kind = TurnRollback.Decide(r.discards, td.DiscardCountOfSeat(SeatMath.MeldSeat(td.seatOfQue, que)));
         if (kind == RollbackKind.CloseTurn)
         {
+            int swapped = td.RemoveSwapAddedFromHand(r);
+            if (swapped > 0)
+                Debug.Log($"[GERIAL] sıra {que} takasla gelen {swapped} taş elden düşüldü (okey tahtada kaldı)");
             td.RenderSeatMeldsFromData(que);
             // Bot, NextTurn serisi ilerleyene kadar bekler (pendingRollbackSerial burada temizlenmez).
             if (master)
-                tm.SendNextTurn(true);
+            {
+                // Atış sonrası destede taş kalmadıysa kopan oyuncunun kendi bitiş mesajı gitmemiştir: tur yerine el biter.
+                if (BotEndRule.PileEmpty(td.allTiles.Count, false))
+                    photonView.RPC(nameof(FinishGameRPC), RpcTarget.AllViaServer, -1, false, false);
+                else
+                    tm.SendNextTurn(true);
+            }
         }
         else
         {

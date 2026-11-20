@@ -266,6 +266,26 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         }
     }
 
+    // Oda özelliği (baraj / çift) güncellemesi: sıra sahibi henüz bir şey yapmadıysa kayıttaki değerler tazelenir
+    // (masa sahibinin kendi yazdığı yankı, kendi NextTurn'ünden sonra geldiğinde kayıt bayat kalmasın).
+    public void RefreshTurnStartLimits()
+    {
+        var r = TurnStart;
+        var gm = GameManager.Instance;
+        if (r == null || gm == null || !TurnRollback.MayRefreshLimits(r.drawn.Count, r.sideTaken != null, GetPlayerTilesForBot(r.que).Count, r.hand.Count))
+            return;
+        r.tableLimit = gm.CurrentTableLimit;
+        r.doubleOpened = gm.IsDoubleOpenedOnTable;
+    }
+
+    // CloseTurn: swap ile ele eklenen okey tahtada durur (SyncProcessedTile gitmedi); el verisinden düşülür, yoksa taş iki olur.
+    public int RemoveSwapAddedFromHand(TurnStartRecord r)
+    {
+        int n = GetPlayerTilesForBot(r.que).RemoveAll(t => r.swapAdded.Any(s => s.id == t.id));
+        r.swapAdded.Clear();
+        return n;
+    }
+
     public void RenderSeatMeldsFromData(int que)
     {
         if (!PhotonNetwork.PlayerList.Any(p => p.CustomProperties.TryGetValue("PlayerQue", out object q) && q is int i && i == que))
@@ -1846,6 +1866,9 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
         if (targetHand != null)
         {
+            if (TurnStart != null && TurnStart.que == playerQue && TurnRollback.IsSwapAdded(TurnStart.hand, TurnStart.drawn, TurnStart.sideTaken, tileData)
+                && TurnStart.swapAdded.All(t => t.id != tileData.id))
+                TurnStart.swapAdded.Add(tileData);
             targetHand.Add(tileData);
             // Debug.Log($"[VERİ EKLENDİ] Oyuncu {playerQue} listesine Joker eklendi. Yeni adet: {targetHand.Count}");
         }
@@ -2029,6 +2052,8 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
         if (targetHand != null)
         {
+            if (TurnStart != null && TurnStart.que == playerQue)
+                TurnStart.swapAdded.RemoveAll(t => t.id == tileToRemove.id); // takas geri alındı
             // Sadece ID ile eşleşen taşı bul
             Tiles foundTile = targetHand.FirstOrDefault(t => t.id == tileToRemove.id);
 

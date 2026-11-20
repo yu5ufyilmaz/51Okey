@@ -531,7 +531,9 @@ public class TurnManager : MonoBehaviourPunCallbacks
 
         // --- ADIM 1: TAŞ ÇEK ---
         bool hasDrawn = false;
-        if (botHand.Count < 15)
+        var rec = tileDist.TurnStart;
+        bool alreadyDrew = rec != null && rec.que == playerQue && rec.serial == TurnSerial && rec.drawn.Count > 0;
+        if (BotDrawRule.ShouldDraw(botHand.Count, alreadyDrew))
         {
             // Ortadan çek
             tileDist.photonView.RPC(

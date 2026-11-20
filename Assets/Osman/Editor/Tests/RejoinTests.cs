@@ -93,4 +93,26 @@ public class RejoinTests
         var hand = TurnRollback.HandAfterRollback(r.hand, r.drawn);
         Assert.IsFalse(hand.Any(t => t.id == "x")); Assert.AreEqual(2, hand.Count);
     }
+    [Test] public void Bot_Draw_Rule() {
+        Assert.IsFalse(BotDrawRule.ShouldDraw(12, true));
+        Assert.IsTrue(BotDrawRule.ShouldDraw(14, false));
+        Assert.IsFalse(BotDrawRule.ShouldDraw(15, false));
+    }
+    [Test] public void Limits_Refresh_Only_Before_Owner_Acts() {
+        Assert.IsTrue(TurnRollback.MayRefreshLimits(0, false, 14, 14));
+        Assert.IsFalse(TurnRollback.MayRefreshLimits(1, false, 15, 14));
+        Assert.IsFalse(TurnRollback.MayRefreshLimits(0, true, 15, 14));
+        Assert.IsFalse(TurnRollback.MayRefreshLimits(0, false, 11, 14)); // açış: eller azaldı
+    }
+    [Test] public void Swap_Added_Is_Tile_Not_Start_Drawn_Or_Side() {
+        var start = new[] { T("a") }; var drawn = new[] { T("b") };
+        Assert.IsTrue(TurnRollback.IsSwapAdded(start, drawn, T("s"), T("okey")));
+        Assert.IsFalse(TurnRollback.IsSwapAdded(start, drawn, T("s"), T("a")));
+        Assert.IsFalse(TurnRollback.IsSwapAdded(start, drawn, T("s"), T("b")));
+        Assert.IsFalse(TurnRollback.IsSwapAdded(start, drawn, T("s"), T("s")));
+    }
+    [Test] public void Close_Turn_Finishes_Hand_On_Empty_Pile() {
+        Assert.IsTrue(BotEndRule.PileEmpty(0, false));
+        Assert.IsFalse(BotEndRule.PileEmpty(1, false));
+    }
 }
