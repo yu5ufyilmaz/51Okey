@@ -62,6 +62,7 @@ public partial class SyncAutoTest
         else
             brain.NewTurn();
         firstOpenThisTurn = processedThisTurn = false;
+        lastFinish = null;
         arrangedSig = null;
         arrangeComplete = false;
         openScoreThisTurn = 0;
@@ -514,9 +515,20 @@ public partial class SyncAutoTest
         Tiles thrown = HandSolver.Copy(new[] { tile.tileDataInfo })[0];
         int que = v.MyQue;
         var expected = new Dictionary<int, int>();
+        var seated = new HashSet<int>(
+            PhotonNetwork.PlayerList.Where(p => p.CustomProperties.ContainsKey("PlayerQue")).Select(p => (int)p.CustomProperties["PlayerQue"])
+        );
         void Add(int q, int amount)
         {
-            if (amount != 0)
+            if (amount != 0 && !RuleOracle.Observable(q, PhotonNetwork.IsMasterClient, seated))
+            {
+                if (!botPenaltyNoted)
+                {
+                    botPenaltyNoted = true;
+                    journal.Line(Key, Who, "not: bot koltuğunun cezası yalnız masa sahibinde denetlenir");
+                }
+            }
+            else if (amount != 0)
                 expected[q] = (expected.TryGetValue(q, out int e) ? e : 0) + amount;
         }
 
@@ -540,6 +552,13 @@ public partial class SyncAutoTest
             journal.Line(Key, Who, "ÖZ-TEST: beklenen ceza bilerek +1 bozuldu");
         }
 
+        // Bitiş kaydı atıştan ÖNCE: el sonu geri çağrısı bu eş yordamdan önce gelebilir.
+        if (finishing)
+            lastFinish = new FinishInfo
+            {
+                OkeyFinish = thrown.type == TileType.Joker,
+                Kafa = firstOpenThisTurn && !v.AnyoneElseOpened,
+            };
         DragTo(tile, GameObject.Find("RightTileContainer").transform);
         if (sideIncomplete)
             yield return StartCoroutine(WaitFor(() => !turnManager.hasPickedFromSide));
@@ -563,11 +582,9 @@ public partial class SyncAutoTest
                 : v.IOpenedPairs ? "çift"
                 : "normal";
             status.finishType = finishKind;
-            lastFinish = new FinishInfo
-            {
-                OkeyFinish = thrown.type == TileType.Joker,
-                Kafa = firstOpenThisTurn && !v.AnyoneElseOpened,
-            };
+            // Taş hâlâ elde ise atış reddedilmiştir: bitiş değil.
+            if (HandTileUI(step.TileId) != null)
+                lastFinish = null;
         }
     }
 
@@ -585,16 +602,23 @@ public partial class SyncAutoTest
     }
 
     FinishInfo lastFinish;
+    bool botPenaltyNoted;
 
     // Okey ve kafa bilgisi sadece bitirende var: el sonunu bitiren kontrol eder (beraberlikte host).
     void OnHandResult(int[] actors, int[] rewards, int[] penalties, int[] netScores)
     {
         if (!Config.IsSmart || journal == null)
+        {
+            lastFinish = null;
             return;
-        bool iFinished = lastFinish != null;
+        }
         bool draw = rewards.All(r => r >= 0);
+        bool iFinished = RuleOracle.IFinished(lastFinish != null, draw);
         if (!iFinished && !(draw && Config.IsHost))
+        {
+            lastFinish = null;
             return;
+        }
 
         var td = Td;
         var sm = Sm;

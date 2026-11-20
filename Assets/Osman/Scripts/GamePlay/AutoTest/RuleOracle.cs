@@ -109,6 +109,12 @@ public static class RuleOracle
         return representedNumber * 10;
     }
 
+    // Bot koltuğunun puanını yalnız masa sahibi görür; misafir için o beklenti denetlenemez.
+    public static bool Observable(int que, bool isMaster, ISet<int> quesWithPlayer) => isMaster || quesWithPlayer.Contains(que);
+
+    // Beraberlikte kazanan yok: bayat bitiş kaydı kazanç sayılmaz.
+    public static bool IFinished(bool hasFinishRecord, bool draw) => hasFinishRecord && !draw;
+
     public static int SidePickPenalty(int tileNumber) => tileNumber * 10;
 
     // Katlamalı: ilk açan en az 51, sonrakiler yeri geçmeli; açmış oyuncuya limit yok.

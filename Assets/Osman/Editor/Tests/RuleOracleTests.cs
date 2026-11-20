@@ -191,4 +191,21 @@ public class RuleOracleTests
         Assert.AreEqual(0, r[1]); // eli boş, açmış
         Assert.AreEqual(400, r[2]); // çarpan yok
     }
+
+    [Test]
+    public void Observable_BotSeatOnlyOnMaster()
+    {
+        var seated = new HashSet<int> { 1, 2 };
+        Assert.IsTrue(RuleOracle.Observable(2, false, seated));
+        Assert.IsFalse(RuleOracle.Observable(3, false, seated));
+        Assert.IsTrue(RuleOracle.Observable(3, true, seated));
+    }
+
+    [Test]
+    public void IFinished_StaleRecordInDrawIsNotAWin()
+    {
+        Assert.IsTrue(RuleOracle.IFinished(true, false));
+        Assert.IsFalse(RuleOracle.IFinished(true, true));
+        Assert.IsFalse(RuleOracle.IFinished(false, false));
+    }
 }
