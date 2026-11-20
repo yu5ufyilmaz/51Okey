@@ -39,13 +39,15 @@ public class TurnManager : MonoBehaviourPunCallbacks
 
     private bool autoPlaying;
 
+    // El başında 0; her kabul edilen NextTurn'de gelen seriye eşitlenir.
+    public int TurnSerial { get; private set; }
+
     public void StartGame()
     {
         TurnStartTime = PhotonNetwork.Time;
         Player player = PhotonNetwork.LocalPlayer;
-        player.CustomProperties.TryGetValue("PlayerQue", out object queueValue);
-        int queueValueInt = (int)queueValue;
-        if (queueValueInt == 1)
+        // PlayerQue sunucu sırasıyla gelir: henüz yoksa canDrop'u StartRoundVisuals/SetTurnDirectly açar.
+        if (player.CustomProperties.TryGetValue("PlayerQue", out object queueValue) && (int)queueValue == 1)
         {
             canDrop = true;
         }
@@ -195,8 +197,12 @@ public class TurnManager : MonoBehaviourPunCallbacks
         isBotMoving = false;
 
         // Sırayı zorla devret
-        photonView.RPC("NextTurn", RpcTarget.All);
+        SendNextTurn(true);
     }
+
+    // Yetki (masa sahibi) gönderimi sunucu sırasıyla gider; insan atışı All: kendi hamlesinin ardından yerelde işlenir.
+    public void SendNextTurn(bool authority) =>
+        photonView.RPC("NextTurn", authority ? RpcTarget.AllViaServer : RpcTarget.All, TurnSerial + 1);
 
     // TurnManager.cs içine eklenecek:
     [PunRPC]
@@ -307,6 +313,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
     {
         // 1. Sadece verileri sıfırla, EKRANA DOKUNMA.
         currentTurnPlayer = 1;
+        TurnSerial = 0;
         ResetTurnFlags();
 
         isBotMoving = false;
@@ -334,8 +341,16 @@ public class TurnManager : MonoBehaviourPunCallbacks
     }
 
     [PunRPC]
-    private void NextTurn(PhotonMessageInfo info)
+    private void NextTurn(int serial, PhotonMessageInfo info)
     {
+        if (!TurnSerialRule.Accept(TurnSerial, serial))
+        {
+            Debug.LogWarning($"[TUR] eski seri {serial} <= {TurnSerial}");
+            return;
+        }
+        if (serial > TurnSerial + 1)
+            Debug.LogWarning($"[TUR] seri atladı {TurnSerial} -> {serial}");
+        TurnSerial = serial;
         localPlayerTurn = false;
         TurnStartTime = info.SentServerTime;
 
@@ -496,7 +511,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
             // Ortadan çek
             tileDist.photonView.RPC(
                 "AddTileFromMiddlePlayerList",
-                RpcTarget.All,
+                RpcTarget.AllViaServer,
                 playerQue
             );
             hasDrawn = true;
@@ -529,7 +544,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
         {
             tileDist.photonView.RPC(
                 "BotDiscardTileRPC",
-                RpcTarget.All,
+                RpcTarget.AllViaServer,
                 playerQue,
                 worstTileID
             );

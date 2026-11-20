@@ -58,4 +58,8 @@ public class RejoinTests
         CollectionAssert.AreEqual(new[] { "A", "Bot 1", "C (bot)", "D" },
             SeatNaming.Names(new[] { "A", null, "C", "D" }, CtlBits.BotNow(0b1001)));
     }
+    [Test] public void Serial_Accepts_Only_Newer() {
+        Assert.IsTrue(TurnSerialRule.Accept(0, 1)); Assert.IsFalse(TurnSerialRule.Accept(3, 3));
+        Assert.IsFalse(TurnSerialRule.Accept(3, 2)); Assert.IsTrue(TurnSerialRule.Accept(3, 5));
+    }
 }

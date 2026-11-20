@@ -17,8 +17,8 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
     [SerializeField]
     private ScoreManager scoreManager;
 
-    [SerializeField]
-    private List<Tiles> playerTiles;
+    // Canlı okunur: PlayerQue sunucu sırasıyla gelir, Start anında henüz olmayabilir.
+    private List<Tiles> playerTiles => tileDistrubite.GetPlayerTiles();
 
     [SerializeField]
     private Image tileImage;
@@ -122,8 +122,6 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
         turnManager = GameObject.Find("TurnManager").GetComponent<TurnManager>();
         tileDistrubite = GameObject.Find("TileManager(Clone)").GetComponent<TileDistrubite>();
         scoreManager = GameObject.Find("ScoreManager(Clone)").GetComponent<ScoreManager>();
-        playerTiles = null;
-        playerTiles = tileDistrubite.GetPlayerTiles();
         tileDistrubite.RegisterTileUI(this);
         scoreManager.CheckForPer();
         FitToParent();
@@ -1050,7 +1048,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
         // Turu bitir, bayrakları sıfırla ve sırayı devret
         turnManager.canDrop = false;
-        turnManager.photonView.RPC("NextTurn", RpcTarget.All);
+        turnManager.SendNextTurn(false);
 
         // Görsel nesneyi yok et
         Destroy(gameObject);

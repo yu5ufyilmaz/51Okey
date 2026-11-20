@@ -222,7 +222,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         // --- [YENİ MANTIK BİTİŞİ] ---
 
         // Sync the indicator tile across all clients
-        photonView.RPC("SyncIndicatorTile", RpcTarget.All, indicatorTile);
+        photonView.RPC("SyncIndicatorTile", RpcTarget.AllViaServer, indicatorTile);
     }
 
     // Bu fonksiyon SADECE gösterge taşı Sahte Okey (Resimli) olduğunda çalışır.
@@ -281,14 +281,14 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     private IEnumerator DistributeWithDelay()
     {
         // 1. Önce herkesin sıra numarasını (PlayerQue) değiştir
-        photonView.RPC("AssignPlayerQueue", RpcTarget.All);
+        photonView.RPC("AssignPlayerQueue", RpcTarget.AllViaServer);
 
         // 2. Bu bilginin ağ üzerinden herkese gidip işlenmesi için kısa bir süre bekle
         // 0.5 saniye genellikle yeterlidir.
         yield return new WaitForSeconds(0.5f);
 
         // 3. Sıralar güncellendikten sonra taşları dağıt
-        photonView.RPC("SyncShuffledTiles", RpcTarget.All, allTiles.ToArray());
+        photonView.RPC("SyncShuffledTiles", RpcTarget.AllViaServer, allTiles.ToArray());
     }
     #endregion
     #region Assign Player Queue
@@ -326,7 +326,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             {
                 photonView.RPC(
                     "AssignQueueToPlayer",
-                    RpcTarget.All,
+                    RpcTarget.AllViaServer,
                     targetPlayer.ActorNumber,
                     currentQueueValue
                 );
@@ -340,7 +340,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 {
                     GameManager.Instance.turnManager.photonView.RPC(
                         "SetTurnDirectly",
-                        RpcTarget.All,
+                        RpcTarget.AllViaServer,
                         1
                     );
                 }
@@ -348,8 +348,8 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         }
 
         // Haritayı herkese senkronize et ve dağıtımı bitir
-        photonView.RPC("SyncQueToSeatMapping", RpcTarget.All, newMapping);
-        photonView.RPC("AssignQueueComplete", RpcTarget.All);
+        photonView.RPC("SyncQueToSeatMapping", RpcTarget.AllViaServer, newMapping);
+        photonView.RPC("AssignQueueComplete", RpcTarget.AllViaServer);
     }
 
     // Bu yeni metodu hemen AssignPlayerQueue'nun altına ekle:
@@ -549,8 +549,10 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     #region Tile Pick or Drop Actions
     public List<Tiles> GetPlayerTiles()
     {
-        PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object queueValue);
-        int playerNumber = (int)queueValue;
+        int playerNumber =
+            PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object queueValue)
+                ? (int)queueValue
+                : 0;
         switch (playerNumber)
         {
             case 1:
@@ -2127,7 +2129,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                     {
                         GameManager.Instance.photonView.RPC(
                             "FinishGameRPC",
-                            RpcTarget.All,
+                            RpcTarget.AllViaServer,
                             -1, // Kazanan yok (-1 = Beraberlik)
                             false, // isPenalty
                             false // isNormalWin
@@ -2146,7 +2148,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 if (tm != null)
                 {
                     tm.canDrop = false;
-                    tm.photonView.RPC("NextTurn", RpcTarget.All);
+                    tm.SendNextTurn(true);
                 }
             }
         }
@@ -2157,7 +2159,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             // Hata toleransı: Sırayı zorla geçir ki oyun donmasın
             if (PhotonNetwork.IsMasterClient)
             {
-                FindObjectOfType<TurnManager>().photonView.RPC("NextTurn", RpcTarget.All);
+                FindObjectOfType<TurnManager>().SendNextTurn(true);
             }
         }
     }

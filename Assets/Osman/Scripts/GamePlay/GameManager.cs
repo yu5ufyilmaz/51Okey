@@ -214,7 +214,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     // Master ceza yazınca herkes, cezayı yiyenin isimliğinin üstünde miktarı ve sebebi görür.
     public void AnnouncePenalty(int playerQue, int amount, PenaltyReason reason) =>
-        photonView.RPC(nameof(ShowPenaltyRPC), RpcTarget.All, playerQue, amount, (byte)reason);
+        photonView.RPC(nameof(ShowPenaltyRPC), RpcTarget.AllViaServer, playerQue, amount, (byte)reason);
 
     [PunRPC]
     void ShowPenaltyRPC(int playerQue, int amount, byte reason)
@@ -429,7 +429,7 @@ public class GameManager : MonoBehaviourPunCallbacks
             if (tileDistrubite.allTiles.Count == 0)
             {
                 Debug.Log("OYUN BİTTİ! Ortada taş kalmadı. (Berabere)");
-                photonView.RPC("FinishGameRPC", RpcTarget.All, -1, false, false);
+                photonView.RPC("FinishGameRPC", RpcTarget.AllViaServer, -1, false, false);
             }
         }
     }
@@ -544,7 +544,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         photonView.RPC(
             "OnGameEndedDetailedRPC",
-            RpcTarget.All,
+            RpcTarget.AllViaServer,
             actors.ToArray(),
             listRewards.ToArray(),
             listPenalties.ToArray(),
@@ -699,7 +699,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         Hashtable cp = new Hashtable();
         cp.Add("CurrentRound", nextRoundValue);
         PhotonNetwork.CurrentRoom.SetCustomProperties(cp);
-        photonView.RPC("RPC_PrepareNextRound", RpcTarget.All);
+        photonView.RPC("RPC_PrepareNextRound", RpcTarget.AllViaServer);
         SeatManager.Instance?.PublishSeatNames(); // yeni elin başında koltuk adları (gösterim)
     }
 
@@ -718,7 +718,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         // Sıfırlama yalnızca masa sahibinden gider: her istemci yollarsa geç gelen kopyalar
         // StartRoundVisuals'ın açtığı canDrop'u siler ve 1. sıradaki masa sahibi takılır.
         if (PhotonNetwork.IsMasterClient)
-            turnManager.photonView.RPC("RPC_ResetTurnForNewRound", RpcTarget.All);
+            turnManager.photonView.RPC("RPC_ResetTurnForNewRound", RpcTarget.AllViaServer);
 
         if (PhotonNetwork.IsMasterClient)
         {
@@ -745,6 +745,6 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         yield return new WaitForSeconds(0.2f);
         if (tileDistrubite != null)
-            tileDistrubite.photonView.RPC("ResetTableAndRedistribute", RpcTarget.All);
+            tileDistrubite.photonView.RPC("ResetTableAndRedistribute", RpcTarget.AllViaServer);
     }
 }
