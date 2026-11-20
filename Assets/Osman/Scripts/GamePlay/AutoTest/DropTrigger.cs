@@ -7,6 +7,7 @@ public struct DropView
     public bool otherMoved; // son atışımdan beri başka koltuğun hamlesi görüldü
     public float offSec; // son atışımdan beri geçen süre
     public bool justDiscarded; // atış bu karede tamamlandı
+    public bool drew; // bu turda çektim (canDrop): açınca el küçüldüğü için el sayısı bunu söylemez
 }
 
 public static class DropTrigger
@@ -31,7 +32,7 @@ public static class DropTrigger
             case "after-draw":
                 return v.myTurn && v.handCount == 15 && !v.openedThisTurn && v.ownTurnsSeen >= 2;
             case "master-turn":
-                return v.isMaster && v.myTurn && v.handCount == 15 && !v.openedThisTurn && v.ownTurnsSeen >= 2;
+                return v.isMaster && v.myTurn && v.drew && v.ownTurnsSeen >= 2;
             case "after-open":
                 return v.myTurn && v.openedThisTurn;
             case "hand-end":

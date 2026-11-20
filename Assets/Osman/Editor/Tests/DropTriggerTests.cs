@@ -3,9 +3,9 @@ using NUnit.Framework;
 public class DropTriggerTests
 {
     static DropView V(bool myTurn = false, int hand = 14, bool opened = false, int seen = 2, bool master = false, bool ended = false,
-        bool live = true, bool other = true, float off = 0f, bool just = false) =>
+        bool live = true, bool other = true, float off = 0f, bool just = false, bool drew = false) =>
         new DropView { myTurn = myTurn, handCount = hand, openedThisTurn = opened, ownTurnsSeen = seen, isMaster = master, handEnded = ended,
-            live = live, otherMoved = other, offSec = off, justDiscarded = just };
+            live = live, otherMoved = other, offSec = off, justDiscarded = just, drew = drew };
 
     [Test]
     public void Offturn_NeedsStableOffTurn()
@@ -40,10 +40,11 @@ public class DropTriggerTests
     [Test]
     public void MasterTurn_NeedsMasterOnOwnTurnAfterDraw()
     {
-        Assert.IsTrue(DropTrigger.ShouldDrop("master-turn", V(true, 15, master: true)));
-        Assert.IsFalse(DropTrigger.ShouldDrop("master-turn", V(true, 15)));
+        Assert.IsTrue(DropTrigger.ShouldDrop("master-turn", V(true, 15, master: true, drew: true)));
+        Assert.IsTrue(DropTrigger.ShouldDrop("master-turn", V(true, 5, master: true, drew: true)), "açmış elde de çekmiş sayılır");
+        Assert.IsFalse(DropTrigger.ShouldDrop("master-turn", V(true, 15, drew: true)));
         Assert.IsFalse(DropTrigger.ShouldDrop("master-turn", V(true, 14, master: true)));
-        Assert.IsFalse(DropTrigger.ShouldDrop("master-turn", V(false, 15, master: true)));
+        Assert.IsFalse(DropTrigger.ShouldDrop("master-turn", V(false, 15, master: true, drew: true)));
     }
 
     [Test]

@@ -45,6 +45,7 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
     float lastSeatRequest = -10f;
     bool seatMoved;
     bool botsReleased;
+    bool wasMasterInRoom;
     bool dropFired,
         handEnded,
         otherMoved;
@@ -262,6 +263,7 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
             otherMoved = otherMoved,
             offSec = Time.unscaledTime - lastDiscardAt,
             justDiscarded = justDiscarded,
+            drew = turnManager != null && turnManager.canDrop,
             myTurn = turnManager != null && gm.isGameReady && !gm.isGameEnded && tp == MyQue,
             isMaster = PhotonNetwork.IsMasterClient,
             handEnded = handEnded,
@@ -480,7 +482,10 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
         status.state = state.ToString();
         status.actor = PhotonNetwork.LocalPlayer?.ActorNumber ?? 0;
         status.que = MyQue;
-        status.isMaster = PhotonNetwork.IsMasterClient;
+        // Oda terk edilince IsMasterClient false olur; odadayken görülen son değer tutulur.
+        if (PhotonNetwork.InRoom)
+            wasMasterInRoom = PhotonNetwork.IsMasterClient;
+        status.isMaster = wasMasterInRoom;
         status.deal = deal;
         status.myMoves = myMoves;
         status.isMyTurn =

@@ -243,6 +243,14 @@ Describe 'Get-DropVerdict evidence' {
     }
 }
 
+Describe 'Get-DropVerdict real-run shape' {
+    It 'passes offturn with the latched host master, Gone g1 and bot-less guests' {
+        $s = @((New-DropStatus 'AT-host'), (New-DropStatus 'AT-g1' -state 'Gone' -drops 1 -lines @()), (New-DropStatus 'AT-g2'), (New-DropStatus 'AT-g3'))
+        $s[2].ctlBotLines = 0; $s[3].ctlBotLines = 0
+        (Get-SyncTestVerdict -Statuses $s -Nicks $Nicks -TimedOut $false -DropEditors @(1) -DropMode 'noreturn' -DropScenario 'offturn').Pass | Should Be $true
+    }
+}
+
 Describe 'Get-DropSummary' {
     It 'prints one line per editor' {
         $s = @((New-DropStatus 'AT-host'), (New-DropStatus 'AT-g1' 'Gone' 1))
