@@ -868,7 +868,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
                             tileDistrubite.photonView.RPC(
                                 "RemoveTileFromPlayerListByValue",
-                                RpcTarget.AllBuffered,
+                                RpcTarget.All,
                                 GetPlayerQue(),
                                 tile
                             );
@@ -879,7 +879,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                     UpdateAvailableForPlaceholders(per, rowIndex);
                     tileDistrubite.photonView.RPC(
                         "MergeValidpers",
-                        RpcTarget.AllBuffered,
+                        RpcTarget.All,
                         per,
                         GetPlayerQue(),
                         positions
@@ -986,7 +986,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
                             tileDistrubite.photonView.RPC(
                                 "RemoveTileFromPlayerListByValue",
-                                RpcTarget.AllBuffered,
+                                RpcTarget.All,
                                 GetPlayerQue(),
                                 tile
                             );
@@ -997,7 +997,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                     UpdateAvailableForPlaceholders(per, rowIndex);
                     tileDistrubite.photonView.RPC(
                         "MergeValidpers",
-                        RpcTarget.AllBuffered,
+                        RpcTarget.All,
                         per,
                         GetPlayerQue(),
                         positions
@@ -1017,7 +1017,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 FirstOpenThisTurn = true;
             GameManager.Instance.photonView.RPC(
                 "SyncOpenedPlayerRPC",
-                RpcTarget.AllBuffered,
+                RpcTarget.All,
                 GetPlayerQue()
             );
 
@@ -1152,7 +1152,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
                             tileDistrubite.photonView.RPC(
                                 "RemoveTileFromPlayerListByValue",
-                                RpcTarget.AllBuffered,
+                                RpcTarget.All,
                                 GetPlayerQue(),
                                 tile
                             );
@@ -1164,7 +1164,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
                     tileDistrubite.photonView.RPC(
                         "MergeValidpers",
-                        RpcTarget.AllBuffered,
+                        RpcTarget.All,
                         pair,
                         GetPlayerQue(),
                         positions
@@ -1184,13 +1184,13 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 FirstOpenThisTurn = true;
             GameManager.Instance.photonView.RPC(
                 "SyncOpenedPlayerRPC",
-                RpcTarget.AllBuffered,
+                RpcTarget.All,
                 GetPlayerQue()
             );
             hasOpenedPairs = true;
             GameManager.Instance.photonView.RPC(
                 "SyncOpenedPairsRPC",
-                RpcTarget.AllBuffered,
+                RpcTarget.All,
                 GetPlayerQue()
             );
             GameManager.Instance.SetDoubleOpened();
@@ -1216,7 +1216,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             }
             tileDistrubite.photonView.RPC(
                 "AddTileToPlayerHand",
-                RpcTarget.AllBuffered,
+                RpcTarget.All,
                 playerQue,
                 tile
             );
@@ -1247,7 +1247,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         // (Burada mevcut kodların aynen kalabilir)
 
         // --- 4. SENKRONİZASYON VE DURUM GÜNCELLEME ---
-        tileDistrubite.photonView.RPC("UnMergeValidPers", RpcTarget.AllBuffered, playerQue);
+        tileDistrubite.photonView.RPC("UnMergeValidPers", RpcTarget.All, playerQue);
 
         pendingMeldedTiles.Clear();
         pendingMeldInfos.Clear();
@@ -1303,7 +1303,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             // TileDistrubite'a RPC göndererek jokeri oyuncunun eline (veri listesi ve görsel olarak) eklet.
             tileDistrubite.photonView.RPC(
                 "AddTileToPlayerHand",
-                RpcTarget.AllBuffered,
+                RpcTarget.All,
                 playerQue,
                 pendingJoker.jokerData
             );
@@ -1805,7 +1805,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         {
             tileDistrubite.photonView.RPC(
                 "RemoveTileFromPlayerListByValue",
-                RpcTarget.AllBuffered,
+                RpcTarget.All,
                 playerQue,
                 actualTileInHand
             );
@@ -1834,7 +1834,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         {
             tileDistrubite.photonView.RPC(
                 "AddTileToPlayerHand",
-                RpcTarget.AllBuffered,
+                RpcTarget.All,
                 playerQue,
                 tileToGiveBack
             );
@@ -1851,7 +1851,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             {
                 tileDistrubite.photonView.RPC(
                     "SyncProcessedTileRPC",
-                    RpcTarget.OthersBuffered,
+                    RpcTarget.Others,
                     sync.ownerQue,
                     sync.tileData,
                     sync.meldType,
@@ -1931,7 +1931,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         // 3. TAŞI GERİ VER (Aynen)
         tileDistrubite.photonView.RPC(
             "AddTileToPlayerHand",
-            RpcTarget.AllBuffered,
+            RpcTarget.All,
             playerQue,
             lastAction.tilePlayed
         );
@@ -1941,7 +1941,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         {
             tileDistrubite.photonView.RPC(
                 "RemoveTileFromPlayerListByValue",
-                RpcTarget.AllBuffered,
+                RpcTarget.All,
                 playerQue,
                 lastAction.tileTaken
             );
@@ -1990,7 +1990,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             // Taşın verisini ve ID'sini diğer oyunculara göndererek sildir
             tileDistrubite.photonView.RPC(
                 "MeldTiles",
-                RpcTarget.AllBuffered,
+                RpcTarget.All,
                 playerQue,
                 tileInfo.tileData
             );

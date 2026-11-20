@@ -95,7 +95,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
 
             photonView.RPC(
                 "AssignSeatToPlayer",
-                RpcTarget.AllBuffered,
+                RpcTarget.All,
                 PhotonNetwork.LocalPlayer.ActorNumber,
                 seatNumber
             );
@@ -224,7 +224,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
             {
                 int seat = FirstFreeSeat();
                 if (!IsSeated(p) && seat > 0)
-                    photonView.RPC("AssignSeatToPlayer", RpcTarget.AllBuffered, p.ActorNumber, seat);
+                    photonView.RPC("AssignSeatToPlayer", RpcTarget.All, p.ActorNumber, seat);
             }
             Debug.Log(
                 $"Oda {delay} sn içinde dolmadı. Boş koltuklar botla dolduruluyor ({PhotonNetwork.PlayerList.Length} insan)."
@@ -247,7 +247,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
             if (seatNumber > 0)
                 photonView.RPC(
                     "AssignSeatToPlayer",
-                    RpcTarget.AllBuffered,
+                    RpcTarget.All,
                     newPlayer.ActorNumber,
                     seatNumber
                 );
@@ -266,7 +266,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
         if (seatNumber_E != -1 && PhotonNetwork.IsMasterClient)
         {
             // Use RPC to remove the seat assignment from all clients
-            photonView.RPC("FreeSeat", RpcTarget.AllBuffered, seatNumber_E);
+            photonView.RPC("FreeSeat", RpcTarget.All, seatNumber_E);
         }
         UpdateSeatDisplay(); // Update the seat display for the local player
     }
@@ -308,7 +308,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
             return;
         if (GetSeatNumberOfPlayer(info.Sender) == seat || TakenSeats(info.Sender).Contains(seat))
             return;
-        photonView.RPC("AssignSeatToPlayer", RpcTarget.AllBuffered, info.Sender.ActorNumber, seat);
+        photonView.RPC("AssignSeatToPlayer", RpcTarget.All, info.Sender.ActorNumber, seat);
         TryStartGame();
     }
 
@@ -355,8 +355,8 @@ public class SeatManager : MonoBehaviourPunCallbacks
 
             Player playerr = PhotonNetwork.LocalPlayer;
 
-            playerPhotonView.RPC("SetPlayerName", RpcTarget.AllBuffered, PhotonNetwork.NickName);
-            playerPhotonView.RPC("SetPlayerSeat", RpcTarget.AllBuffered, spawnPosition);
+            playerPhotonView.RPC("SetPlayerName", RpcTarget.All, PhotonNetwork.NickName);
+            playerPhotonView.RPC("SetPlayerSeat", RpcTarget.All, spawnPosition);
         }
         else
         {

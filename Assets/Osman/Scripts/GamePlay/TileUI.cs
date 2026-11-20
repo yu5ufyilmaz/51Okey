@@ -762,7 +762,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                     SetTileData(tileDistrubite.allTiles[0]);
                     tileDistrubite.photonView.RPC(
                         "AddTileFromMiddlePlayerList",
-                        RpcTarget.AllBuffered,
+                        RpcTarget.All,
                         localQueInt
                     );
                     turnManager.canDrop = true;
@@ -774,7 +774,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
                     EventDispatcher.SummonEvent("OnSideTilePicked", this.tileDataInfo);
                     tileDistrubite.photonView.RPC(
                         "AddTileFromDropPlayerList",
-                        RpcTarget.AllBuffered,
+                        RpcTarget.All,
                         localQueInt
                     );
                     turnManager.canDrop = true;
@@ -1050,7 +1050,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
         // Turu bitir, bayrakları sıfırla ve sırayı devret
         turnManager.canDrop = false;
-        turnManager.photonView.RPC("NextTurn", RpcTarget.AllBuffered);
+        turnManager.photonView.RPC("NextTurn", RpcTarget.All);
 
         // Görsel nesneyi yok et
         Destroy(gameObject);

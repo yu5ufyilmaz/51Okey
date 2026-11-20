@@ -326,7 +326,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             {
                 photonView.RPC(
                     "AssignQueueToPlayer",
-                    RpcTarget.AllBuffered,
+                    RpcTarget.All,
                     targetPlayer.ActorNumber,
                     currentQueueValue
                 );
@@ -348,8 +348,8 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         }
 
         // Haritayı herkese senkronize et ve dağıtımı bitir
-        photonView.RPC("SyncQueToSeatMapping", RpcTarget.AllBuffered, newMapping);
-        photonView.RPC("AssignQueueComplete", RpcTarget.AllBuffered);
+        photonView.RPC("SyncQueToSeatMapping", RpcTarget.All, newMapping);
+        photonView.RPC("AssignQueueComplete", RpcTarget.All);
     }
 
     // Bu yeni metodu hemen AssignPlayerQueue'nun altına ekle:
@@ -2146,7 +2146,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 if (tm != null)
                 {
                     tm.canDrop = false;
-                    tm.photonView.RPC("NextTurn", RpcTarget.AllBuffered);
+                    tm.photonView.RPC("NextTurn", RpcTarget.All);
                 }
             }
         }
@@ -2157,7 +2157,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             // Hata toleransı: Sırayı zorla geçir ki oyun donmasın
             if (PhotonNetwork.IsMasterClient)
             {
-                FindObjectOfType<TurnManager>().photonView.RPC("NextTurn", RpcTarget.AllBuffered);
+                FindObjectOfType<TurnManager>().photonView.RPC("NextTurn", RpcTarget.All);
             }
         }
     }

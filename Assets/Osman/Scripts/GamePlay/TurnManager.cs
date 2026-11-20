@@ -475,7 +475,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
             // Ortadan çek
             tileDist.photonView.RPC(
                 "AddTileFromMiddlePlayerList",
-                RpcTarget.AllBuffered,
+                RpcTarget.All,
                 playerQue
             );
             hasDrawn = true;
@@ -502,7 +502,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
         {
             tileDist.photonView.RPC(
                 "BotDiscardTileRPC",
-                RpcTarget.AllBuffered,
+                RpcTarget.All,
                 playerQue,
                 worstTileID
             );

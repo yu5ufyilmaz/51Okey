@@ -260,7 +260,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         tileDistrubite.photonView.RPC("ReturnTileToSide", RpcTarget.All, playerQue, tileToReturn);
         tileDistrubite.photonView.RPC(
             "RemoveTileFromPlayerListByValue",
-            RpcTarget.AllBuffered,
+            RpcTarget.All,
             playerQue,
             tileToReturn
         );
@@ -273,7 +273,7 @@ public class GameManager : MonoBehaviourPunCallbacks
             Tiles drawn = tileDistrubite.allTiles[0];
             tileDistrubite.photonView.RPC(
                 "AddTileFromMiddlePlayerList",
-                RpcTarget.AllBuffered,
+                RpcTarget.All,
                 playerQue
             );
             tileDistrubite.InstantiateTileInFirstEmptySlot(drawn);
