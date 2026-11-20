@@ -549,6 +549,11 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
     public void OnButtonClick()
     {
+        if (!turnManager.IsPlayerTurn())
+        {
+            Sfx.Play(SfxId.Error);
+            return;
+        }
         if (hasOpenedPairs && !hasOpenedSeries)
         {
             Debug.LogWarning("Sadece Çift açtığınız için Seri açamazsınız!");
@@ -605,6 +610,11 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
     public void OnPairButtonClick()
     {
+        if (!turnManager.IsPlayerTurn())
+        {
+            Sfx.Play(SfxId.Error);
+            return;
+        }
         // 1. SIRA KONTROLÜ
         if (turnManager.canDrop == true)
         {
@@ -724,6 +734,11 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
     public void OnActiveButtonClick()
     {
+        if (!turnManager.IsPlayerTurn())
+        {
+            Sfx.Play(SfxId.Error);
+            return;
+        }
         if (turnManager.canDrop == true)
         {
             ActivePers();

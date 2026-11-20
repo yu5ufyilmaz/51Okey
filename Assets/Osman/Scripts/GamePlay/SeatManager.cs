@@ -160,6 +160,9 @@ public class SeatManager : MonoBehaviourPunCallbacks
                 rememberedNames[s - 1] = p.NickName;
                 botNow[s - 1] = false;
             }
+            // Koltuklar kilitlendikten sonra bot/insan Ctl bitinden gelir (oda özelliğinin yankısı beklenmez).
+            if (SeatsLocked || gameIsStart)
+                botNow = CtlBits.BotNow(IntendedCtl);
             string[] prev = MatchScores.Instance.SeatNames;
             var humans = new string[4];
             for (int i = 0; i < 4; i++)
@@ -178,6 +181,26 @@ public class SeatManager : MonoBehaviourPunCallbacks
         {
             Debug.LogError($"[SKOR] koltuk adları yazılamadı: {e}");
         }
+    }
+
+    // Masa sahibinin niyet ettiği Ctl; oda özelliğinin yerel kopyası sunucu yankısıyla gelir, bot kapısı beklemesin diye bu kullanılır.
+    public int IntendedCtl { get; private set; }
+
+    // Yalnız master: koltuğun insan/bot denetimini değiştirir, odaya yazar, isimlikleri yeniler.
+    public void SetSeatControl(int seat, bool human)
+    {
+        if (!PhotonNetwork.IsMasterClient || PhotonNetwork.CurrentRoom == null)
+            return;
+        int next = CtlBits.Set(IntendedCtl, seat, human);
+        Debug.Log($"[CTL] koltuk {seat} {(human ? "insan" : "bot")}");
+        if (next != IntendedCtl)
+        {
+            IntendedCtl = next;
+            PhotonNetwork.CurrentRoom.SetCustomProperties(
+                new ExitGames.Client.Photon.Hashtable { { CtlBits.Key, IntendedCtl } }
+            );
+        }
+        PublishSeatNames();
     }
 
     // Lobideki oda satırı koltukları bu özellikten okur. Yalnız master yazar; oyun başlayınca yazılmaz.
@@ -206,7 +229,13 @@ public class SeatManager : MonoBehaviourPunCallbacks
         {
             PublishSeats();
             if (SeatsLocked)
+            {
+                IntendedCtl = CtlBits.Read(PhotonNetwork.CurrentRoom.CustomProperties);
+                foreach (Player p in PhotonNetwork.PlayerList)
+                    if (p.IsInactive)
+                        SetSeatControl(GetSeatNumberOfPlayer(p), false);
                 PublishSeatNames(); // eski master'ın adları yok: oda özelliğinden devralınır
+            }
         }
     }
 
@@ -262,7 +291,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
         int seatNumber_E = GetSeatNumberOfPlayer(otherPlayer);
         SeatNaming.RememberLeaver(rememberedNames, seatNumber_E, otherPlayer.NickName, SeatsLocked); // oyun başladıysa ayrılsa da adı kalır
         if (PhotonNetwork.IsMasterClient && SeatsLocked)
-            PublishSeatNames();
+            SetSeatControl(seatNumber_E, false); // koptu ya da çıktı: koltuğu bot oynar (isimlikleri de yeniler)
         if (seatNumber_E != -1 && PhotonNetwork.IsMasterClient)
         {
             // Use RPC to remove the seat assignment from all clients
@@ -528,9 +557,9 @@ public class SeatManager : MonoBehaviourPunCallbacks
             bool pick = canPick && !occupied[i];
             if (pick)
                 field.text = Loc.T("table.sit");
-            else if (!occupied[i] && !canPick && MatchScores.Instance != null)
+            else if ((!occupied[i] || SeatsLocked) && !canPick && MatchScores.Instance != null)
             {
-                // oyun başladı, koltukta insan yok: bot adı (oyuncusu ayrılmışsa "ad (bot)")
+                // oyun başladı: her koltuğun adı MatchScores'tan ("ad (bot)" Ctl bitine bakar, IsInactive'e değil)
                 string[] names = MatchScores.Instance.SeatNames;
                 int seat = SeatMath.SeatAtRelativeIndex(i, viewBaseSeat) - 1;
                 if (seat >= 0 && seat < names.Length)
@@ -565,13 +594,23 @@ public class SeatManager : MonoBehaviourPunCallbacks
     static int[] SeatOfQue => GameManager.Instance != null ? GameManager.Instance.tileDistrubite?.seatOfQue : null;
 
     // Sıra numarasının meld alanı; eşleme/koltuk/alan yoksa null (oyuncu adına bakmaz).
-    public Transform MeldAreaOfQue(int que)
+    public Transform MeldAreaOfQue(int que) => MeldAreaOfSeat(SeatMath.MeldSeat(SeatOfQue, que));
+
+    // MeldAreaOfQue'nun koltuk sürümü; koltuk 1..4 dışındaysa null.
+    public Transform MeldAreaOfSeat(int seat)
     {
-        int seat = SeatMath.MeldSeat(SeatOfQue, que);
-        if (seat < 0 || meldTileOffsets == null)
+        if (seat < 1 || seat > 4 || meldTileOffsets == null)
             return null;
         int rel = SeatMath.RelativeIndex(seat, LocalSeat);
         return rel < meldTileOffsets.Length && meldTileOffsets[rel] != null ? meldTileOffsets[rel].transform : null;
+    }
+
+    public Transform DropAreaOfSeat(int seat)
+    {
+        if (seat < 1 || seat > 4 || tiledropOffset == null)
+            return null;
+        int rel = SeatMath.RelativeIndex(seat, LocalSeat);
+        return rel < tiledropOffset.Length && tiledropOffset[rel] != null ? tiledropOffset[rel].transform : null;
     }
 
     // Meld alanının (meldTileOffsets içindeki kendi transform'u) sıra numarası; bulunamazsa -1.
@@ -671,9 +710,11 @@ public class SeatManager : MonoBehaviourPunCallbacks
                     gameIsStart = true;
                     PhotonNetwork.CurrentRoom.IsOpen = false;
                     PhotonNetwork.CurrentRoom.IsVisible = false;
+                    IntendedCtl = CtlBits.Of(TakenSeats()); // oturan insanlar; boş koltuklar bot
                     PhotonNetwork.CurrentRoom.SetCustomProperties(
-                        new ExitGames.Client.Photon.Hashtable { { SeatsLockedKey, true } }
+                        new ExitGames.Client.Photon.Hashtable { { SeatsLockedKey, true }, { CtlBits.Key, IntendedCtl } }
                     );
+                    Debug.Log($"[CTL] başlangıç {System.Convert.ToString(IntendedCtl, 2)}");
                     System.Array.Clear(rememberedNames, 0, 4); // yalnız şu an oturanlar
                     PublishSeatNames();
                     StartCoroutine(CountdownAndShuffle());

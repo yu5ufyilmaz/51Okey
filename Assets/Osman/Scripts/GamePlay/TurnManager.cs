@@ -72,21 +72,15 @@ public class TurnManager : MonoBehaviourPunCallbacks
         )
             return;
 
-        // 2. CANLI KONTROL: Şu anki sıra numarasında (currentTurnPlayer) oturan bir İNSAN var mı?
-        bool isCurrentPlayerHuman = false;
-        foreach (var p in PhotonNetwork.PlayerList)
+        // 2. Şu anki sıranın koltuğunu insan mı oynuyor? Ctl bitine bakılır (kopan oyuncunun biti master'da kapanır).
+        bool isCurrentPlayerHuman = IsSeatHuman(currentTurnPlayer);
+
+        // Koltuk insana döndü (geri dönüş): çalışan bot hamlesi bırakılır.
+        if (isCurrentPlayerHuman && isBotMoving && botRoutine != null)
         {
-            // Oyuncunun sıra numarasına bak, eğer şu anki sırayla eşleşiyorsa o bir İnsandır.
-            // Bağlantısı kopan oyuncu (PlayerTtl süresince) listede kalır ama IsInactive olur: onun yerine bot oynar.
-            if (
-                !p.IsInactive
-                && p.CustomProperties.TryGetValue("PlayerQue", out object q)
-                && (int)q == currentTurnPlayer
-            )
-            {
-                isCurrentPlayerHuman = true;
-                break;
-            }
+            Debug.Log($"[BOT] iptal sıra {botQue}");
+            StopCoroutine(botRoutine);
+            botRoutine = null;
         }
 
         // 3. HAMLE MANTIĞI: Eğer İnsan YOKSA, demek ki sıra Botta. Oyna.
@@ -95,7 +89,8 @@ public class TurnManager : MonoBehaviourPunCallbacks
             // Eğer bot henüz hamle yapmaya başlamadıysa başlat
             if (!isBotMoving)
             {
-                StartCoroutine(PlayBotTurn(currentTurnPlayer));
+                botQue = currentTurnPlayer;
+                botRoutine = StartCoroutine(PlayBotTurn(currentTurnPlayer));
             }
             // Bot zaten oynuyorsa süresini say (Takılırsa müdahale etmek için)
             else
@@ -222,6 +217,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
         }
     }
 
+    // live: Görev 9'da RestoreGate.Live olur. İnsan kapısı sunucudan dönen Ctl değerine bakar.
     public bool IsPlayerTurn()
     {
         if (
@@ -232,10 +228,27 @@ public class TurnManager : MonoBehaviourPunCallbacks
         )
         {
             localPlayerTurn = true;
-            return (int)queueValue == currentTurnPlayer;
+            bool human = PhotonNetwork.CurrentRoom != null
+                && SeatManager.Instance != null
+                && CtlBits.Has(CtlBits.Read(PhotonNetwork.CurrentRoom.CustomProperties), SeatManager.Instance.LocalSeat);
+            return TurnGate.MayAct(true, human, (int)queueValue == currentTurnPlayer);
         }
         return false;
     }
+
+    // Yalnız master: bu sıranın koltuğunu insan mı oynuyor (masa sahibinin niyet ettiği Ctl; eşleme yoksa bot).
+    public bool IsSeatHuman(int que)
+    {
+        var td = GameManager.Instance != null ? GameManager.Instance.tileDistrubite : null;
+        int seat = SeatMath.MeldSeat(td != null ? td.seatOfQue : null, que);
+        return SeatManager.Instance != null && CtlBits.Has(SeatManager.Instance.IntendedCtl, seat);
+    }
+
+    // Çalışan PlayBotTurn bu sıra için mi.
+    public bool BotRunningFor(int que) => botRoutine != null && isBotMoving && botQue == que;
+
+    private Coroutine botRoutine;
+    private int botQue;
 
     // TurnManager.cs içine:
 
@@ -459,6 +472,11 @@ public class TurnManager : MonoBehaviourPunCallbacks
         TileDistrubite tileDist = FindObjectOfType<TileDistrubite>();
         ScoreManager scoreMgr = FindObjectOfType<ScoreManager>();
 
+        if (IsSeatHuman(playerQue)) // bekleme sırasında insan geri döndü
+        {
+            isBotMoving = false;
+            yield break;
+        }
         List<Tiles> botHand = tileDist.GetPlayerTilesForBot(playerQue);
 
         if (botHand == null)
@@ -498,6 +516,11 @@ public class TurnManager : MonoBehaviourPunCallbacks
         }
 
         // --- ADIM 3: AT ---
+        if (IsSeatHuman(playerQue))
+        {
+            isBotMoving = false;
+            yield break;
+        }
         if (!string.IsNullOrEmpty(worstTileID))
         {
             tileDist.photonView.RPC(

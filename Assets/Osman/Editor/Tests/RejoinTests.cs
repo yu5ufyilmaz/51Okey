@@ -2,6 +2,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
+using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class RejoinTests
 {
@@ -22,5 +23,27 @@ public class RejoinTests
         Assert.IsTrue(PhotonIdentity.NeedsReconnect("x", "a"));
         Assert.IsTrue(PhotonIdentity.NeedsReconnect(null, "a"));
         Assert.IsFalse(PhotonIdentity.NeedsReconnect("x", null));
+    }
+    [Test] public void Ctl_Bits() {
+        Assert.IsTrue(CtlBits.Has(0b0101, 1)); Assert.IsFalse(CtlBits.Has(0b0101, 2)); Assert.IsTrue(CtlBits.Has(0b0101, 3));
+        Assert.IsFalse(CtlBits.Has(5, 0)); Assert.IsFalse(CtlBits.Has(5, 5));
+        Assert.AreEqual(8, CtlBits.Set(0, 4, true)); Assert.AreEqual(13, CtlBits.Set(15, 2, false)); Assert.AreEqual(5, CtlBits.Set(5, 9, true));
+        Assert.AreEqual(5, CtlBits.Of(new[] { 1, 3 })); Assert.AreEqual(0, CtlBits.Of(new int[0]));
+        CollectionAssert.AreEqual(new[] { false, true, false, true }, CtlBits.BotNow(5));
+    }
+    [Test] public void Ctl_Read() {
+        Assert.AreEqual(0, CtlBits.Read(new Hashtable()));
+        Assert.AreEqual(6, CtlBits.Read(new Hashtable { { "Ctl", 6 } }));
+        Assert.AreEqual(0, CtlBits.Read(new Hashtable { { "Ctl", "x" } }));
+    }
+    [Test] public void TurnGate_Requires_Live_Control_And_Turn() {
+        Assert.IsTrue(TurnGate.MayAct(true, true, true));
+        Assert.IsFalse(TurnGate.MayAct(false, true, true));
+        Assert.IsFalse(TurnGate.MayAct(true, false, true));
+        Assert.IsFalse(TurnGate.MayAct(true, true, false));
+    }
+    [Test] public void Names_From_Ctl() {
+        CollectionAssert.AreEqual(new[] { "A", "Bot 1", "C (bot)", "D" },
+            SeatNaming.Names(new[] { "A", null, "C", "D" }, CtlBits.BotNow(0b1001)));
     }
 }
