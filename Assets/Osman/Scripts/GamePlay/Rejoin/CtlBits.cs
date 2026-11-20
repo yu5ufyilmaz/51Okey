@@ -20,6 +20,14 @@ public static class CtlBits
         return ctl;
     }
 
+    // Başlangıç değeri: yalnız etkin (kopmamış) oyuncuların koltukları.
+    public static int OfActive(IEnumerable<(int seat, bool inactive)> players)
+    {
+        int ctl = 0;
+        foreach (var p in players) if (!p.inactive) ctl = Set(ctl, p.seat, true);
+        return ctl;
+    }
+
     public static bool[] BotNow(int ctl) => new[] { !Has(ctl, 1), !Has(ctl, 2), !Has(ctl, 3), !Has(ctl, 4) };
 
     public static int Read(ExitGames.Client.Photon.Hashtable props) =>
@@ -29,5 +37,8 @@ public static class CtlBits
 // İnsanın hamle yapabilmesi: kayıt canlı + koltuk insan kontrolünde + sıra onda.
 public static class TurnGate
 {
+    // Bot çekme RPC'sini gönderdikten sonra iptal edilmez: 15 taşlı el sahipsiz kalır.
+    public static bool MayCancelBot(bool drew) => !drew;
+
     public static bool MayAct(bool live, bool humanControl, bool myQueIsCurrent) => live && humanControl && myQueIsCurrent;
 }

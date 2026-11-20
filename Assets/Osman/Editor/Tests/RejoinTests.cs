@@ -42,6 +42,13 @@ public class RejoinTests
         Assert.IsFalse(TurnGate.MayAct(true, false, true));
         Assert.IsFalse(TurnGate.MayAct(true, true, false));
     }
+    [Test] public void Ctl_Start_Only_Active_Players() {
+        Assert.AreEqual(0b1011, CtlBits.OfActive(new[] { (1, false), (2, false), (3, true), (4, false) }));
+    }
+    [Test] public void Bot_Cancel_Only_Before_Draw() {
+        Assert.IsTrue(TurnGate.MayCancelBot(false));
+        Assert.IsFalse(TurnGate.MayCancelBot(true));
+    }
     [Test] public void Names_From_Ctl() {
         CollectionAssert.AreEqual(new[] { "A", "Bot 1", "C (bot)", "D" },
             SeatNaming.Names(new[] { "A", null, "C", "D" }, CtlBits.BotNow(0b1001)));

@@ -76,7 +76,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
         bool isCurrentPlayerHuman = IsSeatHuman(currentTurnPlayer);
 
         // Koltuk insana döndü (geri dönüş): çalışan bot hamlesi bırakılır.
-        if (isCurrentPlayerHuman && isBotMoving && botRoutine != null)
+        if (isCurrentPlayerHuman && isBotMoving && botRoutine != null && TurnGate.MayCancelBot(botDrew))
         {
             Debug.Log($"[BOT] iptal sıra {botQue}");
             StopCoroutine(botRoutine);
@@ -107,9 +107,10 @@ public class TurnManager : MonoBehaviourPunCallbacks
         }
         else
         {
-            // Sıra İnsanda ise bot zamanlayıcılarını sıfırla ve bekle.
+            // Sıra İnsanda ise bot zamanlayıcılarını sıfırla ve bekle (çekmiş bot hamlesini bitirir).
             botTimeoutTimer = 0f;
-            isBotMoving = false;
+            if (!(isBotMoving && botDrew))
+                isBotMoving = false;
         }
     }
 
@@ -248,6 +249,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
     public bool BotRunningFor(int que) => botRoutine != null && isBotMoving && botQue == que;
 
     private Coroutine botRoutine;
+    private bool botDrew; // çalışan bot çekme RPC'sini gönderdi
     private int botQue;
 
     // TurnManager.cs içine:
@@ -453,6 +455,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
     private IEnumerator PlayBotTurn(int playerQue)
     {
         isBotMoving = true;
+        botDrew = false;
         botTimeoutTimer = 0f; // Sayacı başlat
 
         // Hata yakalama bloğu (Try-Catch)
@@ -497,6 +500,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
                 playerQue
             );
             hasDrawn = true;
+            botDrew = true;
             yield return new WaitForSeconds(1.2f);
         }
 
@@ -516,7 +520,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
         }
 
         // --- ADIM 3: AT ---
-        if (IsSeatHuman(playerQue))
+        if (!botDrew && IsSeatHuman(playerQue))
         {
             isBotMoving = false;
             yield break;
