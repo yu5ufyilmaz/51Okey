@@ -63,6 +63,8 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     #region GENERATE_METHODS
     private void Start()
     {
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "Table")
+            return; // dönüşte maç bitmiş: nötr sahnede kurulmaz (TileDistrubite.Start gibi)
         // Dönüş (kurulum modu): puan, tur başlatma ve skor sıfırlama taze başlangıca aittir.
         bool fresh = RestoreGate.Live;
         if (fresh)

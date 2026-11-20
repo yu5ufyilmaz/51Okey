@@ -77,6 +77,9 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
     private void Start()
     {
+        // Dönüşte maç bitmiş çıkınca oda nesneleri nötr sahneye kurulup hemen silinir: masa yoksa kurulmaz.
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "Table")
+            return;
         // Find and assign containers
         indicatorTileContainer = GameObject.Find("IndicatorTileContainer").transform;
         dropTileContainer = GameObject.Find("DropTileContainers").transform;
