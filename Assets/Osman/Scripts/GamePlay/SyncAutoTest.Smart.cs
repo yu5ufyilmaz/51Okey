@@ -328,7 +328,10 @@ public partial class SyncAutoTest
                     Fail($"{step.Kind}: taş={tile != null} slot={slot != null}");
                     yield break;
                 }
-                yield return StartCoroutine(WaitFor(() => turnManager.canDrop && Td.GetPlayerTiles().Count == before.Hand + 1));
+                // Veri gelince bitmez: çekilen taşın kayması (0.3 sn) bitip ıstakaya oturmadan sonraki hamle onu bulamaz.
+                yield return StartCoroutine(
+                    WaitFor(() => turnManager.canDrop && Td.GetPlayerTiles().Count == before.Hand + 1 && (tile == null || tile.transform.IsChildOf(Rack)))
+                );
                 Obs after = Observe();
                 Check(step.Kind.ToString(), $"el {before.Hand + 1}, çekti", $"el {after.Hand}, {(after.CanDrop ? "çekti" : "çekmedi")}");
                 if (side)
@@ -406,6 +409,9 @@ public partial class SyncAutoTest
             case StepKind.Process:
             {
                 TileUI tile = HandTileUI(step.TileId);
+                if (tile == null)
+                    yield return StartCoroutine(WaitHandTile(step.TileId));
+                tile = HandTileUI(step.TileId);
                 Transform slot = SlotByKey(step.SlotKey);
                 SlotView sv = v.Slots.First(s => s.Key == step.SlotKey);
                 if (tile == null || slot == null)
@@ -442,6 +448,12 @@ public partial class SyncAutoTest
                 Fail($"desteklenmeyen adım {step.Kind}");
                 break;
         }
+    }
+
+    // Kayan taş hedefe varınca ıstakaya bağlanır; sürücü onu kayarken aramış olabilir. Hâlâ yoksa çağıran hatayı bildirir.
+    IEnumerator WaitHandTile(string id)
+    {
+        yield return StartCoroutine(WaitFor(() => HandTileUI(id) != null, 1f));
     }
 
     TileUI TopMiddleTile()
@@ -508,6 +520,9 @@ public partial class SyncAutoTest
     IEnumerator Discard(PlanStep step, TableView v, Obs before)
     {
         TileUI tile = HandTileUI(step.TileId);
+        if (tile == null)
+            yield return StartCoroutine(WaitHandTile(step.TileId));
+        tile = HandTileUI(step.TileId);
         if (tile == null)
         {
             Fail($"atılacak taş ıstakada yok: {step.TileId}");
