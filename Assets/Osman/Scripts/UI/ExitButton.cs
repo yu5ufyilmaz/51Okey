@@ -11,6 +11,7 @@ public class ExitButton : MonoBehaviourPunCallbacks
 
     public void ExitGame()
     {
+        RejoinRecord.Clear();
         Debug.Log("Çıkış butonuna basıldı, odadan ayrılınıyor...");
         // Sadece odadan çık emri veriyoruz. SAHNE DEĞİŞTİRMİYORUZ.
         // Oyun başlamadan (oda açık) kalıcı çık: inactive kalan 60 sn koltuğu tutar ve aynı masaya giremez.

@@ -87,6 +87,7 @@ public class MainMenuUIHandler : MonoBehaviour
     }
 
     // Lobiye geçiş tek yerde: Photon lobisi oturana kadar beklenir, NickName profil isminden gelir.
+    bool identityFixed;
     IEnumerator EnterLobby()
     {
         enteringLobby = true;
@@ -108,6 +109,20 @@ public class MainMenuUIHandler : MonoBehaviour
                 Show(EntryFlow.Screen.Retry);
                 yield break;
             }
+        }
+        // İlk açılışta Photon girişten önce bağlanır: kimlik Firebase uid'i değilse bir kez kopar, uid ile yeniden bağlanır.
+        if (!identityFixed && PhotonIdentity.NeedsReconnect(PhotonNetwork.AuthValues?.UserId, GameServices.Auth.UserId))
+        {
+            identityFixed = true;
+            PhotonNetwork.Disconnect();
+            while (PhotonNetwork.NetworkClientState != ClientState.Disconnected)
+                yield return null;
+            var connect = PhotonManager.ConnectWhenReadyAsync();
+            while (!connect.IsCompleted)
+                yield return null;
+            enteringLobby = false;
+            StartCoroutine(EnterLobby());
+            yield break;
         }
         retrying = false;
         PhotonNetwork.NickName = GameServices.Profile.Current.DisplayName;

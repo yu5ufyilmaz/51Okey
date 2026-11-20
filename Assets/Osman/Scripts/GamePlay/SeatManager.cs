@@ -331,7 +331,12 @@ public class SeatManager : MonoBehaviourPunCallbacks
     public override void OnRoomPropertiesUpdate(ExitGames.Client.Photon.Hashtable propertiesThatChanged)
     {
         if (propertiesThatChanged.ContainsKey(SeatsLockedKey))
+        {
             UpdateSeatDisplay();
+            // Oyun başladı: koptuğunda ana menü bu odaya dönmeyi önersin.
+            if (SeatsLocked && IsSeated(PhotonNetwork.LocalPlayer))
+                RejoinRecord.Save(PhotonNetwork.CurrentRoom.Name);
+        }
     }
     #endregion
     #region  Spawn and Instantiate Players

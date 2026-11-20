@@ -6,8 +6,9 @@ using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class RoomManager : MonoBehaviourPunCallbacks
 {
-    [SerializeField]
-    private int emptyRoomTtl = 0;
+    // Canlı denemeyle doğrulandı: PlayerTtl sınırsız kabul edilir, EmptyRoomTtl üst sınırı 300000 (fazlası hata verir).
+    public const int PlayerTtlMs = 7200000;
+    public const int EmptyRoomTtlMs = 300000;
 
     [SerializeField]
     private bool cleanupCacheOnLeave = true;
@@ -52,11 +53,10 @@ public class RoomManager : MonoBehaviourPunCallbacks
             MaxPlayers = (byte)maxPlayers,
             IsVisible = !hidden, // Bot masası lobi listesinde ve rastgele katılmada görünmez
             CleanupCacheOnLeave = cleanupCacheOnLeave,
-            EmptyRoomTtl = emptyRoomTtl,
-            PlayerTtl =
-                60000 // Yeniden bağlanma için 1 dakika süre
-            ,
+            EmptyRoomTtl = EmptyRoomTtlMs,
+            PlayerTtl = PlayerTtlMs,
         };
+        Debug.Log($"[ODA] PlayerTtl={roomOptions.PlayerTtl} EmptyRoomTtl={roomOptions.EmptyRoomTtl}");
 
         Hashtable roomProps = new Hashtable();
         // Şifrenin kendisi hiçbir oda özelliğine yazılmaz; lobi yalnız özeti görür.

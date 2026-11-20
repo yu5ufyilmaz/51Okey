@@ -13,4 +13,14 @@ public class RejoinTests
             .Select(x => $"{x.f}:{x.i + 1}").ToList();
         CollectionAssert.IsEmpty(hits, string.Join("\n", hits));
     }
+    [Test] public void Record_Key_Is_Per_Instance() {
+        Assert.AreEqual("Okey.Rejoin.device", RejoinRecord.KeyFor("device"));
+        Assert.AreNotEqual(RejoinRecord.KeyFor("51Okey"), RejoinRecord.KeyFor("51Okey_clone_0"));
+    }
+    [Test] public void Identity_Reconnect_Only_When_Auth_Known_And_Different() {
+        Assert.IsFalse(PhotonIdentity.NeedsReconnect("a", "a"));
+        Assert.IsTrue(PhotonIdentity.NeedsReconnect("x", "a"));
+        Assert.IsTrue(PhotonIdentity.NeedsReconnect(null, "a"));
+        Assert.IsFalse(PhotonIdentity.NeedsReconnect("x", null));
+    }
 }

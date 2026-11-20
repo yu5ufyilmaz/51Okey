@@ -52,7 +52,12 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         }
         // Çıkıştan sonra MainMenu yeniden yüklenir; bağlantı sürüyorsa ikinci kez bağlanılmaz.
         if (!PhotonNetwork.IsConnected)
+        {
+            // Photon kimliği Firebase uid'i: aynı oyuncu yeniden bağlanınca aynı koltuğa dönebilir.
+            if (GameServices.Auth.UserId != null)
+                PhotonNetwork.AuthValues = new AuthenticationValues(GameServices.Auth.UserId);
             PhotonNetwork.ConnectUsingSettings();
+        }
         return true;
     }
 

@@ -689,6 +689,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
             Debug.Log("Tüm eller tamamlandı. Lobiye dönülüyor...");
             yield return new WaitForSeconds(10f);
+            RejoinRecord.Clear();
             PhotonNetwork.LeaveRoom();
         }
     }
