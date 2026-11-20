@@ -549,7 +549,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
     public void OnButtonClick()
     {
-        tempOpenedScore = totalScore;
         if (hasOpenedPairs && !hasOpenedSeries)
         {
             Debug.LogWarning("Sadece Çift açtığınız için Seri açamazsınız!");
@@ -606,7 +605,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
 
     public void OnPairButtonClick()
     {
-        tempOpenedScore = pairTotalScore;
         // 1. SIRA KONTROLÜ
         if (turnManager.canDrop == true)
         {
@@ -2277,8 +2275,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     }
     #endregion
 
-    private int tempOpenedScore = 0;
-
     // Bu turda gerçekten yerleşen ilk açışın puanı (düğmeye basmak değil); açış yoksa 0.
     public int OpenedValueThisTurn { get; private set; }
     public bool OpenedPairsThisTurn { get; private set; }
@@ -2315,7 +2311,6 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             );
 
         // İşlem bitince hafızayı sıfırla ki sonraki tura sarkmasın
-        tempOpenedScore = 0;
         OpenedValueThisTurn = 0;
         OpenedPairsThisTurn = false;
     }

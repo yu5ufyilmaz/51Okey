@@ -462,6 +462,9 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
     }
 
+    int finishedRound = -1, finishedWinner = -1; // master: bu elin sonucu (FinishGate)
+    int restartRound = -1; // yeniden başlatma dizisi bu el için başladı
+
     [PunRPC]
     public void FinishGameRPC(int winnerActorNumber, bool isOkeyShot, bool isKafa)
     {
@@ -473,7 +476,9 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         DesyncDetector.Report("Finish");
 
-        if (PhotonNetwork.IsMasterClient)
+        // Son taşla biten kazanır: önce gelen beraberlik, sonra gelen kazancı engellemez; kazanç sonrası beraberlik yok sayılır
+        if (PhotonNetwork.IsMasterClient
+            && FinishGate.Accept((int)PhotonNetwork.CurrentRoom.CustomProperties["CurrentRound"], winnerActorNumber, ref finishedRound, ref finishedWinner))
         {
             CalculateAndDistributeScores(winnerActorNumber, isOkeyShot, isKafa);
         }
@@ -638,22 +643,11 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         isGameEnded = true;
         HandResult?.Invoke(actors, rewards, penalties, netScores);
-        Dictionary<int, int> dictRewards = new Dictionary<int, int>();
-        Dictionary<int, int> dictPenalties = new Dictionary<int, int>();
-        Dictionary<int, int> dictNetScores = new Dictionary<int, int>();
-
-        for (int i = 0; i < actors.Length; i++)
-        {
-            Player p = PhotonNetwork.CurrentRoom.GetPlayer(actors[i]);
-            if (p != null && p.CustomProperties.TryGetValue("PlayerQue", out object q))
-            {
-                int pQue = (int)q;
-                dictRewards[pQue] = rewards[i];
-                dictPenalties[pQue] = penalties[i];
-                dictNetScores[pQue] = netScores[i];
-            }
-        }
-
+        // El başına bir kez: kazanç sonradan beraberliği ezerse ikinci sonuç gelir ama geri sayım yeniden başlamaz
+        int round = (int)PhotonNetwork.CurrentRoom.CustomProperties["CurrentRound"];
+        if (restartRound == round)
+            return;
+        restartRound = round;
         StartCoroutine(RestartSequence());
     }
 
@@ -684,7 +678,9 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (currentRound < totalRounds)
         {
             yield return new WaitForSeconds(10f);
-            if (PhotonNetwork.IsMasterClient)
+            // El zaten ilerlediyse (eski master gitti, yeni master'ın sayacı gecikti) ikinci kez kurma
+            int nowRound = (int)PhotonNetwork.CurrentRoom.CustomProperties["CurrentRound"];
+            if (PhotonNetwork.IsMasterClient && nowRound == currentRound)
             {
                 NextRoundSetup(currentRound + 1);
             }
@@ -711,6 +707,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         isGameEnded = false;
         isGameReady = false;
+        MatchScores.Instance?.StartNewHand(); // geç gelen ceza kaydı yeni ele sızmasın
         OpenValues.Clear();
         OpenValueShown?.Invoke(0, 0, false); // yeni el: etiketleri boşalt
 

@@ -118,6 +118,9 @@ public class MatchScores : MonoBehaviourPunCallbacks
         return sb.ToString();
     }
 
+    // Yeni el başlarken: önceki elin yazılmamış cezaları yeni ele taşınmaz
+    public void StartNewHand() => current.Clear();
+
     // ShowPenaltyRPC'den; sıra bilinmiyorsa sessizce atlar
     public void RecordPenalty(int que, int amount, PenaltyReason reason)
     {

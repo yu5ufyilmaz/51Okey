@@ -159,6 +159,8 @@ public static partial class UiKitBuilder
 
     // --- ayarlar (ses, müzik) ---
 
+    const float BtnFont = 31f, ExitW = 100f, SettingsW = 150f;
+
     // Çıkış düğmesinin sağına Ayarlar düğmesi ve ortada küçük pencere; ikisi de varsa dokunulmaz
     static void BindSettings()
     {
@@ -169,9 +171,15 @@ public static partial class UiKitBuilder
         foreach (var b in Object.FindObjectsByType<UnityEngine.UI.Button>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             if (b.gameObject.name == "Çıkış Butonu") { exit = b; break; }
         if (safe == null || exit == null) { Debug.LogError("[UiKitBuilder] SafeArea ya da çıkış düğmesi yok, ayarlar kurulamadı."); return; }
+        // Telefonda okunsun: iki etiket de ~31 birim (2400x1080'de ~22 px büyük harf yüksekliği). Çıkış daralır, Ayarlar genişler;
+        // Ayarlar'ın sağ ucu 1920'de ~331'de kalır, iskambil yuvası ~345'te başlar.
+        var er = (RectTransform)exit.transform;
+        er.sizeDelta = new Vector2(ExitW, er.sizeDelta.y);
+        AutoSize(exit.GetComponentInChildren<TMP_Text>(true), BtnFont, 26);
+
         var existingWin = safe.Find("SettingsWindow");
         var existingBtn = exit.transform.parent.Find("SettingsButton");
-        if (existingWin != null && existingBtn != null) return;
+        if (existingWin != null && existingBtn != null && ((RectTransform)existingBtn).sizeDelta.x == SettingsW) return;
         if (existingWin != null) Object.DestroyImmediate(existingWin.gameObject);
         if (existingBtn != null) Object.DestroyImmediate(existingBtn.gameObject);
 
@@ -206,11 +214,14 @@ public static partial class UiKitBuilder
         UnityEventTools.AddPersistentListener(ts.musicToggle.onValueChanged, ts.OnMusicToggle);
         EditorUtility.SetDirty(ts);
 
-        // Çıkış düğmesiyle aynı kap, çapa ve yükseklik; sağında 12 birim boşlukla (daha sağda iskambil yuvası var, 112'den geniş olamaz)
-        var er = (RectTransform)exit.transform;
-        var btn = ChoiceButton(teal, exit.transform.parent, "SettingsButton", "lobby.settings", 112, er.sizeDelta.y, 34);
-        Anchor(btn, er.anchorMin, er.anchorMax, er.pivot, new Vector2(er.anchoredPosition.x + er.sizeDelta.x + 12f, er.anchoredPosition.y), new Vector2(112, er.sizeDelta.y));
-        AutoSize(btn.GetComponentInChildren<TMP_Text>(true), 34, 20);
+        // Çıkış düğmesiyle aynı kap, çapa ve yükseklik; sağında 8 birim boşlukla (daha sağda iskambil yuvası var, SettingsW'den geniş olamaz)
+        var btn = ChoiceButton(teal, exit.transform.parent, "SettingsButton", "lobby.settings", SettingsW, er.sizeDelta.y, BtnFont);
+        Anchor(btn, er.anchorMin, er.anchorMax, er.pivot, new Vector2(er.anchoredPosition.x + er.sizeDelta.x + 8f, er.anchoredPosition.y), new Vector2(SettingsW, er.sizeDelta.y));
+        var label = btn.GetComponentInChildren<TMP_Text>(true);
+        AutoSize(label, BtnFont, 26);
+        var lr = (RectTransform)label.transform;
+        lr.offsetMin = new Vector2(10, lr.offsetMin.y);
+        lr.offsetMax = new Vector2(-10, lr.offsetMax.y);
         UnityEventTools.AddPersistentListener(btn.GetComponent<Button>().onClick, ts.Open);
 
         win.SetActive(false);

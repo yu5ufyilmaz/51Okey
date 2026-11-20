@@ -173,4 +173,24 @@ public class ScoreTests
         CollectionAssert.AreEqual(new[] { 3, 4, 1, 2 }, ScoreboardText.RankOrder(new[] { -900, 0, 10, 20 }, new[] { false, false, true, true }));
     [Test] public void RankOrder_All_Zero_Is_Seat_Order() =>
         CollectionAssert.AreEqual(new[] { 1, 2, 3, 4 }, ScoreboardText.RankOrder(new int[4], All4));
+    [Test] public void FinishGate_Draw_Then_Win_Win_Applies() {
+        int r = -1, w = -1;
+        Assert.IsTrue(FinishGate.Accept(3, -1, ref r, ref w));
+        Assert.IsTrue(FinishGate.Accept(3, 2, ref r, ref w));
+        Assert.AreEqual(2, w);
+    }
+    [Test] public void FinishGate_Win_Then_Draw_Or_Same_Win_Ignored() {
+        int r = -1, w = -1;
+        Assert.IsTrue(FinishGate.Accept(3, 2, ref r, ref w));
+        Assert.IsFalse(FinishGate.Accept(3, -1, ref r, ref w));
+        Assert.IsFalse(FinishGate.Accept(3, 2, ref r, ref w));
+        Assert.AreEqual(2, w);
+    }
+    [Test] public void FinishGate_Duplicate_Draw_Ignored_New_Hand_Accepted() {
+        int r = -1, w = -1;
+        Assert.IsTrue(FinishGate.Accept(3, -1, ref r, ref w));
+        Assert.IsFalse(FinishGate.Accept(3, -1, ref r, ref w));
+        Assert.IsTrue(FinishGate.Accept(4, 1, ref r, ref w));
+        Assert.IsTrue(FinishGate.Accept(5, -1, ref r, ref w));
+    }
 }
