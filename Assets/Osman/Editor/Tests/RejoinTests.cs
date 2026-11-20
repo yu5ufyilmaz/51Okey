@@ -159,7 +159,7 @@ public class RejoinTests
         Assert.AreEqual(HandshakeDecision.Wait, HandshakeRule.Decide(0xAB, 0xAB, true, true, false));
         Assert.AreEqual(HandshakeDecision.Wait, HandshakeRule.Decide(0xAB, 0xAB, true, false, true));
         Assert.AreEqual(HandshakeDecision.Again, HandshakeRule.Decide(0xAB, 0xAC, true, false, false));
-        Assert.AreEqual(HandshakeDecision.Again, HandshakeRule.Decide(null, 0xAB, true, false, false));
+        Assert.AreEqual(HandshakeDecision.Wait, HandshakeRule.Decide(null, 0xAB, true, false, false)); // özet yok: bekle
         Assert.AreEqual(HandshakeDecision.Again, HandshakeRule.Decide(0xAB, 0xAB, false, false, false));
     }
     [Test] public void Overlay_After_Five_Agains() {
@@ -189,5 +189,11 @@ public class RejoinTests
         FinishGate.Seed(2, draw, ref r2, ref w2);
         Assert.IsFalse(FinishGate.Accept(2, -1, ref r2, ref w2)); Assert.IsTrue(FinishGate.Accept(2, 9, ref r2, ref w2));
         int r3 = -1, w3 = -1; FinishGate.Seed(2, null, ref r3, ref w3); Assert.AreEqual(-1, r3);
+    }
+    [Test] public void Grant_Keeps_Longer_Local_Penalty_List() {
+        Assert.IsTrue(HandshakeRule.KeepLocalList(new[] { 1, 2 }, new[] { 1, 2, 3 }));   // masa sahibininki baş: yerel kalır
+        Assert.IsTrue(HandshakeRule.KeepLocalList(new int[0], new[] { 4 }));
+        Assert.IsFalse(HandshakeRule.KeepLocalList(new[] { 1, 2, 3 }, new[] { 1, 2 })); // masa sahibininki uzun
+        Assert.IsFalse(HandshakeRule.KeepLocalList(new[] { 1, 5 }, new[] { 1, 2, 3 })); // farklı
     }
 }

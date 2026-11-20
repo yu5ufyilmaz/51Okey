@@ -20,6 +20,7 @@ public class RejoinHandshake : MonoBehaviourPunCallbacks, IOnEventCallback
         tableReady;
     static int agains,
         applyFailures;
+    const int MaxApplyFailures = 5;
 
     public static bool Granted { get; private set; } // bu odada koltuk geri verildi
     public static event Action GrantedNow;
@@ -70,8 +71,18 @@ public class RejoinHandshake : MonoBehaviourPunCallbacks, IOnEventCallback
     // Table'ın oda nesneleri (önbellekten yeniden kurulur) gelince istek. Yeni elle canlı olsa da istenir: defter onu tanımalı.
     IEnumerator WaitTableThenRequest()
     {
+        float since = Time.unscaledTime;
         while (PhotonNetwork.InRoom && !TableReady())
+        {
+            // Masa kurulmadı: katman sonsuza kalmasın, bağlantı akışı baştan (ReconnectFlow nötr sahneden yeniden katılır).
+            if (Time.unscaledTime - since > 20f)
+            {
+                Debug.LogWarning("[DONUS] masa 20 sn'de hazır olmadı, yeniden bağlanılıyor");
+                PhotonNetwork.Disconnect();
+                yield break;
+            }
             yield return null;
+        }
         yield return null; // oda nesnelerinin Start'ı
         if (!PhotonNetwork.InRoom || !TableReady())
         {
@@ -165,7 +176,15 @@ public class RejoinHandshake : MonoBehaviourPunCallbacks, IOnEventCallback
         if (PhotonNetwork.IsMasterClient)
             book.PendingToRestoring();
         else if (!wasLive && Restoring)
+        {
             Debug.Log("[DONUS] yeni elle canlı");
+            // Kurulum denemeleri tükenmişti: yeni elde defter yeniden tanısın (canlı istemci fotoğrafı yok sayar).
+            if (applyFailures >= MaxApplyFailures)
+            {
+                applyFailures = 0;
+                Request();
+            }
+        }
     }
 
     public void OnEvent(EventData e)
@@ -292,9 +311,13 @@ public class RejoinHandshake : MonoBehaviourPunCallbacks, IOnEventCallback
             applyFailures++;
             Debug.LogWarning($"[DONUS] kurulum hatası {applyFailures}: {ex.GetType().Name} {ex.Message}\n{ex.StackTrace}");
             RestoreGate.Enter();
-            ShowOverlay();
-            if (applyFailures < 5)
+            if (applyFailures < MaxApplyFailures)
+            {
+                ShowOverlay();
                 Request();
+            }
+            else
+                UIRoot.ShowLoading(Loc.T("rejoin.retrying"), false); // yeni elde yeniden istenir (OnPrepareNextRound)
             return;
         }
         int replayed = RestoreGate.GoLive(s.turnSerial);
@@ -320,7 +343,10 @@ public class RejoinHandshake : MonoBehaviourPunCallbacks, IOnEventCallback
             return;
         }
         int[] seats = (int[])d[2], amounts = (int[])d[3], reasons = (int[])d[4];
-        MatchScores.Instance?.RestoreCurrent(seats.Select((s, i) => new MatchScores.PenaltyEntry { seat = s, amount = amounts[i], reason = (PenaltyReason)reasons[i] }));
+        var masterList = seats.Select((s, i) => new MatchScores.PenaltyEntry { seat = s, amount = amounts[i], reason = (PenaltyReason)reasons[i] }).ToList();
+        var ms = MatchScores.Instance;
+        if (ms != null && !HandshakeRule.KeepLocalList(masterList, ms.CurrentHandPenalties))
+            ms.RestoreCurrent(masterList);
         Granted = true;
         agains = 0;
         var tm = gm.turnManager;

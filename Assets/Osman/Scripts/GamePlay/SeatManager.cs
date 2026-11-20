@@ -254,7 +254,8 @@ public class SeatManager : MonoBehaviourPunCallbacks
         if (newMasterClient.IsLocal && CanWriteRoom)
         {
             PublishSeats();
-            if (SeatsLocked)
+            // Kurulumdaki istemci masa sahipliğini hemen devreder (RejoinHandshake): bayat listeyle yazmasın.
+            if (SeatsLocked && !RejoinHandshake.Restoring && RestoreGate.Live)
             {
                 GameManager.Instance?.TakeOverAsMaster(); // ceza tablosu, taramadaki geri almadan önce
                 IntendedCtl = CtlBits.Read(PhotonNetwork.CurrentRoom.CustomProperties);

@@ -142,7 +142,9 @@ public class MainMenuUIHandler : MonoBehaviour
                 ReconnectFlow.RejoinSaved(room);
                 yield break;
             }
-            RejoinRecord.Clear();
+            // Yalnız "Hayır" kaydı siler; X, geri tuşu ya da başka pencere kaydı bırakır (sonraki girişte yine sorulur).
+            if (UIRoot.LastNoPressed)
+                RejoinRecord.Clear();
         }
         SceneChangeManager.Instance.ChangeScene("LobbyMenu");
     }

@@ -7,12 +7,28 @@ public static class HandshakeRule
 {
     public static HandshakeDecision Decide(uint? masterDigest, uint clientDigest, bool clientReady, bool seatIsCurrentTurn, bool botRunningForSeat)
     {
+        // Masa sahibinde o anahtar yok (yeni masa sahibi, eski anahtar): fark değil, sonraki raporu bekle.
+        if (masterDigest == null)
+            return HandshakeDecision.Wait;
         if (masterDigest != clientDigest || !clientReady)
             return HandshakeDecision.Again;
         return seatIsCurrentTurn || botRunningForSeat ? HandshakeDecision.Wait : HandshakeDecision.Grant;
     }
 
     public static string OverlayKey(int consecutiveAgains) => consecutiveAgains < 5 ? "rejoin.joining_game" : "rejoin.retrying";
+
+    // Geri vermedeki ceza listesi: masa sahibi kendi cezasını sunucu yankısıyla yazar, yerel liste ondan uzun olabilir.
+    // Masa sahibinin listesi yerelin başıysa yerel kalır; değilse masa sahibininki geçerli.
+    public static bool KeepLocalList<T>(IReadOnlyList<T> master, IReadOnlyList<T> local)
+    {
+        if (master.Count > local.Count)
+            return false;
+        var eq = EqualityComparer<T>.Default;
+        for (int i = 0; i < master.Count; i++)
+            if (!eq.Equals(master[i], local[i]))
+                return false;
+        return true;
+    }
 }
 
 // Masa sahibinin defteri: fotoğraf bekleyenler (pending) ve fotoğrafı yollanıp özeti beklenenler (restoring).

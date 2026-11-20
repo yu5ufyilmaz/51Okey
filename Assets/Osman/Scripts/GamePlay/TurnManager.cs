@@ -66,6 +66,9 @@ public class TurnManager : MonoBehaviourPunCallbacks
         // Sadece MasterClient yönetir
         if (!PhotonNetwork.IsMasterClient)
             return;
+        // Kurulumdaki (geri almamış) istemci masa sahipliğini devrediyor: bot başlatmaz, yeni masa sahibi oynar.
+        if (RejoinHandshake.Restoring || !RestoreGate.Live)
+            return;
 
         // 1. BASİT KONTROL: Oyun bitmişse veya HENÜZ HAZIR DEĞİLSE (Taşlar dağıtılmadıysa) hiçbir şey yapma.
         if (
@@ -508,9 +511,10 @@ public class TurnManager : MonoBehaviourPunCallbacks
         // Eğer botun zekasında bir kod patlarsa, catch bloğu çalışır ve oyun donmaz.
         yield return new WaitForSeconds(1.5f);
 
-        // 1. Durum Kontrolü
+        // 1. Durum Kontrolü (bekleme sırasında masa sahipliği devredildiyse aynı koltuğu iki taraf oynamasın)
         if (
-            currentTurnPlayer != playerQue
+            !PhotonNetwork.IsMasterClient
+            || currentTurnPlayer != playerQue
             || (GameManager.Instance != null && GameManager.Instance.isGameEnded)
         )
         {
@@ -552,6 +556,11 @@ public class TurnManager : MonoBehaviourPunCallbacks
             botDrew = true;
             botDrawPending = true;
             yield return new WaitForSeconds(1.2f);
+            if (!PhotonNetwork.IsMasterClient)
+            {
+                isBotMoving = false;
+                yield break;
+            }
         }
 
         // --- ADIM 2: ATACAK TAŞ BUL ---

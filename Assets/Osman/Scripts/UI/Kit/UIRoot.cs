@@ -67,6 +67,9 @@ public class UIRoot : MonoBehaviour
         }
     }
 
+    // Son onay "Hayır" düğmesiyle mi kapandı (X, geri tuşu, sahne değişimi değil).
+    public static bool LastNoPressed { get; private set; }
+
     public static bool IsLoading => inst != null && inst.timer.Active;
 
     public static void Toast(string text)
@@ -113,6 +116,7 @@ public class UIRoot : MonoBehaviour
         if (r == null) return Task.FromResult(false);
         r.Resolve(false); // açık onay varsa eskisi hayır sayılır
         r.pending = new TaskCompletionSource<bool>();
+        LastNoPressed = false;
         r.confirmTitle.text = title;
         r.confirmBody.text = body;
         var b = destructive ? r.yesDestructive : r.yes;
@@ -167,7 +171,7 @@ public class UIRoot : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         yes.onClick.AddListener(() => Resolve(true));
         yesDestructive.onClick.AddListener(() => Resolve(true));
-        no.onClick.AddListener(() => Resolve(false));
+        no.onClick.AddListener(() => { LastNoPressed = true; Resolve(false); });
         close.onClick.AddListener(() => Resolve(false));
         SceneManager.activeSceneChanged += OnSceneChanged;
     }

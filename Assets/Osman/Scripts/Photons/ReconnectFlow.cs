@@ -107,7 +107,9 @@ public class ReconnectFlow : MonoBehaviourPunCallbacks
     {
         if (Active || quitting)
             return;
-        bool inGame = SceneManager.GetActiveScene().name == "Table";
+        // Reconnect: dönüşten sonra Table yüklenirken kopma da oyun içi sayılır.
+        string scene = SceneManager.GetActiveScene().name;
+        bool inGame = scene == "Table" || scene == "Reconnect";
         if (!RejoinPolicy.ShouldReconnect(DeliberateLeave, RejoinRecord.Load() != null, inGame))
             return;
         Debug.Log($"[DONUS] koptu ({why}), yeniden bağlanılıyor");
@@ -126,10 +128,9 @@ public class ReconnectFlow : MonoBehaviourPunCallbacks
 
     IEnumerator Run()
     {
-        SceneChangeManager.Instance.ChangeScene("Reconnect");
-        while (SceneManager.GetActiveScene().name != "Reconnect")
-            yield return null;
-        yield return null; // SceneChangeManager yükleme sonunda katmanı kapatır
+        // Kendi yüklememiz: süren bir Table yüklemesi varsa ondan sonra biter, sonunda etkin sahne Reconnect olur.
+        UIRoot.KeepLoading();
+        yield return SceneManager.LoadSceneAsync("Reconnect");
         UIRoot.ShowLoading(Loc.T("rejoin.reconnecting"), false);
 #if UNITY_EDITOR
         for (float t0 = Time.unscaledTime; Time.unscaledTime - t0 < TestHoldSeconds; )
