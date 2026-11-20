@@ -274,3 +274,94 @@ Bağımsız bir incelemeci tasarımı koda karşı okudu; aşağıdakiler onun b
 - Çok editörlü testte beklenen istemci sayısı, canlı olmayan istemciyi saymaz.
 - Planın ilk işi canlı Photon denemesidir: kapalı odaya `RejoinRoom`, `PlayerTtl`/`EmptyRoomTtl`
   sınırları, etkin oyuncu kalmayınca odanın ömrü. Sonuç tasarımı değiştirirse Osman'a dönülür.
+
+## Uygulamadan devreden notlar (2026-11-20)
+
+**Ağ üzerinde yeni olanlar**
+- Oda özellikleri: `Ctl` (koltuk başına bit, açık = insan oynuyor; yalnız masa sahibi yazar),
+  `MatchOver` (son elin sonunda masa sahibi yazar; sonradan dönen "Oyun sona ermiş" görür).
+- `RaiseEvent` kodları (güvenilir, oyuncu ActorNumber ile tanınır): 160 istek `{el}` → masa sahibi;
+  161 fotoğraf (`SnapshotCodec.Encode`, int[] + string[]) → dönen(ler); 162 özet raporu
+  `{el, seri, özet, hazır}` → masa sahibi; 163 geri verme `{el, seri, koltuklar[], cezalar[], sebepler[]}`
+  (masa sahibinin el içi ceza listesi) → dönen; 164 yeniden `{el, seri}` → dönen.
+- Yeni RPC: `GameManager.RollbackTurn(que, serial)`. `TurnManager.NextTurn(int serial)` seri numaralı.
+- `AllViaServer` giden masa sahibi mesajları: `ShowPenaltyRPC`, `FinishGameRPC`, `RPC_PrepareNextRound`,
+  `RPC_ResetTurnForNewRound`, `ResetTableAndRedistribute`, `SyncShuffledTiles`, `SyncIndicatorTile`,
+  `SyncQueToSeatMapping`, `AssignQueueComplete`, `RollbackTurn`.
+- Arabellekli RPC kalmadı (EditMode testi `Game_Scripts_Send_No_Buffered_Rpc` denetler).
+- `PlayerTtl` 7200000 ms, `EmptyRoomTtl` 300000 ms (Photon'un üst sınırı). Photon UserId = Firebase uid.
+
+**Yeni sahne ve dosyalar**
+- `Scenes/Reconnect.unity` (yalnız kamera; `UiKitReconnect` kurar, Build Settings'te).
+- `Photons/ReconnectFlow.cs`, `RejoinPolicy.cs`; `GamePlay/Rejoin/`: `RestoreGate`, `SnapshotApplier`,
+  `RejoinHandshake`, `HandshakeRule` (+ `HandshakeBook`), `MasterRecovery` (`PenaltyRebuild`).
+- Senkron testi: `-DropRejoin <senaryo>` dönüşlü, `-NoReturn`, `-ReturnAfterEnd`, `-DropOfflineSec`;
+  `[DONUS]` satırları editörün kendi günlüğünde.
+
+**Yolda bulunan ve düzeltilen eski hatalar**
+- Per konumları açan oyuncuda aynı listeye referansla gönderiliyordu; gönderimde kopyalanır (d0d1dc1).
+- Yeni el zinciri (sıfırlama, dağıtım) birden çok kaynaktan, karışık sırayla gidiyordu; tek sırada gider (7057ef1).
+- Dönüşte Table iki kez yükleniyordu (PUN sahne eşitlemesi); oda nesneleri ilk kopyayla ölüyordu (bbfb8af).
+- Test düzeneğinin yanlış alarmları (bayat ıstaka denetimi, dönenin bayat `PlayerScore`'u, ölü sahnede
+  oda nesnesi) giderildi (d7f2103, b4b538f, df0599d).
+
+**Claude'un yalnız verdiği kararlar**
+- Soruya "Hayır" diyen bilerek çıkmış sayılır (yalnız "Hayır" düğmesi; X ya da geri tuşu kaydı bırakır).
+- Uygulama açıkken kopmada soru sorulmaz; oyun kendiliğinden yeniden bağlanır.
+- Koltuk maç bitene kadar saklanır.
+- Masada etkin insan kalmazsa maç kurtarılamaz; dönen "Oyun sona ermiş" görür.
+- Bot basit kalır; dönen oyuncu botun bıraktığı eli devralır.
+- Turun ortasında kopanın yarım işleri geri alınır.
+- İkinci cihazdan dönüş desteklenmez.
+- Cezalar masa özetinin dışında; geri vermede masa sahibinin el içi ceza listesi gönderilir.
+- Yeni el bekçisi (15 sn) kesildi.
+- Yandan taş alıp kopanın taşı atık yığınına döner.
+- Görev 10'dan sonra her görev için tek kontrolcü koşusu.
+- Soru metni ve beş `rejoin.*` metni Osman'ca onaylanmadı.
+
+**Doğrulanan** (dört editör, `-Mode smart`)
+
+| Koşu (son koşu hangi commit üzerindeyse o) | Sonuç |
+|---|---|
+| `-Seed 11 -DropRejoin after-draw` | `PASS: 1 el, ok 53, desync 0, kopma after-draw/return (312 sn)` |
+| `-Seed 11 -DropRejoin offturn` | `PASS: 1 el, ok 52, desync 0, kopma offturn/return (262 sn)` |
+| `-Seed 1234 -DropRejoin after-open` | `PASS: 1 el, ok 29, desync 0, kopma after-open/return (269 sn)` |
+| `-Seed 11 -DropRejoin master-turn` | `PASS: 1 el, ok 39, desync 0, kopma master-turn/return (294 sn)` |
+| `-Seed 11 -NoReturn -DropRejoin master-turn` | `PASS: 1 el, ok 51, desync 0, kopma master-turn/noreturn (285 sn)` |
+| `-Seed 11 -DropRejoin two` | `PASS: 1 el, ok 51, desync 0, kopma two/return (296 sn)` |
+| `-Seed 11 -DropRejoin offturn -ReturnAfterEnd` | `PASS: 1 el, ok 52, desync 0, kopma offturn/afterend (311 sn)` |
+| `-Seed 11 -Deals 2 -DropRejoin hand-end` | `PASS: 2 el, ok 102, desync 0, kopma hand-end/return (361 sn)` |
+| `-Seed 11 -Deals 2 -DropRejoin hand-end -DropOfflineSec 1` (yeni elle canlı) | `PASS: 2 el, ok 102, desync 0, kopma hand-end/return (351 sn)` |
+| `-Seed 11 -NoReturn -DropRejoin after-draw` | `PASS: 1 el, ok 53, desync 0, kopma after-draw/noreturn (284 sn)` |
+| `-Deals 3` | `PASS: 3 el, ok 130, desync 0 (421 sn)` |
+| `-Bots 2 -Seed 11` | `PASS: 1 el, ok 48, desync 0 (198 sn)` |
+| `-Deals 2` | `PASS: 2 el, ok 44, desync 0 (325 sn)` |
+
+- Dönüşlü koşularda geri verme 1 (iki kopanda 2), geri vermeden sonra hamle 2-11, geri vermeden sonraki
+  özet anahtarları dört editörde aynı (28-98 anahtar).
+- Commitler: 0e367e3, 6a0e159, bbfb8af, d7f2103, b4b538f, 9320082, df0599d, 9a65a63.
+- EditMode 432/432, Pester 44/44, tek editör `-Solo -Mode smart -Seed 11` PASS (6a0e159 üzerinde; sonraki commitlerde tek editör koşulmadı).
+
+**Doğrulanmayan**
+- Telefonda hiçbir şey denenmedi.
+- Uygulamayı kapatıp açma: yalnız editörde soru penceresi ve var olmayan odaya `RejoinRoom` (32758) denendi.
+- Android arka plan / öne dönüş; Wi-Fi ↔ 4G geçişi.
+- 32746 hatası hiç üretilemedi.
+- "Yeni elle canlı" yolu bir kez görüldü (zamanlamaya bağlı).
+- Tek kişi + botlu masa ve "etkin insan kalmadı" yolları; yayın yapısı.
+
+**Bilinen sınırlar**
+- Masa sahibi iki el arasında koparsa yeni el dağıtılmayabilir (oyun takılır).
+- Kopan masa sahibine giderken yolda kalan ceza RPC'leri kaybolur.
+- Kopan oyuncunun atışı ile `NextTurn` arasındaki ~0,4 sn'de işlediği taş kaybolur.
+- Atıştan önce yazılmış cezalar geri almadan sonra da kalır.
+- Etkin insan kalmazsa maç kurtarılamaz.
+- İkinci cihazdan dönüş yok.
+- İlk elin geri sayımında masa sahibi koparsa el başlamaz.
+
+**Telefonda denenecekler**
+- Wi-Fi → 4G ve uçak modu, dönüşten sonra masa yüklenirken de.
+- Arka plana alma: 60 sn'den kısa ve uzun, sonra geri dönme.
+- Oyun ortasında uygulamayı öldürüp açma: "Dön", "Hayır" ve geri tuşu; ardından normal yeni giriş.
+- Bilerek çıkış (yeni onay metniyle).
+- 2 telefon + bot: bir telefon açtıktan sonra kendi turunda kopsun.
