@@ -78,6 +78,15 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         TileSerialization.RegisterCustomTypes();
         isGameReady = false;
+
+        // Dönüş: masa fotoğraftan kurulur, taze başlangıcın yan etkileri çalışmaz (RestoreGate.Live false iken).
+        if (PhotonNetwork.InRoom && PhotonNetwork.LocalPlayer.HasRejoined && SeatManager.SeatsLocked)
+        {
+            RestoreGate.Enter();
+            UIRoot.ShowLoading(Loc.T("rejoin.joining_game"), false);
+        }
+        else
+            RestoreGate.Reset();
     }
 
     // Yandan alınan taşı diğer scriptlerin okumasını sağlar
@@ -91,7 +100,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         EventDispatcher.RegisterFunction<HandData>("OnPlayerMoveFinished", CheckGameStatus);
         EventDispatcher.RegisterFunction<Tiles>("OnSideTilePicked", RecordSidePick);
 
-        if (PhotonNetwork.IsMasterClient)
+        if (PhotonNetwork.IsMasterClient && RestoreGate.Live)
         {
             SetTableLimit(51);
         }
@@ -221,6 +230,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     [PunRPC]
     void ShowPenaltyRPC(int playerQue, int amount, byte reason)
     {
+        if (RestoreGate.Defer(() => ShowPenaltyRPC(playerQue, amount, reason))) return;
         MatchScores.Instance?.RecordPenalty(playerQue, amount, (PenaltyReason)reason); // ceza kaydı (yalnız gösterim)
         if (UIManager.Instance != null)
             UIManager.Instance.ShowPenaltyFloat(playerQue, amount, PenaltyReasonText.Of((PenaltyReason)reason));
@@ -470,6 +480,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     [PunRPC]
     public void FinishGameRPC(int winnerActorNumber, bool isOkeyShot, bool isKafa)
     {
+        if (RestoreGate.Defer(() => FinishGameRPC(winnerActorNumber, isOkeyShot, isKafa))) return;
         if (!isGameReady)
             return;
         bool sfxFirst = !isGameEnded; // ses: ikinci RPC tekrar çalmasın
@@ -608,12 +619,14 @@ public class GameManager : MonoBehaviourPunCallbacks
     [PunRPC]
     public void SyncOpenedPairsRPC(int playerQue)
     {
+        if (RestoreGate.Defer(() => SyncOpenedPairsRPC(playerQue))) return;
         scoreManager.playersWhoOpenedPairs.Add(playerQue);
     }
 
     [PunRPC]
     public void SyncOpenedPlayerRPC(int playerQue)
     {
+        if (RestoreGate.Defer(() => SyncOpenedPlayerRPC(playerQue))) return;
         if (!scoreManager.playersWhoOpened.Contains(playerQue))
         {
             scoreManager.playersWhoOpened.Add(playerQue);
@@ -628,8 +641,21 @@ public class GameManager : MonoBehaviourPunCallbacks
     [PunRPC]
     public void OpenValueRPC(int que, int value, bool isPairs)
     {
+        if (RestoreGate.Defer(() => OpenValueRPC(que, value, isPairs))) return;
         OpenValues[que] = (value, isPairs);
         OpenValueShown?.Invoke(que, value, isPairs);
+    }
+
+    // Fotoğraftan kurulum (SnapshotApplier): hazır/bitti bayrakları, açış değerleri ve etiketler; yandan alma kaydı boşalır.
+    public void RestoreState(bool ready, bool ended, IEnumerable<SnapOpenValue> values)
+    {
+        isGameReady = ready;
+        isGameEnded = ended;
+        currentSidePickTile = null;
+        OpenValues.Clear();
+        foreach (var v in values)
+            OpenValues[v.que] = (v.value, v.pairs);
+        OpenValueShown?.Invoke(0, 0, false);
     }
 
     // Tur geri alınınca o sıranın açış değeri tur başındakine döner; etiketler yenilenir.
@@ -685,6 +711,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     [PunRPC]
     void RollbackTurn(int que, int serial)
     {
+        if (RestoreGate.Defer(() => RollbackTurn(que, serial))) return;
         var tm = turnManager;
         var td = tileDistrubite;
         bool master = PhotonNetwork.IsMasterClient;
@@ -749,6 +776,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         int[] netScores
     )
     {
+        if (RestoreGate.Defer(() => OnGameEndedDetailedRPC(actors, rewards, penalties, netScores))) return;
         isGameEnded = true;
         HandResult?.Invoke(actors, rewards, penalties, netScores);
         // El başına bir kez: kazanç sonradan beraberliği ezerse ikinci sonuç gelir ama geri sayım yeniden başlamaz
@@ -814,6 +842,12 @@ public class GameManager : MonoBehaviourPunCallbacks
     [PunRPC]
     public void RPC_PrepareNextRound()
     {
+        // Kuyruk geçersiz; yeni el hattının tamamı canlı işlenir (kurulum katmanı da kalkar).
+        if (!RestoreGate.Live)
+        {
+            RestoreGate.GoLiveFromNewHand();
+            UIRoot.HideLoading();
+        }
         isGameEnded = false;
         isGameReady = false;
         pendingRollbackSerial = rollbackSentSerial = rollbackDoneSerial = -1; // seri yeni elde 0'dan başlar

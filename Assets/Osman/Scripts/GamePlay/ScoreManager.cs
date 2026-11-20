@@ -63,9 +63,14 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     #region GENERATE_METHODS
     private void Start()
     {
-        ExitGames.Client.Photon.Hashtable resetProps = new ExitGames.Client.Photon.Hashtable();
-        resetProps["PlayerScore"] = 0;
-        PhotonNetwork.LocalPlayer.SetCustomProperties(resetProps);
+        // Dönüş (kurulum modu): puan, tur başlatma ve skor sıfırlama taze başlangıca aittir.
+        bool fresh = RestoreGate.Live;
+        if (fresh)
+        {
+            ExitGames.Client.Photon.Hashtable resetProps = new ExitGames.Client.Photon.Hashtable();
+            resetProps["PlayerScore"] = 0;
+            PhotonNetwork.LocalPlayer.SetCustomProperties(resetProps);
+        }
         Player player = PhotonNetwork.LocalPlayer;
 
         turnManager = GameObject.Find("TurnManager").GetComponent<TurnManager>();
@@ -79,13 +84,74 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             pairPerPlaceHolder = playerMeldContainers.GetChild(2);
         }
 
-        turnManager.StartGame();
+        if (fresh)
+            turnManager.StartGame();
         playerScores = new Dictionary<int, int>();
-        if (PhotonNetwork.IsMasterClient)
+        if (fresh && PhotonNetwork.IsMasterClient)
         {
             InitializeScores(4); // Odaya ilk girişte herkesi 0 puanla başlatır.
         }
         InitializeMeldPlaceholders();
+    }
+
+    // Fotoğraftan kurulum (dönen oyuncunun kendi koltuğu): açış bayrakları, satır doluluğu ve onaylı perler kendi tahtasından türetilir.
+    // Kümeler fotoğraftan; bekleyen listeler (bu turun açışı, işlemeleri, geri alma yığını) boş.
+    public void RestoreOpenState(TableSnapshot s, int myQue)
+    {
+        playersWhoOpened.Clear();
+        playersWhoOpened.UnionWith(s.opened);
+        playersWhoOpenedPairs.Clear();
+        playersWhoOpenedPairs.UnionWith(s.openedPairs);
+
+        var board = myQue >= 1 && myQue <= 4 ? s.boards[myQue - 1] : new List<SnapBoardTile>();
+        var meldIds = new HashSet<string>(
+            myQue >= 1 && myQue <= 4 ? s.melds[myQue - 1].SelectMany(m => m).Select(t => t.id) : Enumerable.Empty<string>()
+        );
+        // İkisi de tahtadan: açılmış kümeler geri almada hiç temizlenmez, üyelik tek başına bayrağı belirlemez.
+        hasOpenedPairs = board.Any(b => b.meldType == (int)MeldType.Pair);
+        hasOpenedSeries = board.Any(b => b.meldType != (int)MeldType.Pair);
+
+        for (int i = 0; i < occupiedRows.Length; i++) occupiedRows[i] = false;
+        for (int i = 0; i < occupiedRowsNumber.Length; i++) occupiedRowsNumber[i] = false;
+        for (int i = 0; i < occupiedRowsPair.Length; i++) occupiedRowsPair[i] = false;
+        committedMelds.Clear();
+        foreach (var b in board.Where(b => meldIds.Contains(b.tile.id)))
+        {
+            var type = (MeldType)b.meldType;
+            int width = type == MeldType.SingleColor ? 13 : type == MeldType.MultiColor ? 4 : 2;
+            int row = b.slot / width;
+            committedMelds.Add(new MeldedTileInfo(b.tile, type, row, b.slot));
+            var rows = type == MeldType.SingleColor ? occupiedRows : type == MeldType.MultiColor ? occupiedRowsNumber : occupiedRowsPair;
+            if (row < rows.Length) rows[row] = true;
+        }
+
+        pendingMeldInfos.Clear();
+        if (pendingMeldedTiles == null) pendingMeldedTiles = new List<Tiles>();
+        pendingMeldedTiles.Clear();
+        meldTileGO.Clear();
+        actionHistory.Clear();
+        pendingSyncActions.Clear();
+        pendingJokersToTake.Clear();
+        pendingActivePlacements.Clear();
+        FirstOpenThisTurn = false;
+        OpenedValueThisTurn = 0;
+        OpenedPairsThisTurn = false;
+        if (PenaltySystem.Instance != null)
+            PenaltySystem.Instance.currentTurnPenalties.Clear();
+    }
+
+    // Dönen oyuncunun açış bayrakları kendi tahtasıyla tutarlı mı (geri vermenin şartı): çift bayrağı tahtada çift taşı,
+    // seri bayrağı seri/grup taşı olmasıyla. Tahta sahneden okunur.
+    public bool OpenFlagsConsistent()
+    {
+        int myQue = GetPlayerQue();
+        Transform area = SeatManager.Instance != null ? SeatManager.Instance.MeldAreaOfQue(myQue) : null;
+        if (area == null || area.childCount < 3)
+            return false;
+        bool series = area.GetChild((int)MeldType.SingleColor).GetComponentsInChildren<TileUI>().Length > 0
+            || area.GetChild((int)MeldType.MultiColor).GetComponentsInChildren<TileUI>().Length > 0;
+        bool pairs = area.GetChild((int)MeldType.Pair).GetComponentsInChildren<TileUI>().Length > 0;
+        return hasOpenedPairs == pairs && hasOpenedSeries == series;
     }
 
     private void InitializeMeldPlaceholders()

@@ -36,6 +36,7 @@ param(
     [ValidateSet('', 'offturn', 'after-discard', 'before-draw', 'after-draw', 'after-open', 'master', 'master-turn', 'master-hand-end', 'hand-end', 'two')][string]$DropRejoin = '',   # bir editör belirli anda bağlantıyı keser (dört editör gerekir)
     [switch]$NoReturn,   # kopan dönmez (dönüş yolu Görev 10-11'de; şimdilik tek geçerli kip)
     [switch]$ReturnAfterEnd,   # kopan, diğerleri bitince döner
+    [switch]$SelfRestore,   # ağsız kanıt: test oyuncusu her 3. kendi turunda masayı fotoğraftan yeniden kurar ([DONUS] öz-kurulum eşit)
     [int]$DropOfflineSec = 8,   # dönüşten önce çevrimdışı süre
     [int]$Bots = 0,   # 1..3: ilk 4-N editör (host + misafirler) + oyunun N botu
     [string[]]$Projects = @(
@@ -173,6 +174,7 @@ try {
             dropThis           = [bool]($dropEditors -contains $i)
             dropOfflineSec     = $DropOfflineSec
             dropMode           = $(if ($DropRejoin) { $dropMode } else { '' })
+            selfRestoreEveryTurns = $(if ($SelfRestore) { 3 } else { 0 })
         }
         [IO.File]::WriteAllText((Join-Path $dir 'config.json'), ($cfg | ConvertTo-Json))
     }

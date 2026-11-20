@@ -222,6 +222,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
     [PunRPC]
     public void SetTurnDirectly(int turnIndex, PhotonMessageInfo info)
     {
+        if (RestoreGate.Defer(() => SetTurnDirectly(turnIndex, info))) return;
         currentTurnPlayer = turnIndex;
         TurnStartTime = info.SentServerTime;
         // Sıra göstergelerini güncelle
@@ -238,7 +239,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
         }
     }
 
-    // live: Görev 9'da RestoreGate.Live olur. İnsan kapısı sunucudan dönen Ctl değerine bakar.
+    // live = RestoreGate.Live. İnsan kapısı sunucudan dönen Ctl değerine bakar.
     public bool IsPlayerTurn()
     {
         if (
@@ -252,7 +253,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
             bool human = PhotonNetwork.CurrentRoom != null
                 && SeatManager.Instance != null
                 && CtlBits.Has(CtlBits.Read(PhotonNetwork.CurrentRoom.CustomProperties), SeatManager.Instance.LocalSeat);
-            return TurnGate.MayAct(true, human, (int)queueValue == currentTurnPlayer);
+            return TurnGate.MayAct(RestoreGate.Live, human, (int)queueValue == currentTurnPlayer);
         }
         return false;
     }
@@ -332,6 +333,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
     [PunRPC]
     public void RPC_ResetTurnForNewRound()
     {
+        if (RestoreGate.Defer(() => RPC_ResetTurnForNewRound())) return;
         // 1. Sadece verileri sıfırla, EKRANA DOKUNMA.
         currentTurnPlayer = 1;
         TurnSerial = 0;
@@ -364,6 +366,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
     [PunRPC]
     private void NextTurn(int serial, PhotonMessageInfo info)
     {
+        if (RestoreGate.Defer(() => NextTurn(serial, info), serial)) return;
         if (!TurnSerialRule.Accept(TurnSerial, serial))
         {
             Debug.LogWarning($"[TUR] eski seri {serial} <= {TurnSerial}");
@@ -602,6 +605,21 @@ public class TurnManager : MonoBehaviourPunCallbacks
             Debug.LogError("[BOT] Atacak taş ID'si boş! Zorla geçiliyor.");
             ForceSkipBotTurn();
         }
+    }
+
+    // Fotoğraftan kurulum: sıra, seri ve süre fotoğraftan; koltuk geri verilmediği için hiçbir işlem izni açık kalmaz.
+    public void RestoreTurn(int currentTurn, int serial, double turnStartTime)
+    {
+        currentTurnPlayer = currentTurn;
+        TurnSerial = serial;
+        TurnStartTime = turnStartTime;
+        ResetTurnFlags();
+        autoPlaying = false;
+        localPlayerTurn = false;
+        isBotMoving = false;
+        botTimeoutTimer = 0f;
+        if (UIManager.Instance != null)
+            UIManager.Instance.UpdateTurnIndicators(currentTurnPlayer);
     }
 
     // Bu fonksiyonu TileDistrubite çağıracak (Veriler geldikten sonra)

@@ -167,6 +167,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void SyncShuffledTiles(Tiles[] shuffledTiles)
     {
+        if (RestoreGate.Defer(() => SyncShuffledTiles(shuffledTiles))) return;
         scoreManager = GameObject.Find("ScoreManager(Clone)").GetComponent<ScoreManager>();
         allTiles.Clear();
         allTiles.AddRange(shuffledTiles);
@@ -381,7 +382,13 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void SyncIndicatorTile(Tiles indicatorTile)
     {
-        // Instantiate the indicator tile
+        if (RestoreGate.Defer(() => SyncIndicatorTile(indicatorTile))) return;
+        PlaceIndicator(indicatorTile);
+    }
+
+    // Gösterge taşı görseli (SyncIndicatorTile gövdesi; kurulumda da bununla gelir).
+    public void PlaceIndicator(Tiles indicatorTile)
+    {
         GameObject indicatorTileObject = Instantiate(tilePrefab, indicatorTileContainer);
         TileUI tileUI = indicatorTileObject.GetComponent<TileUI>();
 
@@ -390,7 +397,6 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             tileUI.SetTileData(indicatorTile);
             tileUI.isIndicatorTile = true; // Mark as indicator tile
         }
-        else { }
     }
 
     private void UpdateFakeJokerTiles(int upperNumber, TileColor color)
@@ -417,6 +423,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void AssignPlayerQueue()
     {
+        if (RestoreGate.Defer(() => AssignPlayerQueue())) return;
         // Sadece Master Client yönetir
         if (!PhotonNetwork.IsMasterClient)
             return;
@@ -478,6 +485,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void SyncQueToSeatMapping(int[] mapping)
     {
+        if (RestoreGate.Defer(() => SyncQueToSeatMapping(mapping))) return;
         seatOfQue = mapping;
         Debug.Log(
             $"[SİSTEM] Yeni Koltuk Haritası: Sıra 1->Koltuk {seatOfQue[1]}, Sıra 2->Koltuk {seatOfQue[2]}, Sıra 3->Koltuk {seatOfQue[3]}, Sıra 4->Koltuk {seatOfQue[4]}"
@@ -487,6 +495,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     private void AssignQueueToPlayer(int actorNumber, int queueValue)
     {
+        if (RestoreGate.Defer(() => AssignQueueToPlayer(actorNumber, queueValue))) return;
         Player player = PhotonNetwork.CurrentRoom.GetPlayer(actorNumber);
         if (player != null)
         {
@@ -539,6 +548,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void AssignQueueComplete()
     {
+        if (RestoreGate.Defer(() => AssignQueueComplete())) return;
         // 1. Önce taşları ve oyuncu listelerini güncelle (Mevcut kodların)
         Debug.Log("Dağıtım ve Sıralama Tamamlandı.");
 
@@ -657,7 +667,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         else { }
     }
 
-    private void PlaceRemainingTilesInMiddleContainer()
+    public void PlaceRemainingTilesInMiddleContainer()
     {
         for (int i = 0; i < allTiles.Count; i++)
         {
@@ -694,6 +704,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void RemoveTileFromPlayerList(int playerNumber, string tileId)
     {
+        if (RestoreGate.Defer(() => RemoveTileFromPlayerList(playerNumber, tileId))) return;
         List<Tiles> hand = playerNumber switch
         {
             1 => playerTiles1,
@@ -731,6 +742,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void AddTileFromMiddlePlayerList(int playerNumber)
     {
+        if (RestoreGate.Defer(() => AddTileFromMiddlePlayerList(playerNumber))) return;
         PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object sfxQue);
         Sfx.Play(SfxId.TileDraw, sfxQue is int sfxMine && sfxMine == playerNumber ? 1f : Sfx.OtherVolume);
         switch (playerNumber)
@@ -768,6 +780,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void AddTileFromDropPlayerList(int playerNumber)
     {
+        if (RestoreGate.Defer(() => AddTileFromDropPlayerList(playerNumber))) return;
         PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object sfxQue);
         Sfx.Play(SfxId.TileTakeSide, sfxQue is int sfxMine && sfxMine == playerNumber ? 1f : Sfx.OtherVolume);
         if (TurnStart != null && TurnStart.que == playerNumber)
@@ -803,7 +816,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     // TileDistrubite.cs dosyasında bu metodu bul ve DEĞİŞTİR:
     public int[] seatOfQue = new int[5];
 
-    void InstatiateSideTiles(int playerCount, Tiles tile)
+    public void InstatiateSideTiles(int playerCount, Tiles tile)
     {
         // playerCount = O anki Sıra Numarası (Queue) (Örn: 3. oyuncunun sırası)
         Transform targetTransform = null;
@@ -913,6 +926,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     void MergeValidpers(List<Tiles> validMeltedTiless, int playerQue, List<Vector2Int> positions)
     {
+        if (RestoreGate.Defer(() => MergeValidpers(validMeltedTiless, playerQue, positions))) return;
         switch (playerQue)
         {
             case 1:
@@ -937,6 +951,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     void UnMergeValidPers(int playerQue)
     {
+        if (RestoreGate.Defer(() => UnMergeValidPers(playerQue))) return;
         switch (playerQue)
         {
             case 1:
@@ -962,6 +977,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void DeactivatePlayerTile(int playerQue, Tiles tileToDeactivate)
     {
+        if (RestoreGate.Defer(() => DeactivatePlayerTile(playerQue, tileToDeactivate))) return;
         object localQue;
         if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out localQue))
         {
@@ -1000,6 +1016,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void DeactivatePlayerTileByIndex(int playerQue, int tileIndex)
     {
+        if (RestoreGate.Defer(() => DeactivatePlayerTileByIndex(playerQue, tileIndex))) return;
         // 1. Bu işlem sadece ilgili oyuncunun ekranında çalışmalı
         object localQue;
         if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out localQue))
@@ -1033,6 +1050,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void MeldTiles(int playerNumber, Tiles tileToRemove)
     {
+        if (RestoreGate.Defer(() => MeldTiles(playerNumber, tileToRemove))) return;
         // 1. Masadaki görselleri oluştur (Tüm oyuncular için)
         if (!(PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object sfxQue) && sfxQue is int q && q == playerNumber))
             Sfx.Play(SfxId.MeldShown, Sfx.OtherVolume);
@@ -1601,6 +1619,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void InstantiateActiveTiles(ActiveTilePlacementInfo[] placements)
     {
+        if (RestoreGate.Defer(() => InstantiateActiveTiles(placements))) return;
         Debug.Log($"RPC Alındı: {placements.Length} adet işlek taş oluşturulacak.");
 
         foreach (var placement in placements)
@@ -1817,6 +1836,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void RemoveActiveTileFromPlayerList(int playerQue, Tiles tileToRemove)
     {
+        if (RestoreGate.Defer(() => RemoveActiveTileFromPlayerList(playerQue, tileToRemove))) return;
         List<Tiles> targetList = null;
         switch (playerQue)
         {
@@ -1862,6 +1882,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void AddTileToPlayerHand(int playerQue, Tiles tileData)
     {
+        if (RestoreGate.Defer(() => AddTileToPlayerHand(playerQue, tileData))) return;
         // -----------------------------------------------------------
         // 1. VERİ KISMI (DÜZELTME BURADA)
         // -----------------------------------------------------------
@@ -1954,6 +1975,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         int placeholderIndex
     )
     {
+        if (RestoreGate.Defer(() => SyncProcessedTileRPC(ownerQue, tileData, meldTypeInt, placeholderIndex))) return;
         // 1. Hedef Oyuncuyu Bul
         Photon.Realtime.Player targetPlayer = PhotonNetwork.PlayerList.FirstOrDefault(p =>
             p.CustomProperties.TryGetValue("PlayerQue", out object q) && (int)q == ownerQue
@@ -1973,6 +1995,16 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         Transform targetPlaceholder = rowTransform.GetChild(placeholderIndex);
 
         // 3. Sadece MASADAKİ Görseli Oluştur
+        PlaceProcessedVisual(targetPlaceholder, tileData);
+
+        // NOT: RemoveActiveTileFromPlayerList burada ÇAĞRILMAZ.
+        // Çift taş silinme hatasının ana sebebi buradaki fazladan çağrıydı.
+
+        RecalculateAllAvailableSlots();
+    }
+
+    void PlaceProcessedVisual(Transform targetPlaceholder, Tiles tileData)
+    {
         if (targetPlaceholder.childCount > 0)
             TileUI.DestroyNow(targetPlaceholder.GetChild(0).gameObject);
 
@@ -1985,11 +2017,19 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
             tileUI.SetTileData(tileData);
             tileUI.FitToParent();
         }
+    }
 
-        // NOT: RemoveActiveTileFromPlayerList burada ÇAĞRILMAZ.
-        // Çift taş silinme hatasının ana sebebi buradaki fazladan çağrıydı.
-
-        RecalculateAllAvailableSlots();
+    // Kurulum: tahtadaki bir taş (per, okey ya da işlenmiş) koltuğun alanında (tür, yuva) yerine; sessiz, hesap yok.
+    public void PlaceBoardTile(int seat, int meldType, int slot, Tiles t)
+    {
+        Transform area = SeatManager.Instance != null ? SeatManager.Instance.MeldAreaOfSeat(seat) : null;
+        Transform row = area != null && meldType >= 0 && meldType < area.childCount ? area.GetChild(meldType) : null;
+        if (row == null || slot < 0 || slot >= row.childCount)
+        {
+            Debug.LogError($"[DONUS] tahta taşı yerleşmedi: koltuk {seat} tür {meldType} yuva {slot}");
+            return;
+        }
+        PlaceProcessedVisual(row.GetChild(slot), t);
     }
     #endregion
     #endregion
@@ -2034,6 +2074,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void ReturnTileToSide(int returningPlayerQue, Tiles tileToReturn)
     {
+        if (RestoreGate.Defer(() => ReturnTileToSide(returningPlayerQue, tileToReturn))) return;
         PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object sfxQue);
         Sfx.Play(SfxId.PutBack, sfxQue is int sfxMine && sfxMine == returningPlayerQue ? 1f : Sfx.OtherVolume);
         // Yandan almayı iptal yolu: taş artık alınmış sayılmaz (tur geri alınırsa yığına bir daha döndürülmez).
@@ -2051,6 +2092,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void RemoveTileFromPlayerListByValue(int playerQue, Tiles tileToRemove)
     {
+        if (RestoreGate.Defer(() => RemoveTileFromPlayerListByValue(playerQue, tileToRemove))) return;
         // ----------------------------------------------------------------
         // 1. VERİ SİLME (LİSTEDEN) - SIKI ID KONTROLÜ
         // ----------------------------------------------------------------
@@ -2146,22 +2188,83 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     #region New Hand Reset and Redistribute
     // TileDistrubite.cs içine
 
-    [PunRPC]
-    public void ResetTableAndRedistribute()
+    // Masanın görsel tarafı: tüm taşlar, atık kaydı, işlek listeleri, yuva durumları. immediate: kurulum aynı karede
+    // yeniden çizer, Destroy karenin sonunda tamamlanır (yeni taşlar eskilerle karışır); canlı yolda false.
+    public void ClearTableVisuals(bool immediate)
     {
-        Debug.Log("MASA SIFIRLANIYOR: Tüm listeler ve görseller temizleniyor...");
+        void Kill(GameObject go) { if (immediate) DestroyImmediate(go); else Destroy(go); }
 
         // 1. Sahnedeki TÜM TileUI (Taş) nesnelerini bul ve yok et
         TileUI[] allTilesInScene = FindObjectsOfType<TileUI>();
         foreach (TileUI tUI in allTilesInScene)
         {
-            if (tUI.gameObject != null)
-                Destroy(tUI.gameObject);
+            if (tUI != null && tUI.gameObject != null)
+                Kill(tUI.gameObject);
         }
 
         // Yere atılan taşların referanslarını tutan listeyi temizle (Görseller yukarıda silindi ama liste dolu kalmasın)
         droppedTiles.Clear();
         dropTile = null;
+
+        // Available (İşlek) hesaplamalarını sıfırla
+        availableTiles.Clear();
+        activePlacements.Clear();
+
+        // 4. Placeholder (yuva) ışıklarını ve durumlarını sıfırla
+        Placeholder[] allPhs = FindObjectsOfType<Placeholder>();
+        foreach (var ph in allPhs)
+        {
+            ph.available = false;
+            ph.AvailableTileInfo = null;
+            // Eğer placeholder içinde child kaldıysa (Destroy'dan kaçan) onu da temizle
+            foreach (Transform child in ph.transform.Cast<Transform>().ToList())
+            {
+                Kill(child.gameObject);
+            }
+        }
+    }
+
+    // Kurulum: veri tarafı. Eller ve havuz aynı List nesneleri olarak yeniden doldurulur (TileUI.playerTiles ve başkaları referansı tutar).
+    public void LoadData(TableSnapshot s)
+    {
+        allTiles.Clear();
+        allTiles.AddRange(s.pile);
+        for (int q = 1; q <= 4; q++)
+        {
+            var hand = GetPlayerTilesForBot(q);
+            hand.Clear();
+            hand.AddRange(s.hands[q - 1]);
+            var melds = MeldsOf(q);
+            melds.Clear();
+            melds.AddRange(s.melds[q - 1].Select(m => new List<Tiles>(m)));
+            var positions = MeldPositionsOf(q);
+            positions.Clear();
+            positions.AddRange(s.meldPositions[q - 1].Select(m => new List<Vector2Int>(m)));
+        }
+        seatOfQue = (int[])s.seatOfQue.Clone();
+    }
+
+    // Kurulum: yerel ıstaka el verisinden, sırasıyla ilk yuvalara; eski görseller hemen silinir.
+    public void RebuildLocalRack()
+    {
+        if (playerTileContainers == null)
+            return;
+        foreach (Transform slot in playerTileContainers)
+            foreach (Transform child in slot.Cast<Transform>().ToList())
+                DestroyImmediate(child.gameObject);
+        var hand = GetPlayerTiles();
+        for (int j = 0; j < hand.Count && j < playerTileContainers.Length; j++)
+            InstantiateTiles(j, hand[j]);
+    }
+
+    [PunRPC]
+    public void ResetTableAndRedistribute()
+    {
+        if (RestoreGate.Defer(() => ResetTableAndRedistribute())) return;
+        Debug.Log("MASA SIFIRLANIYOR: Tüm listeler ve görseller temizleniyor...");
+
+        // 1 ve 4. adımlar: sahnedeki tüm taşlar ve yuvalar (kurulumla ortak, burada karenin sonunda silinir)
+        ClearTableVisuals(false);
 
         // 2. Ana taş havuzunu ve oyuncu ellerini temizle
         allTiles.Clear();
@@ -2182,23 +2285,6 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         meltedTilesPositions2.Clear();
         meltedTilesPositions3.Clear();
         meltedTilesPositions4.Clear();
-
-        // Available (İşlek) hesaplamalarını sıfırla
-        availableTiles.Clear();
-        activePlacements.Clear();
-
-        // 4. Placeholder (yuva) ışıklarını ve durumlarını sıfırla
-        Placeholder[] allPhs = FindObjectsOfType<Placeholder>();
-        foreach (var ph in allPhs)
-        {
-            ph.available = false;
-            ph.AvailableTileInfo = null;
-            // Eğer placeholder içinde child kaldıysa (Destroy'dan kaçan) onu da temizle
-            foreach (Transform child in ph.transform)
-            {
-                Destroy(child.gameObject);
-            }
-        }
 
         // 5. MASTER CLIENT: Taşları yeniden üret ve dağıtımı başlat
         if (PhotonNetwork.IsMasterClient)
@@ -2237,6 +2323,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     [PunRPC]
     public void BotDiscardTileRPC(int playerQue, string tileID)
     {
+        if (RestoreGate.Defer(() => BotDiscardTileRPC(playerQue, tileID))) return;
         // A) Doğru listeyi bul
         List<Tiles> hand = GetPlayerTilesForBot(playerQue);
 

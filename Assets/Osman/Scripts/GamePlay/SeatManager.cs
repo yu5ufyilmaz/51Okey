@@ -70,6 +70,12 @@ public class SeatManager : MonoBehaviourPunCallbacks
     #region Player Join and Left Functions
     public override void OnJoinedRoom()
     {
+        // Dönüş: oyuncu nesnesi, koltuk isteği ve masa sahibi dalı taze girişe aittir; yalnız isimlikler yenilenir.
+        if (PhotonNetwork.LocalPlayer.HasRejoined)
+        {
+            UpdateSeatDisplay();
+            return;
+        }
         // Katılanın masa sahnesini PUN (AutomaticallySyncScene) yükler; RoomManager/SceneChangeManager yükleme katmanını kapatamaz.
         UIRoot.HideLoading();
         AssignPositionAndInstantiate();
@@ -379,7 +385,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
     // Geri sayım başladı: koltuklar kilitli, "OTUR" gizli. Room property ki herkes görsün.
     const string SeatsLockedKey = "SeatsLocked";
 
-    bool SeatsLocked =>
+    public static bool SeatsLocked =>
         PhotonNetwork.CurrentRoom != null
         && PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(SeatsLockedKey, out object v)
         && v is bool locked
@@ -512,7 +518,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
     //Seat Text changes from there.
     // SeatManager.cs -> UpdateSeatDisplay (DÜZELTİLMİŞ)
 
-    private void UpdateSeatDisplay()
+    public void UpdateSeatDisplay()
     {
         // 1. ÖNCE TEMİZLİK (Hayalet/Clone sorunu burada çözülüyor)
         // Her güncelleme öncesi masadaki isimleri siliyoruz ki eskiler orada kalmasın.

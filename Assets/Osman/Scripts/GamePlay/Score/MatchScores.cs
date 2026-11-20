@@ -121,6 +121,13 @@ public class MatchScores : MonoBehaviourPunCallbacks
     // Yeni el başlarken: önceki elin yazılmamış cezaları yeni ele taşınmaz
     public void StartNewHand() => current.Clear();
 
+    // Fotoğraftan kurulum: süren elin ceza listesi fotoğraftakiyle değişir.
+    public void RestoreCurrent(IEnumerable<PenaltyEntry> entries)
+    {
+        current.Clear();
+        current.AddRange(entries);
+    }
+
     // ShowPenaltyRPC'den; sıra bilinmiyorsa sessizce atlar
     public void RecordPenalty(int que, int amount, PenaltyReason reason)
     {

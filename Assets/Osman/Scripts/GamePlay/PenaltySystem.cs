@@ -197,6 +197,7 @@ public class PenaltySystem : MonoBehaviourPunCallbacks
     [PunRPC]
     public void ApplyPenaltyRPC(int playerQue, int penaltyAmount)
     {
+        if (RestoreGate.Defer(() => ApplyPenaltyRPC(playerQue, penaltyAmount))) return;
         // Cezaları sadece master tutar (diğer cezalar da master'da); her client kendi eksik kopyasından
         // PlayerScore yazarsa son yazan kazanır ve ekrandaki puan yanlış olur.
         if (!PhotonNetwork.IsMasterClient)

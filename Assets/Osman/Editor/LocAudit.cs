@@ -17,7 +17,7 @@ public static class LocAudit
         public List<string> MissingGlyphs = new List<string>();
     }
 
-    const string Sections = "common|login|lobby|room|settings|profile|account|shop|table|penalty|toast|error|lang";
+    const string Sections = "common|login|lobby|room|settings|profile|account|shop|table|penalty|toast|error|lang|rejoin";
     static readonly Regex KeyFormat = new Regex("^(?:" + Sections + @")\.[a-z0-9_]+$");
     static readonly Regex UsedKey = new Regex("\"((?:" + Sections + ")\\.(?!(?:cs|json|csv|txt|png|jpg|prefab|asset|unity|meta|log|xml|dat|ogg|wav|mp3)\")[a-z0-9_]+)\"");
     static readonly Regex LangHeader = new Regex("^[a-z]{2,3}(-[a-z0-9]+)?$");

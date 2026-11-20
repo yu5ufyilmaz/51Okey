@@ -159,6 +159,9 @@ public class RoomManager : MonoBehaviourPunCallbacks
 
     public override void OnJoinedRoom()
     {
+        // Dönüş: masa sahnesini PUN yükler; puan sıfırlama ve ikinci sahne yüklemesi taze girişe aittir.
+        if (PhotonNetwork.LocalPlayer.HasRejoined)
+            return;
         Debug.Log("Odaya girildi. Eski puanlar temizleniyor...");
 
         Hashtable resetProps = new Hashtable();

@@ -32,6 +32,7 @@ public class SyncAutoTestConfig
     public bool dropThis; // bu editör kopar
     public float dropOfflineSec; // dönüşten önce çevrimdışı süre
     public string dropMode; // "return" | "noreturn" | "afterend"
+    public int selfRestoreEveryTurns; // > 0: test oyuncusu her N. kendi turunun başında masayı fotoğraftan yeniden kurar (ağsız kanıt)
 
     public string PhotonName => string.IsNullOrEmpty(displayName) ? nickName : displayName;
     public bool IsHost => role == "host";

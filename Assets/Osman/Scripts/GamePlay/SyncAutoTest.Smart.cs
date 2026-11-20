@@ -51,6 +51,40 @@ public partial class SyncAutoTest
         return h & 0x7fffffff;
     }
 
+    int ownTurns;
+
+    // -SelfRestore: sıra başında (çekmeden) masa fotoğraflanır, silinip fotoğraftan kurulur, yeniden fotoğraflanır; iki fotoğraf aynı olmalı.
+    IEnumerator SelfRestore()
+    {
+        var a = SnapshotBuilder.FromScene();
+        var decoded = a != null ? SnapshotCodec.Decode(SnapshotCodec.Encode(a)) : null;
+        if (decoded == null)
+        {
+            Debug.LogError("[DONUS] öz-kurulum fark: fotoğraf kurulamadı ya da çözülemedi");
+            yield break;
+        }
+        bool canDrop = turnManager.canDrop;
+        SnapshotApplier.Apply(decoded);
+        turnManager.canDrop = canDrop; // koltuk geri verilmiyor; bu test oyuncusu kendi turunu sürdürür
+        var b = SnapshotBuilder.FromScene();
+        string rack = Td.RackMismatch();
+        string ta = a.Canonical(true), tb = b != null ? b.Canonical(true) : "";
+        if (b != null && ta == tb && TableDigest.Of(a) == TableDigest.Of(b) && rack == null)
+        {
+            Debug.Log($"[DONUS] öz-kurulum eşit {a.round}.{a.turnSerial} {TableDigest.Of(a):x8}");
+        }
+        else
+        {
+            var la = ta.Split('\n');
+            var lb = tb.Split('\n');
+            var diff = Enumerable.Range(0, Mathf.Max(la.Length, lb.Length))
+                .Where(i => (i < la.Length ? la[i] : "") != (i < lb.Length ? lb[i] : ""))
+                .Select(i => $"önce: {(i < la.Length ? la[i] : "-")} | sonra: {(i < lb.Length ? lb[i] : "-")}");
+            Debug.LogError($"[DONUS] öz-kurulum fark {a.round}.{a.turnSerial}: ıstaka {rack ?? "tamam"}\n{string.Join("\n", diff)}");
+        }
+        yield return null; // yeni TileUI'lerin Start'ı (ScoreManager.CheckForPer) çalışsın
+    }
+
     IEnumerator SmartTurn()
     {
         EnsureSmart();
@@ -61,6 +95,8 @@ public partial class SyncAutoTest
         }
         else
             brain.NewTurn();
+        if (Config.selfRestoreEveryTurns > 0 && ++ownTurns % Config.selfRestoreEveryTurns == 0)
+            yield return StartCoroutine(SelfRestore());
         firstOpenThisTurn = processedThisTurn = false;
         lastFinish = null;
         arrangedSig = null;

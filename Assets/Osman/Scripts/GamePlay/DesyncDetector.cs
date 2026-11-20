@@ -75,6 +75,14 @@ public class DesyncDetector : MonoBehaviourPunCallbacks, IOnEventCallback
     public static int CurrentDeal => Instance != null ? Instance.deal : 0;
     public static int CurrentMove => Instance != null ? Instance.move : 0;
 
+    // Dönüş: fotoğrafın anahtarı sayaç olur (sayaç odaya girişte sıfırlanmıştı).
+    public static void AdoptKey(int deal, int move)
+    {
+        if (Instance == null) return;
+        Instance.deal = deal;
+        Instance.move = move;
+    }
+
     public static string CurrentKey => Instance != null ? $"{Instance.deal}.{Instance.move}" : "0.0";
 
     public static int NextDealSeed()

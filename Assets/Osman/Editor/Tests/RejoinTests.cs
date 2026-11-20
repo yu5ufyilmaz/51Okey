@@ -115,4 +115,24 @@ public class RejoinTests
         Assert.IsTrue(BotEndRule.PileEmpty(0, false));
         Assert.IsFalse(BotEndRule.PileEmpty(1, false));
     }
+    [Test] public void Queue_First_To_Replay() {
+        Assert.AreEqual(2, RestoreQueue.FirstToReplay(new[] { -1, 5, -1, 6, -1 }, 5));
+        Assert.AreEqual(4, RestoreQueue.FirstToReplay(new[] { -1, 5, -1, 6 }, 6));
+        Assert.AreEqual(0, RestoreQueue.FirstToReplay(new[] { -1, -1 }, 5));
+        Assert.AreEqual(0, RestoreQueue.FirstToReplay(new int[0], 5));
+    }
+    [Test] public void Gate_Replays_Only_After_Snapshot_Serial() {
+        var log = new List<string>(); RestoreGate.Enter();
+        Assert.IsTrue(RestoreGate.Defer(() => log.Add("draw6")));
+        Assert.IsTrue(RestoreGate.Defer(() => log.Add("nt7"), 7));
+        Assert.IsTrue(RestoreGate.Defer(() => log.Add("draw7")));
+        CollectionAssert.IsEmpty(log);
+        Assert.AreEqual(1, RestoreGate.GoLive(7));
+        CollectionAssert.AreEqual(new[] { "draw7" }, log); Assert.IsTrue(RestoreGate.Live);
+        Assert.IsFalse(RestoreGate.Defer(() => log.Add("x"))); RestoreGate.Reset();
+    }
+    [Test] public void Gate_New_Hand_Drops_Queue() {
+        var log = new List<string>(); RestoreGate.Enter(); RestoreGate.Defer(() => log.Add("old"));
+        RestoreGate.GoLiveFromNewHand(); CollectionAssert.IsEmpty(log); Assert.IsTrue(RestoreGate.Live); RestoreGate.Reset();
+    }
 }
