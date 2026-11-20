@@ -300,3 +300,50 @@ lobi yeniden üretilir. "BOTLARLA OYNA" masası bugünkü gibi tek el kalır.
   sütunların sığması (sahte veriyle), tr ve en, 16:9 ve 20:9 ekran görüntüleri.
 - Masada ayarlar: Ses kapatılınca ses kesilir; geri tuşu pencereyi kapatır.
 - Telefonda deneme Osman'dadır.
+
+## Uygulamadan devreden notlar (2026-11-20)
+
+**Ağ üzerinde yeni olanlar**
+- Oda özellikleri: `Hand1..Hand7` (int[], el dökümü; biçim yukarıdaki gibi), `SeatNames` (string[4]).
+- RPC: `OpenValueRPC(int que, int value, bool isPairs)` (açış puanı isimlikte).
+- `RPC_ResetTurnForNewRound` artık yalnız masa sahibinden gider (2. elde masa sahibinin takılması
+  bunun kopyalarındandı).
+
+**Kaldırılanlar**
+- Eski skor paneli ve `table.leading` anahtarı. "önde" etiketi Osman'ın isteğiyle kalktı: alt bölüm
+  (eller ve toplam) sıraya göre dizilir, en düşük toplam üstte, eşitlikte koltuk sırası.
+
+**Claude'un yalnız verdiği kararlar (Osman onaylamadı)**
+- CEZALAR ve BİTİRME hücreleri BU EL ile aynı renkte (eksi yeşil, artı kırmızı).
+- Geri sayım 10'dan başlar, 0'da kalır; metin "{0} sn" / "{0} s".
+- Aynı el dökümü farklı içerikle yeniden gelirse tablo yenilenir, sayaç sıfırlanmaz.
+- Skor tablosu, `UiKitTable.cs` değişince kurucu tarafından baştan kurulur (dosyanın MD5'i
+  `ScoreboardView.layoutSignature` içinde); sahnede elle yapılan düzenleme kaybolur.
+- Aynı turda 68 açıp 24 daha yere konursa baraj ve etiket 68 kalır.
+- İngilizcede "kafa" çevrilmedi.
+- Masadaki ayarlar penceresi skor tablosu açıkken açılmaz.
+
+**Doğrulanan**
+- EditMode 376/376; dil ve ses denetimleri hatasız.
+- Dört editör, `Run-SyncTest.ps1 -Deals 2 -Mode smart` (8abd208 üzerinde): `PASS: 2 el, ok 94,
+  desync 0`; dört editörde `[SKOR] el 2: 1=1590 2=1530 3=1070 4=90` aynı. Editörler tek
+  `Editor.log` paylaştığı için `[SKOR] el 1` satırı yalnız iki kez görüldü (ikisi aynı).
+- Tek editör: `-Solo -Mode smart -Seed 11` PASS (99a9f04 üzerinde).
+- Ekran görüntüleri: `.superpowers/shots-keep/masa/`.
+
+**Doğrulanmayan**
+- Sıralama değişikliğinden (99a9f04) sonra dört editörlü test koşulmadı; `-Deals 3 -Mode smart`
+  ve düz `-Deals 2` hiç koşulmadı (klon editörler kapalıydı).
+- İngilizce 7 ellik tablo görüntüsü çekilmedi.
+- Masa sahibi değişimi ve oyun ortasında ayrılan oyuncunun "(bot)" adı canlı denenmedi.
+
+**Bilinen açıklar**
+- Masa sahibi el ortasında değişirse o elin ceza toplamları kaybolur.
+- Aynı turda geri alıp yeniden açınca baraj güncellenmez, etiket çıkmaz.
+- Son taşla bitirmede `FinishGameRPC` iki kez gider (berabere ve kazanan).
+- Çıkış ve Ayarlar yazıları telefonda küçük (yaklaşık 15 px).
+
+**Telefonda denenecekler**
+- 2 ellik gerçek maç: el sonu tablosu, ikinci el sütunu, maç sonu.
+- 7 ellik masada TABLO düğmesi.
+- Açış etiketi isimlikte; masada ses kapatma; bot adları "Bot 1, Bot 2".
