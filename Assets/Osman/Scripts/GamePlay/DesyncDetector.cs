@@ -151,6 +151,9 @@ public class DesyncDetector : MonoBehaviourPunCallbacks, IOnEventCallback
         string key = $"{dealNo}.{moveNo}";
         // AppendLine Windows'ta \r\n, Android'de \n yazar; telefon-editör kıyası her hamlede yanlış alarm veriyordu.
         snapshot = snapshot.Replace("\r", "");
+        // Finish'te eyleyen client işlediği taşın görselini birkaç satır sonra yollar; tahta karşılaştırılmaz (sonraki dağıtım sıfırlar).
+        if (label == "Finish")
+            snapshot = StripBoard(snapshot);
         if (!received.TryGetValue(key, out var byActor))
         {
             byActor = new Dictionary<int, Entry>();
@@ -181,6 +184,9 @@ public class DesyncDetector : MonoBehaviourPunCallbacks, IOnEventCallback
             Debug.Log($"<color=green>[SYNC OK]</color> {key} {label} ({expected} client)");
         }
     }
+
+    public static string StripBoard(string snapshot) =>
+        string.Join("\n", snapshot.Split('\n').Where(l => !l.StartsWith("board#")));
 
     void Compare(string key, int a, Entry ea, int b, Entry eb)
     {

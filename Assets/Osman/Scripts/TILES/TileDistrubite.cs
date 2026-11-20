@@ -622,6 +622,8 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 break;
         }
         allTiles.RemoveAt(0);
+        if (PhotonNetwork.IsMasterClient)
+            GameManager.Instance?.turnManager?.BotDrawApplied(playerNumber);
         if (UIManager.Instance != null)
         {
             UIManager.Instance.UpdateTileCount(allTiles.Count);

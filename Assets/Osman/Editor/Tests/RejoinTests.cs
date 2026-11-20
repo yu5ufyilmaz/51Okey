@@ -68,4 +68,12 @@ public class RejoinTests
         current = captured;                            // ilk gönderim yerelde işlendi
         Assert.IsFalse(TurnSerialRule.Accept(current, captured)); // ikinci gönderim aynı seriyi taşır
     }
+    [Test] public void Bot_End_Decision_Ignores_Latency() {
+        Assert.IsTrue(BotEndRule.PileEmpty(1, true));
+        Assert.IsFalse(BotEndRule.PileEmpty(1, false));
+        Assert.IsTrue(BotEndRule.PileEmpty(0, false));
+    }
+    [Test] public void Finish_Snapshot_Drops_Board_Only() {
+        Assert.AreEqual("turn=3\nhand1(2)=a b", DesyncDetector.StripBoard("turn=3\nhand1(2)=a b\nboard#1=x@0.1\nboard#2="));
+    }
 }

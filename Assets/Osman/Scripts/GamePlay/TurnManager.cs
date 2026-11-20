@@ -258,6 +258,13 @@ public class TurnManager : MonoBehaviourPunCallbacks
 
     private Coroutine botRoutine;
     private bool botDrew; // çalışan bot çekme RPC'sini gönderdi
+    private bool botDrawPending; // çekme gönderildi, masa sahibinde henüz uygulanmadı (sunucu dönüşü)
+
+    public void BotDrawApplied(int que)
+    {
+        if (que == botQue)
+            botDrawPending = false;
+    }
     private int botQue;
 
     // TurnManager.cs içine:
@@ -473,6 +480,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
     {
         isBotMoving = true;
         botDrew = false;
+        botDrawPending = false;
         botTimeoutTimer = 0f; // Sayacı başlat
 
         // Hata yakalama bloğu (Try-Catch)
@@ -518,6 +526,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
             );
             hasDrawn = true;
             botDrew = true;
+            botDrawPending = true;
             yield return new WaitForSeconds(1.2f);
         }
 
@@ -553,7 +562,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
             // Atış ve sonucu (beraberlik ya da sıra geçişi) aynı karede, aynı gönderenden: masa sahibi
             // arada düşse de yeni masa sahibi atılmış taşla birlikte sıra değişimini de görür.
             // isBotMoving = false işlemini NextTurn yapacak.
-            if (tileDist.allTiles.Count == 0)
+            if (BotEndRule.PileEmpty(tileDist.allTiles.Count, botDrawPending))
             {
                 if (GameManager.Instance != null && !GameManager.Instance.isGameEnded)
                     GameManager.Instance.photonView.RPC(
