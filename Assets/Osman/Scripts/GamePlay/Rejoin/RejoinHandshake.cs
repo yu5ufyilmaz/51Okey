@@ -251,6 +251,10 @@ public class RejoinHandshake : MonoBehaviourPunCallbacks, IOnEventCallback
             return;
         }
         sm.SetSeatControl(seat, true);
+        // Dönen yeni eli kaçırdıysa kendi PlayerScore'unu sıfırlamadı: ceza göstergesi masa sahibinin tablosundan.
+        var scm = gm.scoreManager;
+        if (scm != null && scm.playerScores != null && scm.playerScores.TryGetValue(que, out int score))
+            p.SetCustomProperties(new ExitGames.Client.Photon.Hashtable { { "PlayerScore", score } });
         // Cezalar özette yok: el içi ceza listesi geri vermeyle taşınır.
         var pen = MatchScores.Instance != null ? MatchScores.Instance.CurrentHandPenalties.ToList() : new System.Collections.Generic.List<MatchScores.PenaltyEntry>();
         Send(GrantEvent, new object[] { round, serial, pen.Select(x => x.seat).ToArray(), pen.Select(x => x.amount).ToArray(), pen.Select(x => (int)x.reason).ToArray() }, To(actor));
