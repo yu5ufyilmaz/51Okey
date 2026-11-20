@@ -18,7 +18,8 @@ public class RejoinHandshake : MonoBehaviourPunCallbacks, IOnEventCallback
     static HandshakeBook book = new HandshakeBook();
     static bool rejoined, // bu odaya oyun ortasında dönüldü
         tableReady;
-    static int agains;
+    static int agains,
+        applyFailures;
 
     public static bool Granted { get; private set; } // bu odada koltuk geri verildi
     public static event Action GrantedNow;
@@ -53,7 +54,7 @@ public class RejoinHandshake : MonoBehaviourPunCallbacks, IOnEventCallback
         book = new HandshakeBook();
         Granted = false;
         tableReady = false;
-        agains = 0;
+        agains = applyFailures = 0;
         rejoined = PhotonNetwork.LocalPlayer.HasRejoined && SeatManager.SeatsLocked;
         StopAllCoroutines();
         if (rejoined)
@@ -69,18 +70,31 @@ public class RejoinHandshake : MonoBehaviourPunCallbacks, IOnEventCallback
     // Table'ın oda nesneleri (önbellekten yeniden kurulur) gelince istek. Yeni elle canlı olsa da istenir: defter onu tanımalı.
     IEnumerator WaitTableThenRequest()
     {
-        while (PhotonNetwork.InRoom
-            && !(SceneManager.GetActiveScene().name == "Table" && GameManager.Instance != null
-                && GameObject.Find("TileManager(Clone)") != null && GameObject.Find("ScoreManager(Clone)") != null))
+        while (PhotonNetwork.InRoom && !TableReady())
             yield return null;
-        if (!PhotonNetwork.InRoom)
+        yield return null; // oda nesnelerinin Start'ı
+        if (!PhotonNetwork.InRoom || !TableReady())
+        {
+            if (PhotonNetwork.InRoom)
+                StartCoroutine(WaitTableThenRequest());
             yield break;
+        }
         tableReady = true;
         Debug.Log($"[DONUS] masa hazır, canlı {RestoreGate.Live}");
         if (PhotonNetwork.IsMasterClient)
             ReconnectFlow.HandOffMaster(); // devir sonrası OnMasterClientSwitched isteği yollar
         else
             Request();
+    }
+
+    // Son sahne yüklendi (ileti kuyruğu akıyor), masa bileşenleri ve oda nesneleri o sahnede.
+    static bool TableReady()
+    {
+        var gm = GameManager.Instance;
+        return PhotonNetwork.IsMessageQueueRunning && SceneManager.GetActiveScene().name == "Table"
+            && gm != null && gm.gameObject.scene == SceneManager.GetActiveScene()
+            && gm.tileDistrubite != null && gm.scoreManager != null && gm.turnManager != null && SeatManager.Instance != null
+            && GameObject.Find("TileManager(Clone)") != null && GameObject.Find("ScoreManager(Clone)") != null;
     }
 
     static void Request()
@@ -262,7 +276,23 @@ public class RejoinHandshake : MonoBehaviourPunCallbacks, IOnEventCallback
             return;
         }
         Debug.Log($"[DONUS] fotoğraf alındı seri {s.round}.{s.turnSerial}");
-        SnapshotApplier.Apply(s);
+        try
+        {
+            if (!TableReady())
+                throw new InvalidOperationException("masa hazır değil");
+            SnapshotApplier.Apply(s);
+        }
+        catch (Exception ex)
+        {
+            // Yarım kurulum canlı sayılmaz; bot oynamayı sürdürür, sonraki tur yeni fotoğraf (sınırlı).
+            applyFailures++;
+            Debug.LogWarning($"[DONUS] kurulum hatası {applyFailures}: {ex.GetType().Name} {ex.Message}\n{ex.StackTrace}");
+            RestoreGate.Enter();
+            ShowOverlay();
+            if (applyFailures < 5)
+                Request();
+            return;
+        }
         int replayed = RestoreGate.GoLive(s.turnSerial);
         Debug.Log($"[DONUS] kuruldu seri {s.turnSerial} ({replayed} sıradaki oynatıldı)");
     }

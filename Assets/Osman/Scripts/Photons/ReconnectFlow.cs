@@ -236,8 +236,16 @@ public class ReconnectFlow : MonoBehaviourPunCallbacks
             return;
         }
         Active = false;
-        PhotonNetwork.AutomaticallySyncScene = true;
         // PUN'un kendi yüklemesi (ileti kuyruğu sahne yüklenene kadar durur); SceneChangeManager değil.
         PhotonNetwork.LoadLevel("Table");
+        StartCoroutine(SyncSceneWhenLoaded());
+    }
+
+    // Eşitleme yükleme bitmeden açılırsa PUN (etkin sahne hâlâ Reconnect) Table'ı ikinci kez yükler; oda nesneleri ilk kopyayla ölür.
+    IEnumerator SyncSceneWhenLoaded()
+    {
+        while (PhotonNetwork.InRoom && (SceneManager.GetActiveScene().name != "Table" || !PhotonNetwork.IsMessageQueueRunning))
+            yield return null;
+        PhotonNetwork.AutomaticallySyncScene = true;
     }
 }
