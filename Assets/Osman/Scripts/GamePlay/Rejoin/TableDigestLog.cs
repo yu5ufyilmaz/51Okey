@@ -25,7 +25,8 @@ public static class TableDigestLog
         LastDigest = TableDigest.Of(s);
         if (master) Ring.Put(s.round, s.turnSerial, LastDigest);
         if (!Debug.isDebugBuild) return;
-        string line = $"[OZET] {s.round}.{s.turnSerial} {LastDigest:x8}";
+        // Dönen istemci koltuğu geri alana kadar ayrı etiket: Run-SyncTest yalnız [OZET] satırlarını kıyaslar.
+        string line = $"{(RejoinHandshake.Restoring ? "[OZET-KUR]" : "[OZET]")} {s.round}.{s.turnSerial} {LastDigest:x8}";
         Debug.Log(line);
         // Dosya yalnız Editor'de (senkron test donanımı): telefondaki geliştirme yapısında dönüşsüz büyür.
         if (!Application.isEditor) return;

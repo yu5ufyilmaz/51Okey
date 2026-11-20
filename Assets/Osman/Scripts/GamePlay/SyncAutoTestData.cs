@@ -72,12 +72,13 @@ public class SyncAutoTestStatus
     public string digestLog; // [OZET] dosyası: Run-SyncTest editörler arası özetleri kıyaslar
     public int drops,
         dropAtMove,
-        rejoinGrants, // Görev 10-11'de beslenir
+        rejoinGrants, // [DONUS] geri alındı sayısı
+        movesAfterGrant, // geri vermeden sonraki kendi hamleleri
         ctlBotLines, // "[CTL] koltuk N bot" satırları: bu editörün gördüğü
         gerialLines; // "[GERIAL]" satırları
     public bool isMaster, // koşu sonunda master mı: kanıt kuralları yeni master'a bakar
         restoreEntered,
-        gameOverSeen; // Görev 10-11'de beslenir
+        gameOverSeen; // afterend: "oyun sona ermiş" görüldü
     public List<string> scoreLines = new List<string>();
     public string rejoinStage; // son [DONUS] satırı: kopan editör hangi adımda
     public List<string> donusLines = new List<string>(); // bu editörün [DONUS] satırları (son 60)

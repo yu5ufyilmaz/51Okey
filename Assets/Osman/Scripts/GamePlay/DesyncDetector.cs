@@ -160,6 +160,9 @@ public class DesyncDetector : MonoBehaviourPunCallbacks, IOnEventCallback
 
     void Store(int dealNo, int moveNo, int actor, string label, string snapshot)
     {
+        // Dönen istemci koltuğu geri alana kadar kıyasa girmez (masası henüz kurulmamış olabilir).
+        if (RejoinHandshake.IsRestoring(actor))
+            return;
         string key = $"{dealNo}.{moveNo}";
         // AppendLine Windows'ta \r\n, Android'de \n yazar; telefon-editör kıyası her hamlede yanlış alarm veriyordu.
         snapshot = snapshot.Replace("\r", "");
@@ -189,7 +192,7 @@ public class DesyncDetector : MonoBehaviourPunCallbacks, IOnEventCallback
         foreach (int other in against.ToList())
             Compare(key, other, byActor[other], actor, byActor[actor]);
 
-        int expected = PhotonNetwork.PlayerList.Count(p => !p.IsInactive);
+        int expected = PhotonNetwork.PlayerList.Count(p => !p.IsInactive && !RejoinHandshake.IsRestoring(p.ActorNumber));
         if (byActor.Count == expected && !badKeys.Contains(key))
         {
             OkCount++;

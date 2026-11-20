@@ -847,14 +847,15 @@ public class GameManager : MonoBehaviourPunCallbacks
     [PunRPC]
     public void RPC_PrepareNextRound()
     {
-        // Kuyruk geçersiz; yeni el hattının tamamı canlı işlenir (kurulum katmanı da kalkar).
+        bool wasLive = RestoreGate.Live;
+        RejoinHandshake.OnPrepareNextRound(wasLive);
+        // Kuyruk geçersiz; yeni el hattının tamamı canlı işlenir. Katman koltuk geri verilince kalkar.
         if (!RestoreGate.Live)
         {
             RestoreGate.GoLiveFromNewHand();
             // Sınama sayacı: yeni elin Deal'i bu eli sayar (odaya girişte sıfırlanmıştı).
             if (PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue("CurrentRound", out object cr) && cr is int round)
                 DesyncDetector.AdoptKey(round - 1, 0);
-            UIRoot.HideLoading();
         }
         isGameEnded = false;
         isGameReady = false;

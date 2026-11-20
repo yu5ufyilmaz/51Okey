@@ -154,4 +154,25 @@ public class RejoinTests
         Assert.IsFalse(RejoinPolicy.ShouldReconnect(false, false, true));
         Assert.IsFalse(RejoinPolicy.ShouldReconnect(false, true, false));
     }
+    [Test] public void Decide_Cases() {
+        Assert.AreEqual(HandshakeDecision.Grant, HandshakeRule.Decide(0xAB, 0xAB, true, false, false));
+        Assert.AreEqual(HandshakeDecision.Wait, HandshakeRule.Decide(0xAB, 0xAB, true, true, false));
+        Assert.AreEqual(HandshakeDecision.Wait, HandshakeRule.Decide(0xAB, 0xAB, true, false, true));
+        Assert.AreEqual(HandshakeDecision.Again, HandshakeRule.Decide(0xAB, 0xAC, true, false, false));
+        Assert.AreEqual(HandshakeDecision.Again, HandshakeRule.Decide(null, 0xAB, true, false, false));
+        Assert.AreEqual(HandshakeDecision.Again, HandshakeRule.Decide(0xAB, 0xAB, false, false, false));
+    }
+    [Test] public void Overlay_After_Five_Agains() {
+        Assert.AreEqual("rejoin.joining_game", HandshakeRule.OverlayKey(4)); Assert.AreEqual("rejoin.retrying", HandshakeRule.OverlayKey(5));
+    }
+    [Test] public void Book_Grants_Once_And_Forgets_Leavers() {
+        var b = new HandshakeBook(); b.Request(5); b.Request(5);
+        Assert.IsTrue(b.IsRestoring(5)); CollectionAssert.AreEqual(new[] { 5 }, b.TakePending()); CollectionAssert.IsEmpty(b.TakePending());
+        Assert.IsFalse(b.OnDecision(5, HandshakeDecision.Wait));
+        Assert.IsTrue(b.OnDecision(5, HandshakeDecision.Again)); CollectionAssert.AreEqual(new[] { 5 }, b.TakePending());
+        Assert.IsTrue(b.OnDecision(5, HandshakeDecision.Grant)); Assert.IsFalse(b.IsRestoring(5));
+        Assert.IsFalse(b.OnDecision(5, HandshakeDecision.Grant));   // ikinci geri verme yok
+        b.Request(7); b.Forget(7); Assert.IsFalse(b.IsRestoring(7)); CollectionAssert.IsEmpty(b.TakePending());
+        b.Request(8); b.PendingToRestoring(); CollectionAssert.IsEmpty(b.TakePending()); Assert.IsTrue(b.OnDecision(8, HandshakeDecision.Grant));
+    }
 }

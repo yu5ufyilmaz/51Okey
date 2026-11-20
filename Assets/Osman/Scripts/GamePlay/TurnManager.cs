@@ -415,6 +415,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
 
         DesyncDetector.Report("NextTurn");
         TableDigestLog.AtTurnBoundary();
+        RejoinHandshake.OnTurnBoundary(); // özet kurulduktan sonra: fotoğraf / özet raporu
     }
 
     public override void OnPlayerLeftRoom(Photon.Realtime.Player otherPlayer)

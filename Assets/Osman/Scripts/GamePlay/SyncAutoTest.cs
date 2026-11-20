@@ -86,6 +86,7 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
         base.OnEnable();
         Application.logMessageReceived += OnLog;
         GameManager.HandResult += OnHandResult;
+        RejoinHandshake.GrantedNow += OnRejoinGranted;
     }
 
     public override void OnDisable()
@@ -93,6 +94,7 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
         base.OnDisable();
         Application.logMessageReceived -= OnLog;
         GameManager.HandResult -= OnHandResult;
+        RejoinHandshake.GrantedNow -= OnRejoinGranted;
         journal?.Dispose();
     }
 
@@ -305,6 +307,21 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
             status.restoreEntered = true;
             WriteStatus();
         }
+    }
+
+    // Koltuk geri verildi: test oyuncusu kaldığı yerden (gerekirse yeni elde) normal oynar.
+    int grantMoves = -1;
+    void OnRejoinGranted()
+    {
+        status.rejoinGrants++;
+        grantMoves = myMoves;
+        if (PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue("CurrentRound", out object r) && r is int round)
+            deal = round;
+        wasReady = GameManager.Instance != null && GameManager.Instance.isGameReady;
+        handEnded = false;
+        turnManager = null;
+        if (state == State.Dropped)
+            SetState(State.Playing);
     }
 
     void TickPlaying()
@@ -522,6 +539,7 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
         status.isMaster = wasMasterInRoom;
         status.deal = deal;
         status.myMoves = myMoves;
+        status.movesAfterGrant = grantMoves < 0 ? 0 : myMoves - grantMoves;
         status.isMyTurn =
             state == State.Playing && turnManager != null && turnManager.currentTurnPlayer == MyQue;
         var dd = DesyncDetector.Instance;

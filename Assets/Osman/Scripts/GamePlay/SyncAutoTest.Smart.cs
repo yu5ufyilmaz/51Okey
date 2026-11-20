@@ -305,8 +305,8 @@ public partial class SyncAutoTest
         {
             Scores = PhotonNetwork.IsMasterClient && Sm.playerScores != null
                 ? new Dictionary<int, int>(Sm.playerScores)
-                // Kopmuş (inaktif) koltuğu bot oynar; Photon özelliği bayat kalabilir, o koltuk misafirde denetlenmez.
-                : PhotonNetwork.PlayerList.Where(p => !p.IsInactive && p.CustomProperties.ContainsKey("PlayerQue"))
+                // Kopmuş ya da henüz geri almamış koltuğu bot oynar; Photon özelliği bayat kalabilir, o koltuk misafirde denetlenmez.
+                : PhotonNetwork.PlayerList.Where(p => HumanSeat(p) && p.CustomProperties.ContainsKey("PlayerQue"))
                     .ToDictionary(
                         p => (int)p.CustomProperties["PlayerQue"],
                         p => p.CustomProperties.TryGetValue("PlayerScore", out object s) ? (int)s : 0
@@ -318,6 +318,11 @@ public partial class SyncAutoTest
             PickedSide = turnManager.hasPickedFromSide,
             Limit = GameManager.Instance.CurrentTableLimit,
         };
+
+    // Koltuğu insan oynuyor: etkin ve Ctl biti açık (dönen oyuncu geri alana kadar bot sayılır).
+    static bool HumanSeat(Photon.Realtime.Player p) =>
+        !p.IsInactive && SeatManager.Instance != null
+        && CtlBits.Has(CtlBits.Read(PhotonNetwork.CurrentRoom.CustomProperties), SeatManager.Instance.GetSeatNumberOfPlayer(p));
 
     static string Deltas(Dictionary<int, int> d) =>
         d.Count == 0 ? "ceza yok" : string.Join(", ", d.OrderBy(kv => kv.Key).Select(kv => $"que{kv.Key} {kv.Value:+0;-0}"));
@@ -568,7 +573,7 @@ public partial class SyncAutoTest
         int que = v.MyQue;
         var expected = new Dictionary<int, int>();
         var seated = new HashSet<int>(
-            PhotonNetwork.PlayerList.Where(p => !p.IsInactive && p.CustomProperties.ContainsKey("PlayerQue")).Select(p => (int)p.CustomProperties["PlayerQue"])
+            PhotonNetwork.PlayerList.Where(p => HumanSeat(p) && p.CustomProperties.ContainsKey("PlayerQue")).Select(p => (int)p.CustomProperties["PlayerQue"])
         );
         void Add(int q, int amount)
         {

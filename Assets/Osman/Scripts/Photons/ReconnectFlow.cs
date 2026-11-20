@@ -90,12 +90,6 @@ public class ReconnectFlow : MonoBehaviourPunCallbacks
         PhotonNetwork.SetMasterClient(to);
     }
 
-    public override void OnMasterClientSwitched(Player newMasterClient)
-    {
-        if (newMasterClient.IsLocal && PhotonNetwork.InRoom && !RestoreGate.Live)
-            HandOffMaster();
-    }
-
     public override void OnLeftRoom() => OnDropped("OnLeftRoom");
 
     public override void OnDisconnected(DisconnectCause cause)
