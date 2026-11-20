@@ -877,12 +877,13 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
             GameManager.Instance.scoreManager.CommitFinalTableLimit();
         }
         // Coroutine başlatıyoruz ki işlemleri zamana yayabilelim
-        StartCoroutine(NextTurnRoutine());
+        // Seri atış başında alınır: aynı turu bitiren ikinci gönderim aynı seriyi taşır, korumada düşer.
+        StartCoroutine(NextTurnRoutine(turnManager.TurnSerial + 1));
     }
 
     // TileUI.cs içindeki NextTurnRoutine metodunu bununla değiştir:
 
-    private IEnumerator NextTurnRoutine()
+    private IEnumerator NextTurnRoutine(int serial)
     {
         if (canvasGroup != null)
             canvasGroup.blocksRaycasts = false;
@@ -1048,7 +1049,7 @@ public class TileUI : MonoBehaviourPunCallbacks, IBeginDragHandler, IDragHandler
 
         // Turu bitir, bayrakları sıfırla ve sırayı devret
         turnManager.canDrop = false;
-        turnManager.SendNextTurn(false);
+        turnManager.SendNextTurn(false, serial);
 
         // Görsel nesneyi yok et
         Destroy(gameObject);

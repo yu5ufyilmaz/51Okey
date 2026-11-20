@@ -223,6 +223,9 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
         // Sync the indicator tile across all clients
         photonView.RPC("SyncIndicatorTile", RpcTarget.AllViaServer, indicatorTile);
+
+        // Sıra mesajları (AssignPlayerQueue) yukarıda gitti; dağıtım en sonda, bekleme yok: sıra aynı gönderenle sabit.
+        photonView.RPC("SyncShuffledTiles", RpcTarget.AllViaServer, allTiles.ToArray());
     }
 
     // Bu fonksiyon SADECE gösterge taşı Sahte Okey (Resimli) olduğunda çalışır.
@@ -241,7 +244,7 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 // Çünkü bu taş artık "Wildcard" oldu, her renge ve her sayıya uyum sağlar.
             }
         }
-        StartCoroutine(DistributeWithDelay());
+        AssignPlayerQueue(); // yalnız masa sahibi; sıra mesajları dağıtımdan ÖNCE aynı gönderenden gider
     }
 
     [PunRPC]
@@ -275,21 +278,9 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
                 tile.number = upperNumber;
             }
         }
-        StartCoroutine(DistributeWithDelay());
+        AssignPlayerQueue(); // yalnız masa sahibi; sıra mesajları dağıtımdan ÖNCE aynı gönderenden gider
     }
 
-    private IEnumerator DistributeWithDelay()
-    {
-        // 1. Önce herkesin sıra numarasını (PlayerQue) değiştir
-        photonView.RPC("AssignPlayerQueue", RpcTarget.AllViaServer);
-
-        // 2. Bu bilginin ağ üzerinden herkese gidip işlenmesi için kısa bir süre bekle
-        // 0.5 saniye genellikle yeterlidir.
-        yield return new WaitForSeconds(0.5f);
-
-        // 3. Sıralar güncellendikten sonra taşları dağıt
-        photonView.RPC("SyncShuffledTiles", RpcTarget.AllViaServer, allTiles.ToArray());
-    }
     #endregion
     #region Assign Player Queue
     [PunRPC]
@@ -2118,49 +2109,11 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
             // --- [YENİ EKLENEN KISIM] OYUN BİTİŞ KONTROLÜ ---
             // Eğer bot taşı attıktan sonra ortada çekilecek taş kalmadıysa (allTiles == 0), oyun biter.
-            if (allTiles.Count == 0)
-            {
-                Debug.Log("[BOT] Ortada taş kalmadı. Oyun bitiriliyor...");
-
-                if (PhotonNetwork.IsMasterClient)
-                {
-                    // Oyun zaten bitmiş olarak işaretlenmediyse bitir
-                    if (GameManager.Instance != null && !GameManager.Instance.isGameEnded)
-                    {
-                        GameManager.Instance.photonView.RPC(
-                            "FinishGameRPC",
-                            RpcTarget.AllViaServer,
-                            -1, // Kazanan yok (-1 = Beraberlik)
-                            false, // isPenalty
-                            false // isNormalWin
-                        );
-                    }
-                }
-                // NextTurn ÇAĞIRMIYORUZ, çünkü oyun bitti.
-                return;
-            }
-            // ------------------------------------------------
-
-            // E) Sırayı Geçir (Oyun bitmediyse)
-            if (PhotonNetwork.IsMasterClient)
-            {
-                TurnManager tm = FindObjectOfType<TurnManager>();
-                if (tm != null)
-                {
-                    tm.canDrop = false;
-                    tm.SendNextTurn(true);
-                }
-            }
+            // Taş bitişi ve sıra geçişi gönderen tarafta (TurnManager.PlayBotTurn), atışla aynı karede gider.
         }
         else
         {
             Debug.LogError($"[BOT-ERROR] Botun atmak istediği taş ({tileID}) listede bulunamadı!");
-
-            // Hata toleransı: Sırayı zorla geçir ki oyun donmasın
-            if (PhotonNetwork.IsMasterClient)
-            {
-                FindObjectOfType<TurnManager>().SendNextTurn(true);
-            }
         }
     }
     #endregion

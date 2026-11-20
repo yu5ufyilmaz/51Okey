@@ -62,4 +62,10 @@ public class RejoinTests
         Assert.IsTrue(TurnSerialRule.Accept(0, 1)); Assert.IsFalse(TurnSerialRule.Accept(3, 3));
         Assert.IsFalse(TurnSerialRule.Accept(3, 2)); Assert.IsTrue(TurnSerialRule.Accept(3, 5));
     }
+    [Test] public void Serial_Double_Send_For_Same_Turn_End_Is_Dropped() {
+        int current = 3, captured = current + 1;       // tur sonu başlarken alınan seri
+        Assert.IsTrue(TurnSerialRule.Accept(current, captured));
+        current = captured;                            // ilk gönderim yerelde işlendi
+        Assert.IsFalse(TurnSerialRule.Accept(current, captured)); // ikinci gönderim aynı seriyi taşır
+    }
 }

@@ -201,8 +201,10 @@ public class TurnManager : MonoBehaviourPunCallbacks
     }
 
     // Yetki (masa sahibi) gönderimi sunucu sırasıyla gider; insan atışı All: kendi hamlesinin ardından yerelde işlenir.
-    public void SendNextTurn(bool authority) =>
-        photonView.RPC("NextTurn", authority ? RpcTarget.AllViaServer : RpcTarget.All, TurnSerial + 1);
+    public void SendNextTurn(bool authority) => SendNextTurn(authority, TurnSerial + 1);
+
+    public void SendNextTurn(bool authority, int serial) =>
+        photonView.RPC("NextTurn", authority ? RpcTarget.AllViaServer : RpcTarget.All, serial);
 
     // TurnManager.cs içine eklenecek:
     [PunRPC]
@@ -548,8 +550,25 @@ public class TurnManager : MonoBehaviourPunCallbacks
                 playerQue,
                 worstTileID
             );
-            // RPC içinde NextTurn var, o yüzden burada çağırmıyoruz.
+            // Atış ve sonucu (beraberlik ya da sıra geçişi) aynı karede, aynı gönderenden: masa sahibi
+            // arada düşse de yeni masa sahibi atılmış taşla birlikte sıra değişimini de görür.
             // isBotMoving = false işlemini NextTurn yapacak.
+            if (tileDist.allTiles.Count == 0)
+            {
+                if (GameManager.Instance != null && !GameManager.Instance.isGameEnded)
+                    GameManager.Instance.photonView.RPC(
+                        "FinishGameRPC",
+                        RpcTarget.AllViaServer,
+                        -1, // Kazanan yok (-1 = Beraberlik)
+                        false, // isPenalty
+                        false // isNormalWin
+                    );
+            }
+            else
+            {
+                canDrop = false;
+                SendNextTurn(true);
+            }
         }
         else
         {
