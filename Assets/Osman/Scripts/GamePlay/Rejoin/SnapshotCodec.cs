@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using UnityEngine;
 
 // Photon yerel dizi türleriyle: { int[] ints, string[] strs }. strs[0] = tur başlangıç zamanı, strs[1..] = taş id'leri.
@@ -54,6 +55,24 @@ public static class SnapshotCodec
         return new object[] { ints.ToArray(), ids.ToArray() };
     }
 
+    // Biçimi doğru ama içeriği imkânsız fotoğraf (sıra/koltuk/tür aralığı, çift taş) kurulumu bozar.
+    static bool Sane(TableSnapshot s)
+    {
+        if (s.currentTurn < 1 || s.currentTurn > 4) return false;
+        var seen = new bool[5];
+        for (int q = 1; q <= 4; q++)
+        {
+            int seat = s.seatOfQue[q];
+            if (seat < 1 || seat > 4 || seen[seat]) return false;
+            seen[seat] = true;
+        }
+        if (s.discards.Any(d => d.seat < 1 || d.seat > 4)) return false;
+        if (s.boards.Any(b => b.Any(t => t.meldType > 2))) return false;
+        var ids = new HashSet<string>();
+        var all = s.pile.Concat(s.hands.SelectMany(h => h)).Concat(s.discards.Select(d => d.tile)).Concat(s.boards.SelectMany(b => b.Select(t => t.tile)));
+        return all.All(t => t != null && ids.Add(t.id));
+    }
+
     // Bozuk/eksik/fazla veri: null (asla atmaz)
     public static TableSnapshot Decode(object[] payload)
     {
@@ -105,7 +124,7 @@ public static class SnapshotCodec
             for (int n = Count(), i = 0; i < n; i++) s.openedPairs.Add(Int());
             for (int n = Count(), i = 0; i < n; i++) { int q = Int(); int v = Int(); s.openValues.Add(new SnapOpenValue { que = q, value = v, pairs = Int() != 0 }); }
             for (int n = Count(), i = 0; i < n; i++) { int se = Int(); int am = Int(); s.penalties.Add(new SnapPenalty { seat = se, amount = am, reason = Int() }); }
-            return pos == a.Length ? s : null;
+            return pos == a.Length && Sane(s) ? s : null;
         }
         catch (Bad) { return null; }
     }

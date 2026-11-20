@@ -261,3 +261,26 @@ Describe 'Get-DropSummary' {
         $l[1] | Should Match 'KOPTU.*hamle 4'
     }
 }
+
+Describe 'Compare-DigestLogs' {
+    function New-Log($name, $lines) { $f = Join-Path ([IO.Path]::GetTempPath()) "ozet_test_$name.log"; [IO.File]::WriteAllLines($f, $lines); $f }
+    It 'is ok when digests agree on shared keys, missing keys are skipped' {
+        $a = New-Log 'a1' @('[OZET] 1.1 aaaaaaaa', "`thand1=x", '[OZET] 1.2 bbbbbbbb', "`thand1=y")
+        $b = New-Log 'b1' @('[OZET] 1.2 bbbbbbbb', "`thand1=y")
+        $r = Compare-DigestLogs -Paths @($a, $b) -Nicks @('AT-host', 'AT-g1')
+        $r.Ok | Should Be $true; $r.Keys | Should Be 1
+    }
+    It 'names key, editors and the differing section' {
+        $a = New-Log 'a2' @('[OZET] 1.2 aaaaaaaa', "`tpile=p", "`thand2=x")
+        $b = New-Log 'b2' @('[OZET] 1.2 bbbbbbbb', "`tpile=p", "`thand2=z")
+        $r = Compare-DigestLogs -Paths @($a, $b) -Nicks @('AT-host', 'AT-g1')
+        $r.Ok | Should Be $false
+        $r.Message | Should Match '1\.2'
+        $r.Message | Should Match 'AT-host.*AT-g1'
+        $r.Message | Should Match 'farklı bölüm: hand2'
+    }
+    It 'fails when fewer than two editors have a log, and skips a single editor' {
+        (Compare-DigestLogs -Paths @($null, $null) -Nicks @('AT-host', 'AT-g1')).Ok | Should Be $false
+        (Compare-DigestLogs -Paths @($null) -Nicks @('AT-host')).Ok | Should Be $true
+    }
+}

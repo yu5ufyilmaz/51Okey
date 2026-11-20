@@ -411,6 +411,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
             tileDistrubite.CaptureTurnStart(currentTurnPlayer);
 
         DesyncDetector.Report("NextTurn");
+        TableDigestLog.AtTurnBoundary();
     }
 
     public override void OnPlayerLeftRoom(Photon.Realtime.Player otherPlayer)

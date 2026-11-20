@@ -298,6 +298,10 @@ if ($Mode -eq 'smart') {
 
 $v = Get-SyncTestVerdict -Statuses $final -Nicks $Nicks -TimedOut $timedOut -NoHost:$noHost -DropEditors $dropEditors -DropMode $(if ($DropRejoin) { $dropMode } else { '' }) -DropScenario $DropRejoin
 $elapsed = [int]((Get-Date) - $started).TotalSeconds
+# Masa özeti (TableDigestLog): aynı el.seri anahtarında bütün editörlerin özeti aynı olmalı.
+$dg = Compare-DigestLogs -Paths @($final | ForEach-Object { if ($_) { $_.digestLog } else { $null } }) -Nicks $Nicks
+if (-not $dg.Ok) { Write-Host "FAIL: $($dg.Message)"; if ($v.Pass) { exit 1 } }
+elseif ($dg.Keys -gt 0) { Write-Host "özet: $($dg.Keys) anahtar, $($Nicks.Count) editörde aynı" }
 if ($v.Pass) { Write-Host "PASS: $($v.Reason) ($elapsed sn)"; exit 0 }
 Write-Host "FAIL: $($v.Reason) ($elapsed sn)"
 exit 1

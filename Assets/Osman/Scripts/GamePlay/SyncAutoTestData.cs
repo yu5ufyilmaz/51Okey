@@ -68,6 +68,7 @@ public class SyncAutoTestStatus
     public string journal;
     public List<string> errors = new List<string>();
     public string desyncLog;
+    public string digestLog; // [OZET] dosyası: Run-SyncTest editörler arası özetleri kıyaslar
     public int drops,
         dropAtMove,
         rejoinGrants, // Görev 10-11'de beslenir

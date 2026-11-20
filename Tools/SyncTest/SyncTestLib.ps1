@@ -178,3 +178,43 @@ function Get-JournalExcerpt {
         Get-Content -Path $p -Encoding UTF8 | Where-Object { $_ -like "$Key |*" }
     }
 }
+
+# TableDigestLog dosyası: "[OZET] el.seri özet" satırı, ardından tab'la başlayan Canonical satırları.
+function Read-DigestLog([string]$Path) {
+    $map = [ordered]@{}
+    $cur = $null
+    foreach ($l in (Get-Content -Path $Path -Encoding UTF8)) {
+        if ($l -match '^\[OZET\] (\S+) ([0-9a-f]{8})$') { $cur = @{ digest = $Matches[2]; lines = @() }; $map[$Matches[1]] = $cur }
+        elseif ($cur -and $l.StartsWith("`t")) { $cur.lines += $l.Substring(1) }
+    }
+    return $map
+}
+
+# Editörlerin özet dosyalarını aynı anahtarda kıyaslar. Ok=$false: ortak anahtarda özet farklı, ya da kıyaslanacak veri yok.
+# Mesaj anahtarı, editörleri ve ayrışan Canonical bölümlerini söyler. Tek editörde kıyas yoktur (Ok).
+function Compare-DigestLogs {
+    param([string[]]$Paths, [string[]]$Nicks)
+    $logs = @()
+    for ($i = 0; $i -lt $Nicks.Count; $i++) {
+        if ($Paths[$i] -and (Test-Path $Paths[$i])) { $logs += [pscustomobject]@{ Nick = $Nicks[$i]; Map = (Read-DigestLog $Paths[$i]) } }
+    }
+    if ($Nicks.Count -lt 2) { return [pscustomobject]@{ Ok = $true; Keys = 0; Message = '' } }
+    if ($logs.Count -lt 2) { return [pscustomobject]@{ Ok = $false; Keys = 0; Message = "özet dosyası yok: $($logs.Count)/$($Nicks.Count) editörde [OZET] dosyası var" } }
+    $keys = 0
+    foreach ($key in ($logs[0].Map.Keys + $logs[1..($logs.Count - 1)].Map.Keys | Select-Object -Unique)) {
+        $have = @($logs | Where-Object { $_.Map.Contains($key) })
+        if ($have.Count -lt 2) { continue }
+        $keys++
+        $ref = $have[0]
+        foreach ($o in $have[1..($have.Count - 1)]) {
+            if ($o.Map[$key].digest -eq $ref.Map[$key].digest) { continue }
+            $a = @{}; foreach ($l in $ref.Map[$key].lines) { $a[($l -split '=', 2)[0]] = $l }
+            $b = @{}; foreach ($l in $o.Map[$key].lines) { $b[($l -split '=', 2)[0]] = $l }
+            $diff = @(($a.Keys + $b.Keys) | Select-Object -Unique | Where-Object { $a[$_] -ne $b[$_] })
+            $detail = ($diff | ForEach-Object { "$($ref.Nick): $($a[$_])  |  $($o.Nick): $($b[$_])" }) -join "`n  "
+            return [pscustomobject]@{ Ok = $false; Keys = $keys; Message = "özet farkı $key : $($ref.Nick) $($ref.Map[$key].digest) / $($o.Nick) $($o.Map[$key].digest), farklı bölüm: $($diff -join ', ')`n  $detail" }
+        }
+    }
+    if ($keys -eq 0) { return [pscustomobject]@{ Ok = $false; Keys = 0; Message = 'editörlerin özet dosyalarında ortak anahtar yok' } }
+    [pscustomobject]@{ Ok = $true; Keys = $keys; Message = '' }
+}

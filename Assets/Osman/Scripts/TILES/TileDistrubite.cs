@@ -195,6 +195,27 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     List<List<Vector2Int>> MeldPositionsOf(int que) =>
         que switch { 1 => meltedTilesPositions1, 2 => meltedTilesPositions2, 3 => meltedTilesPositions3, _ => meltedTilesPositions4 };
 
+    public List<List<Tiles>> MeldsOfQue(int que) => MeldsOf(que);
+    public List<List<Vector2Int>> PositionsOfQue(int que) => MeldPositionsOf(que);
+
+    // Atık görselleri atış sırasıyla (droppedTiles); yalnız hâlâ bir koltuğun atık alanında duranlar (yandan alınan gitmiştir).
+    public List<(int seat, Tiles tile)> DiscardHistory()
+    {
+        var result = new List<(int, Tiles)>();
+        var sm = SeatManager.Instance;
+        if (sm == null)
+            return result;
+        var areas = Enumerable.Range(1, 4).Select(sm.DropAreaOfSeat).ToArray();
+        foreach (var go in droppedTiles)
+        {
+            var ui = go != null ? go.GetComponent<TileUI>() : null;
+            int i = ui != null && go.transform.parent != null ? Array.IndexOf(areas, go.transform.parent) : -1;
+            if (i >= 0)
+                result.Add((i + 1, ui.tileDataInfo));
+        }
+        return result;
+    }
+
     // Sıra başında (NextTurn sonu / el başı) o koltuğun durumu; tur ortasında kopanın yarım turu bunun üzerine döner.
     public void CaptureTurnStart(int que)
     {

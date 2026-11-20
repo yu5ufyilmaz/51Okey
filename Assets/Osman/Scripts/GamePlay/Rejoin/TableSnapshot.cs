@@ -32,7 +32,7 @@ public sealed class TableSnapshot
 
     static List<T>[] New4<T>() => new[] { new List<T>(), new List<T>(), new List<T>(), new List<T>() };
 
-    public static TableSnapshot Empty() => new TableSnapshot { ready = true };
+    public static TableSnapshot Empty() => new TableSnapshot();
 
     static string Key(Tiles t)
     {

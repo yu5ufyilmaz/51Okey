@@ -68,9 +68,13 @@ public class DesyncDetector : MonoBehaviourPunCallbacks, IOnEventCallback
         receivedOrder.Clear();
         badKeys.Clear();
         CloseLog();
+        TableDigestLog.NewRoom();
     }
 
     // Test oyuncusu günlüğü bu anahtarla yazar (lockstep: her client'ta aynı).
+    public static int CurrentDeal => Instance != null ? Instance.deal : 0;
+    public static int CurrentMove => Instance != null ? Instance.move : 0;
+
     public static string CurrentKey => Instance != null ? $"{Instance.deal}.{Instance.move}" : "0.0";
 
     public static int NextDealSeed()

@@ -499,6 +499,7 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
             status.sync.first = dd.FirstDesync;
         }
         status.desyncLog = dd?.LogPath;
+        status.digestLog = TableDigestLog.LogPath;
         try
         {
             SyncAutoTestFiles.WriteStatus(root, status);
