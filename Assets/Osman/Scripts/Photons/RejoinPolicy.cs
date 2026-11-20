@@ -7,7 +7,7 @@ public static class RejoinPolicy
 
     public static RejoinStep OnFailure(short code, float elapsedSec)
     {
-        if (code == 32758 || code == 32748)
+        if (code == 32758 || code == 32748 || code == -3) // -3: TTL 0 olan (biten) odaya dönüş
             return RejoinStep.GiveUpClear;
         return elapsedSec < WindowSec ? RejoinStep.Retry : RejoinStep.GiveUpKeep;
     }

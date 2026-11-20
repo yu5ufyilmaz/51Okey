@@ -847,9 +847,11 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
             Debug.Log("Tüm eller tamamlandı. Lobiye dönülüyor...");
             yield return new WaitForSeconds(10f);
-            // Oda boş kalsa da 5 dk yaşar: sonradan dönen "oyun sona ermiş" görsün.
             if (PhotonNetwork.IsMasterClient && PhotonNetwork.InRoom)
+            {
                 PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { ReconnectFlow.MatchOverKey, true } });
+                RoomManager.SetRoomTtl(false); // biten oda son çıkanla silinir
+            }
             ReconnectFlow.DeliberateLeave = true;
             RejoinRecord.Clear();
             PhotonNetwork.LeaveRoom();

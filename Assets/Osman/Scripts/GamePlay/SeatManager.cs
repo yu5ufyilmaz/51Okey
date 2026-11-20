@@ -747,6 +747,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
                     gameIsStart = true;
                     PhotonNetwork.CurrentRoom.IsOpen = false;
                     PhotonNetwork.CurrentRoom.IsVisible = false;
+                    RoomManager.SetRoomTtl(true);
                     IntendedCtl = CtlBits.OfActive(PhotonNetwork.PlayerList.Select(p => (GetSeatNumberOfPlayer(p), p.IsInactive))); // oturan insanlar; boş koltuklar bot
                     PhotonNetwork.CurrentRoom.SetCustomProperties(
                         new ExitGames.Client.Photon.Hashtable { { SeatsLockedKey, true }, { CtlBits.Key, IntendedCtl } }

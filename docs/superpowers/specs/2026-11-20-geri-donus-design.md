@@ -365,3 +365,5 @@ Bağımsız bir incelemeci tasarımı koda karşı okudu; aşağıdakiler onun b
 - Oyun ortasında uygulamayı öldürüp açma: "Dön", "Hayır" ve geri tuşu; ardından normal yeni giriş.
 - Bilerek çıkış (yeni onay metniyle).
 - 2 telefon + bot: bir telefon açtıktan sonra kendi turunda kopsun.
+- Oda TTL'leri artık oyun başlayınca açılır: kurulurken `PlayerTtl=0`, `EmptyRoomTtl=0` (bekleme odasında boşalan oda hemen silinir, düşen oyuncu gider); masa sahibi `StartGame`'de `RoomManager.SetRoomTtl(true)` ile uzun değerleri, maç bitince (`MatchOver`) `SetRoomTtl(false)` ile 0'ı canlı odaya yazar.
+- Canlı denendi (iki editör): TTL kurulduktan sonra değişir; 0/0 -> 2 sa/5 dk sonrası düşen oyuncu etkin olmayan kalıp aynı ActorNumber ile döndü; 0'a dönünce düşen gider (`-3` "does not support rejoing"); önceden etkin olmayan oyuncu 0'a dönüşte kalır ama son çıkanla oda yine silinir. `RejoinPolicy` -3'ü de "oyun sona ermiş" sayar.

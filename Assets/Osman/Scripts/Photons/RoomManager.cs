@@ -10,6 +10,17 @@ public class RoomManager : MonoBehaviourPunCallbacks
     public const int PlayerTtlMs = 7200000;
     public const int EmptyRoomTtlMs = 300000;
 
+    // Bekleme odasında TTL 0 (boşalan oda hemen silinir, düşen oyuncu gider); oyun başlayınca uzun, maç bitince yine 0 (yalnız masa sahibi).
+    public static void SetRoomTtl(bool longLived)
+    {
+        Room room = PhotonNetwork.CurrentRoom;
+        if (room == null)
+            return;
+        room.PlayerTtl = longLived ? PlayerTtlMs : 0;
+        room.EmptyRoomTtl = longLived ? EmptyRoomTtlMs : 0;
+        Debug.Log($"[ODA] PlayerTtl={room.PlayerTtl} EmptyRoomTtl={room.EmptyRoomTtl}");
+    }
+
     [SerializeField]
     private bool cleanupCacheOnLeave = true;
 
@@ -53,8 +64,8 @@ public class RoomManager : MonoBehaviourPunCallbacks
             MaxPlayers = (byte)maxPlayers,
             IsVisible = !hidden, // Bot masası lobi listesinde ve rastgele katılmada görünmez
             CleanupCacheOnLeave = cleanupCacheOnLeave,
-            EmptyRoomTtl = EmptyRoomTtlMs,
-            PlayerTtl = PlayerTtlMs,
+            EmptyRoomTtl = 0,
+            PlayerTtl = 0, // oyun başlayınca SetRoomTtl uzatır
         };
         Debug.Log($"[ODA] PlayerTtl={roomOptions.PlayerTtl} EmptyRoomTtl={roomOptions.EmptyRoomTtl}");
 

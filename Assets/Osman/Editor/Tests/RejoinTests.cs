@@ -143,6 +143,7 @@ public class RejoinTests
     [Test] public void Policy_Clears_Record_Only_On_Room_Or_Actor_Gone() {
         Assert.AreEqual(RejoinStep.GiveUpClear, RejoinPolicy.OnFailure(32758, 1f));
         Assert.AreEqual(RejoinStep.GiveUpClear, RejoinPolicy.OnFailure(32748, 1f));
+        Assert.AreEqual(RejoinStep.GiveUpClear, RejoinPolicy.OnFailure(-3, 1f));
         Assert.AreEqual(RejoinStep.Retry, RejoinPolicy.OnFailure(32746, 5f));
         Assert.AreEqual(RejoinStep.GiveUpKeep, RejoinPolicy.OnFailure(32746, 31f));
         Assert.AreEqual(RejoinStep.Retry, RejoinPolicy.OnFailure(32765, 5f));
