@@ -188,7 +188,20 @@ public class SeatManager : MonoBehaviourPunCallbacks
         PhotonNetwork.IsMasterClient
         && PhotonNetwork.InRoom
         && PhotonNetwork.NetworkClientState == ClientState.Joined
-        && (GameManager.Instance == null || !GameManager.Instance.isGameEnded);
+        && !MatchOver;
+
+    // Son el bitti: herkes çıkarken yazılmaz. Eller arasında (isGameEnded de true) yazılır.
+    static bool MatchOver
+    {
+        get
+        {
+            var p = PhotonNetwork.CurrentRoom?.CustomProperties;
+            return GameManager.Instance != null && p != null
+                && p.TryGetValue("CurrentRound", out object c) && c is int cur
+                && p.TryGetValue("TotalRounds", out object t) && t is int tot
+                && MatchState.IsOver(cur, tot, GameManager.Instance.isGameEnded);
+        }
+    }
 
     // Masa sahibinin niyet ettiği Ctl; oda özelliğinin yerel kopyası sunucu yankısıyla gelir, bot kapısı beklemesin diye bu kullanılır.
     public int IntendedCtl { get; private set; }

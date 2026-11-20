@@ -656,7 +656,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         int currentRound = (int)PhotonNetwork.CurrentRoom.CustomProperties["CurrentRound"];
         int totalRounds = (int)PhotonNetwork.CurrentRoom.CustomProperties["TotalRounds"];
 
-        if (currentRound < totalRounds)
+        if (!MatchState.IsOver(currentRound, totalRounds, true))
         {
             Debug.Log($"El bitti! {currentRound}. el tamamlandı. Sonraki ele geçiliyor...");
             if (PhotonNetwork.IsMasterClient)
@@ -675,7 +675,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         int currentRound = (int)PhotonNetwork.CurrentRoom.CustomProperties["CurrentRound"];
         int totalRounds = (int)PhotonNetwork.CurrentRoom.CustomProperties["TotalRounds"];
 
-        if (currentRound < totalRounds)
+        if (!MatchState.IsOver(currentRound, totalRounds, true))
         {
             yield return new WaitForSeconds(10f);
             // El zaten ilerlediyse (eski master gitti, yeni master'ın sayacı gecikti) ikinci kez kurma

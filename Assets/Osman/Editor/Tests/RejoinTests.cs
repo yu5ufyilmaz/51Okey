@@ -49,6 +49,11 @@ public class RejoinTests
         Assert.IsTrue(TurnGate.MayCancelBot(false));
         Assert.IsFalse(TurnGate.MayCancelBot(true));
     }
+    [Test] public void Match_Over_Only_After_Last_Hand() {
+        Assert.IsFalse(MatchState.IsOver(1, 2, true));
+        Assert.IsTrue(MatchState.IsOver(2, 2, true));
+        Assert.IsFalse(MatchState.IsOver(2, 2, false));
+    }
     [Test] public void Names_From_Ctl() {
         CollectionAssert.AreEqual(new[] { "A", "Bot 1", "C (bot)", "D" },
             SeatNaming.Names(new[] { "A", null, "C", "D" }, CtlBits.BotNow(0b1001)));
