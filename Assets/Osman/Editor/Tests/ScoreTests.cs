@@ -164,4 +164,13 @@ public class ScoreTests
         Assert.AreEqual("table.hand_over:1 · table.finished_by:A (table.from_pairs, table.kafa)", ScoreboardText.Header(1, 5, "A", false, true, true, 1, "A", Tr));
         Assert.AreEqual("table.hand_over:1 · table.pile_empty", ScoreboardText.Header(1, 0, null, false, false, false, 1, "A", Tr));
     }
+    static readonly bool[] All4 = { true, true, true, true };
+    [Test] public void RankOrder_Lowest_Total_First() =>
+        CollectionAssert.AreEqual(new[] { 3, 1, 4, 2 }, ScoreboardText.RankOrder(new[] { -300, 900, -660, 570 }, All4));
+    [Test] public void RankOrder_Tie_Keeps_Seat_Order() =>
+        CollectionAssert.AreEqual(new[] { 2, 1, 3, 4 }, ScoreboardText.RankOrder(new[] { 100, -50, 100, 100 }, All4));
+    [Test] public void RankOrder_Unoccupied_Seat_Goes_Last() =>
+        CollectionAssert.AreEqual(new[] { 3, 4, 1, 2 }, ScoreboardText.RankOrder(new[] { -900, 0, 10, 20 }, new[] { false, false, true, true }));
+    [Test] public void RankOrder_All_Zero_Is_Seat_Order() =>
+        CollectionAssert.AreEqual(new[] { 1, 2, 3, 4 }, ScoreboardText.RankOrder(new int[4], All4));
 }

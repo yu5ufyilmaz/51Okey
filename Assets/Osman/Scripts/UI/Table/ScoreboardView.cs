@@ -16,6 +16,17 @@ public static class ScoreboardText
     public static int Countdown(float startedAt, float now, int from) =>
         Math.Min(from, Math.Max(0, (int)Math.Ceiling(from - (now - startedAt))));
 
+    // Sıralama: en düşük toplam önce (en düşük kazanır), eşitlikte koltuk sırası; boş koltuklar sona. Dönen: koltuk 1..4 sırası.
+    public static int[] RankOrder(int[] totals, bool[] occupied)
+    {
+        var seats = new List<int>();
+        for (int i = 0; i < 4; i++) seats.Add(i + 1);
+        bool Occ(int seat) => occupied != null && seat - 1 < occupied.Length && occupied[seat - 1];
+        int T(int seat) => totals != null && seat - 1 < totals.Length ? totals[seat - 1] : 0;
+        // OrderBy kararlıdır: eşitlikte koltuk sırası kalır
+        return seats.OrderBy(x => Occ(x) ? 0 : 1).ThenBy(x => Occ(x) ? T(x) : 0).ToArray();
+    }
+
     // Başlık satırı; t anahtarı çevirir (Loc.T). Berabere: winner null.
     public static string Header(int handIndex, int totalRounds, string winner, bool okey, bool pairs, bool kafa, int mult, string leader, Func<string, object[], string> t)
     {
@@ -48,7 +59,6 @@ public class ScoreboardView : MonoBehaviour
         public GameObject root;
         public Image bg;           // yerel oyuncu vurgusu (yalnız onun satırında açık)
         public TMP_Text[] cells;   // üst: ad, kalan, ceza, bitirme, bu el; alt: ad, 7 el, toplam
-        public TMP_Text marker;    // alt: "önde"
     }
 
     [SerializeField] GameObject window;
@@ -200,7 +210,6 @@ public class ScoreboardView : MonoBehaviour
         var present = new bool[5];
         for (int s = 1; s <= 4; s++) present[s] = !string.IsNullOrEmpty(m.SeatNames[s - 1]);
         foreach (var h in hands) foreach (var r in h.rows) if (r.seat >= 1 && r.seat <= 4) present[r.seat] = true;
-        int leader = hist.LeaderSeat;
 
         // başlık
         header.text = HeaderText(m, hist);
@@ -265,9 +274,12 @@ public class ScoreboardView : MonoBehaviour
             handHeaders[n].gameObject.SetActive(on);
             if (on) handHeaders[n].text = Loc.T("table.hand_n", n + 1);
         }
+        var totals = new int[4];
+        for (int s = 1; s <= 4; s++) totals[s - 1] = hist.Total(s);
+        var rank = ScoreboardText.RankOrder(totals, new[] { present[1], present[2], present[3], present[4] });
         for (int i = 0; i < 4; i++)
         {
-            int seat = i + 1;
+            int seat = rank[i];   // i. satır: sıralamada i. koltuk
             var row = botRows[i];
             row.root.SetActive(present[seat]);
             if (!present[seat]) continue;
@@ -290,7 +302,6 @@ public class ScoreboardView : MonoBehaviour
             var tc = row.cells[1 + MaxHands];
             tc.text = ScoreboardText.Signed(total);
             tc.color = TotalColor(total);
-            row.marker.text = leader == seat ? Loc.T("table.leading") : "";   // hücre yer tutar: satırlar hizalı kalır
         }
 
         footer.text = handEnd && shown != null ? FooterText(ScoreboardText.Countdown(startedAt, Time.unscaledTime, CountFrom)) : "";

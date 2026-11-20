@@ -230,7 +230,7 @@ public static partial class UiKitBuilder
     static readonly Color Mute = new Color(0.62f, 0.70f, 0.78f);
     const float RowH = 58f, HeadH = 52f, Pad = 50f;
 
-    class RowBuild { public GameObject root; public Image bg; public TMP_Text[] cells; public TMP_Text marker; }
+    class RowBuild { public GameObject root; public Image bg; public TMP_Text[] cells; }
 
     // Eski paneller silinir; skor tablosu her çalışmada baştan kurulur
     static ScoreboardView BindScoreboard()
@@ -330,7 +330,6 @@ public static partial class UiKitBuilder
             handHeaders[n] = h;
         }
         Title(botHead, "col_total", "table.col_total", 160, 0, R);
-        Spacer(botHead.transform, 150);
         var bot = new List<RowBuild>();
         for (int i = 0; i < 4; i++)
         {
@@ -339,10 +338,6 @@ public static partial class UiKitBuilder
             for (int n = 0; n < 7; n++) cells.Add(DataCell(r.root.transform, "Hand" + (n + 1), R, 100, 1));
             cells.Add(DataCell(r.root.transform, "Total", R, 160, 0));
             r.cells = cells.ToArray();
-            var mk = DataCell(r.root.transform, "Leading", L, 150, 0);
-            mk.font = extraBold; mk.fontSizeMax = 32; mk.fontSizeMin = 28; mk.fontSize = 32; mk.color = new Color(1f, 0.82f, 0.30f);
-            mk.margin = new Vector4(18, 0, 0, 0);
-            r.marker = mk;
             bot.Add(r);
         }
 
@@ -374,7 +369,7 @@ public static partial class UiKitBuilder
 
     static string SourceSignature()
     {
-        var text = System.IO.File.ReadAllText("Assets/Osman/Editor/UiKitTable.cs").Replace("\r\n", "\n");
+        var text = System.IO.File.ReadAllText(Application.dataPath + "/Osman/Editor/UiKitTable.cs").Replace("\r\n", "\n");
         using (var md5 = System.Security.Cryptography.MD5.Create())
             return System.BitConverter.ToString(md5.ComputeHash(System.Text.Encoding.UTF8.GetBytes(text))).Replace("-", "");
     }
@@ -387,7 +382,6 @@ public static partial class UiKitBuilder
             var e = arr.GetArrayElementAtIndex(i);
             e.FindPropertyRelative("root").objectReferenceValue = rows[i].root;
             e.FindPropertyRelative("bg").objectReferenceValue = rows[i].bg;
-            e.FindPropertyRelative("marker").objectReferenceValue = rows[i].marker;
             var c = e.FindPropertyRelative("cells");
             c.arraySize = rows[i].cells.Length;
             for (int k = 0; k < rows[i].cells.Length; k++) c.GetArrayElementAtIndex(k).objectReferenceValue = rows[i].cells[k];
@@ -469,7 +463,6 @@ public static partial class UiKitBuilder
         Layout(t.gameObject, pref, flex);
     }
 
-    static void Spacer(Transform row, float pref) => Layout(Child("Spacer", row), pref, 0);
 
     static void RebindScoreButton(Button b, ScoreboardView view)
     {
