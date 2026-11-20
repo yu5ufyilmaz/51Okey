@@ -1,0 +1,539 @@
+ea39df5 Google girişi: hesap seçtiren oturum açma (Credential Manager)
+ Assets/Osman/Editor/GoogleSignInDependencies.xml   |   8 ++
+ .../Osman/Editor/GoogleSignInDependencies.xml.meta |   7 ++
+ .../Services/Firebase/FirebaseAuthService.cs       |  81 ++++++------
+ .../Scripts/Services/Firebase/GoogleSignIn.cs      |  80 ++++++++++++
+ .../Scripts/Services/Firebase/GoogleSignIn.cs.meta |   2 +
+ Assets/Osman/Scripts/Services/GoogleLinkFlow.cs    |   6 +-
+ Assets/Plugins/Android/GoogleSignInBridge.java     | 139 +++++++++++++++++++++
+ .../Plugins/Android/GoogleSignInBridge.java.meta   |   2 +
+ Assets/Plugins/Android/mainTemplate.gradle         |   3 +
+ ProjectSettings/AndroidResolverDependencies.xml    |   3 +
+ 10 files changed, 284 insertions(+), 47 deletions(-)
+diff --git a/Assets/Osman/Editor/GoogleSignInDependencies.xml b/Assets/Osman/Editor/GoogleSignInDependencies.xml
+new file mode 100644
+index 0000000..c486bc3
+--- /dev/null
++++ b/Assets/Osman/Editor/GoogleSignInDependencies.xml
+@@ -0,0 +1,8 @@
++<!-- "Google ile oturum aç" (Credential Manager): Assets/Plugins/Android/GoogleSignInBridge.java bunları kullanır. -->
++<dependencies>
++  <androidPackages>
++    <androidPackage spec="androidx.credentials:credentials:1.3.0"/>
++    <androidPackage spec="androidx.credentials:credentials-play-services-auth:1.3.0"/>
++    <androidPackage spec="com.google.android.libraries.identity.googleid:googleid:1.1.1"/>
++  </androidPackages>
++</dependencies>
+diff --git a/Assets/Osman/Scripts/Services/Firebase/FirebaseAuthService.cs b/Assets/Osman/Scripts/Services/Firebase/FirebaseAuthService.cs
+index bed2d3f..1f7ce74 100644
+--- a/Assets/Osman/Scripts/Services/Firebase/FirebaseAuthService.cs
++++ b/Assets/Osman/Scripts/Services/Firebase/FirebaseAuthService.cs
+@@ -1,25 +1,23 @@
+ using System;
+ using System.Threading.Tasks;
+ using Firebase.Auth;
+ using UnityEngine;
+ #if UNITY_ANDROID && !UNITY_EDITOR
+ using Firebase;
+-using GooglePlayGames;
+-using GooglePlayGames.BasicApi;
+ using Step = GoogleLinkFlow.Step;
+ #endif
+ 
+-// Açılış: kayıtlı Firebase kullanıcısı varsa o; yoksa oyuncu seçer (misafir ya da Google). Açılışta Play Games çağrısı yok (tasarım 5.3):
+-// PlayGamesPlatform yalnızca "Google ile gir" düğmesinde kullanılır, Activate/Authenticate çağrılmaz.
++// Açılış: kayıtlı Firebase kullanıcısı varsa o; yoksa oyuncu seçer (misafir ya da Google). Açılışta Google çağrısı yok:
++// "Google ile oturum aç" (Credential Manager, GoogleSignIn.cs) yalnızca "Google ile gir" / "Google'a bağla" düğmesinde açılır.
+ public class FirebaseAuthService : IAuthService
+ {
+     readonly FirebaseBoot boot;
+     readonly Func<Task> deleteGuestProfile;
+     readonly Func<Task<bool>> confirmSwitch;
+     FirebaseUser user;
+ 
+     public string UserId => user?.UserId;
+     public bool IsGuest => user == null || user.IsAnonymous;
+     public event Action UserChanged;
+ 
+     // deleteGuestProfile: misafir profil belgesini siler (misafir kimliğiyle çağrılır). confirmSwitch: oyuncuya hesap geçişini sorar.
+@@ -44,127 +42,122 @@ public class FirebaseAuthService : IAuthService
+         var auth = await boot.AuthAsync();
+         SetUser(auth.CurrentUser ?? (await auth.SignInAnonymouslyAsync()).User);
+     }
+ 
+     // Anonim hesaba geri girilemez: misafirin çıkışı hesabı ve coinini kaybettirir.
+     // auth.CurrentUser'a bakılır: RestoreAsync'ten önce de kayıtlı misafir korunur.
+     public async Task SignOutAsync()
+     {
+         var auth = await boot.AuthAsync();
+         if (auth.CurrentUser?.IsAnonymous == true)
+             throw new InvalidOperationException("misafir hesaptan çıkılmaz");
+         auth.SignOut();
++        GoogleSignIn.SignOut(); // sonraki "Google ile gir" hesabı yeniden sorsun
+         SetUser(null);
+     }
+ 
+-    // Play Games v2 ManuallyAuthenticate → RequestServerSideAccess → PlayGamesAuthProvider.GetCredential → anonim kullanıcıya
++    // Credential Manager hesap seçme penceresi → Google ID token → GoogleAuthProvider.GetCredential → anonim kullanıcıya
+     // LinkWithCredentialAsync. Bağlıysa uid değişmez (UserChanged yok, IsGuest false olur); hesaba geçişte UserChanged tetiklenir.
+     // Kullanıcı yoksa (giriş ekranından Google) misafir açılmaz: SignInWithCredentialAsync ile doğrudan Google kimliğiyle girilir.
+     public Task<LinkResult> LinkGoogleAsync()
+     {
+ #if UNITY_ANDROID && !UNITY_EDITOR
+         return LinkOnDeviceAsync();
+ #else
+-        // Editörde ve Android dışında Play Games yok: beklenen durum, uyarı.
++        // Editörde ve Android dışında Google girişi yok: beklenen durum, uyarı.
+         Debug.LogWarning("[AUTH] Google girişi yalnızca Android cihazda çalışır");
+         return Task.FromResult(LinkResult.Failed);
+ #endif
+     }
+ 
+ #if UNITY_ANDROID && !UNITY_EDITOR
+     async Task<LinkResult> LinkOnDeviceAsync()
+     {
+         if (user != null && !IsGuest)
+             return LinkResult.Linked;
+-        string code = null;
++        // Pencere akış başına bir kez açılır: token akış boyunca saklanır, geçişte yeniden sorulmaz.
++        string idToken = null;
++        Credential updated = null;
+         try
+         {
+             var result = await GoogleLinkFlow.RunAsync(
+                 async () =>
+                 {
+-                    var signedIn = await PlayGamesSignInAsync();
+-                    if (signedIn != Step.Ok)
+-                        return signedIn;
+-                    code = await ServerAuthCodeAsync();
+-                    return code == null ? Step.Failed : Step.Ok;
++                    var (step, token) = await GoogleSignIn.SignInAsync();
++                    idToken = token;
++                    return step;
++                },
++                async () =>
++                {
++                    var (step, credential) = await LinkAsync(idToken);
++                    updated = credential;
++                    return step;
+                 },
+-                () => LinkAsync(code),
+                 confirmSwitch,
+-                SwitchToGoogleAccountAsync);
++                () => SwitchToGoogleAccountAsync(updated != null && updated.IsValid() ? updated : GoogleAuthProvider.GetCredential(idToken, null)));
+             Debug.Log("[AUTH] Google: " + result + " uid=" + UserId);
+             return result;
+         }
+         catch (Exception e)
+         {
+-            Debug.LogWarning("[AUTH] Google'a bağlanılamadı: " + e.GetType().Name + " " + e.Message);
++            // İleti loglanmaz: e-posta içerebilir.
++            Debug.LogWarning("[AUTH] Google'a bağlanılamadı: " + e.GetType().Name);
+             return LinkResult.Failed;
+         }
+     }
+ 
+-    static Task<Step> PlayGamesSignInAsync()
+-    {
+-        if (PlayGamesPlatform.Instance.IsAuthenticated())
+-            return Task.FromResult(Step.Ok);
+-        var done = new TaskCompletionSource<Step>();
+-        PlayGamesPlatform.Instance.ManuallyAuthenticate(status => done.TrySetResult(
+-            status == SignInStatus.Success ? Step.Ok : status == SignInStatus.Canceled ? Step.Cancelled : Step.Failed));
+-        return done.Task;
+-    }
+-
+-    // Kod tek kullanımlık: her Firebase denemesi için yenisi istenir. Kod loglanmaz.
+-    static Task<string> ServerAuthCodeAsync()
+-    {
+-        var done = new TaskCompletionSource<string>();
+-        PlayGamesPlatform.Instance.RequestServerSideAccess(false, c => done.TrySetResult(string.IsNullOrEmpty(c) ? null : c));
+-        return done.Task;
+-    }
+-
+-    async Task<Step> LinkAsync(string code)
++    // InUse'da Firebase'in verdiği güncel kimlik bilgisi (varsa) geçiş için döner.
++    async Task<(Step, Credential)> LinkAsync(string idToken)
+     {
+         var auth = await boot.AuthAsync();
+         if (auth.CurrentUser == null)
+         {
+-            SetUser(await auth.SignInWithCredentialAsync(PlayGamesAuthProvider.GetCredential(code)));
+-            return Step.Ok;
++            SetUser(await auth.SignInWithCredentialAsync(GoogleAuthProvider.GetCredential(idToken, null)));
++            return (Step.Ok, null);
+         }
+-        try { await auth.CurrentUser.LinkWithCredentialAsync(PlayGamesAuthProvider.GetCredential(code)); }
+-        catch (Exception e) when (IsCredentialInUse(e)) { return Step.InUse; }
++        try { await auth.CurrentUser.LinkWithCredentialAsync(GoogleAuthProvider.GetCredential(idToken, null)); }
++        catch (Exception e) when (IsCredentialInUse(e)) { return (Step.InUse, UpdatedCredential(e)); }
+         SetUser(auth.CurrentUser);
+-        return Step.Ok;
++        return (Step.Ok, null);
+     }
+ 
+     // Sıra: misafir belge (kurallar yalnız kendi belgeni sildirir) → misafir Auth kullanıcısı → Google hesabıyla giriş.
+-    async Task<Step> SwitchToGoogleAccountAsync()
++    async Task<Step> SwitchToGoogleAccountAsync(Credential credential)
+     {
+-        var code = await ServerAuthCodeAsync();
+-        if (code == null)
+-            return Step.Failed;
+         var auth = await boot.AuthAsync();
+         await deleteGuestProfile();
+         try
+         {
+             await auth.CurrentUser.DeleteAsync();
+-            SetUser(await auth.SignInWithCredentialAsync(PlayGamesAuthProvider.GetCredential(code)));
++            SetUser(await auth.SignInWithCredentialAsync(credential));
+             return Step.Ok;
+         }
+         catch
+         {
+             // shortcut: misafir Auth silinemezse misafir profilsiz kalır (uygulama yeniden açılınca profil yeniden oluşur).
+             // Misafir silindi ama giriş olmadıysa oyun hesapsız kalmasın: yeni misafir.
+             if (auth.CurrentUser == null)
+                 SetUser((await auth.SignInAnonymouslyAsync()).User);
+             throw;
+         }
+     }
+ 
++    static Credential UpdatedCredential(Exception e)
++    {
++        for (var x = e; x != null; x = x.InnerException)
++            if (x is FirebaseAccountLinkException link)
++                return link.UserInfo?.UpdatedCredential;
++        return null;
++    }
++
+     // Firebase görevleri istisnayı AggregateException içinde verebilir.
+     static bool IsCredentialInUse(Exception e)
+     {
+         for (var x = e; x != null; x = x.InnerException)
+         {
+             if (x is FirebaseAccountLinkException)
+                 return true;
+             if (x is FirebaseException f && (AuthError)f.ErrorCode == AuthError.CredentialAlreadyInUse)
+                 return true;
+         }
+         return false;
+     }
+diff --git a/Assets/Osman/Scripts/Services/Firebase/GoogleSignIn.cs b/Assets/Osman/Scripts/Services/Firebase/GoogleSignIn.cs
+new file mode 100644
+index 0000000..ed6de79
+--- /dev/null
++++ b/Assets/Osman/Scripts/Services/Firebase/GoogleSignIn.cs
+@@ -0,0 +1,80 @@
++using System;
++using System.Threading.Tasks;
++using UnityEngine;
++using UnityEngine.Scripting;
++using Step = GoogleLinkFlow.Step;
++
++// "Google ile oturum aç" (Android Credential Manager, hesap seçme penceresi). Java tarafı
++// Assets/Plugins/Android/GoogleSignInBridge.java. Editörde ve Android dışında giriş yok: Failed.
++static class GoogleSignIn
++{
++    const string Bridge = "com.modiacgames.okey51.auth.GoogleSignInBridge";
++
++    // Ok + ID token / Cancelled / Failed. Token loglanmaz.
++    public static Task<(Step step, string idToken)> SignInAsync()
++    {
++#if UNITY_ANDROID && !UNITY_EDITOR
++        // RunContinuationsAsynchronously: Java iş parçacığında tamamlanır, await eden ana iş parçacığında sürer.
++        var done = new TaskCompletionSource<(Step, string)>(TaskCreationOptions.RunContinuationsAsynchronously);
++        try
++        {
++            using var player = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
++            using var activity = player.GetStatic<AndroidJavaObject>("currentActivity");
++            if (activity == null)
++            {
++                Debug.LogWarning("[AUTH] Google girişi: etkinlik yok");
++                done.TrySetResult((Step.Failed, null));
++            }
++            else
++            {
++                using var bridge = new AndroidJavaClass(Bridge);
++                bridge.CallStatic("signIn", activity, new Callback(done));
++            }
++        }
++        catch (Exception e)
++        {
++            Debug.LogWarning("[AUTH] Google girişi başlatılamadı: " + e.GetType().Name);
++            done.TrySetResult((Step.Failed, null));
++        }
++        return done.Task;
++#else
++        return Task.FromResult((Step.Failed, (string)null));
++#endif
++    }
++
++    // Kayıtlı hesap seçimini temizler (sonraki girişte yeniden sorulur). Hata atmaz.
++    public static void SignOut()
++    {
++#if UNITY_ANDROID && !UNITY_EDITOR
++        try
++        {
++            using var player = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
++            using var activity = player.GetStatic<AndroidJavaObject>("currentActivity");
++            using var bridge = new AndroidJavaClass(Bridge);
++            bridge.CallStatic("signOut", activity);
++        }
++        catch (Exception e)
++        {
++            Debug.LogWarning("[AUTH] Google çıkışı: " + e.GetType().Name);
++        }
++#endif
++    }
++
++    // Java'daki GoogleSignInBridge.Callback; yöntemler Java'dan adıyla çağrılır (Preserve: IL2CPP ayıklamasın).
++    sealed class Callback : AndroidJavaProxy
++    {
++        readonly TaskCompletionSource<(Step, string)> done;
++
++        public Callback(TaskCompletionSource<(Step, string)> done) : base(Bridge + "$Callback") => this.done = done;
++
++        [Preserve] public void onToken(string idToken) => done.TrySetResult((Step.Ok, idToken));
++        [Preserve] public void onCancelled() => done.TrySetResult((Step.Cancelled, null));
++
++        [Preserve]
++        public void onError(string type)
++        {
++            Debug.LogWarning("[AUTH] Google girişi: " + type);
++            done.TrySetResult((Step.Failed, null));
++        }
++    }
++}
+diff --git a/Assets/Osman/Scripts/Services/GoogleLinkFlow.cs b/Assets/Osman/Scripts/Services/GoogleLinkFlow.cs
+index 752ee79..935b2bd 100644
+--- a/Assets/Osman/Scripts/Services/GoogleLinkFlow.cs
++++ b/Assets/Osman/Scripts/Services/GoogleLinkFlow.cs
+@@ -1,23 +1,23 @@
+ using System;
+ using System.Threading.Tasks;
+ 
+-// "Google ile gir" kararları (tasarım 5.3). Firebase'e ve Play Games'e dokunmaz: adımlar dışarıdan verilir, EditMode testi var.
++// "Google ile gir" kararları (tasarım 5.3). Firebase'e ve Google girişine dokunmaz: adımlar dışarıdan verilir, EditMode testi var.
+ // Profiller birleştirilmez: Google hesabı başka profile bağlıysa ya o hesaba geçilir (misafir silinir) ya misafir kalınır.
+ public static class GoogleLinkFlow
+ {
+     public enum Step { Ok, Cancelled, Failed, InUse }
+ 
+-    // signIn: Play Games girişi + sunucu kodu. link: anonim kullanıcıya bağla (Ok / InUse / Failed).
+-    // confirm: oyuncuya sorulur. switchAccount: misafiri sil, kayıtlı hesaba gir (yeni sunucu koduyla; kod tek kullanımlık).
++    // signIn: Google hesap seçimi + ID token. link: anonim kullanıcıya bağla (Ok / InUse / Failed).
++    // confirm: oyuncuya sorulur. switchAccount: misafiri sil, kayıtlı hesaba gir (aynı token; pencere yeniden açılmaz).
+     public static async Task<LinkResult> RunAsync(
+         Func<Task<Step>> signIn,
+         Func<Task<Step>> link,
+         Func<Task<bool>> confirm,
+         Func<Task<Step>> switchAccount)
+     {
+         var step = await signIn();
+         if (step != Step.Ok)
+             return step == Step.Cancelled ? LinkResult.Cancelled : LinkResult.Failed;
+         step = await link();
+         if (step == Step.Ok)
+             return LinkResult.Linked;
+diff --git a/Assets/Plugins/Android/GoogleSignInBridge.java b/Assets/Plugins/Android/GoogleSignInBridge.java
+new file mode 100644
+index 0000000..20d08ab
+--- /dev/null
++++ b/Assets/Plugins/Android/GoogleSignInBridge.java
+@@ -0,0 +1,139 @@
++package com.modiacgames.okey51.auth;
++
++import android.app.Activity;
++import android.os.CancellationSignal;
++import android.util.Log;
++
++import androidx.annotation.Keep;
++import androidx.credentials.ClearCredentialStateRequest;
++import androidx.credentials.Credential;
++import androidx.credentials.CredentialManager;
++import androidx.credentials.CredentialManagerCallback;
++import androidx.credentials.CustomCredential;
++import androidx.credentials.GetCredentialRequest;
++import androidx.credentials.GetCredentialResponse;
++import androidx.credentials.exceptions.ClearCredentialException;
++import androidx.credentials.exceptions.GetCredentialCancellationException;
++import androidx.credentials.exceptions.GetCredentialException;
++
++import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption;
++import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
++
++import java.util.concurrent.Executor;
++import java.util.concurrent.atomic.AtomicBoolean;
++
++// "Google ile oturum aç" (Credential Manager, hesap seçme penceresi). C# tarafı GoogleSignIn.cs; AndroidJavaProxy ile çağrılır.
++// Loglara ve C#'a yalnız istisna türü gider: ileti metni, e-posta ya da token taşınmaz.
++// @Keep: sınıf C#'tan adıyla bulunur, Callback yansımayla çağrılır; sürüm (R8) derlemesinde adlar korunmalı.
++@Keep
++public final class GoogleSignInBridge {
++    static final String TAG = "GoogleSignInBridge";
++    // Geri çağrı doğrudan Credential Manager'ın verdiği iş parçacığında çalışır; C# sonucu ana iş parçacığına kendi taşır.
++    static final Executor DIRECT = Runnable::run;
++
++    @Keep
++    public interface Callback {
++        void onToken(String idToken);
++        void onCancelled();
++        void onError(String type);
++    }
++
++    private GoogleSignInBridge() {}
++
++    public static void signIn(final Activity activity, final Callback cb) {
++        final Once once = new Once(cb);
++        if (activity == null) {
++            once.error("NoActivity");
++            return;
++        }
++        try {
++            // Pencere aktiviteye bağlı: istek UI iş parçacığından gönderilir.
++            activity.runOnUiThread(() -> {
++                try {
++                    request(activity, once);
++                } catch (Throwable t) {
++                    once.error(t.getClass().getSimpleName());
++                }
++            });
++        } catch (Throwable t) {
++            once.error(t.getClass().getSimpleName());
++        }
++    }
++
++    static void request(Activity activity, final Once once) {
++        int id = activity.getResources().getIdentifier("default_web_client_id", "string", activity.getPackageName());
++        String clientId = id == 0 ? null : activity.getString(id);
++        if (clientId == null || clientId.isEmpty()) {
++            Log.w(TAG, "default_web_client_id yok (google-services.json'da web istemcisi yok)");
++            once.error("NoWebClientId");
++            return;
++        }
++        GetSignInWithGoogleOption option = new GetSignInWithGoogleOption.Builder(clientId).build();
++        GetCredentialRequest request = new GetCredentialRequest.Builder().addCredentialOption(option).build();
++        CredentialManager.create(activity).getCredentialAsync(activity, request, new CancellationSignal(), DIRECT,
++            new CredentialManagerCallback<GetCredentialResponse, GetCredentialException>() {
++                @Override
++                public void onResult(GetCredentialResponse response) {
++                    try {
++                        Credential c = response.getCredential();
++                        if (c instanceof CustomCredential
++                                && GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL.equals(c.getType())) {
++                            String token = GoogleIdTokenCredential.createFrom(c.getData()).getIdToken();
++                            if (token != null && !token.isEmpty()) {
++                                once.token(token);
++                                return;
++                            }
++                        }
++                        once.error("UnexpectedCredential");
++                    } catch (Throwable t) {
++                        once.error(t.getClass().getSimpleName());
++                    }
++                }
++
++                @Override
++                public void onError(GetCredentialException e) {
++                    if (e instanceof GetCredentialCancellationException)
++                        once.cancelled();
++                    else
++                        once.error(e.getClass().getSimpleName());
++                }
++            });
++    }
++
++    // Çıkışta kayıtlı seçim temizlenir: sonraki girişte hesap yeniden sorulur. Hata yutulur, yalnız türü loglanır.
++    public static void signOut(final Activity activity) {
++        if (activity == null)
++            return;
++        try {
++            CredentialManager.create(activity).clearCredentialStateAsync(new ClearCredentialStateRequest(), null, DIRECT,
++                new CredentialManagerCallback<Void, ClearCredentialException>() {
++                    @Override
++                    public void onResult(Void result) {}
++
++                    @Override
++                    public void onError(ClearCredentialException e) {
++                        Log.w(TAG, "clearCredentialState: " + e.getClass().getSimpleName());
++                    }
++                });
++        } catch (Throwable t) {
++            Log.w(TAG, "clearCredentialState: " + t.getClass().getSimpleName());
++        }
++    }
++
++    // Her signIn tam bir geri çağrıyla biter; ikinci çağrı yok sayılır.
++    static final class Once {
++        final Callback cb;
++        final AtomicBoolean done = new AtomicBoolean();
++
++        Once(Callback cb) { this.cb = cb; }
++
++        void token(String t) { if (done.compareAndSet(false, true)) cb.onToken(t); }
++        void cancelled() { if (done.compareAndSet(false, true)) cb.onCancelled(); }
++        void error(String type) {
++            if (!done.compareAndSet(false, true))
++                return;
++            Log.w(TAG, "signIn: " + type);
++            cb.onError(type);
++        }
++    }
++}
+diff --git a/Assets/Plugins/Android/mainTemplate.gradle b/Assets/Plugins/Android/mainTemplate.gradle
+index 61a82d4..b787ad3 100644
+--- a/Assets/Plugins/Android/mainTemplate.gradle
++++ b/Assets/Plugins/Android/mainTemplate.gradle
+@@ -1,23 +1,26 @@
+ apply plugin: 'com.android.library'
+ apply from: '../shared/keepUnitySymbols.gradle'
+ apply from: '../shared/common.gradle'
+ **APPLY_PLUGINS**
+ 
+ dependencies {
+     implementation fileTree(dir: 'libs', include: ['*.jar'])
+ // Android Resolver Dependencies Start
++    implementation 'androidx.credentials:credentials:1.3.0' // Assets/Osman/Editor/GoogleSignInDependencies.xml:4
++    implementation 'androidx.credentials:credentials-play-services-auth:1.3.0' // Assets/Osman/Editor/GoogleSignInDependencies.xml:5
+     implementation 'com.google.android.gms:play-services-base:18.11.1' // Assets/Firebase/Editor/AppDependencies.xml:16
+     implementation 'com.google.android.gms:play-services-games-v2:22.1.0' // Assets/GooglePlayGames/com.google.play.games/Editor/GooglePlayGamesPluginDependencies.xml:9
+     implementation 'com.google.android.gms:play-services-nearby:18.5.0' // Assets/GooglePlayGames/com.google.play.games/Editor/GooglePlayGamesPluginDependencies.xml:14
++    implementation 'com.google.android.libraries.identity.googleid:googleid:1.1.1' // Assets/Osman/Editor/GoogleSignInDependencies.xml:6
+     implementation 'com.google.firebase:firebase-analytics:24.0.0' // Assets/Firebase/Editor/FirestoreDependencies.xml:14
+     implementation 'com.google.firebase:firebase-app-unity:14.1.0' // Assets/Firebase/Editor/AppDependencies.xml:21
+     implementation 'com.google.firebase:firebase-auth:25.0.0' // Assets/Firebase/Editor/AuthDependencies.xml:12
+     implementation 'com.google.firebase:firebase-auth-unity:14.1.0' // Assets/Firebase/Editor/AuthDependencies.xml:19
+     implementation 'com.google.firebase:firebase-common:23.0.0' // Assets/Firebase/Editor/AppDependencies.xml:12
+     implementation 'com.google.firebase:firebase-firestore:26.6.0' // Assets/Firebase/Editor/FirestoreDependencies.xml:12
+     implementation 'com.google.firebase:firebase-firestore-unity:14.1.0' // Assets/Firebase/Editor/FirestoreDependencies.xml:19
+ // Android Resolver Dependencies End
+ **DEPS**}
+ 
+ // Android Resolver Exclusions Start
+ android {
+diff --git a/ProjectSettings/AndroidResolverDependencies.xml b/ProjectSettings/AndroidResolverDependencies.xml
+index b5f53b5..df1adde 100644
+--- a/ProjectSettings/AndroidResolverDependencies.xml
++++ b/ProjectSettings/AndroidResolverDependencies.xml
+@@ -1,17 +1,20 @@
+ <dependencies>
+   <packages>
++    <package>androidx.credentials:credentials:1.3.0</package>
++    <package>androidx.credentials:credentials-play-services-auth:1.3.0</package>
+     <package>com.google.android.gms:play-services-base:18.11.1</package>
+     <package>com.google.android.gms:play-services-games-v2:22.1.0</package>
+     <package>com.google.android.gms:play-services-nearby:18.5.0</package>
++    <package>com.google.android.libraries.identity.googleid:googleid:1.1.1</package>
+     <package>com.google.firebase:firebase-analytics:24.0.0</package>
+     <package>com.google.firebase:firebase-app-unity:14.1.0</package>
+     <package>com.google.firebase:firebase-auth:25.0.0</package>
+     <package>com.google.firebase:firebase-auth-unity:14.1.0</package>
+     <package>com.google.firebase:firebase-common:23.0.0</package>
+     <package>com.google.firebase:firebase-firestore:26.6.0</package>
+     <package>com.google.firebase:firebase-firestore-unity:14.1.0</package>
+   </packages>
+   <files>
+     <file>Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-app-unity/14.1.0/firebase-app-unity-14.1.0.aar</file>
+     <file>Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-app-unity/14.1.0/firebase-app-unity-14.1.0.pom</file>
+     <file>Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-auth-unity/14.1.0/firebase-auth-unity-14.1.0.aar</file>

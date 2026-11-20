@@ -1,0 +1,85 @@
+<link href="https://fonts.googleapis.com/css2?family=Changa+One&display=swap" rel="stylesheet">
+<style>
+  .scr{aspect-ratio:16/9;width:100%;background:radial-gradient(ellipse at 50% 30%,#7a2024,#4a1216 70%,#2a0a0c);border-radius:10px;position:relative;overflow:hidden;font-family:'Changa One',sans-serif;color:#fff;container-type:inline-size}
+  .scr *{box-sizing:border-box}
+  .bar{position:absolute;top:3%;left:3%;right:3%;height:13%;display:flex;align-items:center;gap:1.5%}
+  .chip{background:#1f242b;border:.35cqw solid #56616d;border-radius:1.6cqw;height:100%;display:flex;align-items:center;gap:1cqw;padding:0 1.6cqw;font-size:1.9cqw}
+  .ava{width:4.6cqw;height:4.6cqw;border-radius:50%;background:#c9a15a;border:.3cqw solid #fff}
+  .sub{font-size:1.3cqw;color:#f2c94c}
+  .sp{flex:1}
+  .plus{background:#4caf2f;border-radius:.8cqw;width:3cqw;height:3cqw;display:flex;align-items:center;justify-content:center;font-size:2.2cqw}
+  .ico{width:6.4cqw;justify-content:center;padding:0;font-size:2.6cqw}
+  .btn{border-radius:1.8cqw;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-shadow:0 .6cqw 0 rgba(0,0,0,.35);text-shadow:0 .2cqw 0 rgba(0,0,0,.35)}
+  .g{background:linear-gradient(#7bd04f,#3f9a1c)} .o{background:linear-gradient(#ffb347,#e07b12)} .t{background:linear-gradient(#3fc3c0,#16817f)} .r{background:linear-gradient(#ef5a4c,#b3261b)}
+  .panel{background:#1f242b;border:.35cqw solid #56616d;border-radius:1.8cqw}
+  .row{background:#2c333c;border-radius:1cqw;display:flex;align-items:center;padding:0 1.4cqw;font-size:1.6cqw;gap:1.2cqw}
+  .tag{background:#3c4652;border-radius:.6cqw;padding:.2cqw .8cqw;font-size:1.2cqw;color:#cfd6de}
+  .seat{width:3cqw;height:3cqw;border-radius:50%;background:#c9a15a;border:.25cqw solid #fff}
+  .seat.e{background:transparent;border:.25cqw dashed #8a95a1}
+  .note{font-size:.85em;opacity:.8;margin-top:.5em}
+</style>
+
+<h2>Lobi düzeni: hangisi sana daha doğru geliyor?</h2>
+<p class="subtitle">İkisinde de üst bar aynı: profil solda, coin ve mağaza ortada, ayarlar sağda. Fark, ekranın ortasını neyin doldurduğu. Renkler mevcut ui_kit ve ChangaOne'dan.</p>
+
+<div class="cards">
+  <div class="card" data-choice="A" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="scr">
+        <div class="bar">
+          <div class="chip"><div class="ava"></div><div>Osman<div class="sub">Seviye 7</div></div></div>
+          <div class="sp"></div>
+          <div class="chip">🪙 12.500 <div class="plus">+</div></div>
+          <div class="chip ico">⚙</div>
+        </div>
+        <div class="btn g" style="position:absolute;left:3%;top:22%;width:40%;height:46%;font-size:4.6cqw">HEMEN OYNA<div style="font-size:1.6cqw;opacity:.9">Boş masaya otur</div></div>
+        <div class="btn o" style="position:absolute;left:3%;top:73%;width:19.2%;height:21%;font-size:2.2cqw">MASA AÇ</div>
+        <div class="btn t" style="position:absolute;left:23.8%;top:73%;width:19.2%;height:21%;font-size:2.2cqw">BOTLARLA<br>OYNA</div>
+        <div class="panel" style="position:absolute;left:46%;top:22%;right:3%;bottom:6%;padding:1.4cqw;display:flex;flex-direction:column;gap:1cqw">
+          <div style="display:flex;font-size:2cqw;align-items:center">AÇIK MASALAR<div class="sp"></div><span class="tag">⟳ Yenile</span></div>
+          <div class="row" style="height:17%">Ahmet'in masası<div class="sp"></div><span class="tag">3 el</span><div class="seat"></div><div class="seat"></div><div class="seat e"></div><div class="seat e"></div></div>
+          <div class="row" style="height:17%">Okey Gecesi 🔒<div class="sp"></div><span class="tag">5 el</span><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat e"></div></div>
+          <div class="row" style="height:17%">Zeynep<div class="sp"></div><span class="tag">1 el</span><div class="seat"></div><div class="seat e"></div><div class="seat e"></div><div class="seat e"></div></div>
+          <div class="row" style="height:17%;opacity:.5">Dolu masa<div class="sp"></div><span class="tag">3 el</span><div class="seat"></div><div class="seat"></div><div class="seat"></div><div class="seat"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — "Hemen Oyna" önde, masa listesi yanda</h3>
+      <p>Tek dokunuşla oyuna girilir. Masa listesi satır olarak kalır ama her satır kaç kişi oturduğunu, el sayısını ve şifreyi gösterir.</p>
+      <p class="note">Az oyunculu dönemde boş lobi kötü görünmez: liste kısa olsa da büyük buton ekranı taşır.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="B" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="scr">
+        <div class="bar">
+          <div class="chip"><div class="ava"></div><div>Osman<div class="sub">Seviye 7</div></div></div>
+          <div class="sp"></div>
+          <div class="chip">🪙 12.500 <div class="plus">+</div></div>
+          <div class="chip ico">⚙</div>
+        </div>
+        <div class="panel" style="position:absolute;left:-10%;top:24%;width:24%;height:48%;opacity:.5"></div>
+        <div class="panel" style="position:absolute;right:-10%;top:24%;width:24%;height:48%;opacity:.5"></div>
+        <div class="panel" style="position:absolute;left:19%;top:21%;width:62%;height:54%;background:#12403a;border-color:#c98a3a">
+          <div style="position:absolute;top:6%;left:0;right:0;text-align:center;font-size:1.8cqw">Ahmet'in masası <span class="tag">3 el</span></div>
+          <div class="btn g" style="position:absolute;left:41%;top:22%;width:18%;height:20%;font-size:1.9cqw">OTUR</div>
+          <div style="position:absolute;left:8%;top:40%;display:flex;align-items:center;gap:.8cqw;font-size:1.5cqw"><div class="seat" style="width:5cqw;height:5cqw"></div>Ahmet</div>
+          <div style="position:absolute;right:8%;top:40%;display:flex;align-items:center;gap:.8cqw;font-size:1.5cqw">Zeynep<div class="seat" style="width:5cqw;height:5cqw"></div></div>
+          <div class="btn g" style="position:absolute;left:41%;bottom:8%;width:18%;height:20%;font-size:1.9cqw">OTUR</div>
+        </div>
+        <div class="btn g" style="position:absolute;left:19%;bottom:5%;width:30%;height:15%;font-size:2.4cqw">HEMEN OYNA</div>
+        <div class="btn o" style="position:absolute;left:51%;bottom:5%;width:14.5%;height:15%;font-size:1.8cqw">MASA AÇ</div>
+        <div class="btn t" style="position:absolute;left:66.5%;bottom:5%;width:14.5%;height:15%;font-size:1.8cqw">BOTLARLA</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Kaydırılan masa kartları</h3>
+      <p>Masalar büyük kart olarak yana kaydırılır; kimin nerede oturduğu görünür ve koltuk lobiden seçilir. Rakiplerin kullandığı düzen.</p>
+      <p class="note">Koltuk seçimi şu an masa sahnesinde yapılıyor; bunu lobiye taşımak ağ koduna dokunur. Az masa varken ekran boş kalır.</p>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle">Benim tercihim A. Seçmek için karta tıkla, ayrıntıyı sohbete yaz.</p>

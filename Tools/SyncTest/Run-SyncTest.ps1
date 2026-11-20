@@ -31,6 +31,8 @@ param(
     [double]$Mistakes = 0,
     [int]$InjectOracleBug = 0,   # öz-test: AT-g1 bu hamlede beklenen cezayı bilerek bozar, [BUG] ile FAIL beklenir
     [switch]$KeepPlaying,
+    [int]$GuestFrom = 1,   # -JoinRoom ile: ilk test oyuncusunun sırası (2 = AT-g2'den başla; sonradan oyuncu eklemek için)
+    [int]$Guests = 3,   # -JoinRoom ile: kaç test oyuncusu girsin (1..3); kalan koltuklar insanlara kalır
     [string]$JoinRoom = '',   # insana karşı: odayı telefon kurar (master o), 3 clone bu ada katılır
     [switch]$Solo,   # sadece ana editör: test oyuncusu + oyunun 3 botu (clone'lar kapalıyken)
     [switch]$SameNames,   # tüm test oyuncuları aynı Photon adını gösterir (ad ile alan bulan kod bozulur)
@@ -77,7 +79,7 @@ function Leaf($p) { Split-Path $p -Leaf }
 if ($Projects.Count -eq 1) { $Projects = @($Projects[0] -split ',' | ForEach-Object { $_.Trim() }) }
 if ($Projects.Count -ne $Nicks.Count) { Write-Host "HATA: -Projects $($Nicks.Count) proje olmalı (host + 3 guest), $($Projects.Count) verildi"; exit 1 }
 # Ana editör boş kalır (build orada alınır); master telefon olduğu için host config'i yok.
-if ($JoinRoom) { $Projects = $Projects[1..3]; $Nicks = $Nicks[1..3] }
+if ($JoinRoom) { $last = $GuestFrom + $Guests - 1; $Projects = @($Projects[$GuestFrom..$last]); $Nicks = @($Nicks[$GuestFrom..$last]) }
 # Tek insan: kıyaslanacak başka client yok, sync sayacı boş kalır; hüküm hata ve [BUG]'a bakar.
 if ($Solo) { $Projects = @($Projects[0]); $Nicks = @($Nicks[0]) }
 # Eksik koltukları oyunun botları doldurur: ilk 4-N proje (host + misafirler) kullanılır.

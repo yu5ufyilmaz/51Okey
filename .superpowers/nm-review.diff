@@ -1,0 +1,972 @@
+5be090d Benzersiz isim: isim kaydı, otomatik misafir ismi
+d851d00 Hesaptan çık Profil panelinde
+ Assets/Osman/Editor/Tests/GameConfigTests.cs       |  53 +++-
+ Assets/Osman/Editor/Tests/GameServicesTests.cs     |  23 +-
+ Assets/Osman/Editor/Tests/InitGateTests.cs         |   4 +-
+ Assets/Osman/Editor/Tests/LocalServicesTests.cs    |  38 +++
+ Assets/Osman/Scenes/LobbyMenu.unity                | 304 ++++++++++++++++++++-
+ .../Services/Firebase/FirestoreProfileStore.cs     |  67 ++++-
+ Assets/Osman/Scripts/Services/GameConfig.cs        |  26 +-
+ Assets/Osman/Scripts/Services/GameServices.cs      |  41 ++-
+ Assets/Osman/Scripts/Services/IProfileStore.cs     |   3 +-
+ .../Scripts/Services/Local/LocalProfileStore.cs    |  17 +-
+ Assets/Osman/Scripts/Services/NameFlow.cs          |  22 ++
+ Assets/Osman/Scripts/Services/NameFlow.cs.meta     |   2 +
+ Assets/Osman/Scripts/Services/PlayerProfile.cs     |   3 +
+ Assets/Osman/Scripts/UI/LobbyAccountUI.cs          |  36 ++-
+ Assets/Osman/Scripts/UI/MainMenuUIHandler.cs       |  18 +-
+ firebase/firestore.rules                           |   7 +
+ 16 files changed, 577 insertions(+), 87 deletions(-)
+diff --git a/Assets/Osman/Editor/Tests/GameConfigTests.cs b/Assets/Osman/Editor/Tests/GameConfigTests.cs
+index 35e3a99..02e7bb7 100644
+--- a/Assets/Osman/Editor/Tests/GameConfigTests.cs
++++ b/Assets/Osman/Editor/Tests/GameConfigTests.cs
+@@ -1,29 +1,56 @@
+-using System.Linq;
+ using NUnit.Framework;
+ 
+ public class GameConfigTests
+ {
+-    [Test]
+-    public void DefaultName_IsOyuncuPlusFourDigits() =>
+-        StringAssert.IsMatch(@"^Oyuncu\d{4}$", GameConfig.DefaultName("local-51Okey"));
++    [TestCase(42, "Misafir-00042")]
++    [TestCase(123456, "Misafir-23456")]
++    public void GuestName_IsPrefixPlusFiveDigits(int number, string name) =>
++        Assert.AreEqual(name, GameConfig.GuestName(number));
+ 
+-    [Test]
+-    public void DefaultName_IsStableForSameUser() =>
+-        Assert.AreEqual(GameConfig.DefaultName("abc"), GameConfig.DefaultName("abc"));
++    [TestCase("Misafir-00042", true)]
++    [TestCase("Misafir-42", false)]
++    [TestCase("Misafir-abcde", false)]
++    [TestCase("misafir-00042", false)]
++    [TestCase("Ahmet", false)]
++    [TestCase(null, false)]
++    public void IsGuestName_OnlyExactFormat(string name, bool guest) =>
++        Assert.AreEqual(guest, GameConfig.IsGuestName(name));
+ 
+-    [Test]
+-    public void DefaultName_DiffersForTheFourEditors()
+-    {
+-        var ids = new[] { "local-51Okey", "local-51Okey_clone_0", "local-51Okey_clone_1", "local-51Okey_clone_2" };
+-        Assert.AreEqual(4, ids.Select(GameConfig.DefaultName).Distinct().Count());
+-    }
++    // Uzunluk durumları GameServicesTests.IsValidName'de.
++    [TestCase("Misafir-12345", false)]
++    [TestCase("misafir-x", false)]
++    [TestCase("MISAFIR-1", false)]
++    [TestCase("a/b", false)]
++    [TestCase("Ahmet", true)]
++    [TestCase("Misafirim", true)]
++    public void IsValidName_RejectsGuestPrefixAndSlash(string name, bool valid) =>
++        Assert.AreEqual(valid, GameConfig.IsValidName(name));
++
++    // Karar tablosu: misafire isim atanır, Google hesabının kayıtsız ismi kaydedilmeye çalışılır.
++    [TestCase(true, false, "Misafir-00042", NameFlow.Step.AssignGuest)]
++    [TestCase(true, false, "Deneme Oyuncu", NameFlow.Step.AssignGuest)]
++    [TestCase(true, true, "Ahmet", NameFlow.Step.AssignGuest)]
++    [TestCase(true, true, "Misafir-00042", NameFlow.Step.None)]
++    [TestCase(false, false, "Ahmet", NameFlow.Step.ClaimCurrent)]
++    [TestCase(false, false, "Misafir-00042", NameFlow.Step.None)]
++    [TestCase(false, true, "Misafir-00042", NameFlow.Step.None)]
++    [TestCase(false, true, "Ahmet", NameFlow.Step.None)]
++    public void NameFlow_Next(bool isGuest, bool claimed, string name, NameFlow.Step step) =>
++        Assert.AreEqual(step, NameFlow.Next(isGuest, claimed, name));
++
++    [TestCase(NameResult.Ok, "")]
++    [TestCase(NameResult.Taken, "Bu isim alınmış")]
++    [TestCase(NameResult.Invalid, "İsim 2-16 karakter olmalı")]
++    [TestCase(NameResult.Failed, "Bağlanılamadı")]
++    public void NameFlow_ErrorText(NameResult result, string text) =>
++        Assert.AreEqual(text, NameFlow.ErrorText(result));
+ 
+     [TestCase(0, 1)]
+     [TestCase(99, 1)]
+     [TestCase(100, 2)]
+     [TestCase(250, 3)]
+     public void LevelForXp_OneLevelPerHundredXp(int xp, int level) =>
+         Assert.AreEqual(level, GameConfig.LevelForXp(xp));
+ 
+     [Test]
+     public void CoinTx_KeepsItsFields()
+diff --git a/Assets/Osman/Editor/Tests/GameServicesTests.cs b/Assets/Osman/Editor/Tests/GameServicesTests.cs
+index 3e59b35..ad3bb5a 100644
+--- a/Assets/Osman/Editor/Tests/GameServicesTests.cs
++++ b/Assets/Osman/Editor/Tests/GameServicesTests.cs
+@@ -1,16 +1,16 @@
+ using System.IO;
+ using NUnit.Framework;
+ using UnityEngine;
+ 
+ // Not: bu testler ana editörün gerçek yerel profilini kullanır (yoksa oluşturur); bakiyeyi değiştirmez.
+-// Çıkış testleri sonunda misafir olarak geri girer, isim testi eski ismi geri yazar.
++// Çıkış testleri sonunda misafir olarak geri girer. Eski profilin ismi açılışta Misafir-NNNNN olarak onarılır.
+ public class GameServicesTests
+ {
+     [Test]
+     public void InstanceTag_IsProjectFolderName() =>
+         Assert.AreEqual(new DirectoryInfo(Application.dataPath).Parent.Name, GameServices.InstanceTag);
+ 
+     [Test]
+     public void LocalProfilePath_DiffersPerTag()
+     {
+         string a = GameServices.LocalProfilePath("51Okey"), b = GameServices.LocalProfilePath("51Okey_clone_0");
+@@ -155,34 +155,33 @@ public class GameServicesTests
+             Assert.AreEqual(uid, GameServices.Auth.UserId);
+             Assert.IsTrue(GameServices.HasSession);
+         }
+         finally
+         {
+             GameServices.Auth.UserChanged -= onUser;
+             GameServices.EnterAsGuestAsync().GetAwaiter().GetResult();
+         }
+     }
+ 
++    // Yerel oyuncu hep misafir: ismi otomatik Misafir-NNNNN, kayıtlı; isim sorulmaz ve seçemez.
+     [Test]
+-    public void NeedsName_TrueForDefaultName_FalseAfterRename()
++    public void LocalGuest_HasClaimedGuestName_CannotChooseName()
+     {
+         GameServices.InitAsync().GetAwaiter().GetResult();
+-        var original = GameServices.Profile.Current.DisplayName;
+-        try
+-        {
+-            GameServices.Profile.SetDisplayNameAsync(GameConfig.DefaultName(GameServices.Auth.UserId)).GetAwaiter().GetResult();
+-            Assert.IsTrue(GameServices.NeedsName);
+-            GameServices.Profile.SetDisplayNameAsync("Testİsim").GetAwaiter().GetResult();
+-            Assert.IsFalse(GameServices.NeedsName);
+-        }
+-        finally { GameServices.Profile.SetDisplayNameAsync(original).GetAwaiter().GetResult(); }
+-        Assert.AreEqual(original, GameServices.Profile.Current.DisplayName);
++        var profile = GameServices.Profile.Current;
++        Assert.IsTrue(GameConfig.IsGuestName(profile.DisplayName), profile.DisplayName);
++        Assert.IsTrue(profile.NameClaimed);
++        Assert.IsFalse(GameServices.NeedsName);
++        Assert.IsFalse(GameServices.CanChangeName);
++        var name = profile.DisplayName;
++        Assert.AreEqual(NameResult.Invalid, GameServices.ChooseNameAsync("Ahmet").GetAwaiter().GetResult());
++        Assert.AreEqual(name, GameServices.Profile.Current.DisplayName);
+     }
+ 
+     [Test]
+     public void NullAds_RewardedSucceedsAndInterstitialDoesNothing()
+     {
+         IAdsService ads = new NullAdsService();
+         ads.InitializeAsync().GetAwaiter().GetResult();
+         Assert.IsTrue(ads.RewardedReady);
+         Assert.IsTrue(ads.ShowRewardedAsync("shop").GetAwaiter().GetResult());
+         Assert.DoesNotThrow(() => ads.TryShowInterstitial("game_end"));
+diff --git a/Assets/Osman/Editor/Tests/InitGateTests.cs b/Assets/Osman/Editor/Tests/InitGateTests.cs
+index 2021808..4f521ec 100644
+--- a/Assets/Osman/Editor/Tests/InitGateTests.cs
++++ b/Assets/Osman/Editor/Tests/InitGateTests.cs
+@@ -101,26 +101,28 @@ public class InitGateTests
+     {
+         Assert.IsFalse(GameServices.UsesFirebase);
+         Assert.IsInstanceOf<LocalAuthService>(GameServices.Auth);
+     }
+ 
+     [Test]
+     public void FirestoreFields_MapToProfileWithDefaults()
+     {
+         var p = FirestoreProfileStore.FromFields("u1", new System.Collections.Generic.Dictionary<string, object>
+         {
+-            { "displayName", "Osman" }, { "coins", 1200L }, { "level", 3L }, { "xp", 250L }, { "noAds", true }, { "schemaVersion", 1L },
++            { "displayName", "Osman" }, { "coins", 1200L }, { "level", 3L }, { "xp", 250L }, { "noAds", true }, { "schemaVersion", 1L }, { "nameClaimed", true },
+         }, "Oyuncu0001");
+         Assert.AreEqual("u1", p.UserId);
+         Assert.AreEqual("Osman", p.DisplayName);
+         Assert.AreEqual(1200, p.Coins);
+         Assert.AreEqual(3, p.Level);
+         Assert.AreEqual(250, p.Xp);
+         Assert.IsTrue(p.NoAds);
++        Assert.IsTrue(p.NameClaimed);
+ 
+         var empty = FirestoreProfileStore.FromFields("u2", new System.Collections.Generic.Dictionary<string, object>(), "Oyuncu0002");
+         Assert.AreEqual("Oyuncu0002", empty.DisplayName);
+         Assert.AreEqual(0, empty.Coins);
+         Assert.AreEqual(1, empty.Level);
+         Assert.IsFalse(empty.NoAds);
++        Assert.IsFalse(empty.NameClaimed);
+     }
+ }
+diff --git a/Assets/Osman/Editor/Tests/LocalServicesTests.cs b/Assets/Osman/Editor/Tests/LocalServicesTests.cs
+index 1b9565e..8aad3c7 100644
+--- a/Assets/Osman/Editor/Tests/LocalServicesTests.cs
++++ b/Assets/Osman/Editor/Tests/LocalServicesTests.cs
+@@ -360,11 +360,49 @@ public class LocalServicesTests
+ 
+     [Test]
+     public void SetDisplayName_Rejects17Chars()
+     {
+         var s = Loaded();
+         s.SetDisplayNameAsync(new string('a', 17)).GetAwaiter().GetResult();
+         Assert.AreEqual("Oyuncu0001", s.Current.DisplayName);
+         s.SetDisplayNameAsync(new string('a', 16)).GetAwaiter().GetResult();
+         Assert.AreEqual(new string('a', 16), s.Current.DisplayName);
+     }
++
++    // --- benzersiz isim: yerel depo kayıt yapar, benzersizlik denetimi yok ---
++
++    static NameResult SetName(LocalProfileStore s, string name) => s.SetDisplayNameAsync(name).GetAwaiter().GetResult();
++
++    [Test]
++    public void Profile_NewProfileNameNotClaimed() =>
++        Assert.IsFalse(Loaded().Current.NameClaimed);
++
++    [Test]
++    public void SetDisplayName_OkClaimsAndPersists()
++    {
++        var s = Loaded();
++        Assert.AreEqual(NameResult.Ok, SetName(s, "Ahmet"));
++        Assert.AreEqual("Ahmet", s.Current.DisplayName);
++        Assert.IsTrue(s.Current.NameClaimed);
++        var again = Loaded();
++        Assert.AreEqual("Ahmet", again.Current.DisplayName);
++        Assert.IsTrue(again.Current.NameClaimed);
++    }
++
++    [Test]
++    public void SetDisplayName_17Chars_InvalidAndUnchanged()
++    {
++        var s = Loaded();
++        Assert.AreEqual(NameResult.Invalid, SetName(s, new string('a', 17)));
++        Assert.AreEqual("Oyuncu0001", s.Current.DisplayName);
++        Assert.IsFalse(s.Current.NameClaimed);
++    }
++
++    [Test]
++    public void SetDisplayName_SameNameAgain_Ok()
++    {
++        var s = Loaded();
++        Assert.AreEqual(NameResult.Ok, SetName(s, "Ahmet"));
++        Assert.AreEqual(NameResult.Ok, SetName(s, "Ahmet"));
++        Assert.AreEqual("Ahmet", s.Current.DisplayName);
++    }
+ }
+diff --git a/Assets/Osman/Scripts/Services/Firebase/FirestoreProfileStore.cs b/Assets/Osman/Scripts/Services/Firebase/FirestoreProfileStore.cs
+index 578c388..4fb0f66 100644
+--- a/Assets/Osman/Scripts/Services/Firebase/FirestoreProfileStore.cs
++++ b/Assets/Osman/Scripts/Services/Firebase/FirestoreProfileStore.cs
+@@ -1,17 +1,18 @@
+ using System;
+ using System.Collections.Generic;
+ using System.Threading.Tasks;
+ using Firebase.Firestore;
+ using UnityEngine;
+ 
+ // Tasarım 5.2: users/{uid} + users/{uid}/ledger/{txId}. Kurallar: firebase/firestore.rules (coins int >= 0, defter güncellenmez).
++// İsim kaydı names/{isim} = { uid, createdAt }: ilk alan tutar, isim değişikliği tek transaction.
+ // Coin değişikliği tek transaction: bakiye oku, eksiye düşecekse reddet, coins güncelle, defter kaydı yaz.
+ // Cüzdan: istisna = sonuç bilinmiyor (aynı Id ile tekrar dene); false = uygulanmadı.
+ public class FirestoreProfileStore : IProfileStore, IWallet
+ {
+     const string StarterTxId = "starter";
+ 
+     readonly FirebaseBoot boot;
+ 
+     public PlayerProfile Current { get; private set; }
+     public long Coins => Current != null ? Current.Coins : 0;
+@@ -50,26 +51,73 @@ public class FirestoreProfileStore : IProfileStore, IWallet
+                 { "lastSeenAt", FieldValue.ServerTimestamp },
+             };
+             t.Set(userRef, created);
+             t.Set(LedgerDoc(userRef, StarterTxId), LedgerFields(new CoinTx(StarterTxId, GameConfig.StarterCoins, CoinReason.StarterGrant)));
+             return created;
+         });
+         Current = FromFields(userId, fields, defaultName);
+         Notify();
+     }
+ 
+-    public async Task SetDisplayNameAsync(string name)
++    // Tek transaction: yeni ismi al (başkasınınsa Taken), bizdeki eski kaydı bırak, displayName + nameClaimed yaz.
++    // Ağ ya da izin hatası: Failed, bellekteki profil değişmez.
++    public async Task<NameResult> SetDisplayNameAsync(string name)
+     {
+         name = name?.Trim();
+-        if (Current == null || !GameConfig.IsValidName(name) || name == Current.DisplayName)
+-            return;
+-        await Update(p => p.DisplayName = name, new Dictionary<string, object> { { "displayName", name } });
++        if (Current == null || !GameConfig.IsStorableName(name))
++            return NameResult.Invalid;
++        if (name == Current.DisplayName && Current.NameClaimed)
++            return NameResult.Ok;
++        var uid = Current.UserId;
++        // Kayıtlı olmayan eski isim kimsenin kaydı değildir (başkasının olabilir): yalnız kayıtlıysa bırakılır.
++        var oldName = Current.NameClaimed && Current.DisplayName != name ? Current.DisplayName : null;
++        bool claimed;
++        try
++        {
++            var db = await boot.FirestoreAsync();
++            var userRef = db.Collection("users").Document(uid);
++            var nameRef = db.Collection("names").Document(name);
++            var oldRef = oldName != null ? db.Collection("names").Document(oldName) : null;
++            claimed = await db.RunTransactionAsync(async t =>
++            {
++                var taken = await t.GetSnapshotAsync(nameRef);
++                if (taken.Exists && taken.GetValue<string>("uid") != uid)
++                    return false;
++                // Transaction'da önce bütün okumalar: eski kayıt hâlâ bizimse silinir (kural yalnız sahibine sildirir).
++                var old = oldRef != null ? await t.GetSnapshotAsync(oldRef) : null;
++                if (!taken.Exists)
++                    t.Set(nameRef, new Dictionary<string, object> { { "uid", uid }, { "createdAt", FieldValue.ServerTimestamp } });
++                if (old != null && old.Exists && old.GetValue<string>("uid") == uid)
++                    t.Delete(oldRef);
++                t.Update(userRef, new Dictionary<string, object>
++                {
++                    { "displayName", name },
++                    { "nameClaimed", true },
++                    { "lastSeenAt", FieldValue.ServerTimestamp },
++                });
++                return true;
++            });
++        }
++        catch (Exception e)
++        {
++            Debug.LogWarning("[Profil] isim kaydedilemedi: " + e.GetType().Name + " " + uid);
++            return NameResult.Failed;
++        }
++        if (!claimed)
++            return NameResult.Taken;
++        if (Current != null && Current.UserId == uid)
++        {
++            Current.DisplayName = name;
++            Current.NameClaimed = true;
++            Notify();
++        }
++        return NameResult.Ok;
+     }
+ 
+     public async Task AddXpAsync(int xp)
+     {
+         if (Current == null || xp <= 0)
+             return;
+         // shortcut: xp bellekteki değerden yazılır; aynı hesap iki cihazda aynı anda oynarsa biri kaybolur. Sunucu fazında transaction.
+         int total = Current.Xp + xp, level = GameConfig.LevelForXp(total);
+         await Update(p => { p.Xp = total; p.Level = level; }, new Dictionary<string, object> { { "xp", total }, { "level", level } });
+     }
+@@ -84,26 +132,34 @@ public class FirestoreProfileStore : IProfileStore, IWallet
+         {
+             Debug.LogWarning("[Profil] Firestore'a yazılamadı: " + e.GetType().Name + " " + e.Message);
+             return;
+         }
+         if (Current == null || Current.UserId != uid)
+             return;
+         change(Current);
+         Notify();
+     }
+ 
+-    // Hesap silme akışı: önce defter, sonra kullanıcı belgesi (kural defteri yalnızca silmeye açar).
++    // Hesap silme akışı: önce isim kaydı (bizimse), sonra defter, sonra kullanıcı belgesi (kural defteri yalnızca silmeye açar).
+     public async Task DeleteAsync()
+     {
+         if (Current != null)
+         {
+             var userRef = await UserDoc(Current.UserId);
++            if (Current.NameClaimed)
++            {
++                var uid = Current.UserId;
++                var nameRef = (await boot.FirestoreAsync()).Collection("names").Document(Current.DisplayName);
++                var name = await nameRef.GetSnapshotAsync();
++                if (name.Exists && name.GetValue<string>("uid") == uid)
++                    await nameRef.DeleteAsync();
++            }
+             var ledger = await userRef.Collection("ledger").GetSnapshotAsync();
+             foreach (var entry in ledger.Documents)
+                 await entry.Reference.DeleteAsync();
+             await userRef.DeleteAsync();
+         }
+         Current = null;
+         Notify();
+     }
+ 
+     // Çıkış: yalnız bellekteki profil düşer; belge yerinde kalır.
+@@ -159,18 +215,19 @@ public class FirestoreProfileStore : IProfileStore, IWallet
+ 
+     // Firestore tamsayıları long döner; eksik alan varsayılanla dolar.
+     public static PlayerProfile FromFields(string userId, IDictionary<string, object> f, string defaultName) => new PlayerProfile
+     {
+         UserId = userId,
+         DisplayName = f.TryGetValue("displayName", out var n) && n is string s && s.Length > 0 ? s : defaultName,
+         Coins = Long(f, "coins", 0),
+         Level = (int)Long(f, "level", 1),
+         Xp = (int)Long(f, "xp", 0),
+         NoAds = f.TryGetValue("noAds", out var a) && a is bool b && b,
++        NameClaimed = f.TryGetValue("nameClaimed", out var c) && c is bool claimed && claimed,
+         SchemaVersion = (int)Long(f, "schemaVersion", 1),
+     };
+ 
+     static long Long(IDictionary<string, object> f, string key, long fallback) =>
+         f.TryGetValue(key, out var v) && v != null ?Convert.ToInt64(v) : fallback;
+ 
+     void Notify() => ProfileEvents.Raise(Changed, Current);
+ }
+diff --git a/Assets/Osman/Scripts/Services/GameConfig.cs b/Assets/Osman/Scripts/Services/GameConfig.cs
+index daab24c..0599b49 100644
+--- a/Assets/Osman/Scripts/Services/GameConfig.cs
++++ b/Assets/Osman/Scripts/Services/GameConfig.cs
+@@ -1,28 +1,38 @@
+ public static class GameConfig
+ {
+     public const long StarterCoins = 1000;
+     public const long RewardedAdCoins = 50;
+     public const int RewardedAdsPerDay = 5;
+     public const int InterstitialMinSeconds = 180;
+     public const int XpPerGame = 10;
+     public const int XpWinBonus = 25;
+     public const int XpPerLevel = 100;
+     public const int NameMin = 2, NameMax = 16;
++    public const string GuestNamePrefix = "Misafir-";
+ 
+     public static int LevelForXp(int xp) => 1 + xp / XpPerLevel;
+ 
+-    // Kırpılmış uzunluk sayılır: " ab " geçerli, " a " değil.
+-    public static bool IsValidName(string name)
++    // Oyuncunun seçebileceği isim. Kırpılmış uzunluk sayılır: " ab " geçerli, " a " değil.
++    // '/' Firestore belge yolunu böler; "Misafir-" öneki otomatik misafir isimlerine ayrılmış.
++    public static bool IsValidName(string name) =>
++        IsStorableName(name) && !name.Trim().StartsWith(GuestNamePrefix, System.StringComparison.OrdinalIgnoreCase);
++
++    // Depoların yazdığı isim: oyuncu ismi ya da otomatik misafir ismi.
++    public static bool IsStorableName(string name)
+     {
+         int length = name?.Trim().Length ?? 0;
+-        return length >= NameMin && length <= NameMax;
++        return length >= NameMin && length <= NameMax && name.IndexOf('/') < 0;
+     }
+ 
+-    // string.GetHashCode çalışma zamanları arasında sabit değil; FNV-1a sabit.
+-    public static string DefaultName(string userId)
++    public static string GuestName(int number) => GuestNamePrefix + ((number % 100000 + 100000) % 100000).ToString("D5");
++
++    public static bool IsGuestName(string name)
+     {
+-        uint h = 2166136261;
+-        foreach (char c in userId ?? "") h = (h ^ c) * 16777619;
+-        return "Oyuncu" + (h % 10000).ToString("D4");
++        if (name == null || name.Length != GuestNamePrefix.Length + 5 || !name.StartsWith(GuestNamePrefix, System.StringComparison.Ordinal))
++            return false;
++        for (int i = GuestNamePrefix.Length; i < name.Length; i++)
++            if (name[i] < '0' || name[i] > '9')
++                return false;
++        return true;
+     }
+ }
+diff --git a/Assets/Osman/Scripts/Services/GameServices.cs b/Assets/Osman/Scripts/Services/GameServices.cs
+index ec9ac7b..c00d2b9 100644
+--- a/Assets/Osman/Scripts/Services/GameServices.cs
++++ b/Assets/Osman/Scripts/Services/GameServices.cs
+@@ -1,47 +1,53 @@
+ using System;
+ using System.IO;
+ using System.Threading.Tasks;
+ using UnityEngine;
+ 
+ public static class GameServices
+ {
+     // Editörde Firebase soğuk açılışı 9-12 sn ölçüldü (İP2, İP3): 10 sn sınırı ilk açılışta düşüyordu.
+     public const int InitTimeoutMs = 20000;
+     public const string UseFirebaseInEditorPref = "Okey.UseFirebaseInEditor";
++    // Misafir ismi çakışırsa yeni rastgele numarayla en çok bu kadar denenir; olmazsa sonraki açılışta yeniden.
++    public const int GuestNameAttempts = 5;
+ 
+     // Nesneler beklemeden ve süreç boyunca bir kez kurulur: arayüz InitAsync bitmeden Profile.Changed'a abone olabilir.
+     static readonly InitGate init;
+     static bool adsStarted;
+     // Profil yükleme tek yoldan: kullanıcı başına tek Task (başlangıç coini iki kez yazılmasın).
+     static Task profileLoad = Task.CompletedTask;
+     static string profileUser;
+     // Süren giriş/çıkış: çift dokunuş yeni işlem başlatmaz, aynı Task'ı alır.
+     static Task pending = Task.CompletedTask;
+     static System.Reflection.MethodInfo pendingOp;
++    // UnityEngine.Random yalnız ana iş parçacığında çalışır; EditMode testleri de buradan geçer.
++    static readonly System.Random guestNumbers = new System.Random();
+ 
+     public static IAuthService Auth { get; }
+     public static IProfileStore Profile { get; }
+     public static IWallet Wallet { get; }
+     public static IAdsService Ads { get; }
+     public static string InstanceTag { get; }
+     public static bool UsesFirebase { get; }
+ 
+     // Google hesabı başka profile bağlıysa oyuncuya sorulur (MainMenu atar). Atanmamışsa misafir kalınır.
+     public static Func<Task<bool>> ConfirmAccountSwitch { get; set; }
+ 
+     // "Bağlanılamadı, tekrar dene" paneli için: InitFailed paneli açar, düğme PhotonManager.ConnectWhenReadyAsync'i çağırır.
+     public static bool IsReady => init.IsReady;
+ 
+     public static bool HasSession => Auth.UserId != null && Profile.Current?.UserId == Auth.UserId;
+-    // Ayrı "isim seçildi" alanı yok: varsayılan isim duruyorsa sorulur.
+-    public static bool NeedsName => HasSession && Profile.Current.DisplayName == GameConfig.DefaultName(Auth.UserId);
++    // Misafire isim sorulmaz. Google hesabının ismi kayıtlı değilse ya da hâlâ Misafir- ise sorulur.
++    public static bool NeedsName => CanChangeName
++        && (!Profile.Current.NameClaimed || GameConfig.IsGuestName(Profile.Current.DisplayName));
++    public static bool CanChangeName => HasSession && !Auth.IsGuest;
+     // Firebase misafiri çıkarsa anonim hesaba geri dönemez; yerel kimlik sabit, kayıp yok.
+     public static bool CanSignOut => HasSession && (!Auth.IsGuest || !UsesFirebase);
+     public static event Action<Exception> InitFailed
+     {
+         add => init.Failed += value;
+         remove => init.Failed -= value;
+     }
+ 
+     static GameServices()
+     {
+@@ -96,20 +102,24 @@ public static class GameServices
+         StartAds();
+         return init.RunAsync();
+     }
+ 
+     static async Task RunInitAsync()
+     {
+         if (await Auth.RestoreAsync())
+             await ProfileLoadAsync();
+     }
+ 
++    // Oyuncunun seçtiği isim: misafir seçemez, Misafir- öneki ve '/' reddedilir.
++    public static Task<NameResult> ChooseNameAsync(string name) =>
++        CanChangeName && GameConfig.IsValidName(name) ? Profile.SetDisplayNameAsync(name) : Task.FromResult(NameResult.Invalid);
++
+     // Oturum varsa yeniden giriş yapılmaz, yalnız profil beklenir.
+     public static Task EnterAsGuestAsync() => Exclusive(EnterAsGuestCoreAsync);
+ 
+     static async Task EnterAsGuestCoreAsync()
+     {
+         if (Auth.UserId == null)
+             await Auth.SignInGuestAsync();
+         await ProfileLoadAsync();
+         if (!HasSession)
+             throw new InvalidOperationException("misafir girişi tamamlanmadı");
+@@ -186,26 +196,51 @@ public static class GameServices
+         if (profileUser != uid || profileLoad.IsFaulted || profileLoad.IsCanceled)
+         {
+             profileUser = uid;
+             profileLoad = LoadProfileAsync(uid);
+         }
+         return profileLoad;
+     }
+ 
+     static async Task LoadProfileAsync(string uid)
+     {
+-        await Profile.LoadOrCreateAsync(uid, GameConfig.DefaultName(uid));
++        await Profile.LoadOrCreateAsync(uid, NewGuestName());
+         if (Profile.Current?.UserId != uid)
+             throw new InvalidOperationException("profil yüklenemedi");
++        await EnsureNameAsync();
+         LogProfile();
+     }
+ 
++    static string NewGuestName() => GameConfig.GuestName(guestNumbers.Next(100000));
++
++    // İsim güvenceye alınır; Taken/Failed girişi engellemez (isim kayıtsız kalır, sonraki yüklemede yeniden denenir).
++    static async Task EnsureNameAsync()
++    {
++        var profile = Profile.Current;
++        var step = NameFlow.Next(Auth.IsGuest, profile.NameClaimed, profile.DisplayName);
++        if (step == NameFlow.Step.ClaimCurrent)
++        {
++            await Profile.SetDisplayNameAsync(profile.DisplayName);
++            return;
++        }
++        if (step != NameFlow.Step.AssignGuest)
++            return;
++        // Yeni profil zaten bir Misafir- adayıyla açıldı: önce o denenir.
++        var name = GameConfig.IsGuestName(profile.DisplayName) ? profile.DisplayName : NewGuestName();
++        for (int i = 0; i < GuestNameAttempts; i++, name = NewGuestName())
++        {
++            if (await Profile.SetDisplayNameAsync(name) != NameResult.Taken)
++                return;
++        }
++        Debug.LogWarning("[SERVICES] misafir ismi alınamadı: " + Auth.UserId);
++    }
++
+     static async void StartAds()
+     {
+         if (adsStarted)
+             return;
+         adsStarted = true;
+         try { await Ads.InitializeAsync(); }
+         catch (Exception e)
+         {
+             adsStarted = false;
+             Debug.LogWarning("[SERVICES] reklam başlatılamadı: " + e.GetType().Name);
+diff --git a/Assets/Osman/Scripts/Services/IProfileStore.cs b/Assets/Osman/Scripts/Services/IProfileStore.cs
+index 7396541..3e5572a 100644
+--- a/Assets/Osman/Scripts/Services/IProfileStore.cs
++++ b/Assets/Osman/Scripts/Services/IProfileStore.cs
+@@ -1,10 +1,11 @@
+ public interface IProfileStore
+ {
+     PlayerProfile Current { get; }      // yüklenmeden null
+     event System.Action<PlayerProfile> Changed;
+     System.Threading.Tasks.Task LoadOrCreateAsync(string userId, string defaultName);
+-    System.Threading.Tasks.Task SetDisplayNameAsync(string name);
++    // Aynı isim zaten kayıtlıysa yazmadan Ok. Biçim denetimi yalnız uzunluk ve '/': oyuncu girdisi GameServices.ChooseNameAsync'ten gelir.
++    System.Threading.Tasks.Task<NameResult> SetDisplayNameAsync(string name);
+     System.Threading.Tasks.Task AddXpAsync(int xp);
+     System.Threading.Tasks.Task DeleteAsync();
+     void Clear();                       // çıkışta: Current = null, Changed(null); kayıtlı profil silinmez
+ }
+diff --git a/Assets/Osman/Scripts/Services/Local/LocalProfileStore.cs b/Assets/Osman/Scripts/Services/Local/LocalProfileStore.cs
+index 5aa14c8..78ff52b 100644
+--- a/Assets/Osman/Scripts/Services/Local/LocalProfileStore.cs
++++ b/Assets/Osman/Scripts/Services/Local/LocalProfileStore.cs
+@@ -47,27 +47,34 @@ public class LocalProfileStore : IProfileStore, IWallet
+         if (Write())
+             Notify();
+         else
+         {
+             Current = null;
+             appliedTxIds = new List<string>();
+         }
+         return Task.CompletedTask;
+     }
+ 
+-    public Task SetDisplayNameAsync(string name)
++    // Tek profil, benzersizlik denetimi yok: geçerli isim her zaman kaydedilir. Dosya yazılamazsa Failed.
++    public Task<NameResult> SetDisplayNameAsync(string name)
+     {
+         name = name?.Trim();
+-        if (Current == null || !GameConfig.IsValidName(name))
+-            return Task.CompletedTask;
+-        Mutate(() => Current.DisplayName = name);
+-        return Task.CompletedTask;
++        if (Current == null || !GameConfig.IsStorableName(name))
++            return Task.FromResult(NameResult.Invalid);
++        if (name == Current.DisplayName && Current.NameClaimed)
++            return Task.FromResult(NameResult.Ok);
++        bool written = Mutate(() =>
++        {
++            Current.DisplayName = name;
++            Current.NameClaimed = true;
++        });
++        return Task.FromResult(written ? NameResult.Ok : NameResult.Failed);
+     }
+ 
+     public Task AddXpAsync(int xp)
+     {
+         if (Current == null || xp <= 0)
+             return Task.CompletedTask;
+         Mutate(() =>
+         {
+             Current.Xp += xp;
+             Current.Level = GameConfig.LevelForXp(Current.Xp);
+diff --git a/Assets/Osman/Scripts/Services/NameFlow.cs b/Assets/Osman/Scripts/Services/NameFlow.cs
+new file mode 100644
+index 0000000..87e1b96
+--- /dev/null
++++ b/Assets/Osman/Scripts/Services/NameFlow.cs
+@@ -0,0 +1,22 @@
++// Profil yüklenince isim için ne yapılacağı. Karar saf kodda, tabloyla test edilir (EntryFlow ile aynı desen).
++public static class NameFlow
++{
++    // None: dokunma. AssignGuest: misafire yeni Misafir-NNNNN. ClaimCurrent: Google hesabının bugünkü ismini kaydet.
++    public enum Step { None, AssignGuest, ClaimCurrent }
++
++    // Google hesabında Misafir- ismi ya da kaydedilemeyen isim kalırsa GameServices.NeedsName sorar.
++    public static Step Next(bool isGuest, bool nameClaimed, string name)
++    {
++        bool guestName = GameConfig.IsGuestName(name);
++        if (isGuest)
++            return nameClaimed && guestName ? Step.None : Step.AssignGuest;
++        return !nameClaimed && !guestName ? Step.ClaimCurrent : Step.None;
++    }
++
++    // Giriş ekranındaki isim paneli ve lobideki Profil aynı yazıyı gösterir; Ok boş.
++    public static string ErrorText(NameResult result) =>
++        result == NameResult.Taken ? "Bu isim alınmış"
++        : result == NameResult.Invalid ? "İsim 2-16 karakter olmalı"
++        : result == NameResult.Failed ? "Bağlanılamadı"
++        : "";
++}
+diff --git a/Assets/Osman/Scripts/Services/PlayerProfile.cs b/Assets/Osman/Scripts/Services/PlayerProfile.cs
+index 03330d9..fa2b0e9 100644
+--- a/Assets/Osman/Scripts/Services/PlayerProfile.cs
++++ b/Assets/Osman/Scripts/Services/PlayerProfile.cs
+@@ -1,22 +1,25 @@
+ [System.Serializable]
+ public class PlayerProfile
+ {
+     public string UserId, DisplayName;
+     public long Coins;
+     public int Level = 1, Xp;
+     public bool NoAds;
++    // İsim names/{isim} kaydıyla bu hesaba ait mi (Firestore alanı "nameClaimed"); eski profillerde false.
++    public bool NameClaimed;
+     public int SchemaVersion = 1;
+ }
+ 
+ public enum CoinReason { StarterGrant, RewardedAd, Purchase, TableFee, TablePayout }
+ public enum LinkResult { Linked, SwitchedToExistingAccount, Cancelled, Failed }
++public enum NameResult { Ok, Invalid, Taken, Failed }
+ 
+ public readonly struct CoinTx
+ {
+     public readonly string Id; public readonly long Amount; public readonly CoinReason Reason; public readonly string Reference;
+ 
+     public CoinTx(string id, long amount, CoinReason reason, string reference = "")
+     {
+         Id = id; Amount = amount; Reason = reason; Reference = reference;
+     }
+ }
+diff --git a/Assets/Osman/Scripts/UI/LobbyAccountUI.cs b/Assets/Osman/Scripts/UI/LobbyAccountUI.cs
+index 3ac81c4..d88f0de 100644
+--- a/Assets/Osman/Scripts/UI/LobbyAccountUI.cs
++++ b/Assets/Osman/Scripts/UI/LobbyAccountUI.cs
+@@ -12,37 +12,40 @@ public class LobbyAccountUI : MonoBehaviour
+     [Header("Üst çubuk")]
+     public TextMeshProUGUI chipText;
+     // Lobideki coin yazısı ShopController'a ait ama market ilk açılana dek abone olmaz: burada da yazılır.
+     public TextMeshProUGUI lobbyCoinText;
+ 
+     [Header("Profil")]
+     public GameObject profilePanel;
+     public TMP_InputField nameInput;
+     public Button nameSaveButton;
+     public TextMeshProUGUI nameError;
++    // Misafir ismini seçemez: kutu yerine düz isim ve "Google'a bağlan" ipucu görünür.
++    public TextMeshProUGUI nameText;
++    public TextMeshProUGUI nameHint;
+     public TextMeshProUGUI accountText;
+     public TextMeshProUGUI levelText;
+     public TextMeshProUGUI xpText;
+     public TextMeshProUGUI coinText;
+     public Button linkGoogleButton;
+     public TextMeshProUGUI linkStatus;
++    public Button signOutButton;
++    public TextMeshProUGUI signOutStatus;
+ 
+     [Header("Hesap değiştirme onayı")]
+     public GameObject confirmSwitchPanel;
+ 
+     [Header("Ayarlar")]
+     public GameObject settingsPanel;
+     public Toggle soundToggle;
+     public Toggle musicToggle;
+     public TextMeshProUGUI versionText;
+-    public Button signOutButton;
+-    public TextMeshProUGUI signOutStatus;
+ 
+     TaskCompletionSource<bool> switchAnswer;
+ 
+     void Awake()
+     {
+         GameServices.Profile.Changed += Refresh;
+         GameServices.Auth.UserChanged += RefreshCurrent;
+         GameServices.ConfirmAccountSwitch = AskSwitchAsync;
+ 
+         nameInput.characterLimit = GameConfig.NameMax;
+@@ -65,23 +68,30 @@ public class LobbyAccountUI : MonoBehaviour
+     }
+ 
+     void RefreshCurrent() => Refresh(GameServices.Profile.Current);
+ 
+     // Profil yüklenmediyse (null) yazılara dokunulmaz; düğme görünürlüğü profile bağlı değildir ve her zaman kurulur
+     // (çıkış yalnız CanSignOut iken görünür: Firebase misafiri çıkarsa hesabı kalıcı kaybeder).
+     void Refresh(PlayerProfile profile)
+     {
+         linkGoogleButton.gameObject.SetActive(GameServices.UsesFirebase && GameServices.Auth.IsGuest);
+         signOutButton.gameObject.SetActive(GameServices.CanSignOut);
++        bool canChangeName = GameServices.CanChangeName;
++        nameInput.gameObject.SetActive(canChangeName);
++        nameSaveButton.gameObject.SetActive(canChangeName);
++        nameError.gameObject.SetActive(canChangeName);
++        nameText.gameObject.SetActive(!canChangeName);
++        nameHint.gameObject.SetActive(!canChangeName);
+         if (profile == null)
+             return;
+         chipText.text = profile.DisplayName + " · Seviye " + profile.Level;
++        nameText.text = profile.DisplayName;
+         levelText.text = "Seviye: " + profile.Level;
+         xpText.text = "XP: " + profile.Xp % GameConfig.XpPerLevel + " / " + GameConfig.XpPerLevel;
+         coinText.text = "Coin: " + profile.Coins;
+         lobbyCoinText.text = profile.Coins.ToString();
+         accountText.text = GameServices.Auth.IsGuest ? "Hesap: Misafir" : "Hesap: Google";
+         // Yazılırken (ör. Changed başka sebeple gelince) kutudaki metin ezilmesin.
+         if (!nameInput.isFocused)
+             nameInput.text = profile.DisplayName;
+     }
+ 
+@@ -96,51 +106,47 @@ public class LobbyAccountUI : MonoBehaviour
+     {
+         var profile = GameServices.Profile.Current;
+         if (profile != null)
+             PhotonNetwork.NickName = profile.DisplayName;
+     }
+ 
+     public void OpenProfile()
+     {
+         nameError.text = "";
+         linkStatus.text = "";
++        signOutStatus.text = "";
+         nameInput.text = GameServices.Profile.Current?.DisplayName ?? "";
+         RefreshCurrent();
+         profilePanel.SetActive(true);
+     }
+ 
+     public void CloseProfile() => profilePanel.SetActive(false);
+ 
+     public async void SaveName()
+     {
+         try
+         {
+-            if (!GameConfig.IsValidName(nameInput.text))
+-            {
+-                nameError.text = "İsim 2-16 karakter olmalı";
+-                return;
+-            }
+             nameError.text = "";
+             nameSaveButton.interactable = false;
+-            try { await GameServices.Profile.SetDisplayNameAsync(nameInput.text); }
++            NameResult result;
++            try { result = await GameServices.ChooseNameAsync(nameInput.text); }
+             catch (Exception e)
+             {
+                 Debug.LogWarning("[SERVICES] isim kaydedilemedi: " + e.GetType().Name + " " + e.Message);
+-                if (this == null)
+-                    return;
+-                nameSaveButton.interactable = true;
+-                nameError.text = "Bağlanılamadı";
+-                return;
++                result = NameResult.Failed;
+             }
+             if (this == null)
+                 return;
+             nameSaveButton.interactable = true;
++            nameError.text = NameFlow.ErrorText(result);
++            if (result != NameResult.Ok)
++                return;
+             SyncNickName();
+             RefreshCurrent();
+         }
+         catch (Exception e)
+         {
+             Debug.LogWarning("[SERVICES] isim kaydı hata: " + e.GetType().Name + " " + e.Message);
+         }
+     }
+ 
+     // Düğme iş sürerken kapalı; iptal ya da hata profilde yazıyla gösterilir, oturum değişmez.
+@@ -158,20 +164,23 @@ public class LobbyAccountUI : MonoBehaviour
+                 Debug.LogWarning("[SERVICES] Google'a bağlanılamadı: " + e.GetType().Name + " " + e.Message);
+                 result = LinkResult.Failed;
+             }
+             if (this == null)
+                 return;
+             linkGoogleButton.interactable = true;
+             if (result == LinkResult.Cancelled)
+                 linkStatus.text = "Google girişi tamamlanmadı";
+             else if (result == LinkResult.Failed)
+                 linkStatus.text = "Google'a bağlanılamadı";
++            // Misafir aynı hesapla Google'a geçti: isim kutusu açılır (RefreshCurrent), sonraki açılışta da sorulur.
++            else if (result == LinkResult.Linked)
++                linkStatus.text = "İsmini seçebilirsin";
+             // Geçiş yarıda kalınca yeni misafire düşülebilir: Photon adı her sonuçta profille eşitlenir.
+             SyncNickName();
+             RefreshCurrent();
+         }
+         catch (Exception e)
+         {
+             Debug.LogWarning("[SERVICES] Google bağlama hata: " + e.GetType().Name + " " + e.Message);
+         }
+     }
+ 
+@@ -190,21 +199,20 @@ public class LobbyAccountUI : MonoBehaviour
+ 
+     void AnswerSwitch(bool yes)
+     {
+         confirmSwitchPanel.SetActive(false);
+         switchAnswer?.TrySetResult(yes);
+         switchAnswer = null;
+     }
+ 
+     public void OpenSettings()
+     {
+-        signOutStatus.text = "";
+         SyncToggles();
+         RefreshCurrent();
+         settingsPanel.SetActive(true);
+     }
+ 
+     public void CloseSettings() => settingsPanel.SetActive(false);
+ 
+     public void OnSoundToggle(bool on) => GameSettings.SoundOn = on;
+ 
+     public void OnMusicToggle(bool on) => GameSettings.MusicOn = on;
+diff --git a/Assets/Osman/Scripts/UI/MainMenuUIHandler.cs b/Assets/Osman/Scripts/UI/MainMenuUIHandler.cs
+index 038f77a..9c7620e 100644
+--- a/Assets/Osman/Scripts/UI/MainMenuUIHandler.cs
++++ b/Assets/Osman/Scripts/UI/MainMenuUIHandler.cs
+@@ -148,41 +148,35 @@ public class MainMenuUIHandler : MonoBehaviour
+         SetEntryBusy(false);
+         if (result == LinkResult.Cancelled)
+             statusText.text = "Google girişi tamamlanmadı";
+         else if (result == LinkResult.Failed)
+             statusText.text = "Google'a bağlanılamadı";
+         Refresh();
+     }
+ 
+     public async void ConfirmName()
+     {
+-        if (!GameConfig.IsValidName(nameInput.text))
+-        {
+-            nameError.text = "İsim 2-16 karakter olmalı";
+-            return;
+-        }
+         nameError.text = "";
+         nameOkButton.interactable = false;
+-        try { await GameServices.Profile.SetDisplayNameAsync(nameInput.text); }
++        NameResult result;
++        try { result = await GameServices.ChooseNameAsync(nameInput.text); }
+         catch (Exception e)
+         {
+             Debug.LogWarning("[SERVICES] isim kaydedilemedi: " + e.GetType().Name + " " + e.Message);
+-            if (this == null)
+-                return;
+-            nameOkButton.interactable = true;
+-            nameError.text = "Bağlanılamadı";
+-            return;
++            result = NameResult.Failed;
+         }
+         if (this == null)
+             return;
+         nameOkButton.interactable = true;
+-        Refresh();
++        nameError.text = NameFlow.ErrorText(result);
++        if (result == NameResult.Ok)
++            Refresh();
+     }
+ 
+     public async void RetryConnect()
+     {
+         retryButton.interactable = false;
+         await PhotonManager.ConnectWhenReadyAsync();
+         if (this == null)
+             return;
+         retryButton.interactable = true;
+         initFailed = !GameServices.IsReady;
+diff --git a/firebase/firestore.rules b/firebase/firestore.rules
+index 630d212..0837518 100644
+--- a/firebase/firestore.rules
++++ b/firebase/firestore.rules
+@@ -8,12 +8,19 @@ service cloud.firestore {
+       allow read, delete: if request.auth != null && request.auth.uid == uid;
+       allow create, update: if request.auth != null && request.auth.uid == uid
+                             && request.resource.data.coins is int
+                             && request.resource.data.coins >= 0;
+ 
+       match /ledger/{txId} {
+         // update yok: yazılan kayıt değişmez. delete yalnızca hesap silme akışı için açık.
+         allow read, create, delete: if request.auth != null && request.auth.uid == uid;
+       }
+     }
++
++    match /names/{name} {
++      // İsim kaydı: ilk alan tutar. update yok: var olan kayda yazılamaz, sahibi dışında kimse silemez.
++      allow get: if request.auth != null;
++      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
++      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
++    }
+   }
+ }

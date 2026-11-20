@@ -16,7 +16,7 @@
 - Sürücü RPC çağırmaz. Hamleler yalnızca `TileUI.OnBeginDrag` / `OnEndDrag` üzerinden yapılır.
 - Proje kökü = `Directory.GetCurrentDirectory()` (DesyncDetector ile aynı).
 - Oda adı `autotest_<runId>`, oda şifresi = `runId`, `runId` = `yyyyMMdd_HHmmss`. Nick'ler: `AT-host`, `AT-g1`, `AT-g2`, `AT-g3`.
-- Projeler (sıra = rol): `C:\Users\osman\Documents\51Okey` (host), `..._clone_0` (AT-g1), `..._clone_1` (AT-g2), `..._clone_2` (AT-g3).
+- Projeler (sıra = rol): `F:\Documents\UnityProjects\51Okey` (host), `..._clone_0` (AT-g1), `..._clone_1` (AT-g2), `..._clone_2` (AT-g3).
 - CLI: `C:\Users\osman\AppData\Local\Unity\bin\unity.exe command <grup> <komut> --project-path <proje> --result-only --no-banner`. Playmode girişinde gelen "No Pipeline instance found" geçicidir, tekrar denenir.
 - PowerShell 5.1: `&&`, `??`, ternary yok. JSON dosyaları `[IO.File]::WriteAllText` ile (BOM'suz) yazılır.
 - Pester 3.4 sözdizimi: `Should Be`, `Should Match`.
@@ -69,10 +69,10 @@
   - `TryLoadConfig_EmptyRunId_ReturnsFalse`: içerik `{}` → `false`.
   - `WriteStatus_ReplacesWholeFile`: önce `errors={"a","b"}`, `state="Playing"` yaz; sonra `state="Done"`, `errors` boş yaz → `JsonUtility.FromJson<SyncAutoTestStatus>(File.ReadAllText(...))` ile `state=="Done"`, `errors.Count==0`; `Dir` içinde `.tmp` dosyası kalmamış.
 - [ ] **Step 2: Derle ve testin başarısız olduğunu gör**
-  Run: `unity command editor invoke_menu --path "Assets/Refresh" --project-path C:\Users\osman\Documents\51Okey --result-only --no-banner`, sonra `script recompile`, `script recompile_status` → `completed`. `compilationFailed` true olmalı (tipler yok) — beklenen kırmızı.
+  Run: `unity command editor invoke_menu --path "Assets/Refresh" --project-path F:\Documents\UnityProjects\51Okey --result-only --no-banner`, sonra `script recompile`, `script recompile_status` → `completed`. `compilationFailed` true olmalı (tipler yok) — beklenen kırmızı.
 - [ ] **Step 3: `SyncAutoTestData.cs`'i yaz.** `TryLoadConfig`: dosya yoksa / `JsonUtility` exception atarsa / sonuç null ya da `runId` boşsa `false`. `WriteStatus`: `Dir`'i oluştur, `status.json.tmp`'ye yaz, hedef varsa `File.Replace`, yoksa `File.Move`.
 - [ ] **Step 4: Testleri koş**
-  Run: Refresh + recompile (Step 2 gibi), sonra `unity command test run --mode EditMode --filter SyncAutoTestDataTests --project-path C:\Users\osman\Documents\51Okey --result-only --no-banner`
+  Run: Refresh + recompile (Step 2 gibi), sonra `unity command test run --mode EditMode --filter SyncAutoTestDataTests --project-path F:\Documents\UnityProjects\51Okey --result-only --no-banner`
   Expected: 5 passed, 0 failed.
 - [ ] **Step 5: Commit** — `git add` iki `.cs` ve iki `.cs.meta` + `Assets/Osman/Editor/Tests.meta` (yeni klasör meta'sı); mesaj: `Add SyncAutoTest config/status files`
 
@@ -145,7 +145,7 @@
   - AT-g1 status `$null` → `Reason | Should Match 'AT-g1'`
   - host desync 1 **ve** AT-g1 Error → `Reason | Should Match 'DESYNC'` (öncelik)
   - `Read-SyncStatus`: `$TestDrive\p\Temp\SyncAutoTest\status.json` = `{"state":` (yarım yazılmış) → `$null`, exception yok; geçerli JSON → `state` okunur (Review Focus 5)
-- [ ] **Step 2:** `Invoke-Pester -Script C:\Users\osman\Documents\51Okey\Tools\SyncTest\SyncTestLib.Tests.ps1` → başarısız (fonksiyon yok).
+- [ ] **Step 2:** `Invoke-Pester -Script F:\Documents\UnityProjects\51Okey\Tools\SyncTest\SyncTestLib.Tests.ps1` → başarısız (fonksiyon yok).
 - [ ] **Step 3:** `SyncTestLib.ps1`'i yaz → Pester: 7 passed, 0 failed.
 - [ ] **Step 4: `Run-SyncTest.ps1`'i yaz** — spec "Runner" adımları sırasıyla:
   1. Ön kontrol: her proje için `editor status`; hata → `"<proje>: erişilemiyor (<mesaj>)"`, `playMode == "playing"` → `"<proje>: zaten Play'de"`. Sorun varsa hepsini bas, **hiçbir editörü Play'e almadan** exit 1.
