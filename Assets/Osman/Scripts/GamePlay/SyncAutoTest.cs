@@ -46,7 +46,11 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
     bool seatMoved;
     bool botsReleased;
     bool dropFired,
-        handEnded;
+        handEnded,
+        otherMoved;
+    int prevMoves,
+        lastTurnPlayer;
+    float lastDiscardAt;
     float humansSeatedSince = -1f;
     readonly SyncAutoTestStatus status = new SyncAutoTestStatus();
     readonly Dictionary<string, RoomInfo> rooms = new Dictionary<string, RoomInfo>();
@@ -237,9 +241,28 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
             return;
         if (turnManager == null)
             turnManager = FindObjectOfType<TurnManager>();
+        // Başka koltuğun hamlesi: sıra benden başka birinden bir başkasına geçti (benim atışımdan sonra sayılır).
+        int tp = turnManager != null ? turnManager.currentTurnPlayer : -1;
+        if (tp != lastTurnPlayer)
+        {
+            if (lastTurnPlayer > 0 && lastTurnPlayer != MyQue)
+                otherMoved = true;
+            lastTurnPlayer = tp;
+        }
+        bool justDiscarded = myMoves != prevMoves;
+        if (justDiscarded)
+        {
+            prevMoves = myMoves;
+            otherMoved = false;
+            lastDiscardAt = Time.unscaledTime;
+        }
         var view = new DropView
         {
-            myTurn = turnManager != null && gm.isGameReady && turnManager.currentTurnPlayer == MyQue,
+            live = gm.isGameReady && !gm.isGameEnded,
+            otherMoved = otherMoved,
+            offSec = Time.unscaledTime - lastDiscardAt,
+            justDiscarded = justDiscarded,
+            myTurn = turnManager != null && gm.isGameReady && !gm.isGameEnded && tp == MyQue,
             isMaster = PhotonNetwork.IsMasterClient,
             handEnded = handEnded,
             openedThisTurn = firstOpenThisTurn,
@@ -457,6 +480,7 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
         status.state = state.ToString();
         status.actor = PhotonNetwork.LocalPlayer?.ActorNumber ?? 0;
         status.que = MyQue;
+        status.isMaster = PhotonNetwork.IsMasterClient;
         status.deal = deal;
         status.myMoves = myMoves;
         status.isMyTurn =

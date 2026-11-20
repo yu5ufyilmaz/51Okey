@@ -3,28 +3,39 @@ public struct DropView
 {
     public bool myTurn, isMaster, handEnded, openedThisTurn;
     public int handCount, ownTurnsSeen;
+    public bool live; // el sürüyor: oyun hazır ve bitmemiş (el sonu ekranında false)
+    public bool otherMoved; // son atışımdan beri başka koltuğun hamlesi görüldü
+    public float offSec; // son atışımdan beri geçen süre
+    public bool justDiscarded; // atış bu karede tamamlandı
 }
 
 public static class DropTrigger
 {
+    public const float StableSec = 1.5f;
+
     // Tek atışı çağıran tutar (ilk true'da bir kez).
     public static bool ShouldDrop(string scenario, DropView v)
     {
+        bool offTurnStable = v.live && !v.myTurn && v.ownTurnsSeen >= 2 && (v.otherMoved || v.offSec >= StableSec);
         switch (scenario)
         {
             case "offturn":
             case "two":
-                return !v.myTurn && v.ownTurnsSeen >= 2;
+                return offTurnStable;
             case "master":
-                return v.isMaster && !v.myTurn && v.ownTurnsSeen >= 2;
+                return v.isMaster && offTurnStable;
+            case "after-discard": // atıştan hemen sonraki kare: atış/NextTurn sunucuya ulaşmamış olabilir
+                return v.justDiscarded && !v.myTurn && v.ownTurnsSeen >= 2;
             case "before-draw":
                 return v.myTurn && v.handCount == 14 && v.ownTurnsSeen >= 2;
             case "after-draw":
                 return v.myTurn && v.handCount == 15 && !v.openedThisTurn && v.ownTurnsSeen >= 2;
+            case "master-turn":
+                return v.isMaster && v.myTurn && v.handCount == 15 && !v.openedThisTurn && v.ownTurnsSeen >= 2;
             case "after-open":
                 return v.myTurn && v.openedThisTurn;
             case "hand-end":
-                return v.handEnded;
+                return !v.isMaster && v.handEnded;
             case "master-hand-end":
                 return v.isMaster && v.handEnded;
             default:

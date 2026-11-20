@@ -73,7 +73,8 @@ public class SyncAutoTestStatus
         rejoinGrants, // Görev 10-11'de beslenir
         ctlBotLines, // "[CTL] koltuk N bot" satırları: bu editörün gördüğü
         gerialLines; // "[GERIAL]" satırları
-    public bool restoreEntered,
+    public bool isMaster, // koşu sonunda master mı: kanıt kuralları yeni master'a bakar
+        restoreEntered,
         gameOverSeen; // Görev 10-11'de beslenir
     public List<string> scoreLines = new List<string>();
     public SyncCounts sync = new SyncCounts();

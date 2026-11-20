@@ -40,7 +40,7 @@ function Read-SyncStatus {
 # Error eksik status'tan önce: biri girişte düşerse sonraki guest'ler hiç başlamaz, asıl sebep o Error'dır.
 # -NoHost: odayı telefon kurdu, master o; editörlerde sync sayacı yok, sadece hata ve [BUG] bakılır.
 function Get-SyncTestVerdict {
-    param([object[]]$Statuses, [string[]]$Nicks, [bool]$TimedOut, [switch]$NoHost, [int[]]$DropEditors = @(), [string]$DropMode = '')
+    param([object[]]$Statuses, [string[]]$Nicks, [bool]$TimedOut, [switch]$NoHost, [int[]]$DropEditors = @(), [string]$DropMode = '', [string]$DropScenario = '')
     $fail = { param($reason) [pscustomobject]@{ Pass = $false; Reason = $reason } }
     # -DropRejoin: masa sahibi de kopabilir, sayaçlar yeni master'da devam eder; hepsinin toplamı alınır.
     $drop = $DropEditors.Count -gt 0
@@ -75,20 +75,27 @@ function Get-SyncTestVerdict {
         $s = $Statuses[$i]
         if (@($s.errors).Count -gt 0) { return & $fail "$($Nicks[$i]): $(@($s.errors)[0])" }
     }
-    if ($drop) { return Get-DropVerdict -Statuses $Statuses -Nicks $Nicks -DropEditors $DropEditors -DropMode $DropMode -Compared $all }
+    if ($drop) { return Get-DropVerdict -Statuses $Statuses -Nicks $Nicks -DropEditors $DropEditors -DropMode $DropMode -DropScenario $DropScenario -Compared $all }
     if ($NoHost) { return [pscustomobject]@{ Pass = $true; Reason = "$($host0.deal) el, test oyuncularında hata yok" } }
     # Snapshot'lar master'a hiç ulaşmadıysa "desync 0" bir şey kanıtlamaz.
     if ($host0.sync.ok -le 0) { return & $fail "host hiç snapshot kıyaslamadı (ok 0)" }
     [pscustomobject]@{ Pass = $true; Reason = "$($host0.deal) el, ok $($host0.sync.ok), desync 0" }
 }
 
-# Get-SyncTestVerdict'in -DropRejoin kolu: senaryo tetiklendi mi, geri verme / oyun sonu görüldü mü, skorlar aynı mı.
+# Tetiklenmeyen senaryo için bilinen tohumlar (-Mode smart).
+function Get-DropSeedHint([string]$Scenario) {
+    if ($Scenario -eq 'after-open') { return ' (bilinen tohumlar: -Seed 1234, -Seed 7; 11 tetiklemez)' }
+    ''
+}
+
+# Get-SyncTestVerdict'in -DropRejoin kolu: senaryo tetiklendi mi, geri verme / oyun sonu görüldü mü, skorlar aynı mı,
+# kalan editörlerde beklenen kanıt ([CTL] bot, [GERIAL]) var mı. Bugün yalnız -NoReturn kipi çalışır (dönüş yolu Görev 10-11).
 function Get-DropVerdict {
-    param([object[]]$Statuses, [string[]]$Nicks, [int[]]$DropEditors, [string]$DropMode, [int[]]$Compared)
+    param([object[]]$Statuses, [string[]]$Nicks, [int[]]$DropEditors, [string]$DropMode, [string]$DropScenario = '', [int[]]$Compared)
     $fail = { param($reason) [pscustomobject]@{ Pass = $false; Reason = $reason } }
     foreach ($i in $DropEditors) {
         $s = $Statuses[$i]
-        if (-not $s -or $s.drops -lt 1) { return & $fail "$($Nicks[$i]): senaryo tetiklenmedi (drops 0)" }
+        if (-not $s -or $s.drops -lt 1) { return & $fail "$($Nicks[$i]): senaryo tetiklenmedi (drops 0)$(Get-DropSeedHint $DropScenario)" }
     }
     foreach ($i in $DropEditors) {
         $s = $Statuses[$i]
@@ -97,7 +104,26 @@ function Get-DropVerdict {
         }
         if ($DropMode -eq 'afterend' -and -not $s.gameOverSeen) { return & $fail "$($Nicks[$i]): oyun sona ermiş görülmedi" }
     }
+    $remaining = @($Compared | Where-Object { $DropEditors -notcontains $_ })
+    # Kanıt: koşu sonunda master olan editör koltuğu bota devretmiş olmalı.
+    $masters = @($remaining | Where-Object { $Statuses[$_].isMaster })
+    if ($masters.Count -eq 0) { return & $fail "kalan editörlerde master görünmedi" }
+    foreach ($i in $masters) {
+        if ($Statuses[$i].ctlBotLines -lt 1) { return & $fail "$($Nicks[$i]): master olarak '[CTL] koltuk N bot' görmedi" }
+    }
+    $needGerial = $DropScenario -in 'after-draw', 'after-open', 'master-turn'
+    $noGerial = $DropScenario -in 'offturn', 'hand-end'
+    foreach ($i in $remaining) {
+        $g = $Statuses[$i].gerialLines
+        if ($needGerial -and $g -lt 1) { return & $fail "$($Nicks[$i]): $DropScenario için [GERIAL] satırı beklenirdi, yok" }
+        if ($noGerial -and $g -ne 0) { return & $fail "$($Nicks[$i]): $DropScenario için [GERIAL] olmamalıydı, $g satır var" }
+    }
     $done = @($Compared | Where-Object { $Statuses[$_].state -eq 'Done' })
+    foreach ($i in $done) {
+        $need = [Math]::Max(1, [int]$Statuses[$i].deal)
+        $have = @($Statuses[$i].scoreLines).Count
+        if ($have -lt $need) { return & $fail "$($Nicks[$i]): $need elden $have '[SKOR] el' satırı var (skor kıyaslanamaz)" }
+    }
     if ($done.Count -gt 1) {
         $ref = @($Statuses[$done[0]].scoreLines) -join "`n"
         foreach ($i in $done) {
@@ -108,7 +134,7 @@ function Get-DropVerdict {
     # Snapshot'lar hiç kıyaslanmadıysa "desync 0" bir şey kanıtlamaz.
     if ($ok -le 0) { return & $fail "hiç snapshot kıyaslanmadı (ok 0)" }
     $deal = ($Statuses | Where-Object { $_ } | ForEach-Object { $_.deal } | Measure-Object -Maximum).Maximum
-    [pscustomobject]@{ Pass = $true; Reason = "$deal el, ok $ok, desync 0, kopma $DropMode" }
+    [pscustomobject]@{ Pass = $true; Reason = "$deal el, ok $ok, desync 0, kopma $DropScenario/$DropMode" }
 }
 
 # Kopma koşusu için editör başına tek satır: ne oldu + kalanların gördüğü [CTL] bot / [GERIAL] satır sayısı.

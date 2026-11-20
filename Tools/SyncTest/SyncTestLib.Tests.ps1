@@ -14,6 +14,7 @@ function New-DropStatus($nick, $state = 'Done', $drops = 0, $grants = 0, $lines 
     $s = New-Status $nick $state
     $s | Add-Member drops $drops; $s | Add-Member rejoinGrants $grants; $s | Add-Member scoreLines $lines
     $s | Add-Member gameOverSeen $over; $s | Add-Member restoreEntered $false
+    $s | Add-Member isMaster ($nick -eq 'AT-host'); $s | Add-Member ctlBotLines 1; $s | Add-Member gerialLines 0
     $s
 }
 
@@ -165,7 +166,7 @@ Describe 'Get-JournalExcerpt' {
 
 Describe 'Get-SyncTestVerdict -DropEditors' {
     function New-DropSet { @((New-DropStatus 'AT-host'), (New-DropStatus 'AT-g1' -drops 1 -grants 1), (New-DropStatus 'AT-g2'), (New-DropStatus 'AT-g3')) }
-    function Get-V($s, $mode = 'return', $drop = @(1)) { Get-SyncTestVerdict -Statuses $s -Nicks $Nicks -TimedOut $false -DropEditors $drop -DropMode $mode }
+    function Get-V($s, $mode = 'return', $drop = @(1), $scn = '') { Get-SyncTestVerdict -Statuses $s -Nicks $Nicks -TimedOut $false -DropEditors $drop -DropMode $mode -DropScenario $scn }
 
     It 'passes on return with a grant and equal score lines' {
         (Get-V (New-DropSet)).Pass | Should Be $true
@@ -207,15 +208,45 @@ Describe 'Get-SyncTestVerdict -DropEditors' {
     }
     It 'accepts a master drop: ok comes from the new master' {
         $s = New-DropSet; $s[0] = New-DropStatus 'AT-host' -drops 1 -grants 1
-        $s[0].sync.ok = 0; $s[2].sync.ok = 20
+        $s[0].sync.ok = 0; $s[2].sync.ok = 20; $s[0].isMaster = $false; $s[2].isMaster = $true
         (Get-V $s 'return' @(0)).Pass | Should Be $true
+    }
+}
+
+Describe 'Get-DropVerdict evidence' {
+    function New-DropSet { @((New-DropStatus 'AT-host'), (New-DropStatus 'AT-g1' -drops 1 -grants 1), (New-DropStatus 'AT-g2'), (New-DropStatus 'AT-g3')) }
+    function Get-V($s, $scn, $drop = @(1)) { Get-SyncTestVerdict -Statuses $s -Nicks $Nicks -TimedOut $false -DropEditors $drop -DropMode 'noreturn' -DropScenario $scn }
+
+    It 'fails when empty score lines would compare equal' {
+        $s = New-DropSet; foreach ($x in $s) { $x.scoreLines = @() }
+        (Get-V $s 'offturn').Reason | Should Match 'SKOR'
+    }
+    It 'fails when the master saw no [CTL] bot line' {
+        $s = New-DropSet; $s[0].ctlBotLines = 0
+        (Get-V $s 'offturn').Reason | Should Match 'CTL'
+    }
+    It 'requires [GERIAL] on every remaining editor for after-draw' {
+        $s = New-DropSet; foreach ($i in 0, 2, 3) { $s[$i].gerialLines = 2 }
+        (Get-V $s 'after-draw').Pass | Should Be $true
+        $s[3].gerialLines = 0
+        (Get-V $s 'after-draw').Reason | Should Match 'AT-g3.*GERIAL'
+    }
+    It 'forbids [GERIAL] for offturn and hand-end, accepts either for after-discard' {
+        $s = New-DropSet; $s[2].gerialLines = 1
+        (Get-V $s 'offturn').Reason | Should Match 'olmamalıydı'
+        (Get-V $s 'hand-end').Pass | Should Be $false
+        (Get-V $s 'after-discard').Pass | Should Be $true
+    }
+    It 'names the known seeds for an untriggered after-open' {
+        $s = New-DropSet; $s[1].drops = 0
+        (Get-V $s 'after-open').Reason | Should Match '1234'
     }
 }
 
 Describe 'Get-DropSummary' {
     It 'prints one line per editor' {
         $s = @((New-DropStatus 'AT-host'), (New-DropStatus 'AT-g1' 'Gone' 1))
-        $s[1] | Add-Member dropAtMove 4; $s[0] | Add-Member ctlBotLines 2; $s[0] | Add-Member gerialLines 1
+        $s[1] | Add-Member dropAtMove 4; $s[0].ctlBotLines = 2; $s[0].gerialLines = 1
         $l = @(Get-DropSummary -Statuses $s -Nicks @('AT-host', 'AT-g1') -DropEditors @(1))
         $l.Count | Should Be 2
         $l[0] | Should Match 'KALDI.*2 satır.*1 satır'

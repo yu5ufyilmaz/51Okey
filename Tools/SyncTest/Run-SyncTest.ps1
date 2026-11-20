@@ -12,6 +12,10 @@
   powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -Solo -Mode smart        # clone'lar kapalı: tek test oyuncusu + oyunun botları
   powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -Mode smart -SameNames  # 4 test oyuncusu da aynı Photon adını gösterir (iç kimlik AT-host/AT-g1.. aynı kalır)
   powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -Mode smart -Bots 2     # 2 editör (host + 1 misafir) + oyunun 2 botu; -Bots 1..3, -Solo/-JoinRoom ile birlikte olmaz
+  powershell -ExecutionPolicy Bypass -File Tools\SyncTest\Run-SyncTest.ps1 -Mode smart -Seed 11 -DropRejoin after-draw -NoReturn   # bir editör kopar; kalanlar bota devreder
+  -DropRejoin senaryoları (dört editör): offturn (sıra dışı, kararlı), after-discard (atıştan hemen sonra), before-draw, after-draw, after-open
+    (tohum 1234 ya da 7; 11 tetiklemez), master (masa sahibi sıra dışı), master-turn (masa sahibi kendi turunda çektikten sonra),
+    hand-end (misafir el sonu ekranında; -Deals 2 gerekir), master-hand-end, two. Bugün yalnız -NoReturn kipi çalışır (dönüş yolu Görev 10-11).
   Tasarım (smart): docs/superpowers/specs/2026-11-11-test-oyunculari-design.md
 .NOTES
   1 el ~4 dk sürer. Claude 10 dk'lık komut sınırına takılmasın diye uzun koşuları arka planda (run_in_background) başlatır;
@@ -29,7 +33,7 @@ param(
     [string]$JoinRoom = '',   # insana karşı: odayı telefon kurar (master o), 3 clone bu ada katılır
     [switch]$Solo,   # sadece ana editör: test oyuncusu + oyunun 3 botu (clone'lar kapalıyken)
     [switch]$SameNames,   # tüm test oyuncuları aynı Photon adını gösterir (ad ile alan bulan kod bozulur)
-    [ValidateSet('', 'offturn', 'before-draw', 'after-draw', 'after-open', 'master', 'master-hand-end', 'hand-end', 'two')][string]$DropRejoin = '',   # bir editör belirli anda bağlantıyı keser (dört editör gerekir)
+    [ValidateSet('', 'offturn', 'after-discard', 'before-draw', 'after-draw', 'after-open', 'master', 'master-turn', 'master-hand-end', 'hand-end', 'two')][string]$DropRejoin = '',   # bir editör belirli anda bağlantıyı keser (dört editör gerekir)
     [switch]$NoReturn,   # kopan dönmez (dönüş yolu Görev 10-11'de; şimdilik tek geçerli kip)
     [switch]$ReturnAfterEnd,   # kopan, diğerleri bitince döner
     [int]$DropOfflineSec = 8,   # dönüşten önce çevrimdışı süre
@@ -49,8 +53,10 @@ if ($DropRejoin -and ($Solo -or $Bots -or $JoinRoom)) { Write-Host "HATA: -DropR
 if ($NoReturn -and $ReturnAfterEnd) { Write-Host "HATA: -NoReturn ve -ReturnAfterEnd birlikte verilemez"; exit 1 }
 # Kopan editör indeksleri (0 = host): masa sahibi senaryoları host'u, two 1 ve 2'yi, diğerleri 1'i koparır.
 $dropEditors = @()
+if ($DropRejoin -and -not $NoReturn) { Write-Host "HATA: -DropRejoin bugün yalnız -NoReturn ile çalışır (dönüş yolu Görev 10-11'de)"; exit 1 }
+if ($DropRejoin -eq 'hand-end' -and $Deals -lt 2) { Write-Host "HATA: hand-end senaryosu -Deals 2 ister (sonraki el bot koltuğuyla oynanır)"; exit 1 }
 if ($DropRejoin) {
-    $dropEditors = switch ($DropRejoin) { { $_ -in 'master', 'master-hand-end' } { @(0) } 'two' { @(1, 2) } default { @(1) } }
+    $dropEditors = switch ($DropRejoin) { { $_ -in 'master', 'master-turn', 'master-hand-end' } { @(0) } 'two' { @(1, 2) } default { @(1) } }
 }
 $dropMode = $(if ($NoReturn) { 'noreturn' } elseif ($ReturnAfterEnd) { 'afterend' } else { 'return' })
 # Bot doldurma, host'un insanlar oturunca bitirdiği beklemedir (humans); 300 sn sadece güvenlik üst sınırı.
@@ -290,7 +296,7 @@ if ($Mode -eq 'smart') {
     }
 }
 
-$v = Get-SyncTestVerdict -Statuses $final -Nicks $Nicks -TimedOut $timedOut -NoHost:$noHost -DropEditors $dropEditors -DropMode $(if ($DropRejoin) { $dropMode } else { '' })
+$v = Get-SyncTestVerdict -Statuses $final -Nicks $Nicks -TimedOut $timedOut -NoHost:$noHost -DropEditors $dropEditors -DropMode $(if ($DropRejoin) { $dropMode } else { '' }) -DropScenario $DropRejoin
 $elapsed = [int]((Get-Date) - $started).TotalSeconds
 if ($v.Pass) { Write-Host "PASS: $($v.Reason) ($elapsed sn)"; exit 0 }
 Write-Host "FAIL: $($v.Reason) ($elapsed sn)"

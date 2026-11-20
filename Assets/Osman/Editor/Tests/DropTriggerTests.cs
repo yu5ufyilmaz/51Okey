@@ -2,15 +2,29 @@ using NUnit.Framework;
 
 public class DropTriggerTests
 {
-    static DropView V(bool myTurn = false, int hand = 14, bool opened = false, int seen = 2, bool master = false, bool ended = false) =>
-        new DropView { myTurn = myTurn, handCount = hand, openedThisTurn = opened, ownTurnsSeen = seen, isMaster = master, handEnded = ended };
+    static DropView V(bool myTurn = false, int hand = 14, bool opened = false, int seen = 2, bool master = false, bool ended = false,
+        bool live = true, bool other = true, float off = 0f, bool just = false) =>
+        new DropView { myTurn = myTurn, handCount = hand, openedThisTurn = opened, ownTurnsSeen = seen, isMaster = master, handEnded = ended,
+            live = live, otherMoved = other, offSec = off, justDiscarded = just };
 
     [Test]
-    public void Offturn()
+    public void Offturn_NeedsStableOffTurn()
     {
         Assert.IsTrue(DropTrigger.ShouldDrop("offturn", V()));
+        Assert.IsTrue(DropTrigger.ShouldDrop("offturn", V(other: false, off: 1.6f)));
+        Assert.IsFalse(DropTrigger.ShouldDrop("offturn", V(other: false, off: 0.2f)));
         Assert.IsFalse(DropTrigger.ShouldDrop("offturn", V(myTurn: true)));
         Assert.IsFalse(DropTrigger.ShouldDrop("offturn", V(seen: 1)));
+        Assert.IsFalse(DropTrigger.ShouldDrop("offturn", V(live: false)), "el sonu ekranı sıra dışı sayılmaz");
+        Assert.IsTrue(DropTrigger.ShouldDrop("two", V()));
+    }
+
+    [Test]
+    public void AfterDiscard_OnlyInThatFrame()
+    {
+        Assert.IsTrue(DropTrigger.ShouldDrop("after-discard", V(other: false, just: true)));
+        Assert.IsFalse(DropTrigger.ShouldDrop("after-discard", V()));
+        Assert.IsFalse(DropTrigger.ShouldDrop("after-discard", V(seen: 1, just: true)));
     }
 
     [Test]
@@ -24,11 +38,22 @@ public class DropTriggerTests
     }
 
     [Test]
+    public void MasterTurn_NeedsMasterOnOwnTurnAfterDraw()
+    {
+        Assert.IsTrue(DropTrigger.ShouldDrop("master-turn", V(true, 15, master: true)));
+        Assert.IsFalse(DropTrigger.ShouldDrop("master-turn", V(true, 15)));
+        Assert.IsFalse(DropTrigger.ShouldDrop("master-turn", V(true, 14, master: true)));
+        Assert.IsFalse(DropTrigger.ShouldDrop("master-turn", V(false, 15, master: true)));
+    }
+
+    [Test]
     public void Master_HandEnd_Unknown()
     {
         Assert.IsTrue(DropTrigger.ShouldDrop("master", V(master: true)));
         Assert.IsFalse(DropTrigger.ShouldDrop("master", V()));
+        Assert.IsFalse(DropTrigger.ShouldDrop("master", V(master: true, live: false)));
         Assert.IsTrue(DropTrigger.ShouldDrop("hand-end", V(ended: true)));
+        Assert.IsFalse(DropTrigger.ShouldDrop("hand-end", V(ended: true, master: true)), "hand-end: yalnız master olmayan");
         Assert.IsFalse(DropTrigger.ShouldDrop("x", V()));
         Assert.IsTrue(DropTrigger.ShouldDrop("master-hand-end", V(master: true, ended: true)));
         Assert.IsFalse(DropTrigger.ShouldDrop("master-hand-end", V(ended: true)));
