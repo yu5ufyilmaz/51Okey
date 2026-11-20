@@ -4,7 +4,7 @@ using Photon.Pun;
 using UnityEngine;
 
 // Tur sınırında masa özeti: master kendi özetlerini Ring'de tutar (dönenin özeti bununla kıyaslanır);
-// geliştirme yapısında her istemci "[OZET] el.seri özet" satırını konsola ve editör başına dosyaya yazar (Run-SyncTest dört dosyayı kıyaslar).
+// geliştirme yapısında her istemci "[OZET] el.seri özet" satırını konsola ve editör başına dosyaya (yalnız Editor) yazar (Run-SyncTest dört dosyayı kıyaslar).
 public static class TableDigestLog
 {
     public static readonly DigestRing Ring = new DigestRing(16);
@@ -27,18 +27,20 @@ public static class TableDigestLog
         if (!Debug.isDebugBuild) return;
         string line = $"[OZET] {s.round}.{s.turnSerial} {LastDigest:x8}";
         Debug.Log(line);
+        // Dosya yalnız Editor'de (senkron test donanımı): telefondaki geliştirme yapısında dönüşsüz büyür.
+        if (!Application.isEditor) return;
         try
         {
             if (file == null)
             {
-                string dir = Application.isEditor ? Path.Combine(Directory.GetCurrentDirectory(), "Logs") : Application.persistentDataPath;
+                string dir = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
                 Directory.CreateDirectory(dir);
                 LogPath = Path.Combine(dir, $"ozet_{DateTime.Now:yyyyMMdd_HHmmss}_actor{PhotonNetwork.LocalPlayer?.ActorNumber ?? 0}.log");
                 file = new StreamWriter(LogPath) { AutoFlush = true };
             }
             // Bölüm bölüm döküm: fark çıkarsa hangi bölümün ayrıştığı dosyadan okunur (tab ile başlayan satırlar).
             file.WriteLine(line);
-            foreach (string l in s.Canonical(false).TrimEnd('\n').Split('\n')) file.WriteLine("\t" + l);
+            foreach (string l in s.Canonical(false).TrimEnd((char)10).Split((char)10)) file.WriteLine((char)9 + l);
         }
         catch (IOException e) { Debug.LogWarning($"[OZET] dosyaya yazılamadı: {e.Message}"); }
     }

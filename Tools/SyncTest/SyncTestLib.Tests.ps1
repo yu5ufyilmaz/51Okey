@@ -284,3 +284,25 @@ Describe 'Compare-DigestLogs' {
         (Compare-DigestLogs -Paths @($null) -Nicks @('AT-host')).Ok | Should Be $true
     }
 }
+
+Describe 'Compare-DigestLogs requirements' {
+    function New-Log2($name, $lines) { $f = Join-Path ([IO.Path]::GetTempPath()) "ozet_test_$name.log"; [IO.File]::WriteAllLines($f, $lines); $f }
+    It 'fails when a non-dropped editor has no file even if two others agree' {
+        $a = New-Log2 'a3' @('[OZET] 1.1 aaaaaaaa'); $b = New-Log2 'b3' @('[OZET] 1.1 aaaaaaaa')
+        $r = Compare-DigestLogs -Paths @($a, $b, $null) -Nicks @('AT-host', 'AT-g1', 'AT-g2')
+        $r.Ok | Should Be $false; $r.Message | Should Match 'AT-g2'
+    }
+    It 'accepts a missing file of a skipped (dropped) editor' {
+        $a = New-Log2 'a4' @('[OZET] 1.1 aaaaaaaa'); $b = New-Log2 'b4' @('[OZET] 1.1 aaaaaaaa')
+        (Compare-DigestLogs -Paths @($a, $b, $null) -Nicks @('AT-host', 'AT-g1', 'AT-g2') -Skip @(2)).Ok | Should Be $true
+    }
+    It 'fails when a required editor shares no key with the reference' {
+        $a = New-Log2 'a5' @('[OZET] 1.1 aaaaaaaa', '[OZET] 1.2 bbbbbbbb'); $b = New-Log2 'b5' @('[OZET] 1.1 aaaaaaaa'); $c = New-Log2 'c5' @('[OZET] 2.9 cccccccc')
+        $r = Compare-DigestLogs -Paths @($a, $b, $c) -Nicks @('AT-host', 'AT-g1', 'AT-g2')
+        $r.Ok | Should Be $false; $r.Message | Should Match 'AT-g2.*AT-host'
+    }
+    It 'still compares a dropped editor on shared keys' {
+        $a = New-Log2 'a6' @('[OZET] 1.1 aaaaaaaa', "`tpile=x"); $b = New-Log2 'b6' @('[OZET] 1.1 aaaaaaaa', "`tpile=x"); $c = New-Log2 'c6' @('[OZET] 1.1 dddddddd', "`tpile=y")
+        (Compare-DigestLogs -Paths @($a, $b, $c) -Nicks @('AT-host', 'AT-g1', 'AT-g2') -Skip @(2)).Ok | Should Be $false
+    }
+}

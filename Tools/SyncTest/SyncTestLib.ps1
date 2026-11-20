@@ -191,30 +191,38 @@ function Read-DigestLog([string]$Path) {
 }
 
 # Editörlerin özet dosyalarını aynı anahtarda kıyaslar. Ok=$false: ortak anahtarda özet farklı, ya da kıyaslanacak veri yok.
-# Mesaj anahtarı, editörleri ve ayrışan Canonical bölümlerini söyler. Tek editörde kıyas yoktur (Ok).
+# -Skip: kopup dönmeyen editörler; dosyaları zorunlu değil (varsa ortak anahtarlarda kıyaslanır). Diğer her editörün dosyası şart
+# ve referansla (ilk zorunlu editör) en az bir ortak anahtarı olmalı. Tek editörde kıyas yoktur (Ok).
 function Compare-DigestLogs {
-    param([string[]]$Paths, [string[]]$Nicks)
+    param([string[]]$Paths, [string[]]$Nicks, [int[]]$Skip = @())
+    $fail = { param($m, $k) [pscustomobject]@{ Ok = $false; Keys = $k; Message = $m } }
+    if ($Nicks.Count -lt 2) { return [pscustomobject]@{ Ok = $true; Keys = 0; Message = '' } }
     $logs = @()
     for ($i = 0; $i -lt $Nicks.Count; $i++) {
-        if ($Paths[$i] -and (Test-Path $Paths[$i])) { $logs += [pscustomobject]@{ Nick = $Nicks[$i]; Map = (Read-DigestLog $Paths[$i]) } }
+        $has = $Paths[$i] -and (Test-Path $Paths[$i])
+        if (-not $has -and $Skip -notcontains $i) { return & $fail "özet dosyası yok: $($Nicks[$i])" 0 }
+        if ($has) { $logs += [pscustomobject]@{ Nick = $Nicks[$i]; Req = ($Skip -notcontains $i); Map = (Read-DigestLog $Paths[$i]) } }
     }
-    if ($Nicks.Count -lt 2) { return [pscustomobject]@{ Ok = $true; Keys = 0; Message = '' } }
-    if ($logs.Count -lt 2) { return [pscustomobject]@{ Ok = $false; Keys = 0; Message = "özet dosyası yok: $($logs.Count)/$($Nicks.Count) editörde [OZET] dosyası var" } }
+    $req = @($logs | Where-Object { $_.Req })
+    if ($req.Count -lt 2) { return [pscustomobject]@{ Ok = $true; Keys = 0; Message = '' } }
+    $ref = $req[0]
+    foreach ($o in $req[1..($req.Count - 1)]) {
+        if (-not @($o.Map.Keys | Where-Object { $ref.Map.Contains($_) })) { return & $fail "$($o.Nick) ile $($ref.Nick) arasında ortak özet anahtarı yok" 0 }
+    }
     $keys = 0
-    foreach ($key in ($logs[0].Map.Keys + $logs[1..($logs.Count - 1)].Map.Keys | Select-Object -Unique)) {
+    foreach ($key in @($logs | ForEach-Object { $_.Map.Keys } | Select-Object -Unique)) {
         $have = @($logs | Where-Object { $_.Map.Contains($key) })
         if ($have.Count -lt 2) { continue }
         $keys++
-        $ref = $have[0]
+        $r = $have[0]
         foreach ($o in $have[1..($have.Count - 1)]) {
-            if ($o.Map[$key].digest -eq $ref.Map[$key].digest) { continue }
-            $a = @{}; foreach ($l in $ref.Map[$key].lines) { $a[($l -split '=', 2)[0]] = $l }
+            if ($o.Map[$key].digest -eq $r.Map[$key].digest) { continue }
+            $a = @{}; foreach ($l in $r.Map[$key].lines) { $a[($l -split '=', 2)[0]] = $l }
             $b = @{}; foreach ($l in $o.Map[$key].lines) { $b[($l -split '=', 2)[0]] = $l }
             $diff = @(($a.Keys + $b.Keys) | Select-Object -Unique | Where-Object { $a[$_] -ne $b[$_] })
-            $detail = ($diff | ForEach-Object { "$($ref.Nick): $($a[$_])  |  $($o.Nick): $($b[$_])" }) -join "`n  "
-            return [pscustomobject]@{ Ok = $false; Keys = $keys; Message = "özet farkı $key : $($ref.Nick) $($ref.Map[$key].digest) / $($o.Nick) $($o.Map[$key].digest), farklı bölüm: $($diff -join ', ')`n  $detail" }
+            $detail = ($diff | ForEach-Object { "$($r.Nick): $($a[$_])  |  $($o.Nick): $($b[$_])" }) -join "`n  "
+            return & $fail "özet farkı $key : $($r.Nick) $($r.Map[$key].digest) / $($o.Nick) $($o.Map[$key].digest), farklı bölüm: $($diff -join ', ')`n  $detail" $keys
         }
     }
-    if ($keys -eq 0) { return [pscustomobject]@{ Ok = $false; Keys = 0; Message = 'editörlerin özet dosyalarında ortak anahtar yok' } }
     [pscustomobject]@{ Ok = $true; Keys = $keys; Message = '' }
 }

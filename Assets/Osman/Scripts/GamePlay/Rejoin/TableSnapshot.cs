@@ -16,7 +16,7 @@ public sealed class TableSnapshot
 {
     public const int Version = 1;
     public int round, turnSerial, currentTurn; public bool ready, ended;
-    public double turnStartTime;               // meta: özete girmez
+    public double turnStartTime;               // özete girmez
     public int devDeal, devMove;               // meta: DesyncDetector anahtarı, özete girmez
     public int[] seatOfQue = new int[5];       // [1..4]
     public Tiles indicator, dropTile;          // ikisi de null olabilir
@@ -61,14 +61,16 @@ public sealed class TableSnapshot
         for (int i = 0; i < 4; i++)
         {
             L("meld" + (i + 1), string.Join("|", melds[i].Select(Keys)));
-            L("pos" + (i + 1), string.Join("|", meldPositions[i].Select(p => string.Join(",", p.Select(v => v.x + ":" + v.y)))));
+            // Per konumları ortak durum değil: yalnız sahibi olmayan istemcilerde dolu (ScoreManager RPC listesini gönderdikten sonra Clear eder, sahipte aynı liste boşalır).
+            if (withMeta) L("pos" + (i + 1), string.Join("|", meldPositions[i].Select(p => string.Join(",", p.Select(v => v.x + ":" + v.y)))));
         }
         L("discards", string.Join(",", discards.Select(d => d.seat + "/" + Key(d.tile))));
         for (int i = 0; i < 4; i++)
             L("board" + (i + 1), string.Join(",", boards[i].Select(b => $"{Key(b.tile)}@{b.meldType}.{b.slot}")));
         L("opened", string.Join(",", opened)); L("openedPairs", string.Join(",", openedPairs));
         L("openValues", string.Join(",", openValues.Select(o => $"{o.que}/{o.value}/{(o.pairs ? 1 : 0)}")));
-        L("penalties", string.Join(",", penalties.Select(p => $"{p.seat}/{p.amount}/{p.reason}")));
+        // Ceza listesi gösterim verisi (masa sahibinin duyurusu istemciye farklı anda ulaşır); özete girmez.
+        if (withMeta) L("penalties", string.Join(",", penalties.Select(p => $"{p.seat}/{p.amount}/{p.reason}")));
         return sb.ToString();
     }
 }

@@ -94,25 +94,44 @@ public class SnapshotTests
         Assert.IsNull(SnapshotCodec.Decode(new object[] { With(ints, 20, int.MaxValue), strs }));           // dev sayaç (havuz)
     }
 
-    static readonly (string name, Action<TableSnapshot> change)[] Mutations = {
-        ("turn", s => s.currentTurn = 4), ("serial", s => s.turnSerial++), ("round", s => s.round++),
-        ("ready", s => s.ready = !s.ready), ("ended", s => s.ended = !s.ended), ("seats", s => s.seatOfQue[1] = 2),
-        ("ind", s => s.indicator.number = 8), ("drop", s => s.dropTile = null), ("pileOrder", s => s.pile.Reverse()),
-        ("pileCount", s => s.pile.RemoveAt(0)), ("handOrder", s => s.hands[0].Reverse()), ("handMove", s => { s.hands[1].Add(s.hands[0][0]); s.hands[0].RemoveAt(0); }),
-        ("meldTile", s => s.melds[1][0].RemoveAt(0)), ("meldPos", s => s.meldPositions[1][0][0] = new Vector2Int(9, 9)),
-        ("discardSeat", s => s.discards[0] = new SnapDiscard { seat = 4, tile = s.discards[0].tile }), ("discardOrder", s => s.discards.Reverse()),
-        ("boardSlot", s => s.boards[2][0] = new SnapBoardTile { tile = s.boards[2][0].tile, meldType = s.boards[2][0].meldType, slot = 7 }),
-        ("boardType", s => s.boards[2][0] = new SnapBoardTile { tile = s.boards[2][0].tile, meldType = 2, slot = s.boards[2][0].slot }),
-        ("opened", s => s.opened.Add(3)), ("pairs", s => s.openedPairs.Add(1)),
-        ("openValue", s => s.openValues[0] = new SnapOpenValue { que = 2, value = 69 }), ("penalty", s => s.penalties[0] = new SnapPenalty { seat = 1, amount = 251, reason = 1 }),
+    // (alan, değişiklik): özeti DEĞİŞTİRMEK zorunda. Alan adı TableSnapshot'ın public alanıdır.
+    static readonly (string field, string name, Action<TableSnapshot> change)[] Mutations = {
+        ("currentTurn", "turn", s => s.currentTurn = 4), ("turnSerial", "serial", s => s.turnSerial++), ("round", "round", s => s.round++),
+        ("ready", "ready", s => s.ready = !s.ready), ("ended", "ended", s => s.ended = !s.ended), ("seatOfQue", "seats", s => s.seatOfQue[1] = 2),
+        ("indicator", "ind", s => s.indicator.number = 8), ("dropTile", "drop", s => s.dropTile = null), ("pile", "pileOrder", s => s.pile.Reverse()),
+        ("pile", "pileCount", s => s.pile.RemoveAt(0)), ("hands", "handOrder", s => s.hands[0].Reverse()), ("hands", "handMove", s => { s.hands[1].Add(s.hands[0][0]); s.hands[0].RemoveAt(0); }),
+        ("melds", "meldTile", s => s.melds[1][0].RemoveAt(0)),
+        ("discards", "discardSeat", s => s.discards[0] = new SnapDiscard { seat = 4, tile = s.discards[0].tile }), ("discards", "discardOrder", s => s.discards.Reverse()),
+        ("boards", "boardSlot", s => s.boards[2][0] = new SnapBoardTile { tile = s.boards[2][0].tile, meldType = s.boards[2][0].meldType, slot = 7 }),
+        ("boards", "boardType", s => s.boards[2][0] = new SnapBoardTile { tile = s.boards[2][0].tile, meldType = 2, slot = s.boards[2][0].slot }),
+        ("opened", "opened", s => s.opened.Add(3)), ("openedPairs", "pairs", s => s.openedPairs.Add(1)),
+        ("openValues", "openValue", s => s.openValues[0] = new SnapOpenValue { que = 2, value = 69 }),
+        ("openValues", "openPairs", s => s.openValues[0] = new SnapOpenValue { que = 2, value = 68, pairs = true }),
+    };
+    // Özette OLMAYAN alanlar ve nedeni. Yeni alan ya Mutations'a ya buraya girmeli (Every_Field_Has_A_Digest_Decision).
+    static readonly (string field, Action<TableSnapshot> change)[] Ignored = {
+        ("turnStartTime", s => s.turnStartTime += 3), ("devDeal", s => s.devDeal = 9), ("devMove", s => s.devMove = 1),
+        // Ceza listesi gösterim verisi: ceza masa sahibinde duyurulur, eyleyen istemci kendi NextTurn'ünü ondan önce işler; aynı anahtarda istemciler ayrışır.
+        ("penalties", s => s.penalties[0] = new SnapPenalty { seat = 1, amount = 251, reason = 1 }),
+        ("penalties", s => s.penalties[0] = new SnapPenalty { seat = 1, amount = 250, reason = 2 }),
+        // Per konumları yalnız per sahibi olmayan istemcilerde dolu (sahibinde RPC listesi gönderildikten sonra Clear edilir); ayrıntı raporda.
+        ("meldPositions", s => s.meldPositions[1][0][0] = new Vector2Int(9, 9)),
     };
     [Test] public void Digest_Changes_For_Every_Field() {
         uint baseD = TableDigest.Of(Sample());
-        foreach (var (name, change) in Mutations) { var s = Sample(); change(s); Assert.AreNotEqual(baseD, TableDigest.Of(s), name); }
+        foreach (var (field, name, change) in Mutations) { var s = Sample(); change(s); Assert.AreNotEqual(baseD, TableDigest.Of(s), name); }
     }
-    [Test] public void Digest_Ignores_Meta_And_Joker_Values() {
+    [Test] public void Digest_Ignores_Documented_Exclusions() {
+        uint baseD = TableDigest.Of(Sample());
+        foreach (var (field, change) in Ignored) { var s = Sample(); change(s); Assert.AreEqual(baseD, TableDigest.Of(s), field); Assert.AreNotEqual(Sample().Canonical(true), s.Canonical(true), field + " tam metinde olmalı"); }
+    }
+    [Test] public void Every_Field_Has_A_Digest_Decision() {
+        var fields = typeof(TableSnapshot).GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance).Select(f => f.Name).OrderBy(x => x).ToArray();
+        var decided = Mutations.Select(m => m.field).Concat(Ignored.Select(i => i.field)).Distinct().OrderBy(x => x).ToArray();
+        CollectionAssert.AreEqual(fields, decided);
+    }
+    [Test] public void Digest_Ignores_Joker_Values() {
         var s = Sample(); uint d = TableDigest.Of(s);
-        s.turnStartTime += 3; s.devDeal = 9; s.devMove = 1;
         s.hands.SelectMany(h => h).First(t => t.type == TileType.Joker).number = 12;
         Assert.AreEqual(d, TableDigest.Of(s));
     }
