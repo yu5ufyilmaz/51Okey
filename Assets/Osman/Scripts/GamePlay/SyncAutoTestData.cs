@@ -79,6 +79,8 @@ public class SyncAutoTestStatus
         restoreEntered,
         gameOverSeen; // Görev 10-11'de beslenir
     public List<string> scoreLines = new List<string>();
+    public string rejoinStage; // son [DONUS] satırı: kopan editör hangi adımda
+    public List<string> donusLines = new List<string>(); // bu editörün [DONUS] satırları (son 60)
     public SyncCounts sync = new SyncCounts();
 }
 

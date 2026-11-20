@@ -126,6 +126,24 @@ public class MainMenuUIHandler : MonoBehaviour
         }
         retrying = false;
         PhotonNetwork.NickName = GameServices.Profile.Current.DisplayName;
+        // Uygulama oyun ortasında kapandıysa: kayıtlı odaya dönmek istiyor mu?
+        string room = RejoinRecord.Load();
+        if (room != null)
+        {
+            UIRoot.HideLoading(); // "Bağlanıyor" katmanı soruyu örtmesin
+            var ask = UIRoot.Confirm(Loc.T("rejoin.ask_title"), Loc.T("rejoin.ask_body"), Loc.T("rejoin.ask_yes"));
+            while (!ask.IsCompleted)
+                yield return null;
+            if (this == null)
+                yield break;
+            if (ask.Result)
+            {
+                PhotonNetwork.AutomaticallySyncScene = true;
+                ReconnectFlow.RejoinSaved(room);
+                yield break;
+            }
+            RejoinRecord.Clear();
+        }
         SceneChangeManager.Instance.ChangeScene("LobbyMenu");
     }
 

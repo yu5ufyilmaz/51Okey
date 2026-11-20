@@ -4,13 +4,14 @@ using UnityEngine;
 
 public static class RestoreQueue
 {
-    // nextTurnSerials[i] = i. kuyruk öğesi NextTurn ise serisi, değilse -1. Seri K'li NextTurn'den sonraki ilk indeks; K yoksa 0.
+    // nextTurnSerials[i] = i. kuyruk öğesi NextTurn ise serisi, değilse -1. Seri K'li NextTurn'den sonraki ilk indeks;
+    // K yoksa kuyruk boyu (hepsi atılır: fotoğraf onları zaten içerebilir, yeniden oynatmak taş çoğaltır; fark özet raporunda yakalanır).
     public static int FirstToReplay(IReadOnlyList<int> nextTurnSerials, int snapshotSerial)
     {
         for (int i = 0; i < nextTurnSerials.Count; i++)
             if (nextTurnSerials[i] == snapshotSerial)
                 return i + 1;
-        return 0;
+        return nextTurnSerials.Count;
     }
 }
 

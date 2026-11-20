@@ -118,7 +118,7 @@ public class RejoinTests
     [Test] public void Queue_First_To_Replay() {
         Assert.AreEqual(2, RestoreQueue.FirstToReplay(new[] { -1, 5, -1, 6, -1 }, 5));
         Assert.AreEqual(4, RestoreQueue.FirstToReplay(new[] { -1, 5, -1, 6 }, 6));
-        Assert.AreEqual(0, RestoreQueue.FirstToReplay(new[] { -1, -1 }, 5));
+        Assert.AreEqual(2, RestoreQueue.FirstToReplay(new[] { -1, -1 }, 5)); // K yok: hepsi atılır
         Assert.AreEqual(0, RestoreQueue.FirstToReplay(new int[0], 5));
     }
     [Test] public void Gate_Replays_Only_After_Snapshot_Serial() {
@@ -134,5 +134,24 @@ public class RejoinTests
     [Test] public void Gate_New_Hand_Drops_Queue() {
         var log = new List<string>(); RestoreGate.Enter(); RestoreGate.Defer(() => log.Add("old"));
         RestoreGate.GoLiveFromNewHand(); CollectionAssert.IsEmpty(log); Assert.IsTrue(RestoreGate.Live); RestoreGate.Reset();
+    }
+    [Test] public void Gate_Drops_Whole_Queue_Without_Snapshot_Serial() {
+        var log = new List<string>(); RestoreGate.Enter();
+        RestoreGate.Defer(() => log.Add("draw6")); RestoreGate.Defer(() => log.Add("nt6"), 6);
+        Assert.AreEqual(0, RestoreGate.GoLive(7)); CollectionAssert.IsEmpty(log); RestoreGate.Reset();
+    }
+    [Test] public void Policy_Clears_Record_Only_On_Room_Or_Actor_Gone() {
+        Assert.AreEqual(RejoinStep.GiveUpClear, RejoinPolicy.OnFailure(32758, 1f));
+        Assert.AreEqual(RejoinStep.GiveUpClear, RejoinPolicy.OnFailure(32748, 1f));
+        Assert.AreEqual(RejoinStep.Retry, RejoinPolicy.OnFailure(32746, 5f));
+        Assert.AreEqual(RejoinStep.GiveUpKeep, RejoinPolicy.OnFailure(32746, 31f));
+        Assert.AreEqual(RejoinStep.Retry, RejoinPolicy.OnFailure(32765, 5f));
+        Assert.AreEqual(RejoinStep.GiveUpKeep, RejoinPolicy.OnFailure(0, 30f));
+    }
+    [Test] public void Policy_Reconnect_Only_For_Unexpected_Drop_In_Game() {
+        Assert.IsTrue(RejoinPolicy.ShouldReconnect(false, true, true));
+        Assert.IsFalse(RejoinPolicy.ShouldReconnect(true, true, true));
+        Assert.IsFalse(RejoinPolicy.ShouldReconnect(false, false, true));
+        Assert.IsFalse(RejoinPolicy.ShouldReconnect(false, true, false));
     }
 }

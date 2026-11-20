@@ -15,6 +15,7 @@ function New-DropStatus($nick, $state = 'Done', $drops = 0, $grants = 0, $lines 
     $s | Add-Member drops $drops; $s | Add-Member rejoinGrants $grants; $s | Add-Member scoreLines $lines
     $s | Add-Member gameOverSeen $over; $s | Add-Member restoreEntered $false
     $s | Add-Member isMaster ($nick -eq 'AT-host'); $s | Add-Member ctlBotLines 1; $s | Add-Member gerialLines 0
+    $s | Add-Member movesAfterGrant $grants
     $s
 }
 
@@ -192,6 +193,14 @@ Describe 'Get-SyncTestVerdict -DropEditors' {
     It 'does not time out on a Gone editor under noreturn' {
         $s = New-DropSet; $s[1] = New-DropStatus 'AT-g1' -state 'Gone' -drops 1
         (Get-SyncTestVerdict -Statuses $s -Nicks $Nicks -TimedOut $true -DropEditors @(1) -DropMode 'noreturn').Pass | Should Be $true
+    }
+    It 'fails return when the returner made no move after the grant' {
+        $s = New-DropSet; $s[1].movesAfterGrant = 0
+        (Get-V $s).Reason | Should Match 'sonra hamle yok'
+    }
+    It 'passes afterend without score lines on the editor that never came back to the table' {
+        $s = New-DropSet; $s[1].rejoinGrants = 0; $s[1].scoreLines = @()
+        (Get-V $s 'afterend').Pass | Should Be $true
     }
     It 'fails afterend when game over was not seen' {
         $s = New-DropSet; $s[1].gameOverSeen = $false

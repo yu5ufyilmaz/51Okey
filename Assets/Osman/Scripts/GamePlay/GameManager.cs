@@ -83,6 +83,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (PhotonNetwork.InRoom && PhotonNetwork.LocalPlayer.HasRejoined && SeatManager.SeatsLocked)
         {
             RestoreGate.Enter();
+            Debug.Log("[DONUS] kurulum modu");
             UIRoot.ShowLoading(Loc.T("rejoin.joining_game"), false);
         }
         else
@@ -825,6 +826,10 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
             Debug.Log("Tüm eller tamamlandı. Lobiye dönülüyor...");
             yield return new WaitForSeconds(10f);
+            // Oda boş kalsa da 5 dk yaşar: sonradan dönen "oyun sona ermiş" görsün.
+            if (PhotonNetwork.IsMasterClient && PhotonNetwork.InRoom)
+                PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { ReconnectFlow.MatchOverKey, true } });
+            ReconnectFlow.DeliberateLeave = true;
             RejoinRecord.Clear();
             PhotonNetwork.LeaveRoom();
         }
@@ -846,6 +851,9 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (!RestoreGate.Live)
         {
             RestoreGate.GoLiveFromNewHand();
+            // Sınama sayacı: yeni elin Deal'i bu eli sayar (odaya girişte sıfırlanmıştı).
+            if (PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue("CurrentRound", out object cr) && cr is int round)
+                DesyncDetector.AdoptKey(round - 1, 0);
             UIRoot.HideLoading();
         }
         isGameEnded = false;

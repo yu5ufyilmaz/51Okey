@@ -14,6 +14,7 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         {
             instance = this;
             DontDestroyOnLoad(this.gameObject);
+            gameObject.AddComponent<ReconnectFlow>(); // kopmada ve açılışta odaya dönüş
         }
         else
         {
@@ -64,6 +65,8 @@ public class PhotonManager : MonoBehaviourPunCallbacks
     public override void OnConnectedToMaster()
     {
         Debug.Log("Connected to Server");
+        if (ReconnectFlow.Active) // odaya dönülüyor: lobiye girilmez
+            return;
         PhotonNetwork.JoinLobby();
     }
 
@@ -74,6 +77,8 @@ public class PhotonManager : MonoBehaviourPunCallbacks
 
     public override void OnJoinRoomFailed(short returnCode, string message)
     {
+        if (ReconnectFlow.Active) // dönüş hatası ReconnectFlow'un
+            return;
         UIRoot.HideLoading();
         UIRoot.Toast(Loc.T(JoinErrorText.For(returnCode)));
         Debug.LogWarning("Failed to join room: " + returnCode + " " + message);

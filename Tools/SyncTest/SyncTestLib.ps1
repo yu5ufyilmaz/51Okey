@@ -89,7 +89,7 @@ function Get-DropSeedHint([string]$Scenario) {
 }
 
 # Get-SyncTestVerdict'in -DropRejoin kolu: senaryo tetiklendi mi, geri verme / oyun sonu görüldü mü, skorlar aynı mı,
-# kalan editörlerde beklenen kanıt ([CTL] bot, [GERIAL]) var mı. Bugün yalnız -NoReturn kipi çalışır (dönüş yolu Görev 10-11).
+# kalan editörlerde beklenen kanıt ([CTL] bot, [GERIAL]) var mı.
 function Get-DropVerdict {
     param([object[]]$Statuses, [string[]]$Nicks, [int[]]$DropEditors, [string]$DropMode, [string]$DropScenario = '', [int[]]$Compared)
     $fail = { param($reason) [pscustomobject]@{ Pass = $false; Reason = $reason } }
@@ -102,6 +102,7 @@ function Get-DropVerdict {
         if ($DropMode -eq 'return' -and $s.rejoinGrants -lt 1) {
             return & $fail "$($Nicks[$i]): geri verme yok (rejoinGrants 0)$(if ($s.restoreEntered) { ', kurulum modunda kaldı' })"
         }
+        if ($DropMode -eq 'return' -and $s.movesAfterGrant -lt 1) { return & $fail "$($Nicks[$i]): koltuk geri verildi ama sonra hamle yok (movesAfterGrant 0)" }
         if ($DropMode -eq 'afterend' -and -not $s.gameOverSeen) { return & $fail "$($Nicks[$i]): oyun sona ermiş görülmedi" }
     }
     $remaining = @($Compared | Where-Object { $DropEditors -notcontains $_ })
@@ -118,7 +119,8 @@ function Get-DropVerdict {
         if ($needGerial -and $g -lt 1) { return & $fail "$($Nicks[$i]): $DropScenario için [GERIAL] satırı beklenirdi, yok" }
         if ($noGerial -and $g -ne 0) { return & $fail "$($Nicks[$i]): $DropScenario için [GERIAL] olmamalıydı, $g satır var" }
     }
-    $done = @($Compared | Where-Object { $Statuses[$_].state -eq 'Done' })
+    # afterend: kopan masaya hiç dönmez, el sonuçlarını görmez; skor kıyasının dışında.
+    $done = @($Compared | Where-Object { $Statuses[$_].state -eq 'Done' -and -not ($DropMode -eq 'afterend' -and $DropEditors -contains $_) })
     foreach ($i in $done) {
         $need = [Math]::Max(1, [int]$Statuses[$i].deal)
         $have = @($Statuses[$i].scoreLines).Count
@@ -144,7 +146,7 @@ function Get-DropSummary {
         $s = $Statuses[$i]
         if (-not $s) { "$($Nicks[$i]): status yok"; continue }
         if ($DropEditors -contains $i) {
-            "$($Nicks[$i]): KOPTU $($s.drops) kez (hamle $($s.dropAtMove), son durum $($s.state), geri verme $($s.rejoinGrants))"
+            "$($Nicks[$i]): KOPTU $($s.drops) kez (hamle $($s.dropAtMove), son durum $($s.state), geri verme $($s.rejoinGrants), sonra hamle $($s.movesAfterGrant), kurulum modu $($s.restoreEntered), son adım: $($s.rejoinStage))"
         }
         else {
             "$($Nicks[$i]): KALDI (durum $($s.state)), '[CTL] koltuk N bot' $($s.ctlBotLines) satır, [GERIAL] $($s.gerialLines) satır"

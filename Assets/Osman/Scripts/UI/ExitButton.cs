@@ -11,6 +11,7 @@ public class ExitButton : MonoBehaviourPunCallbacks
 
     public void ExitGame()
     {
+        ReconnectFlow.DeliberateLeave = true; // OnLeftRoom kopma sanmasın; koltuk maç sonuna dek bot
         RejoinRecord.Clear();
         Debug.Log("Çıkış butonuna basıldı, odadan ayrılınıyor...");
         // Sadece odadan çık emri veriyoruz. SAHNE DEĞİŞTİRMİYORUZ.
@@ -27,8 +28,12 @@ public class ExitButton : MonoBehaviourPunCallbacks
     }
 
     // Photon "Tamam, odadan çıktın" dediği an burası çalışır.
+    // Beklenmeyen düşmede (kayıt varken) ReconnectFlow nötr sahneden geri döner; bilerek çıkış ve oyun öncesi düşme lobiye.
     public override void OnLeftRoom()
     {
+        if (!ReconnectFlow.DeliberateLeave && RejoinRecord.Load() != null)
+            return;
+        ReconnectFlow.DeliberateLeave = false;
         Debug.Log("Odadan çıkış onaylandı. Lobiye dönülüyor...");
         SceneChangeManager.Instance.ChangeScene("LobbyMenu");
     }

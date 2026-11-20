@@ -281,15 +281,30 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
         SetState(State.Dropped);
         journal?.Line(Key, Who, $"KOPMA: {Config.dropScenario}, hamle {myMoves}, el {view.handCount}, sıra {(view.myTurn ? "bende" : "değil")}");
         Debug.LogWarning($"[AUTOTEST] kopuyor: {Config.dropScenario} (hamle {myMoves})");
+#if UNITY_EDITOR
+        // Dönüş oyunun kendi yolundan (ReconnectFlow); harness yalnız ilk denemeyi bekletir. noreturn/afterend: izin gelene kadar.
+        ReconnectFlow.TestHoldSeconds = Config.dropMode == "return" ? Config.dropOfflineSec : float.MaxValue;
+#endif
         PhotonNetwork.Disconnect();
     }
 
-    // Dönüş yolu (Görev 10-11) yok: "return" ve "afterend" şimdilik yalnız bekler, durum Dropped kalır.
+    // Dönüşü ReconnectFlow yürütür; burada yalnız izlenir. afterend: runner release.json yazınca bekletme biter.
     void TickDropped()
     {
         if (Config.dropMode == "noreturn")
+        {
             SetState(State.Gone);
-        // TODO Görev 10-11: "return" -> dropOfflineSec sonra yeniden bağlan; "afterend" -> release.json görününce.
+            return;
+        }
+#if UNITY_EDITOR
+        if (Config.dropMode == "afterend" && ReconnectFlow.TestHoldSeconds > 0f && File.Exists(Path.Combine(SyncAutoTestFiles.Dir(root), "release.json")))
+            ReconnectFlow.TestHoldSeconds = 0f;
+#endif
+        if (!status.restoreEntered && GameManager.Instance != null && !RestoreGate.Live && SceneManager.GetActiveScene().name == "Table")
+        {
+            status.restoreEntered = true;
+            WriteStatus();
+        }
     }
 
     void TickPlaying()
@@ -447,7 +462,26 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
         if (type == LogType.Log || type == LogType.Warning)
         {
             if (message.StartsWith("[SKOR] el"))
-                status.scoreLines.Add(message);
+            {
+                if (!status.scoreLines.Contains(message)) // dönüşte MatchScores geçmiş elleri yeniden yazar
+                    status.scoreLines.Add(message);
+            }
+            else if (message.StartsWith("[DONUS]"))
+            {
+                // Editor.log editörler arasında karışık: dönüş adımları editörün kendi durum dosyasına ve günlüğüne.
+                status.rejoinStage = message;
+                status.donusLines.Add($"{Time.unscaledTime:0.0} {message}");
+                if (status.donusLines.Count > 60)
+                    status.donusLines.RemoveAt(0);
+                if (Config.IsSmart)
+                    EnsureSmart();
+                journal?.Line(Key, Who, message);
+                if (message.StartsWith("[DONUS] oyun sona ermiş") && state == State.Dropped)
+                {
+                    status.gameOverSeen = true;
+                    SetState(State.Done);
+                }
+            }
             else if (message.StartsWith("[GERIAL]"))
                 status.gerialLines++;
             else if (message.StartsWith("[CTL] koltuk") && message.EndsWith(" bot"))
