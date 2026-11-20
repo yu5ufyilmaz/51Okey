@@ -619,30 +619,38 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     {
         if (!turnManager.IsPlayerTurn())
         {
-            Sfx.Play(SfxId.Error);
+            Refuse("table.not_your_turn");
             return;
         }
         if (hasOpenedPairs && !hasOpenedSeries)
         {
             Debug.LogWarning("Sadece Çift açtığınız için Seri açamazsınız!");
-            Sfx.Play(SfxId.Error);
+            Refuse("table.only_pairs_opened");
             return;
         }
 
         if (turnManager.canDrop == true)
         {
             // Bitiş Taşı Güvenlik Kontrolü
-            int tilesToMeldCount = 0;
-            foreach (var group in validPerss)
-                tilesToMeldCount += group.Count;
+            // Yalnız seri düğmesinin gerçekten koyacağı gruplar sayılır (çiftler yerde kalır).
+            int tilesToMeldCount = OkeyRuleEngine.TilesLaidBySeriesButton(
+                validPerss,
+                tileDistrubite.GetIndicatorTile()
+            );
             int currentHandCount = tileDistrubite.GetPlayerHandCount(GetPlayerQue());
+
+            if (tilesToMeldCount < 1)
+            {
+                Refuse("table.no_valid_run");
+                return;
+            }
 
             if (currentHandCount - tilesToMeldCount < 1)
             {
                 Debug.LogWarning(
                     "HATA: Tüm taşları açamazsınız! Oyunu bitirmek için elinizde en az 1 taş kalmalı."
                 );
-                Sfx.Play(SfxId.Error);
+                Refuse("table.no_discard_left");
                 return;
             }
 
@@ -672,7 +680,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         else
         {
             Debug.Log("Sıra sizde değil.");
-            Sfx.Play(SfxId.Error);
+            Refuse("table.draw_first");
         }
     }
 
@@ -680,7 +688,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     {
         if (!turnManager.IsPlayerTurn())
         {
-            Sfx.Play(SfxId.Error);
+            Refuse("table.not_your_turn");
             return;
         }
         // 1. SIRA KONTROLÜ
@@ -692,20 +700,28 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 Debug.LogWarning(
                     "Seri açtınız! Masada başkası Çift açmadığı sürece Çift açamazsınız."
                 );
-                Sfx.Play(SfxId.Error);
+                Refuse("table.only_runs_opened");
                 return;
             }
 
             // 2. BİTİŞ TAŞI GÜVENLİK KONTROLÜ
-            int tilesToMeldCount = 0;
-            foreach (var group in validPerss)
-                tilesToMeldCount += group.Count;
+            // Yalnız çift düğmesinin gerçekten koyacağı gruplar sayılır (raftaki seriler elde kalır).
+            int tilesToMeldCount = OkeyRuleEngine.TilesLaidByPairButton(
+                validPerss,
+                tileDistrubite.GetIndicatorTile()
+            );
             int currentHandCount = tileDistrubite.GetPlayerHandCount(GetPlayerQue());
+
+            if (tilesToMeldCount < 1)
+            {
+                Refuse("table.no_valid_pair");
+                return;
+            }
 
             if (currentHandCount - tilesToMeldCount < 1)
             {
                 Debug.LogWarning("HATA: Çift açarsanız atacak taşınız kalmaz!");
-                Sfx.Play(SfxId.Error);
+                Refuse("table.no_discard_left");
                 return;
             }
 
@@ -727,7 +743,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                 if (pairTotalPerCount < 1)
                 {
                     Debug.LogWarning("Elinizde geçerli bir çift per yok!");
-                    Sfx.Play(SfxId.Error);
+                    Refuse("table.no_valid_pair");
                     return;
                 }
 
@@ -749,7 +765,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
         else
         {
             Debug.Log("Sıra sizde değil.");
-            Sfx.Play(SfxId.Error);
+            Refuse("table.draw_first");
         }
     }
 
@@ -1108,7 +1124,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             hasOpenedSeries = true;
             Debug.Log("Oyuncu başarıyla per açtı. Kısıtlamalar kaldırıldı.");
         }
-        else Sfx.Play(SfxId.Error);
+        else Refuse("table.no_run_row");
     }
 
     private void PlacePairPers(List<List<Tiles>> validPairs)
@@ -1279,7 +1295,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
             GameManager.Instance.SetDoubleOpened();
             Debug.Log("Çift açıldı ve sisteme işlendi.");
         }
-        else Sfx.Play(SfxId.Error);
+        else Refuse("table.no_pair_row");
     }
 
     void TakeBackPers()
@@ -2136,6 +2152,14 @@ public class ScoreManager : MonoBehaviourPunCallbacks
     }
 
     bool AnyoneElseOpened() => playersWhoOpened.Any(q => q != GetPlayerQue());
+
+    // Reddedilen düğme: hata sesi + nedeni ekranda.
+    void Refuse(string locKey)
+    {
+        Sfx.Play(SfxId.Error);
+        if (UIManager.Instance != null)
+            UIManager.Instance.ShowMessage(Loc.T(locKey));
+    }
 
     // Limit altında açma denemesi cezasız; oyuncuya sadece neden açamadığı söylenir.
     void ShowLimitMessage(int score, int tableLimit)

@@ -61,6 +61,32 @@ public class OkeyRulesTests
         Assert.AreEqual(10, OkeyRuleEngine.CalculateDoublePerScore(L(T(TileColor.red, 13), T(TileColor.blue, 5)), ind));
     }
 
+    // --- Düğmeye basınca yere inecek taşlar ---
+
+    static readonly Tiles Ind = new Tiles(TileColor.blue, 5, TileType.Number);
+
+    [Test]
+    public void PairButton_CountsOnlyPairs_RunStaysInHand()
+    {
+        var pair = L(T(TileColor.red, 9), T(TileColor.red, 9));
+        var run = L(T(TileColor.yellow, 1), T(TileColor.yellow, 2), T(TileColor.yellow, 3));
+        var groups = new List<List<Tiles>> { pair, run };
+        Assert.AreEqual(2, OkeyRuleEngine.TilesLaidByPairButton(groups, Ind));
+        Assert.AreEqual(3, OkeyRuleEngine.TilesLaidBySeriesButton(groups, Ind));
+    }
+
+    [Test]
+    public void PairButton_OnlyPairsInHand_LeavesNothing()
+    {
+        var groups = new List<List<Tiles>>
+        {
+            L(T(TileColor.red, 9), T(TileColor.red, 9)),
+            L(T(TileColor.black, 4), T(TileColor.black, 4)),
+        };
+        Assert.AreEqual(4, OkeyRuleEngine.TilesLaidByPairButton(groups, Ind)); // el 4 ise 0 kalır: reddedilir
+        Assert.AreEqual(0, OkeyRuleEngine.TilesLaidBySeriesButton(groups, Ind));
+    }
+
     // --- Açma limiti (katlamalı) ---
 
     [Test]

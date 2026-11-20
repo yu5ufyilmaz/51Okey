@@ -268,6 +268,13 @@ public static class OkeyRuleEngine
     public static bool PassesOpenLimit(int score, int tableLimit, bool anyoneOpened, bool iHaveOpened) =>
         iHaveOpened || (anyoneOpened ? score > tableLimit : score >= tableLimit);
 
+    // Düğmeye basınca yere inecek taş sayısı: yerleştirme kodunun seçtiği gruplar (çift düğmesi yalnız çiftleri, seri düğmesi yalnız seri/sayı gruplarını koyar).
+    public static int TilesLaidByPairButton(List<List<Tiles>> groups, Tiles indicator) =>
+        groups.Where(g => IsSingleColor(g, indicator) && CheckForDoublePer(g, indicator)).Sum(g => g.Count);
+
+    public static int TilesLaidBySeriesButton(List<List<Tiles>> groups, Tiles indicator) =>
+        groups.Where(g => (IsSingleColor(g, indicator) && SingleColorCheck(g)) || MultiColorCheck(g)).Sum(g => g.Count);
+
     // Kural kitabı: bir pere aynı turda bir uçtan en fazla 2 taş işlenir (6-7-8'e 9 ve 10 olur, 11 olmaz; 5 ve 4 ayrıca olur).
     public const int MaxSeriesProcessPerEnd = 2;
 
