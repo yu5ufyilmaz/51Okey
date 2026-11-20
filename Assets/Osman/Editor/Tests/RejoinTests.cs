@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -75,5 +76,21 @@ public class RejoinTests
     }
     [Test] public void Finish_Snapshot_Drops_Board_Only() {
         Assert.AreEqual("turn=3\nhand1(2)=a b", DesyncDetector.StripBoard("turn=3\nhand1(2)=a b\nboard#1=x@0.1\nboard#2="));
+    }
+    static Tiles T(string id, int n = 5) => new Tiles { id = id, color = TileColor.red, number = n, type = TileType.Number };
+    [Test] public void Rollback_Decide() {
+        Assert.AreEqual(RollbackKind.CloseTurn, TurnRollback.Decide(3, 4));
+        Assert.AreEqual(RollbackKind.Rollback, TurnRollback.Decide(3, 3));
+        Assert.AreEqual(RollbackKind.Rollback, TurnRollback.Decide(0, 0));
+    }
+    [Test] public void Hand_After_Rollback_Is_Start_Plus_Drawn() {
+        CollectionAssert.AreEqual(new[] { "a", "b", "c" }, TurnRollback.HandAfterRollback(new[] { T("a"), T("b") }, new[] { T("c") }).Select(t => t.id));
+        CollectionAssert.AreEqual(new[] { "a", "b" }, TurnRollback.HandAfterRollback(new[] { T("a"), T("b") }, new Tiles[0]).Select(t => t.id));
+        CollectionAssert.AreEqual(new[] { "a", "b" }, TurnRollback.HandAfterRollback(new[] { T("a"), T("b") }, new[] { T("b") }).Select(t => t.id));
+    }
+    [Test] public void Side_Taken_Tile_Is_Not_Kept() {
+        var r = new TurnStartRecord { hand = new List<Tiles> { T("a"), T("b") }, sideTaken = T("x") };
+        var hand = TurnRollback.HandAfterRollback(r.hand, r.drawn);
+        Assert.IsFalse(hand.Any(t => t.id == "x")); Assert.AreEqual(2, hand.Count);
     }
 }

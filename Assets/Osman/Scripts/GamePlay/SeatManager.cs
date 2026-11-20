@@ -253,10 +253,10 @@ public class SeatManager : MonoBehaviourPunCallbacks
                 IntendedCtl = CtlBits.Read(PhotonNetwork.CurrentRoom.CustomProperties);
                 foreach (Player p in PhotonNetwork.PlayerList)
                     if (p.IsInactive)
-                        SetSeatControl(GetSeatNumberOfPlayer(p), false);
+                        GameManager.Instance?.HandleSeatLoss(p); // sırası ondaysa yarım turu geri alır
                 for (int seat = 1; seat <= 4; seat++) // tamamen ayrılmış koltuk
                     if (CtlBits.Has(IntendedCtl, seat) && !PhotonNetwork.PlayerList.Any(p => GetSeatNumberOfPlayer(p) == seat))
-                        SetSeatControl(seat, false);
+                        GameManager.Instance?.HandleSeatLoss(seat);
                 PublishSeatNames(); // eski master'ın adları yok: oda özelliğinden devralınır
             }
         }
@@ -314,7 +314,12 @@ public class SeatManager : MonoBehaviourPunCallbacks
         int seatNumber_E = GetSeatNumberOfPlayer(otherPlayer);
         SeatNaming.RememberLeaver(rememberedNames, seatNumber_E, otherPlayer.NickName, SeatsLocked); // oyun başladıysa ayrılsa da adı kalır
         if (PhotonNetwork.IsMasterClient && (SeatsLocked || gameIsStart))
-            SetSeatControl(seatNumber_E, false); // koptu ya da çıktı: koltuğu bot oynar (isimlikleri de yeniler)
+        {
+            if (GameManager.Instance != null)
+                GameManager.Instance.HandleSeatLoss(seatNumber_E); // koltuğu bota verir; sırası ondaysa yarım turu geri alır
+            else
+                SetSeatControl(seatNumber_E, false); // koptu ya da çıktı: koltuğu bot oynar (isimlikleri de yeniler)
+        }
         if (seatNumber_E != -1 && PhotonNetwork.IsMasterClient)
         {
             // Use RPC to remove the seat assignment from all clients
@@ -486,7 +491,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
 
     // SeatManager.cs -> GetSeatNumberOfPlayer (GÜNCELLENMİŞ HIZLI VERSİYON)
 
-    private int GetSeatNumberOfPlayer(Player player)
+    public int GetSeatNumberOfPlayer(Player player)
     {
         // YÖNTEM 1: Önce yerel hafızaya (Dictionary) bak (En Hızlısı)
         if (playerSeatMap.ContainsKey(player.ActorNumber))

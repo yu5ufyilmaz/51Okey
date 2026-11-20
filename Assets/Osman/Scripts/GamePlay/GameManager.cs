@@ -630,6 +630,99 @@ public class GameManager : MonoBehaviourPunCallbacks
         OpenValueShown?.Invoke(que, value, isPairs);
     }
 
+    // Tur geri alınınca o sıranın açış değeri tur başındakine döner; etiketler yenilenir.
+    public void RestoreOpenValue(int que, bool has, int value, bool pairs)
+    {
+        if (has)
+            OpenValues[que] = (value, pairs);
+        else
+            OpenValues.Remove(que);
+        OpenValueShown?.Invoke(0, 0, false);
+    }
+
+    // --- TUR GERİ ALMA (tur ortasında kopan oyuncu) ---
+    // Master: bu seri için geri alma gönderildi, kendi işleyicisi henüz çalışmadı; TurnManager botu bekletir.
+    public int pendingRollbackSerial = -1;
+    int rollbackSentSerial = -1; // master: aynı seri için bir kez gönderir (iki geri çağrı çağırsa da)
+    int rollbackDoneSerial = -1; // her istemci: aynı seri için bir kez uygular
+
+    // Yalnız master: koltuk insanlıktan çıktı. Sırası o koltuktaysa yarım tur herkeste geri alınır.
+    public void HandleSeatLoss(Player p) => HandleSeatLoss(SeatManager.Instance.GetSeatNumberOfPlayer(p));
+
+    public void HandleSeatLoss(int seat)
+    {
+        if (!PhotonNetwork.IsMasterClient || SeatManager.Instance == null)
+            return;
+        SeatManager.Instance.SetSeatControl(seat, false);
+        var tm = turnManager;
+        var td = tileDistrubite;
+        if (!isGameReady || isGameEnded || tm == null || td == null)
+            return;
+        int que = SeatMath.QueOfSeat(td.seatOfQue, seat);
+        if (que != tm.currentTurnPlayer || rollbackSentSerial == tm.TurnSerial)
+            return;
+        rollbackSentSerial = pendingRollbackSerial = tm.TurnSerial;
+        pendingSince = Time.time;
+        rollbackResent = false;
+        photonView.RPC(nameof(RollbackTurn), RpcTarget.AllViaServer, que, tm.TurnSerial);
+    }
+
+    float pendingSince;
+    bool rollbackResent;
+
+    // Bot bekletmesi ~3 sn'yi aşarsa (ör. masa sahibi gönderimle yankı arasında değişti) bir kez yeniden gönderilir; seri korumaları kopyayı zararsız yapar.
+    public void RollbackWatchdog()
+    {
+        if (rollbackResent || pendingRollbackSerial < 0 || Time.time - pendingSince < 3f)
+            return;
+        rollbackResent = true;
+        Debug.LogWarning($"[GERIAL] seri {pendingRollbackSerial} 3 sn'de uygulanmadı, yeniden gönderiliyor");
+        photonView.RPC(nameof(RollbackTurn), RpcTarget.AllViaServer, turnManager.currentTurnPlayer, pendingRollbackSerial);
+    }
+
+    [PunRPC]
+    void RollbackTurn(int que, int serial)
+    {
+        var tm = turnManager;
+        var td = tileDistrubite;
+        bool master = PhotonNetwork.IsMasterClient;
+        var r = td.TurnStart;
+        if (
+            serial != tm.TurnSerial
+            || que != tm.currentTurnPlayer
+            || r == null
+            || r.que != que
+            || serial == rollbackDoneSerial
+        )
+        {
+            if (master && serial == pendingRollbackSerial)
+                pendingRollbackSerial = -1;
+            return;
+        }
+        rollbackDoneSerial = serial;
+        var kind = TurnRollback.Decide(r.discards, td.DiscardCountOfSeat(SeatMath.MeldSeat(td.seatOfQue, que)));
+        if (kind == RollbackKind.CloseTurn)
+        {
+            td.RenderSeatMeldsFromData(que);
+            // Bot, NextTurn serisi ilerleyene kadar bekler (pendingRollbackSerial burada temizlenmez).
+            if (master)
+                tm.SendNextTurn(true);
+        }
+        else
+        {
+            td.ApplyRollback(r);
+            if (master)
+            {
+                if (CurrentTableLimit != r.tableLimit)
+                    SetTableLimit(r.tableLimit);
+                if (IsDoubleOpenedOnTable != r.doubleOpened)
+                    PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { "IsDoubleOpened", r.doubleOpened } });
+                pendingRollbackSerial = -1;
+            }
+        }
+        Debug.Log($"[GERIAL] sıra {que} seri {serial} {kind}");
+    }
+
     // Test oyuncusu (SyncAutoTest) el sonucunu kendi beklentisiyle karşılaştırmak için dinler; abonesi yoksa etkisiz.
     public static event System.Action<int[], int[], int[], int[]> HandResult;
 
@@ -708,6 +801,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         isGameEnded = false;
         isGameReady = false;
+        pendingRollbackSerial = rollbackSentSerial = rollbackDoneSerial = -1; // seri yeni elde 0'dan başlar
         MatchScores.Instance?.StartNewHand(); // geç gelen ceza kaydı yeni ele sızmasın
         OpenValues.Clear();
         OpenValueShown?.Invoke(0, 0, false); // yeni el: etiketleri boşalt

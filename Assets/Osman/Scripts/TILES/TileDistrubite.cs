@@ -178,9 +178,99 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
         if (GameManager.Instance != null)
         {
             GameManager.Instance.SetGameReady();
+            // El başında NextTurn yok: ilk sıranın kaydı dağıtımın sonunda alınır.
+            if (GameManager.Instance.turnManager != null)
+                CaptureTurnStart(GameManager.Instance.turnManager.currentTurnPlayer);
         }
 
         DesyncDetector.Report("Deal", newDeal: true);
+    }
+    #endregion
+    #region Turn Start Record
+    public TurnStartRecord TurnStart { get; private set; }
+
+    List<List<Tiles>> MeldsOf(int que) =>
+        que switch { 1 => meltedTiles1, 2 => meltedTiles2, 3 => meltedTiles3, _ => meltedTiles4 };
+
+    List<List<Vector2Int>> MeldPositionsOf(int que) =>
+        que switch { 1 => meltedTilesPositions1, 2 => meltedTilesPositions2, 3 => meltedTilesPositions3, _ => meltedTilesPositions4 };
+
+    // Sıra başında (NextTurn sonu / el başı) o koltuğun durumu; tur ortasında kopanın yarım turu bunun üzerine döner.
+    public void CaptureTurnStart(int que)
+    {
+        if (que < 1 || que > 4)
+            return;
+        var gm = GameManager.Instance;
+        var sm = gm != null ? gm.scoreManager : null;
+        var tm = gm != null ? gm.turnManager : null;
+        var room = PhotonNetwork.CurrentRoom;
+        var r = new TurnStartRecord
+        {
+            round = room != null && room.CustomProperties.TryGetValue("CurrentRound", out object cr) && cr is int c ? c : 0,
+            serial = tm != null ? tm.TurnSerial : 0,
+            que = que,
+            discards = DiscardCountOfSeat(SeatMath.MeldSeat(seatOfQue, que)),
+            tableLimit = gm != null ? gm.CurrentTableLimit : 51,
+            doubleOpened = gm != null && gm.IsDoubleOpenedOnTable,
+            opened = sm != null && sm.playersWhoOpened.Contains(que),
+            openedPairs = sm != null && sm.playersWhoOpenedPairs.Contains(que),
+            hand = new List<Tiles>(GetPlayerTilesForBot(que)),
+            melds = MeldsOf(que).Select(m => new List<Tiles>(m)).ToList(),
+            positions = MeldPositionsOf(que).Select(m => new List<Vector2Int>(m)).ToList(),
+        };
+        if (gm != null && gm.OpenValues.TryGetValue(que, out var ov))
+        {
+            r.hasOpenValue = true;
+            r.openValue = ov.value;
+            r.openValuePairs = ov.pairs;
+        }
+        TurnStart = r;
+    }
+
+    // Koltuğun atık alanındaki taş görseli sayısı.
+    public int DiscardCountOfSeat(int seat)
+    {
+        Transform area = SeatManager.Instance != null ? SeatManager.Instance.DropAreaOfSeat(seat) : null;
+        return area == null ? 0 : area.GetComponentsInChildren<TileUI>().Length;
+    }
+
+    // Yalnız veri: kopan oyuncunun eli başka istemcilerde hiç çizilmez, açtığı perler de atışa kadar çizilmemiştir.
+    public void ApplyRollback(TurnStartRecord r)
+    {
+        var hand = GetPlayerTilesForBot(r.que);
+        var restored = TurnRollback.HandAfterRollback(r.hand, r.drawn);
+        hand.Clear();
+        hand.AddRange(restored);
+
+        var melds = MeldsOf(r.que);
+        melds.Clear();
+        melds.AddRange(r.melds.Select(m => new List<Tiles>(m)));
+        var positions = MeldPositionsOf(r.que);
+        positions.Clear();
+        positions.AddRange(r.positions.Select(m => new List<Vector2Int>(m)));
+
+        var gm = GameManager.Instance;
+        var sm = gm.scoreManager;
+        if (sm != null)
+        {
+            if (r.opened) sm.playersWhoOpened.Add(r.que); else sm.playersWhoOpened.Remove(r.que);
+            if (r.openedPairs) sm.playersWhoOpenedPairs.Add(r.que); else sm.playersWhoOpenedPairs.Remove(r.que);
+        }
+        gm.RestoreOpenValue(r.que, r.hasOpenValue, r.openValue, r.openValuePairs);
+
+        // ReturnTileToSide gövdesi: taş, onu atan (önceki) sıranın atık yığınına döner.
+        if (r.sideTaken != null)
+        {
+            InstatiateSideTiles(r.que == 1 ? 4 : r.que - 1, r.sideTaken);
+            r.sideTaken = null;
+        }
+    }
+
+    public void RenderSeatMeldsFromData(int que)
+    {
+        if (!PhotonNetwork.PlayerList.Any(p => p.CustomProperties.TryGetValue("PlayerQue", out object q) && q is int i && i == que))
+            Debug.LogWarning($"[GERIAL] sıra {que} oyuncusu listede yok, perler çizilemedi");
+        InstatiateMeldTiles(que);
     }
     #endregion
     #region Find Joker Tile
@@ -621,6 +711,8 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
                 break;
         }
+        if (TurnStart != null && TurnStart.que == playerNumber)
+            TurnStart.drawn.Add(allTiles[0]);
         allTiles.RemoveAt(0);
         if (PhotonNetwork.IsMasterClient)
             GameManager.Instance?.turnManager?.BotDrawApplied(playerNumber);
@@ -637,6 +729,8 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     {
         PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object sfxQue);
         Sfx.Play(SfxId.TileTakeSide, sfxQue is int sfxMine && sfxMine == playerNumber ? 1f : Sfx.OtherVolume);
+        if (TurnStart != null && TurnStart.que == playerNumber)
+            TurnStart.sideTaken = dropTile;
         switch (playerNumber)
         {
             case 1:
@@ -969,9 +1063,13 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
 
                 if (playerQueInt == playerCount)
                 {
-                    Transform meldTileContainer = GameObject
-                        .Find(player[i].NickName + " meld")
-                        .transform;
+                    GameObject meldObject = GameObject.Find(player[i].NickName + " meld");
+                    if (meldObject == null)
+                    {
+                        Debug.LogWarning($"[GERIAL] sıra {playerCount} için per alanı bulunamadı ({player[i].NickName} meld)");
+                        continue;
+                    }
+                    Transform meldTileContainer = meldObject.transform;
                     Transform colorTileMeldContainer = meldTileContainer.GetChild(0);
                     Transform numberTileContainer = meldTileContainer.GetChild(1);
                     Transform pairTileContainer = meldTileContainer.GetChild(2);
@@ -1894,6 +1992,9 @@ public class TileDistrubite : MonoBehaviourPunCallbacks
     {
         PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue("PlayerQue", out object sfxQue);
         Sfx.Play(SfxId.PutBack, sfxQue is int sfxMine && sfxMine == returningPlayerQue ? 1f : Sfx.OtherVolume);
+        // Yandan almayı iptal yolu: taş artık alınmış sayılmaz (tur geri alınırsa yığına bir daha döndürülmez).
+        if (TurnStart != null && TurnStart.sideTaken != null && TurnStart.sideTaken.id == tileToReturn.id)
+            TurnStart.sideTaken = null;
         // Taş, onu atan (bir önceki) oyuncunun atma yerine, ilk atıldığı yola geri döner.
         // Eskiden isimle aranan bir kutuya konuyor ve droppedTiles'a eklenmiyordu: sonra biri alınca
         // diğer ekranlarda yanlış görsel siliniyor, iade edilen taş masada hayalet gibi kalıyordu.

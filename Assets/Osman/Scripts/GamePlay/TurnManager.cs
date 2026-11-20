@@ -77,6 +77,18 @@ public class TurnManager : MonoBehaviourPunCallbacks
         // 2. Şu anki sıranın koltuğunu insan mı oynuyor? Ctl bitine bakılır (kopan oyuncunun biti master'da kapanır).
         bool isCurrentPlayerHuman = IsSeatHuman(currentTurnPlayer);
 
+        // Kopanın yarım turu geri alınana kadar (master kendi RollbackTurn'ünü işleyene dek) bot başlamaz.
+        if (
+            !isCurrentPlayerHuman
+            && !isBotMoving
+            && GameManager.Instance != null
+            && GameManager.Instance.pendingRollbackSerial == TurnSerial
+        )
+        {
+            GameManager.Instance.RollbackWatchdog();
+            return;
+        }
+
         // Koltuk insana döndü (geri dönüş): çalışan bot hamlesi bırakılır.
         if (isCurrentPlayerHuman && isBotMoving && botRoutine != null && TurnGate.MayCancelBot(botDrew))
         {
@@ -394,6 +406,9 @@ public class TurnManager : MonoBehaviourPunCallbacks
             UIManager.Instance.UpdateTurnIndicators(currentTurnPlayer);
 
         // Bot kontrolü artık Update() içinde yapılıyor.
+
+        if (tileDistrubite != null)
+            tileDistrubite.CaptureTurnStart(currentTurnPlayer);
 
         DesyncDetector.Report("NextTurn");
     }
