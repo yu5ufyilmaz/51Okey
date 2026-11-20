@@ -29,6 +29,10 @@ param(
     [string]$JoinRoom = '',   # insana karşı: odayı telefon kurar (master o), 3 clone bu ada katılır
     [switch]$Solo,   # sadece ana editör: test oyuncusu + oyunun 3 botu (clone'lar kapalıyken)
     [switch]$SameNames,   # tüm test oyuncuları aynı Photon adını gösterir (ad ile alan bulan kod bozulur)
+    [ValidateSet('', 'offturn', 'before-draw', 'after-draw', 'after-open', 'master', 'master-hand-end', 'hand-end', 'two')][string]$DropRejoin = '',   # bir editör belirli anda bağlantıyı keser (dört editör gerekir)
+    [switch]$NoReturn,   # kopan dönmez (dönüş yolu Görev 10-11'de; şimdilik tek geçerli kip)
+    [switch]$ReturnAfterEnd,   # kopan, diğerleri bitince döner
+    [int]$DropOfflineSec = 8,   # dönüşten önce çevrimdışı süre
     [int]$Bots = 0,   # 1..3: ilk 4-N editör (host + misafirler) + oyunun N botu
     [string[]]$Projects = @(
         'F:\Documents\UnityProjects\51Okey',
@@ -41,6 +45,14 @@ $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\SyncTestLib.ps1"
 if ($Bots -lt 0 -or $Bots -gt 3) { Write-Host "HATA: -Bots 1, 2 veya 3 olmalı ($Bots verildi)"; exit 1 }
 if ($Bots -and ($Solo -or $JoinRoom)) { Write-Host "HATA: -Bots, -Solo ve -JoinRoom ile birlikte verilemez"; exit 1 }
+if ($DropRejoin -and ($Solo -or $Bots -or $JoinRoom)) { Write-Host "HATA: -DropRejoin yalnız dört editörle çalışır (-Solo, -Bots, -JoinRoom ile birlikte verilemez)"; exit 1 }
+if ($NoReturn -and $ReturnAfterEnd) { Write-Host "HATA: -NoReturn ve -ReturnAfterEnd birlikte verilemez"; exit 1 }
+# Kopan editör indeksleri (0 = host): masa sahibi senaryoları host'u, two 1 ve 2'yi, diğerleri 1'i koparır.
+$dropEditors = @()
+if ($DropRejoin) {
+    $dropEditors = switch ($DropRejoin) { { $_ -in 'master', 'master-hand-end' } { @(0) } 'two' { @(1, 2) } default { @(1) } }
+}
+$dropMode = $(if ($NoReturn) { 'noreturn' } elseif ($ReturnAfterEnd) { 'afterend' } else { 'return' })
 # Bot doldurma, host'un insanlar oturunca bitirdiği beklemedir (humans); 300 sn sadece güvenlik üst sınırı.
 $botFillDelaySec = $(if ($Bots) { 300 } else { 0 })
 if ($JoinRoom -and -not $PSBoundParameters.ContainsKey('Mode')) { $Mode = 'smart' }
@@ -123,7 +135,7 @@ $setStart = Join-Path ([IO.Path]::GetTempPath()) "synctest_setstart_$runId.cs"
 $resetStart = Join-Path ([IO.Path]::GetTempPath()) "synctest_resetstart_$runId.cs"
 [IO.File]::WriteAllText($setStart, 'UnityEditor.SceneManagement.EditorSceneManager.playModeStartScene = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEditor.SceneAsset>("Assets/Osman/Scenes/MainMenu.unity"); UnityEditor.SceneManagement.EditorSceneManager.playModeStartScene != null')
 [IO.File]::WriteAllText($resetStart, 'UnityEditor.SceneManagement.EditorSceneManager.playModeStartScene = null; true')
-Write-Host "runId $runId | $Deals el | seed $Seed$(if ($JoinRoom) { " | '$JoinRoom' odasına katılır" })$(if ($InjectDesync) { " | AT-g1 $InjectDesync. hamlede desync enjekte eder" })$(if ($SameNames) { " | aynı isim" })$(if ($Bots) { " | $($Projects.Count) editör + $Bots bot (insanlar oturunca başlar, üst sınır $botFillDelaySec sn)" })"
+Write-Host "runId $runId | $Deals el | seed $Seed$(if ($JoinRoom) { " | '$JoinRoom' odasına katılır" })$(if ($InjectDesync) { " | AT-g1 $InjectDesync. hamlede desync enjekte eder" })$(if ($SameNames) { " | aynı isim" })$(if ($DropRejoin) { " | kopma: $DropRejoin ($dropMode), kopan: $(($dropEditors | ForEach-Object { $Nicks[$_] }) -join ',')" })$(if ($Bots) { " | $($Projects.Count) editör + $Bots bot (insanlar oturunca başlar, üst sınır $botFillDelaySec sn)" })"
 try {
     # 3. Hazırlık
     for ($i = 0; $i -lt $Projects.Count; $i++) {
@@ -151,6 +163,10 @@ try {
             botFillDelaySec    = $botFillDelaySec
             humanHost          = [bool]$JoinRoom
             humans             = $(if ($Bots) { 4 - $Bots } else { 0 })
+            dropScenario       = $DropRejoin
+            dropThis           = [bool]($dropEditors -contains $i)
+            dropOfflineSec     = $DropOfflineSec
+            dropMode           = $(if ($DropRejoin) { $dropMode } else { '' })
         }
         [IO.File]::WriteAllText((Join-Path $dir 'config.json'), ($cfg | ConvertTo-Json))
     }
@@ -171,14 +187,36 @@ try {
 
     # 5. İzle
     $last = ''
+    $stoppedGone = @{}
+    $released = $false
     while (-not $timedOut) {
         $all = Read-All
         $h = $all[0]
         $moves = ($all | ForEach-Object { if ($_) { $_.myMoves } else { '?' } }) -join '/'
-        $line = "deal $(if ($h) { $h.deal } else { '?' }) | moves $moves$(if (-not $JoinRoom) { " | ok $(if ($h) { $h.sync.ok }) desync $(if ($h) { $h.sync.desync })" })"
+        $okSum = ($all | Where-Object { $_ } | ForEach-Object { $_.sync.ok } | Measure-Object -Sum).Sum
+        $deSum = ($all | Where-Object { $_ } | ForEach-Object { $_.sync.desync } | Measure-Object -Sum).Sum
+        $line = "deal $(if ($h) { $h.deal } else { '?' }) | moves $moves$(if ($DropRejoin) { " | ok $okSum desync $deSum | durum $(($all | ForEach-Object { if ($_) { $_.state } else { '?' } }) -join '/')" } elseif (-not $JoinRoom) { " | ok $(if ($h) { $h.sync.ok }) desync $(if ($h) { $h.sync.desync })" })"
         if ($line -ne $last) { Write-Host $line; $last = $line }
         $states = @($all | ForEach-Object { if ($_) { $_.state } else { '' } })
-        if (@($states | Where-Object { $_ -eq 'Done' }).Count -eq $Projects.Count) { $allDone = $true; break }
+        # Gone: kopup dönmeyecek editör; bitmiş sayılır ve Play'den hemen çıkarılır.
+        for ($i = 0; $i -lt $Projects.Count; $i++) {
+            if ($states[$i] -eq 'Gone' -and -not $stoppedGone[$i]) {
+                $stoppedGone[$i] = $true
+                Write-Host "$($Nicks[$i]) koptu ve dönmeyecek; Play'den çıkarılıyor"
+                try { Invoke-UnityCmd $Projects[$i] @('editor.playmode', 'stop') -Retries 10 | Out-Null }
+                catch { Write-Host "UYARI: $(Leaf $Projects[$i]) Play'den çıkarılamadı: $($_.Exception.Message)" }
+            }
+        }
+        # -ReturnAfterEnd: kalanlar bitince kopan(lar)a dönme izni (release.json) ver.
+        if ($DropRejoin -and $dropMode -eq 'afterend' -and -not $released) {
+            $rest = @(0..($Projects.Count - 1) | Where-Object { $dropEditors -notcontains $_ })
+            if (@($rest | Where-Object { $states[$_] -eq 'Done' }).Count -eq $rest.Count) {
+                foreach ($i in $dropEditors) { [IO.File]::WriteAllText((Join-Path $Projects[$i] 'Temp\SyncAutoTest\release.json'), '{}') }
+                $released = $true
+                Write-Host "diğerleri bitti; kopanlara dönüş izni verildi"
+            }
+        }
+        if (@($states | Where-Object { $_ -in 'Done', 'Gone' }).Count -eq $Projects.Count) { $allDone = $true; break }
         if ($states -contains 'Error') { break }
         if ((Get-Date) -gt $started.AddSeconds($TimeoutSec)) { $timedOut = $true; break }
         Start-Sleep -Seconds 2
@@ -199,7 +237,9 @@ finally {
     }
     foreach ($p in $Projects) {
         $leave = $stillPlaying -contains $p
-        if (-not $KeepPlaying -and -not $leave) {
+        $idx = [array]::IndexOf($Projects, $p)
+        # Gone editörün Play'i izleme döngüsünde zaten durduruldu.
+        if (-not $KeepPlaying -and -not $leave -and -not $stoppedGone[$idx]) {
             try { Invoke-UnityCmd $p @('editor.playmode', 'stop') -Retries 10 | Out-Null }
             catch { Write-Host "UYARI: $(Leaf $p) Play'den çıkarılamadı: $($_.Exception.Message)" }
         }
@@ -230,6 +270,11 @@ for ($i = 0; $i -lt $Projects.Count; $i++) {
     if ($final[$i] -and $final[$i].desyncLog) { Write-Host "$($Nicks[$i]) log: $($final[$i].desyncLog)" }
 }
 
+if ($DropRejoin) {
+    Write-Host "Kopma koşusu ($DropRejoin, $dropMode):"
+    Get-DropSummary -Statuses $final -Nicks $Nicks -DropEditors $dropEditors | ForEach-Object { Write-Host "  $_" }
+}
+
 if ($Mode -eq 'smart') {
     # Oyuncular gerçekten açıp işledi mi görünsün; [BUG] varsa o hamlede 4 günlüğün ne dediği.
     for ($i = 0; $i -lt $Projects.Count; $i++) {
@@ -245,7 +290,7 @@ if ($Mode -eq 'smart') {
     }
 }
 
-$v = Get-SyncTestVerdict -Statuses $final -Nicks $Nicks -TimedOut $timedOut -NoHost:$noHost
+$v = Get-SyncTestVerdict -Statuses $final -Nicks $Nicks -TimedOut $timedOut -NoHost:$noHost -DropEditors $dropEditors -DropMode $(if ($DropRejoin) { $dropMode } else { '' })
 $elapsed = [int]((Get-Date) - $started).TotalSeconds
 if ($v.Pass) { Write-Host "PASS: $($v.Reason) ($elapsed sn)"; exit 0 }
 Write-Host "FAIL: $($v.Reason) ($elapsed sn)"

@@ -269,7 +269,8 @@ public partial class SyncAutoTest
         {
             Scores = PhotonNetwork.IsMasterClient && Sm.playerScores != null
                 ? new Dictionary<int, int>(Sm.playerScores)
-                : PhotonNetwork.PlayerList.Where(p => p.CustomProperties.ContainsKey("PlayerQue"))
+                // Kopmuş (inaktif) koltuğu bot oynar; Photon özelliği bayat kalabilir, o koltuk misafirde denetlenmez.
+                : PhotonNetwork.PlayerList.Where(p => !p.IsInactive && p.CustomProperties.ContainsKey("PlayerQue"))
                     .ToDictionary(
                         p => (int)p.CustomProperties["PlayerQue"],
                         p => p.CustomProperties.TryGetValue("PlayerScore", out object s) ? (int)s : 0
@@ -516,7 +517,7 @@ public partial class SyncAutoTest
         int que = v.MyQue;
         var expected = new Dictionary<int, int>();
         var seated = new HashSet<int>(
-            PhotonNetwork.PlayerList.Where(p => p.CustomProperties.ContainsKey("PlayerQue")).Select(p => (int)p.CustomProperties["PlayerQue"])
+            PhotonNetwork.PlayerList.Where(p => !p.IsInactive && p.CustomProperties.ContainsKey("PlayerQue")).Select(p => (int)p.CustomProperties["PlayerQue"])
         );
         void Add(int q, int amount)
         {
@@ -607,6 +608,7 @@ public partial class SyncAutoTest
     // Okey ve kafa bilgisi sadece bitirende var: el sonunu bitiren kontrol eder (beraberlikte host).
     void OnHandResult(int[] actors, int[] rewards, int[] penalties, int[] netScores)
     {
+        handEnded = true; // -DropRejoin hand-end senaryosu
         if (!Config.IsSmart || journal == null)
         {
             lastFinish = null;

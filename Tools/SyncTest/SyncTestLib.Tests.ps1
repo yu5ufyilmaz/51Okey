@@ -10,6 +10,13 @@ function New-Status($nick, $state = 'Done', $errors = @(), $desync = 0, $first =
     }
 }
 
+function New-DropStatus($nick, $state = 'Done', $drops = 0, $grants = 0, $lines = @('[SKOR] el 1: 1=0 2=5 3=0 4=0'), $over = $true) {
+    $s = New-Status $nick $state
+    $s | Add-Member drops $drops; $s | Add-Member rejoinGrants $grants; $s | Add-Member scoreLines $lines
+    $s | Add-Member gameOverSeen $over; $s | Add-Member restoreEntered $false
+    $s
+}
+
 function New-Statuses { $Nicks | ForEach-Object { New-Status $_ } }
 
 Describe 'Get-SyncTestVerdict' {
@@ -153,5 +160,65 @@ Describe 'Get-JournalExcerpt' {
         $lines.Count | Should Be 2
         $lines[0] | Should Match 'AT-host.*y'
         $lines[1] | Should Match 'AT-g1.*z'
+    }
+}
+
+Describe 'Get-SyncTestVerdict -DropEditors' {
+    function New-DropSet { @((New-DropStatus 'AT-host'), (New-DropStatus 'AT-g1' -drops 1 -grants 1), (New-DropStatus 'AT-g2'), (New-DropStatus 'AT-g3')) }
+    function Get-V($s, $mode = 'return', $drop = @(1)) { Get-SyncTestVerdict -Statuses $s -Nicks $Nicks -TimedOut $false -DropEditors $drop -DropMode $mode }
+
+    It 'passes on return with a grant and equal score lines' {
+        (Get-V (New-DropSet)).Pass | Should Be $true
+    }
+    It 'fails when no rejoin grant was seen' {
+        $s = New-DropSet; $s[1].rejoinGrants = 0
+        $v = Get-V $s
+        $v.Pass | Should Be $false
+        $v.Reason | Should Match 'geri verme yok'
+    }
+    It 'adds restore mode to the reason' {
+        $s = New-DropSet; $s[1].rejoinGrants = 0; $s[1].restoreEntered = $true
+        (Get-V $s).Reason | Should Match 'kurulum modunda kaldı'
+    }
+    It 'fails when a finisher has different score lines' {
+        $s = New-DropSet; $s[2].scoreLines = @('[SKOR] el 1: 1=0 2=9 3=0 4=0')
+        (Get-V $s).Reason | Should Match 'skor farklı'
+    }
+    It 'passes noreturn when the dropped editor is Gone, ignoring its state and lines' {
+        $s = New-DropSet; $s[1] = New-DropStatus 'AT-g1' -state 'Gone' -drops 1 -lines @()
+        (Get-V $s 'noreturn').Pass | Should Be $true
+    }
+    It 'does not time out on a Gone editor under noreturn' {
+        $s = New-DropSet; $s[1] = New-DropStatus 'AT-g1' -state 'Gone' -drops 1
+        (Get-SyncTestVerdict -Statuses $s -Nicks $Nicks -TimedOut $true -DropEditors @(1) -DropMode 'noreturn').Pass | Should Be $true
+    }
+    It 'fails afterend when game over was not seen' {
+        $s = New-DropSet; $s[1].gameOverSeen = $false
+        (Get-V $s 'afterend').Reason | Should Match 'oyun sona ermiş görülmedi'
+    }
+    It 'sums desync over all editors, not just the host' {
+        $s = New-DropSet
+        $s[2] = New-DropStatus 'AT-g2'; $s[2].sync.desync = 1; $s[2].sync.first = 'x'
+        (Get-V $s).Reason | Should Match 'DESYNC'
+    }
+    It 'fails when the scenario never fired' {
+        $s = New-DropSet; $s[1].drops = 0
+        (Get-V $s).Reason | Should Match 'senaryo tetiklenmedi'
+    }
+    It 'accepts a master drop: ok comes from the new master' {
+        $s = New-DropSet; $s[0] = New-DropStatus 'AT-host' -drops 1 -grants 1
+        $s[0].sync.ok = 0; $s[2].sync.ok = 20
+        (Get-V $s 'return' @(0)).Pass | Should Be $true
+    }
+}
+
+Describe 'Get-DropSummary' {
+    It 'prints one line per editor' {
+        $s = @((New-DropStatus 'AT-host'), (New-DropStatus 'AT-g1' 'Gone' 1))
+        $s[1] | Add-Member dropAtMove 4; $s[0] | Add-Member ctlBotLines 2; $s[0] | Add-Member gerialLines 1
+        $l = @(Get-DropSummary -Statuses $s -Nicks @('AT-host', 'AT-g1') -DropEditors @(1))
+        $l.Count | Should Be 2
+        $l[0] | Should Match 'KALDI.*2 satır.*1 satır'
+        $l[1] | Should Match 'KOPTU.*hamle 4'
     }
 }

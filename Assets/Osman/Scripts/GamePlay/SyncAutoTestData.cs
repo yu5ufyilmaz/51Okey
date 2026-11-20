@@ -28,6 +28,11 @@ public class SyncAutoTestConfig
     public bool humanHost; // -JoinRoom: oda insanda; adım koruması tıkanırsa Error'a düşme, turu bitirip devam et
     public int humans; // > 0: bu kadar insan oturunca host bot beklemesini bitirir (0 = kullanılmaz)
 
+    public string dropScenario; // "" = kopma yok; DropTrigger senaryo adı
+    public bool dropThis; // bu editör kopar
+    public float dropOfflineSec; // dönüşten önce çevrimdışı süre
+    public string dropMode; // "return" | "noreturn" | "afterend"
+
     public string PhotonName => string.IsNullOrEmpty(displayName) ? nickName : displayName;
     public bool IsHost => role == "host";
     public bool IsSmart => mode == "smart";
@@ -63,6 +68,14 @@ public class SyncAutoTestStatus
     public string journal;
     public List<string> errors = new List<string>();
     public string desyncLog;
+    public int drops,
+        dropAtMove,
+        rejoinGrants, // Görev 10-11'de beslenir
+        ctlBotLines, // "[CTL] koltuk N bot" satırları: bu editörün gördüğü
+        gerialLines; // "[GERIAL]" satırları
+    public bool restoreEntered,
+        gameOverSeen; // Görev 10-11'de beslenir
+    public List<string> scoreLines = new List<string>();
     public SyncCounts sync = new SyncCounts();
 }
 

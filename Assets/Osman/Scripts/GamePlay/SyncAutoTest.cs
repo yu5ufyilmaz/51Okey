@@ -21,6 +21,8 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
         Playing,
         Done,
         Error,
+        Dropped, // -DropRejoin: bağlantıyı kendisi kesti
+        Gone, // -DropRejoin noreturn: dönmeyecek; runner Play'i durdurur
     }
 
     const float StuckSeconds = 60f;
@@ -43,6 +45,8 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
     float lastSeatRequest = -10f;
     bool seatMoved;
     bool botsReleased;
+    bool dropFired,
+        handEnded;
     float humansSeatedSince = -1f;
     readonly SyncAutoTestStatus status = new SyncAutoTestStatus();
     readonly Dictionary<string, RoomInfo> rooms = new Dictionary<string, RoomInfo>();
@@ -93,8 +97,13 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
     {
         if (Time.unscaledTime >= nextStatusWrite)
             WriteStatus();
-        if (state == State.Done || state == State.Error)
+        if (state == State.Done || state == State.Error || state == State.Gone)
             return;
+        if (state == State.Dropped)
+        {
+            TickDropped();
+            return;
+        }
 
         if (state < State.InTable && Time.unscaledTime - stateSince > StuckSeconds)
         {
@@ -180,10 +189,15 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
             case State.Playing:
                 if (Config.IsHost && Config.humans > 0 && !botsReleased)
                     ReleaseBotsWhenHumansSeated();
+                if (Config.dropThis && !dropFired)
+                    TryDrop();
+                if (state != State.InTable && state != State.Playing)
+                    break;
                 bool ready = GameManager.Instance != null && GameManager.Instance.isGameReady;
                 if (ready && !wasReady)
                 {
                     deal++;
+                    handEnded = false;
                     SetState(State.Playing);
                 }
                 wasReady = ready;
@@ -212,6 +226,45 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
             botsReleased = true;
             Debug.Log($"[AUTOTEST] {Config.humans} insan oturdu, botlar dolduruluyor");
         }
+    }
+
+    // -DropRejoin: senaryo anı gelince bağlantıyı keser; kalan editörler koltuğu bota devreder.
+    void TryDrop()
+    {
+        var gm = GameManager.Instance;
+        var td = FindObjectOfType<TileDistrubite>();
+        if (gm == null || td == null)
+            return;
+        if (turnManager == null)
+            turnManager = FindObjectOfType<TurnManager>();
+        var view = new DropView
+        {
+            myTurn = turnManager != null && gm.isGameReady && turnManager.currentTurnPlayer == MyQue,
+            isMaster = PhotonNetwork.IsMasterClient,
+            handEnded = handEnded,
+            openedThisTurn = firstOpenThisTurn,
+            handCount = td.GetPlayerTiles().Count,
+            ownTurnsSeen = myMoves,
+        };
+        if (!DropTrigger.ShouldDrop(Config.dropScenario, view))
+            return;
+        dropFired = true;
+        status.drops++;
+        status.dropAtMove = myMoves;
+        StopAllCoroutines();
+        moving = false;
+        SetState(State.Dropped);
+        journal?.Line(Key, Who, $"KOPMA: {Config.dropScenario}, hamle {myMoves}, el {view.handCount}, sıra {(view.myTurn ? "bende" : "değil")}");
+        Debug.LogWarning($"[AUTOTEST] kopuyor: {Config.dropScenario} (hamle {myMoves})");
+        PhotonNetwork.Disconnect();
+    }
+
+    // Dönüş yolu (Görev 10-11) yok: "return" ve "afterend" şimdilik yalnız bekler, durum Dropped kalır.
+    void TickDropped()
+    {
+        if (Config.dropMode == "noreturn")
+            SetState(State.Gone);
+        // TODO Görev 10-11: "return" -> dropOfflineSec sonra yeniden bağlan; "afterend" -> release.json görününce.
     }
 
     void TickPlaying()
@@ -343,6 +396,8 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
 
     public override void OnLeftRoom()
     {
+        if (state == State.Dropped || state == State.Gone)
+            return;
         if (state != State.InTable && state != State.Playing)
             return;
         if (deal >= Config.deals)
@@ -364,6 +419,15 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
 
     void OnLog(string message, string stackTrace, LogType type)
     {
+        if (type == LogType.Log || type == LogType.Warning)
+        {
+            if (message.StartsWith("[SKOR] el"))
+                status.scoreLines.Add(message);
+            else if (message.StartsWith("[GERIAL]"))
+                status.gerialLines++;
+            else if (message.StartsWith("[CTL] koltuk") && message.EndsWith(" bot"))
+                status.ctlBotLines++;
+        }
         if (!IsGameError(message, stackTrace, type) || status.errors.Count >= MaxErrors)
             return;
         string firstFrame = string.IsNullOrEmpty(stackTrace) ? "" : stackTrace.Split('\n')[0];
@@ -398,7 +462,8 @@ public partial class SyncAutoTest : MonoBehaviourPunCallbacks
         status.isMyTurn =
             state == State.Playing && turnManager != null && turnManager.currentTurnPlayer == MyQue;
         var dd = DesyncDetector.Instance;
-        if (Config.IsHost && dd != null)
+        // Masa sahibi kopunca yeni master'ın sayacı sayılır; eski master'ın son değeri status'ta kalır.
+        if ((Config.IsHost || PhotonNetwork.IsMasterClient) && dd != null)
         {
             status.sync.ok = dd.OkCount;
             status.sync.desync = dd.DesyncCount;
