@@ -391,7 +391,8 @@ public class TurnManager : MonoBehaviourPunCallbacks
         {
             tileDistrubite.RecalculateAllAvailableSlots();
             // Taş kaybı/ikiz silinmesi: ıstakada görünen taşlar verideki elle aynı olmalı.
-            string rack = tileDistrubite.RackMismatch();
+            // Dönen istemcide koltuğu bot oynarken ıstaka güncellenmez; özet raporu onu veriden yeniden kurar.
+            string rack = RejoinHandshake.Restoring ? null : tileDistrubite.RackMismatch();
             if (rack != null)
                 Debug.LogError($"[ISTAKA] sıra {currentTurnPlayer}: {rack}");
         }
