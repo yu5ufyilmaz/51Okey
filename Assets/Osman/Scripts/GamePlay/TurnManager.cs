@@ -518,6 +518,7 @@ public class TurnManager : MonoBehaviourPunCallbacks
             yield break;
         }
 
+        int startSerial = TurnSerial;
         TileDistrubite tileDist = FindObjectOfType<TileDistrubite>();
         ScoreManager scoreMgr = FindObjectOfType<ScoreManager>();
 
@@ -572,6 +573,14 @@ public class TurnManager : MonoBehaviourPunCallbacks
         if (!botDrew && IsSeatHuman(playerQue))
         {
             isBotMoving = false;
+            yield break;
+        }
+        // Uzun takılmadan sonra (ForceSkipBotTurn) sıra başkasına geçmişse atma: sırası dışında taş atılırdı.
+        if (currentTurnPlayer != playerQue || TurnSerial != startSerial)
+        {
+            Debug.LogWarning($"[BOT] sıra {playerQue} seri {startSerial} artık geçerli değil (sıra {currentTurnPlayer} seri {TurnSerial}), atılmadı");
+            if (botQue == playerQue)
+                isBotMoving = false;
             yield break;
         }
         if (!string.IsNullOrEmpty(worstTileID))

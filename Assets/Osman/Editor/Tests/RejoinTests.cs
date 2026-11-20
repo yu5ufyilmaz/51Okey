@@ -175,4 +175,19 @@ public class RejoinTests
         b.Request(7); b.Forget(7); Assert.IsFalse(b.IsRestoring(7)); CollectionAssert.IsEmpty(b.TakePending());
         b.Request(8); b.PendingToRestoring(); CollectionAssert.IsEmpty(b.TakePending()); Assert.IsTrue(b.OnDecision(8, HandshakeDecision.Grant));
     }
+    [Test] public void Penalties_From_Log_By_Que() {
+        var d = PenaltyRebuild.FromLog(new[] { (3, 250), (1, 40), (3, -100) }, new[] { 0, 3, 4, 1, 2 });   // sıra1=koltuk3, sıra3=koltuk1
+        Assert.AreEqual(150, d[1]); Assert.AreEqual(0, d[2]); Assert.AreEqual(40, d[3]); Assert.AreEqual(0, d[4]);
+    }
+    [Test] public void FinishGate_Seed_From_Hand_Property() {
+        int r = -1, w = -1;
+        var win = HandBreakdown.Encode(HandBreakdown.Build(2, 3, 1, false, false, false, new[] { new SeatInput { seat = 3 } }, (s, x) => 0));
+        FinishGate.Seed(2, win, ref r, ref w);
+        Assert.IsFalse(FinishGate.Accept(2, -1, ref r, ref w)); Assert.IsFalse(FinishGate.Accept(2, 9, ref r, ref w));
+        int r2 = -1, w2 = -1;
+        var draw = HandBreakdown.Encode(HandBreakdown.Build(2, 0, 1, false, false, false, new[] { new SeatInput { seat = 1 } }, (s, x) => 0));
+        FinishGate.Seed(2, draw, ref r2, ref w2);
+        Assert.IsFalse(FinishGate.Accept(2, -1, ref r2, ref w2)); Assert.IsTrue(FinishGate.Accept(2, 9, ref r2, ref w2));
+        int r3 = -1, w3 = -1; FinishGate.Seed(2, null, ref r3, ref w3); Assert.AreEqual(-1, r3);
+    }
 }

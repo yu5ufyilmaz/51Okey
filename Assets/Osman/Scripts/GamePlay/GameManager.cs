@@ -476,6 +476,27 @@ public class GameManager : MonoBehaviourPunCallbacks
     }
 
     int finishedRound = -1, finishedWinner = -1; // master: bu elin sonucu (FinishGate)
+
+    // Yeni masa sahibi (SeatManager.OnMasterClientSwitched, koltuk taramasından önce): ceza tablosu kayıttan, el sonucu kapısı odadan.
+    public void TakeOverAsMaster()
+    {
+        var td = tileDistrubite;
+        var sm = scoreManager;
+        if (sm != null && td != null && td.seatOfQue != null && MatchScores.Instance != null)
+        {
+            sm.playerScores = PenaltyRebuild.FromLog(MatchScores.Instance.CurrentHandPenalties.Select(p => (p.seat, p.amount)), td.seatOfQue);
+            foreach (Player p in PhotonNetwork.PlayerList)
+                if (p.CustomProperties.TryGetValue("PlayerQue", out object q) && q is int que && sm.playerScores.TryGetValue(que, out int score))
+                    p.SetCustomProperties(new Hashtable { { "PlayerScore", score } });
+            Debug.Log($"[DEVIR] ceza tablosu: {string.Join(" ", sm.playerScores.OrderBy(kv => kv.Key).Select(kv => $"que{kv.Key}={kv.Value}"))}");
+        }
+        var props = PhotonNetwork.CurrentRoom?.CustomProperties;
+        if (props != null && props.TryGetValue("CurrentRound", out object cr) && cr is int round)
+        {
+            props.TryGetValue("Hand" + round, out object hand);
+            FinishGate.Seed(round, hand as int[], ref finishedRound, ref finishedWinner);
+        }
+    }
     int restartRound = -1; // yeniden başlatma dizisi bu el için başladı
 
     [PunRPC]
@@ -728,7 +749,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
             // Kayıt bu seriye ait değil: yerelde bir şey geri alınmaz; master'ın bekletmesi yine de kalkar, oyun devam eder.
             if (r != null && serial == tm.TurnSerial && (r.que != que || r.serial != serial))
-                Debug.LogWarning($"[GERIAL] kayıt uyuşmuyor (kayıt sıra {r.que} seri {r.serial}, mesaj sıra {que} seri {serial}), geri alınmadı");
+                Debug.LogError($"[GERIAL] kayıt uyuşmuyor (kayıt sıra {r.que} seri {r.serial}, mesaj sıra {que} seri {serial}), geri alınmadı");
             if (master && serial == pendingRollbackSerial)
                 pendingRollbackSerial = -1;
             return;

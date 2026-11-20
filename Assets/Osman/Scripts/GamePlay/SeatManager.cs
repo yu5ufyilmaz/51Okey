@@ -256,6 +256,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
             PublishSeats();
             if (SeatsLocked)
             {
+                GameManager.Instance?.TakeOverAsMaster(); // ceza tablosu, taramadaki geri almadan önce
                 IntendedCtl = CtlBits.Read(PhotonNetwork.CurrentRoom.CustomProperties);
                 foreach (Player p in PhotonNetwork.PlayerList)
                     if (p.IsInactive)
@@ -297,6 +298,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
         if (
             PhotonNetwork.IsMasterClient
             && !gameIsStart
+            && !SeatsLocked
             && GetSeatNumberOfPlayer(newPlayer) <= 0
             && !WantsToPickSeat(newPlayer)
         )
@@ -367,7 +369,7 @@ public class SeatManager : MonoBehaviourPunCallbacks
     [PunRPC]
     private void RequestSeatRPC(int seat, PhotonMessageInfo info)
     {
-        if (!PhotonNetwork.IsMasterClient || gameIsStart || info.Sender == null || seat < 1 || seat > 4)
+        if (!PhotonNetwork.IsMasterClient || gameIsStart || SeatsLocked || info.Sender == null || seat < 1 || seat > 4) // yeni masa sahibinde gameIsStart yok
             return;
         if (GetSeatNumberOfPlayer(info.Sender) == seat || TakenSeats(info.Sender).Contains(seat))
             return;
