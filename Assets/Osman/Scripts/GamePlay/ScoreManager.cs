@@ -897,7 +897,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                         RpcTarget.All,
                         per,
                         GetPlayerQue(),
-                        positions
+                        new List<Vector2Int>(positions) // kopya: yerel çağrı listeyi olduğu gibi saklar, Clear onu boşaltırdı
                     );
                     positions.Clear();
                 }
@@ -1015,7 +1015,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                         RpcTarget.All,
                         per,
                         GetPlayerQue(),
-                        positions
+                        new List<Vector2Int>(positions) // kopya: yerel çağrı listeyi olduğu gibi saklar, Clear onu boşaltırdı
                     );
                     positions.Clear();
                 }
@@ -1182,7 +1182,7 @@ public class ScoreManager : MonoBehaviourPunCallbacks
                         RpcTarget.All,
                         pair,
                         GetPlayerQue(),
-                        positions
+                        new List<Vector2Int>(positions) // kopya: yerel çağrı listeyi olduğu gibi saklar, Clear onu boşaltırdı
                     );
                     positions.Clear();
                 }

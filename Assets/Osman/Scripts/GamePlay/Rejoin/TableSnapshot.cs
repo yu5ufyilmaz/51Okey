@@ -61,8 +61,7 @@ public sealed class TableSnapshot
         for (int i = 0; i < 4; i++)
         {
             L("meld" + (i + 1), string.Join("|", melds[i].Select(Keys)));
-            // Per konumları ortak durum değil: yalnız sahibi olmayan istemcilerde dolu (ScoreManager RPC listesini gönderdikten sonra Clear eder, sahipte aynı liste boşalır).
-            if (withMeta) L("pos" + (i + 1), string.Join("|", meldPositions[i].Select(p => string.Join(",", p.Select(v => v.x + ":" + v.y)))));
+            L("pos" + (i + 1), string.Join("|", meldPositions[i].Select(p => string.Join(",", p.Select(v => v.x + ":" + v.y)))));
         }
         L("discards", string.Join(",", discards.Select(d => d.seat + "/" + Key(d.tile))));
         for (int i = 0; i < 4; i++)

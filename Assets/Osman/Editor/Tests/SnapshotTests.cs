@@ -101,6 +101,7 @@ public class SnapshotTests
         ("indicator", "ind", s => s.indicator.number = 8), ("dropTile", "drop", s => s.dropTile = null), ("pile", "pileOrder", s => s.pile.Reverse()),
         ("pile", "pileCount", s => s.pile.RemoveAt(0)), ("hands", "handOrder", s => s.hands[0].Reverse()), ("hands", "handMove", s => { s.hands[1].Add(s.hands[0][0]); s.hands[0].RemoveAt(0); }),
         ("melds", "meldTile", s => s.melds[1][0].RemoveAt(0)),
+        ("meldPositions", "meldPos", s => s.meldPositions[1][0][0] = new Vector2Int(9, 9)),
         ("discards", "discardSeat", s => s.discards[0] = new SnapDiscard { seat = 4, tile = s.discards[0].tile }), ("discards", "discardOrder", s => s.discards.Reverse()),
         ("boards", "boardSlot", s => s.boards[2][0] = new SnapBoardTile { tile = s.boards[2][0].tile, meldType = s.boards[2][0].meldType, slot = 7 }),
         ("boards", "boardType", s => s.boards[2][0] = new SnapBoardTile { tile = s.boards[2][0].tile, meldType = 2, slot = s.boards[2][0].slot }),
@@ -114,8 +115,6 @@ public class SnapshotTests
         // Ceza listesi gösterim verisi: ceza masa sahibinde duyurulur, eyleyen istemci kendi NextTurn'ünü ondan önce işler; aynı anahtarda istemciler ayrışır.
         ("penalties", s => s.penalties[0] = new SnapPenalty { seat = 1, amount = 251, reason = 1 }),
         ("penalties", s => s.penalties[0] = new SnapPenalty { seat = 1, amount = 250, reason = 2 }),
-        // Per konumları yalnız per sahibi olmayan istemcilerde dolu (sahibinde RPC listesi gönderildikten sonra Clear edilir); ayrıntı raporda.
-        ("meldPositions", s => s.meldPositions[1][0][0] = new Vector2Int(9, 9)),
     };
     [Test] public void Digest_Changes_For_Every_Field() {
         uint baseD = TableDigest.Of(Sample());
